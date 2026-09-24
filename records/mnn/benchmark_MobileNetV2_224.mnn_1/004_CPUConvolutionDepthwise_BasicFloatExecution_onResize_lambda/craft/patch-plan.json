@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mnn-benchmark-mobilenetv2-224-mnn-1-004",
+  "blueprintId": "bp-mnn-benchmark_MobileNetV2_224.mnn_1-004",
+  "createdAt": "2026-09-14T10:58:43.820Z",
+  "objective": "输入 padding 的 memcpy 被自动向量化为 e8,m1（每轮 32 字节），LMUL 过小导致循环控制/配置开销占比过高，实际字节拷贝吞吐未被利用。",
+  "changes": [
+    {
+      "filePath": "source/backend/cpu/CPUConvolutionDepthwise.cpp",
+      "action": "modify",
+      "rationale": "输入 padding 的 memcpy 被自动向量化为 e8,m1（每轮 32 字节），LMUL 过小导致循环控制/配置开销占比过高，实际字节拷贝吞吐未被利用。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "low"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 source/backend/cpu/CPUConvolutionDepthwise.cpp 来解决 blueprint bp-mnn-benchmark_MobileNetV2_224.mnn_1-004。"
+}

@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-mnn-benchmark-mobilenetv2-224-mnn-1-004",
+  "patchPlanId": "pp-bp-mnn-benchmark-mobilenetv2-224-mnn-1-004",
+  "createdAt": "2026-09-14T11:04:16.705Z",
+  "changedFiles": [
+    "source/backend/cpu/CPUConvolutionDepthwise.cpp"
+  ],
+  "gitDiff": "diff --git a/source/backend/cpu/CPUConvolutionDepthwise.cpp b/source/backend/cpu/CPUConvolutionDepthwise.cpp\nindex 5cda18c0..55cf0e82 100644\n--- a/source/backend/cpu/CPUConvolutionDepthwise.cpp\n+++ b/source/backend/cpu/CPUConvolutionDepthwise.cpp\n@@ -15,12 +15,31 @@\n #include \"backend/cpu/compute/CommonOptFunction.h\"\n #include \"backend/cpu/compute/ConvOpt.h\"\n \n+#ifdef MNN_USE_RVV\n+#include <riscv_vector.h>\n+#endif // MNN_USE_RVV\n+\n #ifdef MNN_KLEIDIAI_ENABLED\n #include \"backend/cpu/kleidiai/KleidiAIConvolutionDepthwise.hpp\"\n #include \"backend/cpu/CPURuntime.hpp\"\n #endif //MNN_KLEIDIAI_ENABLED\n \n namespace MNN {\n+\n+#ifdef MNN_USE_RVV\n+// 使用更大 LMUL（e8,m8）的字节拷贝，减少循环控制/配置开销。\n+// 相较编译器默认的 e8,m1 自动向量化 memcpy，单次迭代覆盖字节数更多。\n+static void _memcpyBytesRVV(void* dst, const void* src, size_t n) {\n+    uint8_t* d = static_cast<uint8_t*>(dst);\n+    const uint8_t* s = static_cast<const uint8_t*>(src);\n+    for (size_t vl; n > 0; n -= vl, s += vl, d += vl) {\n+        vl = __riscv_vsetvl_e8m8(n);\n+        vuint8m8_t v = __riscv_vle8_v_u8m8(s, vl);\n+        __riscv_vse8_v_u8m8(d, v, vl);\n+    }\n+}\n+#endif // MNN_USE_RVV\n+\n CPUConvolutionDepthwise::FloatExecution::FloatExecution(const Convolution2DCommon* common, Backend* b,\n                                                         const float* originWeight, size_t originWeightSize,\n                                                         const float* bias, size_t biasSize)\n@@ -227,7 +246,11 @@ ErrorCode CPUConvolutionDepthwise::BasicFloatExecution::onResize(const std::vect\n             for (int y = 0; y < src_height; ++y) {\n                 auto src = srcOrigin + y * src_width * unit * bytes;\n                 auto dst = inputPadPtr + ((y + padY) * paddedWidth + padX) * unit * bytes;\n+#ifdef MNN_USE_RVV\n+                _memcpyBytesRVV(dst, src, src_width * unit * bytes);\n+#else\n                 ::memcpy(dst, src, src_width * unit * bytes);\n+#endif\n             }\n \n             // Compute\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

@@ -1,0 +1,261 @@
+ Percent |	Source code & Disassembly of libMNN.so for cpu-clock (34 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000111e56 <std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&)>:
+         : 6      std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&):
+         : 290    }
+         : 291    return false;
+         : 292    }
+         :
+         : 294    static _Res
+         : 295    _M_invoke(const _Any_data& __functor, _ArgTypes&&... __args)
+    0.00 :   111e56: addi    sp,sp,-128
+    0.00 :   111e58: sd      s4,80(sp)
+         : 144    return __source._M_access<_Functor*>();
+    0.00 :   111e5a: ld      s4,0(a0)
+         : 290    _M_invoke(const _Any_data& __functor, _ArgTypes&&... __args)
+    0.00 :   111e5e: sd      s0,112(sp)
+    0.00 :   111e60: sd      s1,104(sp)
+         : 293    std::__shared_ptr<MNN::Tensor, (__gnu_cxx::_Lock_policy)1>::get() const:
+         : 1673   { __shared_ptr(__p, std::move(__d), std::move(__a)).swap(*this); }
+         :
+         : 1675   /// Return the stored pointer.
+         : 1676   element_type*
+         : 1677   get() const noexcept
+         : 1678   { return _M_ptr; }
+    0.00 :   111e62: ld      a5,0(s4)
+         : 1680   std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&):
+         : 63     { return static_cast<_Up&&>(__t); }
+         :
+         : 65     template<typename _Res, typename _Fn, typename... _Args>
+         : 66     constexpr _Res
+         : 67     __invoke_impl(__invoke_other, _Fn&& __f, _Args&&... __args)
+         : 68     { return std::forward<_Fn>(__f)(std::forward<_Args>(__args)...); }
+    0.00 :   111e66: lw      s0,0(a3)
+         : 70     __invoke_impl<void, MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(const std::vector<MNN::Tensor*>&, const std::vector<MNN::Tensor*>&)::<lambda(const uint8_t*, uint8_t*, int)>&, unsigned char const*, unsigned char*, int>():
+    0.00 :   111e68: ld      s1,0(a2)
+         : 64     std::__shared_ptr<MNN::Tensor, (__gnu_cxx::_Lock_policy)1>::get() const:
+    0.00 :   111e6a: ld      a5,136(a5)
+         : 1674   std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&):
+    0.00 :   111e6c: sd      s5,72(sp)
+         : 213    dilateY_step   = dilateY * paddedWidth * unit;
+         : 214    src_y_step     = paddedWidth * unit;
+         : 215    }
+         : 216    mExecutor   = [=](const uint8_t* inputPtr, uint8_t* outputPtr, int tId) {
+         : 217    MNN_ASSERT(divides[tId] < divides[tId+1]);
+         : 218    const auto inputPadPtr = mInputPad->host<uint8_t>() + mInputPad->stride(0) * tId * bytes;
+    0.00 :   111e6e: lw      a4,8(s4)
+         : 220    MNN::Tensor::stride(int) const:
+         : 266    return mBuffer.dim[0].extent;
+         : 267    }
+         :
+         : 269    // visit dimension's extent & stride
+         : 270    inline int stride(int index) const {
+         : 271    return mBuffer.dim[index].stride;
+    0.00 :   111e72: ld      a0,48(a5)
+         : 273    operator()():
+    0.00 :   111e74: ld      s5,16(a5)
+         : 214    std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&):
+    0.00 :   111e78: mv      a3,a1
+         : 291    MNN::Tensor::stride(int) const:
+    0.00 :   111e7a: lw      a2,8(a0)
+         : 267    operator()():
+         : 214    ::memset(inputPadPtr, 0, mInputPad->stride(0) * bytes);
+    0.00 :   111e7c: li      a1,0
+         : 216    std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&):
+    0.00 :   111e7e: sd      s6,64(sp)
+         : 291    operator()():
+         : 213    const auto inputPadPtr = mInputPad->host<uint8_t>() + mInputPad->stride(0) * tId * bytes;
+    0.00 :   111e80: mulw    a5,s0,a2
+         : 215    std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&):
+    0.00 :   111e84: sd      s7,56(sp)
+         : 291    __invoke_impl<void, MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(const std::vector<MNN::Tensor*>&, const std::vector<MNN::Tensor*>&)::<lambda(const uint8_t*, uint8_t*, int)>&, unsigned char const*, unsigned char*, int>():
+    0.00 :   111e86: ld      s6,0(a3)
+         : 64     std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&):
+    0.00 :   111e8a: sd      ra,120(sp)
+         : 291    operator()():
+    0.00 :   111e8c: mulw    a5,a5,a4
+         : 214    ::memset(inputPadPtr, 0, mInputPad->stride(0) * bytes);
+    0.00 :   111e90: mulw    a2,a2,a4
+         : 213    const auto inputPadPtr = mInputPad->host<uint8_t>() + mInputPad->stride(0) * tId * bytes;
+    0.00 :   111e94: add     s5,s5,a5
+         : 214    ::memset(inputPadPtr, 0, mInputPad->stride(0) * bytes);
+    0.00 :   111e96: mv      a0,s5
+    0.00 :   111e98: jal     21ed0 <memset@plt>
+         : 217    std::vector<int, std::allocator<int> >::operator[](unsigned long) const:
+         : 1283   _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
+         : 1284   const_reference
+         : 1285   operator[](size_type __n) const _GLIBCXX_NOEXCEPT
+         : 1286   {
+         : 1287   __glibcxx_requires_subscript(__n);
+         : 1288   return *(this->_M_impl._M_start + __n);
+    0.00 :   111e9c: ld      a4,40(s4)
+    0.00 :   111ea0: slli    a5,s0,0x2
+    0.00 :   111ea4: addi    s0,a5,4
+         : 1292   operator()():
+         : 217    auto biasP   = inputs[2]->host<uint8_t>();
+         : 218    auto weightP = inputs[1]->host<uint8_t>();
+         : 219    for (int index = divides[tId]; index < divides[tId+1]; ++index) {
+    0.00 :   111ea8: add     a5,a5,a4
+    0.00 :   111eaa: add     a4,a4,s0
+    0.00 :   111eac: lw      a4,0(a4)
+    0.00 :   111eae: lw      s7,0(a5)
+    0.00 :   111eb2: bge     s7,a4,111fd8 <std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&)+0x182>
+         : 218    std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> >::operator[](unsigned long) const:
+    0.00 :   111eb6: ld      a5,16(s4)
+    0.00 :   111eba: sd      s2,96(sp)
+    0.00 :   111ebc: sd      s3,88(sp)
+         : 1286   unsigned char* MNN::Tensor::host<unsigned char>() const:
+         : 203    return (T*)mBuffer.host;
+    0.00 :   111ebe: ld      a4,16(a5)
+    0.00 :   111ec0: ld      a5,8(a5)
+    0.00 :   111ec2: ld      s3,16(a4)
+    0.00 :   111ec6: ld      s2,16(a5)
+         : 208    operator()():
+         :
+         : 220    int dz = index / batch;
+    0.00 :   111eca: lw      a5,64(s4)
+         : 222    auto dstOrigin           = outputPtr + dst_z_step * index * bytes;
+         : 223    const auto srcOrigin     = inputPtr + src_z_step * index * bytes;
+         : 224    auto bias_z          = biasP + unit * dz * bytes;
+    0.00 :   111ece: lw      a4,76(s4)
+         : 223    const auto weight_dz = weightP + dz * weight_z_step * bytes;
+    0.00 :   111ed2: lw      a2,80(s4)
+         : 219    int dz = index / batch;
+    0.00 :   111ed6: divw    a5,s7,a5
+         : 220    auto dstOrigin           = outputPtr + dst_z_step * index * bytes;
+    0.00 :   111eda: lw      a0,68(s4)
+    0.00 :   111ede: lw      t3,8(s4)
+         :
+         : 228    auto srcPtr = srcOrigin;
+         : 229    // Pad inputs
+         : 230    for (int y = 0; y < src_height; ++y) {
+    0.00 :   111ee2: lw      a3,84(s4)
+         : 222    auto bias_z          = biasP + unit * dz * bytes;
+    0.00 :   111ee6: mulw    t1,a5,a4
+         : 223    const auto weight_dz = weightP + dz * weight_z_step * bytes;
+    0.00 :   111eea: mulw    a2,a2,a5
+         : 220    auto dstOrigin           = outputPtr + dst_z_step * index * bytes;
+    0.00 :   111eee: mulw    a0,a0,s7
+         : 222    auto bias_z          = biasP + unit * dz * bytes;
+    0.00 :   111ef2: mulw    t1,t1,t3
+         : 223    const auto weight_dz = weightP + dz * weight_z_step * bytes;
+    0.00 :   111ef6: mulw    a2,a2,t3
+         : 222    auto bias_z          = biasP + unit * dz * bytes;
+    0.00 :   111efa: add     t1,t1,s3
+         : 220    auto dstOrigin           = outputPtr + dst_z_step * index * bytes;
+    0.00 :   111efc: mulw    a0,a0,t3
+         : 223    const auto weight_dz = weightP + dz * weight_z_step * bytes;
+    2.94 :   111f00: add     a2,a2,s2
+         : 220    auto dstOrigin           = outputPtr + dst_z_step * index * bytes;
+    0.00 :   111f02: add     a0,a0,s1
+         : 227    for (int y = 0; y < src_height; ++y) {
+    0.00 :   111f04: blez    a3,111f7c <std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&)+0x126>
+         : 221    const auto srcOrigin     = inputPtr + src_z_step * index * bytes;
+    0.00 :   111f08: lw      a7,72(s4)
+         : 227    for (int y = 0; y < src_height; ++y) {
+    0.00 :   111f0c: li      a6,0
+         : 221    const auto srcOrigin     = inputPtr + src_z_step * index * bytes;
+    0.00 :   111f0e: mulw    a7,a7,s7
+    0.00 :   111f12: mulw    a7,a7,t3
+    0.00 :   111f16: j       111f1c <std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&)+0xc6>
+         : 228    auto src = srcOrigin + y * src_width * unit * bytes;
+    0.00 :   111f18: lw      t3,8(s4)
+         : 229    auto dst = inputPadPtr + ((y + padY) * paddedWidth + padX) * unit * bytes;
+    0.00 :   111f1c: lw      a3,92(s4)
+         : 228    auto src = srcOrigin + y * src_width * unit * bytes;
+    2.94 :   111f20: lw      a1,88(s4)
+         : 229    auto dst = inputPadPtr + ((y + padY) * paddedWidth + padX) * unit * bytes;
+    0.00 :   111f24: lw      t4,96(s4)
+    2.94 :   111f28: addw    a3,a3,a6
+    0.00 :   111f2c: lw      a5,100(s4)
+    0.00 :   111f30: mulw    t4,t4,a3
+         : 228    auto src = srcOrigin + y * src_width * unit * bytes;
+    0.00 :   111f34: mulw    a3,a1,a6
+         : 229    auto dst = inputPadPtr + ((y + padY) * paddedWidth + padX) * unit * bytes;
+    0.00 :   111f38: addw    a5,a5,t4
+         : 228    auto src = srcOrigin + y * src_width * unit * bytes;
+    0.00 :   111f3c: mulw    a3,a3,a4
+         : 229    auto dst = inputPadPtr + ((y + padY) * paddedWidth + padX) * unit * bytes;
+    0.00 :   111f40: mulw    a5,a5,a4
+         : 230    ::memcpy(dst, src, src_width * unit * bytes);
+    0.00 :   111f44: mulw    a1,a1,a4
+         : 228    auto src = srcOrigin + y * src_width * unit * bytes;
+    0.00 :   111f48: mulw    a4,a3,t3
+         : 229    auto dst = inputPadPtr + ((y + padY) * paddedWidth + padX) * unit * bytes;
+    0.00 :   111f4c: mulw    a5,a5,t3
+         : 228    auto src = srcOrigin + y * src_width * unit * bytes;
+    0.00 :   111f50: add     a4,a4,a7
+         : 230    ::memcpy(dst, src, src_width * unit * bytes);
+    0.00 :   111f52: add     a4,a4,s6
+    2.94 :   111f54: mulw    a3,a1,t3
+    0.00 :   111f58: add     a5,a5,s5
+    2.94 :   111f5a: vsetvli a1,a3,e8,m1,ta,ma
+    0.00 :   111f5e: vle8.v  v1,(a4)
+   47.06 :   111f62: sub     a3,a3,a1
+    0.00 :   111f64: add     a4,a4,a1
+    5.88 :   111f66: vse8.v  v1,(a5)
+   29.41 :   111f6a: add     a5,a5,a1
+    0.00 :   111f6c: bnez    a3,111f5a <std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&)+0x104>
+         : 227    for (int y = 0; y < src_height; ++y) {
+    0.00 :   111f6e: lw      a5,84(s4)
+    0.00 :   111f72: addiw   a6,a6,1
+         : 234    }
+         :
+         : 236    // Compute
+         : 237    kernelFunc((float*)dstOrigin, (const float*)(inputPadPtr), (const float*)weight_dz, dst_width, strideX * unit, kernel_width, kernel_height, dilateX_step, dilateY_step, dst_height, src_y_step * strideY, dst_y_step, (const float*)bias_z, postData.data() + 2);
+    2.94 :   111f74: lw      a4,76(s4)
+         : 227    for (int y = 0; y < src_height; ++y) {
+    0.00 :   111f78: blt     a6,a5,111f18 <std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&)+0xc2>
+         : 234    kernelFunc((float*)dstOrigin, (const float*)(inputPadPtr), (const float*)weight_dz, dst_width, strideX * unit, kernel_width, kernel_height, dilateX_step, dilateY_step, dst_height, src_y_step * strideY, dst_y_step, (const float*)bias_z, postData.data() + 2);
+    0.00 :   111f7c: ld      a1,152(s4)
+    0.00 :   111f80: lw      a5,120(s4)
+    0.00 :   111f84: lw      t3,116(s4)
+    0.00 :   111f88: addi    a1,a1,8
+    0.00 :   111f8a: lw      a7,128(s4)
+    0.00 :   111f8e: lw      a6,124(s4)
+    0.00 :   111f92: lw      a3,112(s4)
+    0.00 :   111f96: sd      a1,40(sp)
+    0.00 :   111f98: sd      t1,32(sp)
+    0.00 :   111f9a: lw      a1,148(s4)
+    0.00 :   111f9e: mulw    a4,t3,a4
+         : 217    for (int index = divides[tId]; index < divides[tId+1]; ++index) {
+    0.00 :   111fa2: addiw   s7,s7,1
+         : 234    kernelFunc((float*)dstOrigin, (const float*)(inputPadPtr), (const float*)weight_dz, dst_width, strideX * unit, kernel_width, kernel_height, dilateX_step, dilateY_step, dst_height, src_y_step * strideY, dst_y_step, (const float*)bias_z, postData.data() + 2);
+    0.00 :   111fa4: sd      a1,24(sp)
+    0.00 :   111fa6: lw      a1,140(s4)
+    0.00 :   111faa: lw      t1,144(s4)
+    0.00 :   111fae: mulw    t1,t1,a1
+    0.00 :   111fb2: mv      a1,s5
+    0.00 :   111fb4: sd      t1,16(sp)
+    0.00 :   111fb6: lw      t1,136(s4)
+    0.00 :   111fba: sd      t1,8(sp)
+    0.00 :   111fbc: lw      t1,132(s4)
+    0.00 :   111fc0: sd      t1,0(sp)
+    0.00 :   111fc2: ld      t1,104(s4)
+    0.00 :   111fc6: jalr    t1
+         : 217    for (int index = divides[tId]; index < divides[tId+1]; ++index) {
+    0.00 :   111fc8: ld      a5,40(s4)
+    0.00 :   111fcc: add     a5,a5,s0
+    0.00 :   111fce: lw      a5,0(a5)
+    0.00 :   111fd0: blt     s7,a5,111eca <std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&)+0x74>
+    0.00 :   111fd4: ld      s2,96(sp)
+    0.00 :   111fd6: ld      s3,88(sp)
+         : 218    std::_Function_handler<void (unsigned char const*, unsigned char*, int), MNN::CPUConvolutionDepthwise::BasicFloatExecution::onResize(std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&, std::vector<MNN::Tensor*, std::allocator<MNN::Tensor*> > const&)::{lambda(unsigned char const*, unsigned char*, int)#1}>::_M_invoke(std::_Any_data const&, unsigned char const*&&, unsigned char*&&, int&&):
+         : 294    {
+         : 295    return std::__invoke_r<_Res>(*_Base::_M_get_pointer(__functor),
+         : 296    std::forward<_ArgTypes>(__args)...);
+         : 297    }
+    0.00 :   111fd8: ld      ra,120(sp)
+    0.00 :   111fda: ld      s0,112(sp)
+    0.00 :   111fdc: ld      s1,104(sp)
+    0.00 :   111fde: ld      s4,80(sp)
+    0.00 :   111fe0: ld      s5,72(sp)
+    0.00 :   111fe2: ld      s6,64(sp)
+    0.00 :   111fe4: ld      s7,56(sp)
+    0.00 :   111fe6: addi    sp,sp,128
+    0.00 :   111fe8: ret

@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mnn-benchmark_MobileNetV2_224.mnn_1-004",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-14T08:38:00.982Z",
+    "software": "mnn",
+    "testcaseIds": [
+      "benchmark_MobileNetV2_224.mnn_1"
+    ],
+    "diagnosisId": "diag-20260914-083800",
+    "targetHardware": "SpacemiT K3 (spacemit-x100, RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://github.com/alibaba/MNN.git",
+    "testBranch": "master",
+    "commitHash": "3a255733478d1746fe83b4d91b8b9d01ab9e4f05"
+  },
+  "problem": {
+    "summary": "CPUConvolutionDepthwise::BasicFloatExecution::onResize 的 per-thread lambda 中，输入 padding 的 memcpy 被编译器自动向量化为 e8,m1 字节拷贝，每轮仅覆盖 vlenb=32 字节（VLEN=256），循环控制开销（sub 47.06% + add 29.41%）主导实际 load/store（vle8 0% + vse8 5.88%）。",
+    "evidence": [
+      "duration_time: RV=4,615,257,380，IPC=0.83，L1 miss 1.04%（testcase 级）",
+      "热点循环 `47.06% 111f62: sub a3,a3,a1` + `29.41% 111f6a: add a5,a5,a1`（循环控制）主导，`vle8.v/vse8.v` 几乎无样本",
+      "反汇编为 `vsetvli e8,m1` + `vle8.v` + `vse8.v` 的字节拷贝，m1 每轮仅 32 字节"
+    ]
+  },
+  "rootCause": {
+    "summary": "输入 padding 的 memcpy 被自动向量化为 e8,m1（每轮 32 字节），LMUL 过小导致循环控制/配置开销占比过高，实际字节拷贝吞吐未被利用。",
+    "candidateFiles": [
+      "source/backend/cpu/CPUConvolutionDepthwise.cpp"
+    ],
+    "performanceFactors": [
+      "Maximal LMUL for Misaligned Byte Processing"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "low",
+    "mustPreserve": [
+      "保持 memcpy 逐字节一致语义（无数据变化）",
+      "保持零长度/短输入回退与未对齐地址正确性"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "benchmark_MobileNetV2_224.mnn_1"
+    ],
+    "regressionCommand": "agent1 patch_regression --case benchmark_MobileNetV2_224.mnn_1"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.7,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "样本数少（34 samples）、memcpy 是 depthwise 次要组件，绝对收益有限，建议人工确认优化价值后再转发",
+    "reasoning": "perf annotate 显示该 lambda 的 hot loop 是 memcpy 自动向量化出的 e8,m1 字节拷贝，循环控制（sub 47.06% + add 29.41%）主导、实际 vle8/vse8 几乎无样本，属 loop-control-bound。VLEN=256 下 m1 每轮仅 32 字节，提升 LMUL（m4/m8）可显著减少迭代与回边开销。因样本数仅 34 且该 memcpy 为 depthwise 的输入 padding 次要环节，收益方向明确但绝对幅度有限，置信度定为 0.70。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "该 memcpy 是输入 padding，占总时间比例小，即使 LMUL 优化对整体 fps 提升有限",
+      "编译器选择 m1 可能是为对齐/尾块安全考虑，改 m8 需确认无 page/cache-line 越界"
+    ],
+    "currentGaps": "样本数少（34 samples）导致份额噪声大；未提供 ARM 对比 ratio；sampling IP precision 未知；memcpy 对整体 workload 的贡献比例未知；m4/m8 的实测收益需 A/B benchmark。",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV — benchmark_MobileNetV2_224.mnn_1",
+    "recommendedFirstAction": "在 source/backend/cpu/CPUConvolutionDepthwise.cpp 的 BasicFloatExecution::onResize lambda 中，将输入 padding 的 memcpy（源码第 230 行 `::memcpy(dst, src, src_width * unit * bytes)`）改为使用更大 LMUL 的显式 RVV 字节拷贝（vsetvl_e8m4/m8 + vle8/vse8），或通过编译优化/内联 memcpy 使编译器生成 e8,m4/m8 形态，短输入保留标量回退。",
+    "recommendedVerification": "重新运行 benchmark_MobileNetV2_224.mnn_1，观察 duration_time/latency_ms；perf annotate 复核该循环出现 e8,m4/m8 且 sub/add 迭代开销份额下降；跑零长度/短输入/未对齐地址用例保证逐字节一致。",
+    "metricEvidence": [
+      {
+        "metric": "duration_time",
+        "rv": 4615257380,
+        "anomalyNote": "testcase 级总 duration 4.615s；无 ARM 对比"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.83,
+        "anomalyNote": "IPC 偏低；本函数循环控制开销主导"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "CPUConvolutionDepthwise::BasicFloatExecution::onResize lambda",
+        "fileModule": "source/backend/cpu/CPUConvolutionDepthwise.cpp",
+        "rvvPattern": "Maximal LMUL for Misaligned Byte Processing",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.76,
+        "note": "字节拷贝：已向量化 e8,m1，loop-control（sub/add/bnez）约 76% 局部份额主导"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "source/backend/cpu/CPUConvolutionDepthwise.cpp",
+      "relatedKnowledge": "https://github.com/golang/go/commit/f532f87a9895afc60b6ab17969c67e33d1ed1564",
+      "evidenceExplanation": "该 memcpy 自动向量化为 e8,m1，每轮 32 字节，循环控制开销主导；Go 的 byte loop 最大 LMUL 提交证明将 m1 提升到寄存器预算允许的最大 LMUL 可摊薄 vsetvli/指针/回边开销，与本函数现象一致。"
+    }
+  }
+}
