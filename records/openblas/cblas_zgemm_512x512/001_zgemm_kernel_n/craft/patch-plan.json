@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-openblas-cblas_zgemm_512x512-001",
+  "blueprintId": "bp-openblas-cblas_zgemm_512x512-001",
+  "createdAt": "2026-09-15T06:40:00.000Z",
+  "objective": "修复 zgemm_kernel_n 主 k-loop 的 issue-bandwidth-bound 根因：复数 MAC 采用 tmp 寄存器 + 16 条 vfadd.vv 分步累加（未折叠进 FMA 链），每 k-step 48 条向量 FP 中仅 32 条 FMA（FMA 密度 48%、IPC 0.984）；同时 A 面板用 4 条 stride-16B 的 vlse64 interleaved gather。把复数 MAC 折叠为 16 个 ACC 上的成对 signed-FMA 直接累加，并把成对 A 字段 gather 合并为 vlseg2e64 段加载。",
+  "changes": [
+    {
+      "filePath": "kernel/riscv64/zgemm_kernel_8x4_zvl256b.c",
+      "action": "modify",
+      "rationale": "蓝图 rootCause.candidateFiles 记为 kernel/riscv64/zgemm_kernel_n.c，但 diagnosis.currentGaps 声明该路径为推断（无 debug symbols）。仓库实际 kernel/riscv64/KERNEL.RISCV64_ZVL256B:153 将 ZGEMMKERNEL 绑定为 zgemm_kernel_$(ZGEMM_UNROLL_M)x$(ZGEMM_UNROLL_N)_zvl256b.c，本 CORE 为 8x4；annotate 源码行 175–228 与该文件逐行吻合，热点 k-loop 即 M/8 主 pass。仅改此单文件的 M/8 主 pass 与其转置符号宏表，不触碰封装布局、epilogue 与 tail 路径。",
+      "instructions": [
+        "在每个转置分组的宏块（NN/NT/TN/TT、NR/NC/TR/TC、RN/RT/CN/CT、RR/RC/CR/CC）中，除既有 VFMACC_RR/VFMACC_RI 外新增 FOLD_OPA/FOLD_OPB 两个宏，取值分别为：组 A(vfmacc,vfmacc)、组 B(vfmacc,vfnmsac)、组 C(vfnmsac,vfmacc)、组 D(vfnmsac,vfnmsac)。这两个宏编码把 tmp 物化折叠进 ACC 所需的正确复合算子，保持原有 S0..S3 与复数共轭符号约定不变。",
+        "M/8 主 pass k-loop：把每个累加器原来的 `tmp = vfmul(...); tmp = VFMACC_RR/RI(tmp,...); ACC = vfadd(ACC,tmp)` 三步折叠为两条命中 ACC 的 FMA——实部用 `ACC = VFMACC_RR(ACC, Bi, Ai); ACC = VFMACC_RR(ACC, Br, Ar);`（同一宏连用两次，对 vfmacc 与 vfmsac 都严格等于 ACC + Br*Ar + s*Ai*Bi）；虚部用 `ACC = FOLD_OPA(ACC, Br, Ai); ACC = FOLD_OPB(ACC, Ar, Bi);`。每条指令的标量操作数（B 值）仍置于 intrinsic 的 rs1 位，向量 A 置于 vs2 位。",
+        "M/8 主 pass k-loop 的 A 装载：把两条分别取 real/imag 的 stride-16B `vlse64`（针对 A[ai+0*gvl*2] 与 A[ai+1*gvl*2] 两个 4 行半区）分别合并为一条 `vlseg2e64_v_f64m1x2` 段加载，再用 `vget_v_f64m1x2_f64m1` 取出 field0/field1；packed A 为 interleaved (r,i) 二字段，字段分离结果与两条 vlse64 逐元素一致。",
+        "不变项（constraints.mustPreserve）：复数乘加/共轭符号约定（VFMACC_RR/RI 与 S0..S3）不变——实部只用 VFMACC_RR 连乘两次、虚部按组使用 FOLD_OPA/OPB，均可证严格等价于原 tmp 公式；A/B/C packing 布局、alpha/beta 语义与 alias 行为、epilogue、以及 M&4/M&2/M&1、N&2/N&1 各 tail 路径全部不改动。折叠仅改变末位 FP rounding 顺序（蓝图已声明在 OpenBLAS 误差合同内）。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "修改 kernel/riscv64/zgemm_kernel_8x4_zvl256b.c：4 个转置宏块各新增 2 个折叠算子宏；M/8 主 pass k-loop 将 16 个累加器的 tmp+vfmul+VFMACC+vadd 三步（每 k-step 48 条向量 FP）折叠为 32 条 signed-FMA 直接累加，并把 4 条 stride-16B vlse64 合并为 2 条 vlseg2e64 段加载。k-loop 每 k-step 向量 FP 由 48 降到 32，FMA 密度由 48% 升到 100%。tail 路径、epilogue、packing 合同、分发表均不变。"
+}

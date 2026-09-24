@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-openblas-sgemv_2048x2048-002",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-17T04:07:49.048Z",
+    "software": "openblas",
+    "testcaseIds": [
+      "sgemv_2048x2048"
+    ],
+    "diagnosisId": "diag-20260917T040749048Z-1051a594",
+    "targetHardware": "SpacemiT X100 (K3, spacemit-x100, RVV 1.0, VLEN=256, out-of-order)",
+    "repositoryUrl": "https://github.com/OpenMathLib/OpenBLAS.git",
+    "testBranch": "develop",
+    "commitHash": "70c2410f17b60575f34dbb7eac88d16a9f485861"
+  },
+  "problem": {
+    "summary": "OpenBLAS FP32 sgemv 2048x2048 在 SpacemiT X100 (RVV 1.0, VLEN=256) 上内核吞吐仅 3.79 GFLOPS（benchmark_ms 2.211ms/call）。sgemv_n 函数自占运行样本 13.08%，函数内 17/17 样本全部落在 inc_y==1 双列路径的内层 m-向量循环 [0x4bc4,0x4bee]。热点循环为 runtime-VL strip-mined 结构：每迭代重建 vsetvli、slli/sub/adds 标量指针链（41.18% 样本），单一 y accumulator v8 构成 vle→vfmacc→vfmacc→vse→下一轮 vle 的 WAR 串行 recurrence，col2 列加载延迟直接暴露在串行链末端（47.06% 样本）。整体 perf stat 显示 L1 miss 率仅 0.257%、branch miss 0.402% → 非 cache/branch-bound，属 latency/overhead-bound。",
+    "evidence": [
+      "benchmark_ms=2.211（OpenBLAS benchmark 内核计时，16 loops 之一）— gflops=3.794，远低于 256-bit RVV FP32 理论吞吐",
+      "perf annotate: sgemv_n self=13.08%（17/130 cpu-clock samples）；函数内 17/17（100%）位于 hot interval [0x4bc4,0x4bee]",
+      "IPC=0.672、L1_dcache_load_miss_rate=0.257%、branch_miss_rate=0.402%（perf stat）→ 非 cache-miss/branch-bound",
+      "最高样本行 47.06% `4bd0: vle32.v v16,(t4)`（第二列加载）+ 41.18% `4bd4: slli t1,a4,0x2`（每迭代指针步长重建）"
+    ]
+  },
+  "rootCause": {
+    "summary": "sgemv_n 内层 GEMV 向量循环以 runtime-VL strip-mined 结构实现：每迭代 vsetvli + 标量 IV 链（slli/sub/adds）重建循环状态，单一 y accumulator（v8）形成跨迭代 WAR 串行 recurrence，且每轮 y 往返仅摊还 2 个 FMAC，导致循环 latency/overhead-bound（非 cache 或吞吐限制）。",
+    "candidateFiles": [
+      "interface/gemv.c"
+    ],
+    "performanceFactors": [
+      "RVV Floating-Point Matmul and GEMV Kernels",
+      "RVV Vector-State Management",
+      "Register-Budgeted RVV Loop Unrolling",
+      "Loop Induction Variable Strength Reduction"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "y[i] += alpha * sum_j A[i + j*lda] * x[j] 的 read-modify-write 语义与 lda 列主布局",
+      "FP32 累加顺序变化（独立 accumulator + 循环末合并）必须在 BLAS 误差容限内（FMA contraction、NaN/Inf/±0/subnormal）",
+      "inc_y==1 快速路径与 inc_y!=1 一般化路径（VLSEV/VSSEV）各自合同",
+      "公共 BLAS API 签名与 n/m 边界（含 n&1、m tail）行为"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "sgemv_2048x2048"
+    ],
+    "regressionCommand": "agent1 patch_regression --case sgemv_2048x2048"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat（IPC 0.672、L1 miss 0.257%）将 workload 归为 latency/overhead-bound 而非 cache-miss-bound，使本地 RVV 循环调优成为有效杠杆；perf annotate 显示 sgemv_n 函数内 100% 样本（17/17）集中在 [0x4bc4,0x4bee] 内层向量循环，反汇编 def-use 证明该循环存在每迭代 vsetvli→slli→adds 的循环携带标量链（对应 41.18% slli 份额）与单一 v8 accumulator 的 WAR 串行 recurrence（对应 47.06% col2 load 份额），与 patterns/rvv_floating_point_matmul_and_gemv_kernels.md 的 'FMA accumulator 依赖过长' 机制一致；OpenBLAS 自身存在 RVV GEMV/GEMM 调优提交线（2d82d144e279 等）佐证该修复方向。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "运行级 cpu-clock 样本被 benchmark 初始化随机数噪声（random() 65%）主导，kernel 计时（benchmark_ms）与样本口径分离；若噪声影响内核计时则收益可能低于循环结构分析预期",
+      "X100 向量执行吞吐（每周期 FMA 数）未经 PMU 实测，若 FP 吞吐本身低于假设，则部分样本可能归因于执行资源而非循环结构",
+      "不同编译器版本对 vsetvli 合并/IV 强度削减的处理不同，可能改变 slli 份额归属"
+    ],
+    "currentGaps": "build ISA（Tag_RISCV_arch）未采集（工作区无 ELF，annotate 显示 v* 指令故 build 至少含 v）；Sampling IP precision 未知（precise_ip 未记录）→ 结论锚定 interval 级；样本数少（17）；无 DWARF 行号，interface/gemv.c 精确行号待源码核对；无 ARM 侧对比数据（本批次仅 RISC-V 采集）",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + sgemv_2048x2048",
+    "recommendedFirstAction": "在 OpenBLAS interface/gemv.c 的 sgemv_n（CNAME）RVV 内层循环实施 fixed-VL main loop 重构：循环外单次 vsetvlmax(e32,m8)（vl=64），nmain=m&~(step-1) 主循环用固定 vl 与常数指针步长（addi 256），m 尾部保留 runtime-VL tail；随后按 m1/m2/m4/m8 × 列数 frontier 评估独立 accumulator（候选 m8×2列×2accum 与 m4×4列×2accum，循环末 vadd 合并），j-loop 由 n>>1 双列扩展为 n>>2 四列主循环以摊还 y 流量",
+    "recommendedVerification": "重跑 OpenBLAS benchmark `sgemv.goto 2048 2048 1`（OPENBLAS_LOOPS=16）对比 benchmark_ms/GFLOPS（当前 2.211ms/3.79 GFLOPS）；对同一函数重采 perf annotate，确认 hot interval 内 vsetvli 降为 1 次、slli/sub/adds 消失（常数 addi）、4bd0/4bd4 局部份额大幅下降；覆盖 n=0/1、step 整倍数（2048=32×64）与 n 奇偶 tail、inc_x/inc_y≠1 回归；按 BLAS FP32 误差容限对照 reference 验证多 accumulator 重排序",
+    "metricEvidence": [
+      {
+        "metric": "benchmark_ms",
+        "rv": 2.211,
+        "anomalyNote": "OpenBLAS benchmark 单次 sgemv(2048x2048) 内核计时；对应 3.79 GFLOPS，远低于 256-bit RVV FP32 理论吞吐（约 9 倍差距），指示内核循环非吞吐最优"
+      },
+      {
+        "metric": "gflops",
+        "rv": 3.794,
+        "anomalyNote": "FP32 sgemv 2048x2048 实测吞吐；latency/overhead-bound 特征"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.672,
+        "anomalyNote": "整体运行 IPC 0.672；热点循环受串行 y accumulator 链与每迭代 vsetvli/标量链限制"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.257,
+        "anomalyNote": "极低 L1 miss 率 → 排除 cache-miss-bound 根因，本地 RVV 循环调优杠杆有效"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.402,
+        "anomalyNote": "低 branch miss → 排除 branch-bound"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "sgemv_n",
+        "fileModule": "sgemv_n",
+        "rvvPattern": "RVV Floating-Point Matmul and GEMV Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 1,
+        "note": "OpenBLAS FP32 GEMV 内核（interface/gemv.c CNAME，无 DWARF 行号）。线性代数计算，内存流式 + FMA 主导。函数自占运行样本 13.08%；函数内 17/17 样本（局部份额 1.0）位于内层 m-向量循环 [0x4bc4,0x4bee]；因采样为 local period 且缺 build ISA，不宣称 workload 级 Amdahl 上界"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "interface/gemv.c（sgemv_n CNAME；无 DWARF 行号，精确行待源码核对）",
+      "relatedKnowledge": "OpenBLAS: https://github.com/OpenMathLib/OpenBLAS/commit/0a967797a15617239523053633bf14be7895b25a, https://github.com/OpenMathLib/OpenBLAS/commit/0acb60aab3c0134e879a68292904d8346dcd50ef, https://github.com/OpenMathLib/OpenBLAS/commit/1cc377ef61d498b75c852aa4b9b042fe9422c347, https://github.com/OpenMathLib/OpenBLAS/commit/2d82d144e2791e37d7a314237b638d85b156a2ec, https://github.com/OpenMathLib/OpenBLAS/commit/809e1cba8f1f3f89972581e8b82f2ec52e51eadb, https://github.com/OpenMathLib/OpenBLAS/commit/376d3a138faa0a0fe483a8fa8d4fa1ab0d395acf, https://github.com/OpenMathLib/OpenBLAS/commit/2ae019161a85333a35018b517d4b34474a7694e9, oneDNN: https://github.com/uxlfoundation/oneDNN/commit/d6f82a2d0d0db41e6daaf20fbb4fd352843aac64, https://github.com/uxlfoundation/oneDNN/commit/3bac96b8bc1fc9c348c986f38f65285693943d2f, https://github.com/uxlfoundation/oneDNN/commit/8b48a77091062ce78959ccb96e43a8ee4e97022d, https://github.com/uxlfoundation/oneDNN/commit/8c52facbe61845d86062c76280b4bc515160c03e, https://github.com/uxlfoundation/oneDNN/commit/b73fc3172d3e3230cf24ae29cbb6a07a09507a43, https://github.com/uxlfoundation/oneDNN/commit/bd984d09dc5985a19fb427ac46d19d2cbd5558dd, https://github.com/uxlfoundation/oneDNN/commit/d2a44b9b855706a0df33f9b6d4fb84f5420fdeaf, https://github.com/uxlfoundation/oneDNN/commit/d6107ddb8be72041dade165a233c0de69f7a1387, https://github.com/uxlfoundation/oneDNN/commit/fe04323ab0b4bba79ee60109fc391bb36052e43c, https://github.com/uxlfoundation/oneDNN/pull/4410, https://github.com/uxlfoundation/oneDNN/pull/4414, https://github.com/uxlfoundation/oneDNN/pull/4545, https://github.com/uxlfoundation/oneDNN/pull/4620, https://github.com/uxlfoundation/oneDNN/pull/4770, https://github.com/uxlfoundation/oneDNN/pull/4824, https://github.com/uxlfoundation/oneDNN/pull/4840, https://github.com/uxlfoundation/oneDNN/pull/4850, https://github.com/uxlfoundation/oneDNN/pull/4945, https://github.com/uxlfoundation/oneDNN/pull/5157, https://github.com/uxlfoundation/oneDNN/pull/5294, https://github.com/uxlfoundation/oneDNN/pull/5403, https://github.com/uxlfoundation/oneDNN/pull/5405, llama.cpp: https://github.com/ggml-org/llama.cpp/pull/17318, https://github.com/ggml-org/llama.cpp/pull/17448, https://github.com/ggml-org/llama.cpp/pull/17314, https://github.com/ggml-org/llama.cpp/pull/17161, https://github.com/ggml-org/llama.cpp/pull/18199, https://github.com/ggml-org/llama.cpp/pull/20627, MNN: https://github.com/alibaba/MNN/pull/4426, vLLM: https://github.com/vllm-project/vllm/pull/44324",
+      "evidenceExplanation": "命中 pattern（RVV Floating-Point Matmul and GEMV Kernels）的本地 Related PRs 表中，OpenBLAS 存在 RVV GEMV/GEMM 调优提交线（含 2d82d144e279 RVV GEMV cache-friendly traversal、809e1cba8f1f FP16 RVV GEMV、376d3a138faa RVV GEMM edge kernels），证明该项目的 RVV 内核循环结构（fixed-VL、accumulator 结构、edge/tail 处理）是活跃优化对象，与本次诊断的 fixed-VL main loop + 独立 accumulator 修复方向一致；热点地址归属（sgemv_n 内层循环）与 pattern 的 GEMV semantic contract 直接对应。"
+    }
+  }
+}

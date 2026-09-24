@@ -1,0 +1,116 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-openblas-cblas_cgemm_512x512-003",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-15T01:53:57.801Z",
+    "software": "openblas",
+    "testcaseIds": [
+      "cblas_cgemm_512x512"
+    ],
+    "diagnosisId": "diag-20260915T015357801Z-b15bcc8a",
+    "targetHardware": "SpacemiT X100 (spacemit-x100)",
+    "repositoryUrl": "https://github.com/OpenMathLib/OpenBLAS.git",
+    "testBranch": "develop",
+    "commitHash": "70c2410f17b60575f34dbb7eac88d16a9f485861"
+  },
+  "problem": {
+    "summary": "cgemm_oncopy（CGEMM A 面板打包器）将 A 以 interleaved (r,i) 复数对写入 packed buffer，直接迫使第一热点 cgemm_kernel_n（472 samples）每 k 步以两条 stride=8B 的 vlse32 gather 读取 A（单条 23.09% 局部样本）；本函数自身仅 5 samples（≈1%），其 8 列打包循环中 4/5 样本落在只服务单个访存的地址生成指令（add/addi）上，store 偏移 8–56 未折叠进 vse32 的 imm12。",
+    "evidence": [
+      "annotate（本函数，5 samples, local period）: 40.00% :  223b4:  add     t3,a5,t2；20.00% :  223a4:  add     t3,a5,t0；20.00% :  223bc:  add     t3,a5,t4；20.00% :  223d0:  vle32.v v2,(s8)——4/5 样本在 8 列打包循环，3/5 落在地址生成",
+      "annotate（跨函数配对）: cgemm_kernel_n 主 k-loop 0x17c5a/0x17c5e 两条 vlse32（stride=2 floats）读取本函数产出的 interleaved 布局，单条 23.09%",
+      "perf stat: IPC=1.026、L1_dcache_load_miss_rate=1.806%、branch_miss_rate=0.255%（compute/issue-bound）",
+      "本函数 store 段: 0.00 :  223d4:  addi t3,a6,8; 0.00 :  223d8:  vse32.v v7,(t3)——store 偏移未折叠进 vse32 imm12"
+    ]
+  },
+  "rootCause": {
+    "summary": "repack 层布局合同错误：cgemm_oncopy 以 interleaved (r,i) 复数对打包 A，迫使 cgemm_kernel_n 以 vlse32 跨步 gather 装载（跨函数主因，收益主体在第一热点函数）；本函数 8 列打包循环自身另有寻址形态缺陷（每访存前 add/addi 地址生成，store 偏移未折叠进 imm12，每轮 35 条指令搬 64B，地址生成占 ≈43%）。",
+    "candidateFiles": [
+      "kernel/riscv64/cgemm_oncopy.c",
+      "kernel/riscv64/cgemm_kernel_n.c"
+    ],
+    "performanceFactors": [
+      "Weight Repacking for Vectorized GEMM",
+      "Load/Store Addressing-Mode Fusion"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "打包输出布局必须与所有消费 kernel（含 cgemm_kernel_n 的 M&4/M&2/N&4/N&2/M&1 尾块）的读取顺序严格一致",
+      "复数 (r,i) 配对语义与最终 C 数值输出不变",
+      "公共 BLAS API 与打包器调用合同（m/n/lda/a/b 参数语义）不变"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "cblas_cgemm_512x512"
+    ],
+    "regressionCommand": "agent1 patch_regression --case cblas_cgemm_512x512"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.62,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "本函数自身仅 5 samples（函数级贡献≈1%），函数内收益上界低；布局修复的主体收益在 cgemm_kernel_n（该函数蓝图已单独自动转发）。需人工确认打包布局变更的作用域（所有消费 oncopy 输出的 kernel 与尾块）后再实施。",
+    "reasoning": "本函数 annotate 仅 5 samples（cpu-clock, local period），4/5 落在 8 列打包循环的地址生成与 vle32 装载（223a4/223b4/223bc/223d0），样本量小但形态一致：每访存前都有只服务该访存的 add/addi 地址生成，store 偏移 8–56 未折叠进 vse32 imm12（每轮 35 条指令搬 64B，地址生成占≈43%）。同时该打包器输出 interleaved (r,i) 布局，与 cgemm_kernel_n 主 k-loop 的 vlse32（stride=2 floats）读取构成严格配对——这是第一热点函数（472 samples）A-gather（23.09% 单行）的直接成因，命中 Weight Repacking for Vectorized GEMM。全局 perf stat（IPC 1.03、L1 miss 1.81%）确认 compute/issue-bound。故本函数既是内核 gather 的布局源头（跨函数根因），自身也有寻址形态冗余（35→28 条/轮）。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "本函数样本仅 5 个，地址生成占比可能受采样噪声影响；若延长采样窗口后形态消失，则 Finding 2 降级为 compiler 偶发行为",
+      "若 OpenBLAS 其它 kernel（如 zgemm/zhemm 消费同一 oncopy 布局）不需 split-plane，布局改动可能引入兼容分支需求，需确认所有消费方合同"
+    ],
+    "currentGaps": "build ISA 缺失（无 ELF）；采样 local period 且本函数样本仅 5 个，函数级贡献≈1%，无法给出 Amdahl 上界；Sampling IP precision 未知，单行按 interval 归因；无 ARM 侧对比；工作区无 OpenBLAS 源码树，candidateFiles 路径按仓库 kernel/riscv64/ 布局推断，需在 commit 70c2410f 下确认。",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 split-plane 布局变更的完整作用域：cgemm_oncopy 输出被哪些 kernel/尾块消费（同文件 cgemm_kernel_n 的 M&4/M&2/N&4/N&2/M&1 段及可能的其它 CGEMM 内核），以及打包器-内核读取顺序严格匹配的验证计划",
+    "affectedTarget": "RV / cblas_cgemm_512x512",
+    "recommendedFirstAction": "修改 kernel/riscv64/cgemm_oncopy.c 的 8 列打包 i-loop（0x2238e–0x2241e）：将 interleaved (r,i) 输出改为 split-plane（先 8 个实部连续 32B、再 8 个虚部连续 32B），并将 vse32 store 偏移折叠进 imm12（vse32.v vX,N(a6)，N=0/8/…/120），消除 addi t3,a6,N 序列；配对修改 cgemm_kernel_n.c 的 A 装载为两条 unit-stride vle32，更新 ai 索引与 k 步指针步长。",
+    "recommendedVerification": "重跑 cblas_cgemm_512x512：perf annotate 确认 cgemm_kernel_n 的 17c5e vlse32（23.09%）消失、本函数 store 侧 addi 序列消失；perf stat 确认全局指令数与 GFLOPS（16.57）改善；对照 reference 逐字节验证打包输出，并覆盖 M/N 余数形状正确性测试。",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 1.026,
+        "anomalyNote": "全局 compute/issue-bound；本函数样本极少，主要瓶颈信号在 cgemm_kernel_n"
+      },
+      {
+        "metric": "L1 dcache load miss rate (%)",
+        "rv": 1.806,
+        "anomalyNote": "miss 率低，非 memory-bound"
+      },
+      {
+        "metric": "branch miss rate (%)",
+        "rv": 0.255,
+        "anomalyNote": "分支预测良好，非 branch-bound"
+      },
+      {
+        "metric": "GFLOPS",
+        "rv": 16.567,
+        "anomalyNote": "单线程 cgemm 512×512 性能，受内核侧 gather 与打包侧地址生成共同限制"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "cgemm_oncopy",
+        "fileModule": "cgemm_oncopy",
+        "rvvPattern": "Weight Repacking for Vectorized GEMM",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.8,
+        "note": "A 面板打包器（线性代数 repack 层）；本函数输出 interleaved (r,i) 布局迫使 cgemm_kernel_n 跨步 gather；函数内 8 列打包循环占本函数样本 4/5（80%），布局修复的主体收益在第一热点函数"
+      },
+      {
+        "hotspotFunction": "cgemm_oncopy",
+        "fileModule": "cgemm_oncopy",
+        "rvvPattern": "Load/Store Addressing-Mode Fusion",
+        "patternConfidence": "MEDIUM",
+        "benefitUpperbound": 0.8,
+        "note": "同一打包循环内 4/5 样本落在只服务单个访存的地址生成（add/addi）；store 偏移 8–56 未折叠进 vse32 imm12，每轮 35→28 条指令"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "cgemm_oncopy（函数名；无 debug symbols，精确 file:line 无法定位）",
+      "relatedKnowledge": "https://github.com/ggml-org/llama.cpp/pull/19121；https://github.com/alibaba/MNN/pull/3813；https://github.com/alibaba/MNN/commit/6afcf99fedaec90b5b363ce4c78317800f291443；https://github.com/alibaba/MNN/pull/4426；https://github.com/alibaba/MNN/pull/4433",
+      "evidenceExplanation": "weight-repack pattern 的关联提交（llama.cpp/MNN 的 RVV 权重重排）证明：将权重/操作数预排成向量友好布局（如 split-plane、交织 tile）并把 gather 移出内层循环是 RVV GEMM 的标准做法；本函数正是该 repack 层，其布局决策直接决定 cgemm_kernel_n 的 vlse32 gather 是否存在，与 evidence 中的跨函数配对一致。"
+    }
+  }
+}

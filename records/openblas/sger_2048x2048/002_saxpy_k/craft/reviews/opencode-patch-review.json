@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-bp-openblas-sger_2048x2048-002",
+  "patchCandidateId": "pc-bp-openblas-sger-2048x2048-002",
+  "reviewedAt": "2026-09-17T17:10:00Z",
+  "reviewer": "OpenCode independent patch reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "not-applicable",
+    "notes": "arch-scan archSpecific=false: only added line is `#define LMUL m4`, no RISC-V architecture rule match; general quality review only."
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "kernel/riscv64/axpy_vector.c",
+      "line": 32,
+      "evidence": "diff hunk: `-#       define LMUL m2` / `+#       define LMUL m4`；blueprint.diagnosis.recommendedFirstAction 建议将 e32 路径 LMUL 提升为 m4/m8",
+      "severity": "suggestion",
+      "category": "performance",
+      "suggestion": "在 SpacemiT X100 上对 sger/saxpy 做 m2/m4/m8 × unroll frontier 的 A/B 实测，确认 m4 净收益。"
+    },
+    {
+      "id": "F2",
+      "file": "kernel/riscv64/axpy_vector.c",
+      "line": 31,
+      "evidence": "diff 仅修改 `#ifdef RISCV64_ZVL256B` 分支的 LMUL 宏，其余分支与循环结构未变",
+      "severity": "suggestion",
+      "category": "scope",
+      "suggestion": "改动范围最小；如后续需要可统一各分支 LMUL 选择，但非本蓝图必需。"
+    }
+  ]
+}

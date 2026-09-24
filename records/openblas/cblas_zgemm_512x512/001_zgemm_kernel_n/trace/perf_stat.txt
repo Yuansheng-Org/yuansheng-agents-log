@@ -1,0 +1,65 @@
+14-OPENBLAS-BENCHMARK cblas_zgemm_512x512 RISC-V perf stat
+==========================================================
+
+Source CSV: /workspace/results/14-openblas-benchmark_results.csv
+TestName: cblas_zgemm_512x512
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 2,041,796,982 |
+| task_clock | 2,035.8600000000 |
+| cpu_cycle | 4,477,009,433 |
+| instruction | 4,406,578,593 |
+| cache_references | NA |
+| cache_misses | NA |
+| branches | 85,135,360 |
+| branch_misses | 1,129,342 |
+| L1_dcache_loads | 1,627,604,739 |
+| L1_dcache_load_misses | 21,884,301 |
+| LLC_load_misses | NA |
+| LLC_loads | NA |
+| IPC | 0.9842680000 |
+| benchmark_ms | 1,939.9780000000 |
+| gflops | 8.3022200000 |
+| gbps | NA |
+| official_mflops | 8,302.2200000000 |
+| official_mbytes_per_sec | NA |
+| checksum | NA |
+| threads | 1 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 2.041797 |
+| branch_miss_rate | 1.327% |
+| L1_dcache_load_miss_rate | 1.345% |
+
+perf stat style summary
+-----------------------
+           2,041,796,982  duration_time
+        2,035.8600000000  task_clock
+           4,477,009,433  cpu_cycle
+           4,406,578,593  instruction
+                      NA  cache_references
+                      NA  cache_misses
+              85,135,360  branches
+               1,129,342  branch_misses
+           1,627,604,739  L1_dcache_loads
+              21,884,301  L1_dcache_load_misses
+                      NA  LLC_load_misses
+                      NA  LLC_loads
+            0.9842680000  IPC
+        1,939.9780000000  benchmark_ms
+            8.3022200000  gflops
+                      NA  gbps
+        8,302.2200000000  official_mflops
+                      NA  official_mbytes_per_sec
+                      NA  checksum
+                       1  threads
+                2.041797  duration_s
+                  1.327%  branch_miss_rate
+                  1.345%  L1_dcache_load_miss_rate

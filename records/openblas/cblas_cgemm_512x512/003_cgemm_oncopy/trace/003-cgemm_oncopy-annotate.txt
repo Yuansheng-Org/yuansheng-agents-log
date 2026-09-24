@@ -1,0 +1,316 @@
+ Percent |	Source code & Disassembly of cblas_cgemm.goto for cpu-clock (5 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     0000000000022206 <cgemm_oncopy>:
+         : 6     cgemm_oncopy():
+         : 42    /*********************************************************************/
+         :
+         : 44    #include <stdio.h>
+         : 45    #include "common.h"
+         :
+         : 47    int CNAME(BLASLONG m, BLASLONG n, FLOAT *a, BLASLONG lda, FLOAT *b){
+    0.00 :   22206:  addi    sp,sp,-80
+    0.00 :   22208:  sd      s0,64(sp)
+    0.00 :   2220a:  sd      s1,56(sp)
+    0.00 :   2220c:  sd      s2,48(sp)
+    0.00 :   2220e:  sd      s4,32(sp)
+    0.00 :   22210:  sd      s5,24(sp)
+    0.00 :   22212:  sd      s6,16(sp)
+    0.00 :   22214:  sd      ra,72(sp)
+    0.00 :   22216:  addi    s0,sp,80
+         :
+         : 60    aoffset = a;
+         : 61    boffset = b;
+         : 62    lda *= 2;
+         :
+         : 64    j = (n >> 3);
+    0.00 :   22218:  srai    s5,a1,0x3
+         : 42    int CNAME(BLASLONG m, BLASLONG n, FLOAT *a, BLASLONG lda, FLOAT *b){
+    0.00 :   2221c:  mv      s2,a1
+    0.00 :   2221e:  mv      s4,a3
+    0.00 :   22220:  mv      a1,a2
+    0.00 :   22222:  mv      s1,a4
+         : 57    lda *= 2;
+    0.00 :   22224:  slli    s6,a3,0x1
+         : 60    if (j > 0){
+    0.00 :   22228:  blez    s5,22432 <cgemm_oncopy+0x22c>
+    0.00 :   2222c:  slli    t6,a3,0x3
+    0.00 :   22230:  slli    t4,a3,0x2
+    0.00 :   22234:  sub     a4,t6,a3
+    0.00 :   22238:  add     t5,s6,a3
+    0.00 :   2223c:  add     t4,t4,a3
+    0.00 :   2223e:  slli    a2,t5,0x4
+    0.00 :   22242:  slli    t2,a3,0x5
+    0.00 :   22246:  slli    t0,a3,0x4
+    0.00 :   2224a:  slli    a4,a4,0x3
+    0.00 :   2224c:  slli    t4,t4,0x3
+    0.00 :   2224e:  slli    t5,t5,0x3
+    0.00 :   22250:  sd      s3,40(sp)
+    0.00 :   22252:  sd      s7,8(sp)
+         : 70    aoffset4  = aoffset3 + lda;
+         : 71    aoffset5  = aoffset4 + lda;
+         : 72    aoffset6  = aoffset5 + lda;
+         : 73    aoffset7  = aoffset6 + lda;
+         : 74    aoffset8  = aoffset7 + lda;
+         : 75    aoffset += 8 * lda;
+    0.00 :   22254:  slli    t1,a3,0x6
+    0.00 :   22258:  vsetivli        zero,2,e32,mf2,ta,ma
+    0.00 :   2225c:  sd      s8,0(sp)
+    0.00 :   2225e:  add     a4,a4,a1
+    0.00 :   22260:  add     t6,t6,a1
+    0.00 :   22262:  add     t4,t4,a1
+    0.00 :   22264:  add     a2,a2,a1
+    0.00 :   22266:  add     t5,t5,a1
+    0.00 :   22268:  add     t2,t2,a1
+    0.00 :   2226a:  add     t0,t0,a1
+    0.00 :   2226c:  mv      a3,a1
+         : 59    j = (n >> 3);
+    0.00 :   2226e:  mv      s3,s5
+    0.00 :   22270:  slli    s7,a0,0x6
+         :
+         : 74    i = m;
+         : 75    if (i > 0){
+    0.00 :   22274:  bgtz    a0,2238e <cgemm_oncopy+0x188>
+         :
+         : 123   boffset += 16;
+         : 124   i --;
+         : 125   }while(i > 0);
+         : 126   }
+         : 127   j--;
+    0.00 :   22278:  addi    s3,s3,-1
+         : 123   }while(j > 0);
+    0.00 :   2227a:  add     a3,a3,t1
+    0.00 :   2227c:  add     a4,a4,t1
+    0.00 :   2227e:  add     a2,a2,t1
+    0.00 :   22280:  add     t4,t4,t1
+    0.00 :   22282:  add     t2,t2,t1
+    0.00 :   22284:  add     t5,t5,t1
+    0.00 :   22286:  add     t0,t0,t1
+    0.00 :   22288:  add     t6,t6,t1
+    0.00 :   2228a:  bnez    s3,22274 <cgemm_oncopy+0x6e>
+    0.00 :   2228e:  addi    s5,s5,-1
+    0.00 :   22290:  mul     s5,s5,t1
+    0.00 :   22294:  ld      s3,40(sp)
+    0.00 :   22296:  ld      s7,8(sp)
+    0.00 :   22298:  ld      s8,0(sp)
+    0.00 :   2229a:  add     t1,t1,a1
+    0.00 :   2229c:  add     a1,s5,t1
+         : 126   } /* end of if(j > 0) */
+         :
+         : 128   if (n & 4){
+    0.00 :   222a0:  andi    a5,s2,4
+    0.00 :   222a4:  beqz    a5,22420 <cgemm_oncopy+0x21a>
+         : 134   aoffset3  = aoffset2 + lda;
+         : 135   aoffset4  = aoffset3 + lda;
+         : 136   aoffset += 4 * lda;
+         :
+         : 138   i = m;
+         : 139   if (i > 0){
+    0.00 :   222a8:  blez    a0,2237a <cgemm_oncopy+0x174>
+         : 128   aoffset2  = aoffset1 + lda;
+    0.00 :   222ac:  slli    a7,s6,0x2
+    0.00 :   222b0:  slli    t4,s6,0x3
+         : 131   aoffset += 4 * lda;
+    0.00 :   222b4:  slli    a4,s6,0x4
+    0.00 :   222b8:  add     t1,a7,t4
+    0.00 :   222bc:  add     a3,a1,a4
+    0.00 :   222c0:  add     t1,t1,a1
+    0.00 :   222c2:  add     a7,a7,a1
+    0.00 :   222c4:  add     t3,a1,t4
+    0.00 :   222c8:  mv      a4,s1
+    0.00 :   222ca:  li      a5,0
+    0.00 :   222cc:  li      a2,0
+         : 136   do{
+         : 137   ctemp01 = *(aoffset1 +  0);
+    0.00 :   222ce:  add     a6,a1,a5
+    0.00 :   222d2:  vle32.v v4,(a6)
+         : 138   ctemp02 = *(aoffset1 +  1);
+         : 139   ctemp03 = *(aoffset2 +  0);
+    0.00 :   222d6:  add     a6,a7,a5
+    0.00 :   222da:  vle32.v v3,(a6)
+         : 140   ctemp04 = *(aoffset2 +  1);
+         : 141   ctemp05 = *(aoffset3 +  0);
+    0.00 :   222de:  add     a6,t3,a5
+    0.00 :   222e2:  vle32.v v2,(a6)
+         : 142   ctemp06 = *(aoffset3 +  1);
+         : 143   ctemp07 = *(aoffset4 +  0);
+    0.00 :   222e6:  add     a6,t1,a5
+    0.00 :   222ea:  vle32.v v1,(a6)
+         : 145   ctemp08 = *(aoffset4 +  1);
+         :
+         : 147   *(boffset +  0) = ctemp01;
+    0.00 :   222ee:  vse32.v v4,(a4)
+    0.00 :   222f2:  addi    a6,a4,8
+    0.00 :   222f6:  vse32.v v3,(a6)
+    0.00 :   222fa:  addi    a6,a4,16
+    0.00 :   222fe:  vse32.v v2,(a6)
+    0.00 :   22302:  addi    a6,a4,24
+    0.00 :   22306:  vse32.v v1,(a6)
+         : 161   aoffset3 += 2;
+         : 162   aoffset4 += 2;
+         :
+         : 164   boffset += 8;
+         : 165   i --;
+         : 166   }while(i > 0);
+    0.00 :   2230a:  addi    a2,a2,1
+    0.00 :   2230c:  addi    a5,a5,8
+    0.00 :   2230e:  addi    a4,a4,32
+    0.00 :   22312:  bne     a2,a0,222ce <cgemm_oncopy+0xc8>
+    0.00 :   22316:  slli    a4,a0,0x5
+         : 165   }
+         : 166   } /* end of if(j > 0) */
+         :
+         : 168   if (n & 2){
+    0.00 :   2231a:  andi    a5,s2,2
+    0.00 :   2231e:  add     s1,s1,a4
+         : 131   aoffset += 4 * lda;
+    0.00 :   22320:  mv      a1,a3
+         : 165   if (n & 2){
+    0.00 :   22322:  beqz    a5,2235a <cgemm_oncopy+0x154>
+         : 168   aoffset1  = aoffset;
+         : 169   aoffset2  = aoffset1 + lda;
+         : 170   aoffset += 2 * lda;
+    0.00 :   22324:  add     a1,a3,t4
+    0.00 :   22328:  slli    s4,s4,0x3
+    0.00 :   2232a:  mv      a4,a3
+    0.00 :   2232c:  sub     s4,a1,s4
+    0.00 :   22330:  mv      a5,s1
+    0.00 :   22332:  li      a3,0
+         :
+         : 174   i = m;
+         : 175   if (i > 0){
+         : 176   do{
+         : 177   ctemp01 = *(aoffset1 +  0);
+    0.00 :   22334:  vle32.v v2,(a4)
+         : 175   ctemp02 = *(aoffset1 +  1);
+         : 176   ctemp03 = *(aoffset2 +  0);
+    0.00 :   22338:  vle32.v v1,(s4)
+         : 178   ctemp04 = *(aoffset2 +  1);
+         :
+         : 180   *(boffset +  0) = ctemp01;
+    0.00 :   2233c:  addi    a2,a5,8
+    0.00 :   22340:  addi    a3,a3,1
+    0.00 :   22342:  addi    a4,a4,8
+    0.00 :   22344:  addi    s4,s4,8
+    0.00 :   22346:  vse32.v v2,(a5)
+    0.00 :   2234a:  vse32.v v1,(a2)
+         :
+         : 188   aoffset1 +=  2;
+         : 189   aoffset2 +=  2;
+         : 190   boffset  +=  4;
+         : 191   i --;
+         : 192   }while(i > 0);
+    0.00 :   2234e:  addi    a5,a5,16
+    0.00 :   22350:  bne     a3,a0,22334 <cgemm_oncopy+0x12e>
+    0.00 :   22354:  slli    a5,a0,0x4
+    0.00 :   22358:  add     s1,s1,a5
+         :
+         : 197   if (n & 1){
+         : 198   aoffset1  = aoffset;
+         :
+         : 200   i = m;
+         : 201   if (i > 0){
+    0.00 :   2235a:  blez    a0,2237a <cgemm_oncopy+0x174>
+    0.00 :   2235e:  andi    s2,s2,1
+    0.00 :   22362:  beqz    s2,2237a <cgemm_oncopy+0x174>
+    0.00 :   22366:  li      a5,0
+         : 198   do{
+         : 199   ctemp01 = *(aoffset1 +  0);
+    0.00 :   22368:  vle32.v v1,(a1)
+         : 202   ctemp02 = *(aoffset1 +  1);
+         :
+         : 204   *(boffset +  0) = ctemp01;
+         : 205   *(boffset +  1) = ctemp02;
+    0.00 :   2236c:  addi    a5,a5,1
+    0.00 :   2236e:  addi    a1,a1,8
+         : 201   *(boffset +  0) = ctemp01;
+    0.00 :   22370:  vse32.v v1,(s1)
+         :
+         : 208   aoffset1 += 2;
+         : 209   boffset  += 2;
+         : 210   i --;
+         : 211   }while(i > 0);
+    0.00 :   22374:  addi    s1,s1,8
+    0.00 :   22376:  bltu    a5,a0,22368 <cgemm_oncopy+0x162>
+         : 213   }
+         :
+         : 215   } /* end of if(j > 0) */
+         :
+         : 217   return 0;
+         : 218   }
+    0.00 :   2237a:  ld      ra,72(sp)
+    0.00 :   2237c:  ld      s0,64(sp)
+    0.00 :   2237e:  ld      s1,56(sp)
+    0.00 :   22380:  ld      s2,48(sp)
+    0.00 :   22382:  ld      s4,32(sp)
+    0.00 :   22384:  ld      s5,24(sp)
+    0.00 :   22386:  ld      s6,16(sp)
+    0.00 :   22388:  li      a0,0
+    0.00 :   2238a:  addi    sp,sp,80
+    0.00 :   2238c:  ret
+         : 73    if (i > 0){
+    0.00 :   2238e:  mv      a6,s1
+    0.00 :   22390:  li      a5,0
+    0.00 :   22392:  li      a7,0
+         : 75    ctemp01 = *(aoffset1 +  0);
+    0.00 :   22394:  add     t3,a5,a3
+    0.00 :   22398:  vle32.v v8,(t3)
+         : 77    ctemp03 = *(aoffset2 +  0);
+    0.00 :   2239c:  add     t3,a5,t6
+    0.00 :   223a0:  vle32.v v7,(t3)
+         : 79    ctemp05 = *(aoffset3 +  0);
+   20.00 :   223a4:  add     t3,a5,t0
+    0.00 :   223a8:  vle32.v v6,(t3)
+         : 81    ctemp07 = *(aoffset4 +  0);
+    0.00 :   223ac:  add     t3,a5,t5
+    0.00 :   223b0:  vle32.v v5,(t3)
+         : 83    ctemp09 = *(aoffset5 +  0);
+   40.00 :   223b4:  add     t3,a5,t2
+    0.00 :   223b8:  vle32.v v4,(t3)
+         : 85    ctemp11 = *(aoffset6 +  0);
+   20.00 :   223bc:  add     t3,a5,t4
+    0.00 :   223c0:  vle32.v v3,(t3)
+         : 87    ctemp13 = *(aoffset7 +  0);
+    0.00 :   223c4:  add     s8,a5,a2
+         : 89    ctemp15 = *(aoffset8 +  0);
+    0.00 :   223c8:  add     t3,a4,a5
+    0.00 :   223cc:  vle32.v v1,(t3)
+         : 87    ctemp13 = *(aoffset7 +  0);
+   20.00 :   223d0:  vle32.v v2,(s8)
+         : 92    *(boffset +  0) = ctemp01;
+    0.00 :   223d4:  addi    t3,a6,8
+    0.00 :   223d8:  vse32.v v8,(a6)
+    0.00 :   223dc:  vse32.v v7,(t3)
+    0.00 :   223e0:  addi    t3,a6,16
+    0.00 :   223e4:  vse32.v v6,(t3)
+    0.00 :   223e8:  addi    t3,a6,24
+    0.00 :   223ec:  vse32.v v5,(t3)
+    0.00 :   223f0:  addi    t3,a6,32
+    0.00 :   223f4:  vse32.v v4,(t3)
+    0.00 :   223f8:  addi    t3,a6,40
+    0.00 :   223fc:  vse32.v v3,(t3)
+    0.00 :   22400:  addi    t3,a6,48
+    0.00 :   22404:  vse32.v v2,(t3)
+    0.00 :   22408:  addi    t3,a6,56
+    0.00 :   2240c:  vse32.v v1,(t3)
+         : 120   }while(i > 0);
+    0.00 :   22410:  addi    a7,a7,1
+    0.00 :   22412:  addi    a5,a5,8
+    0.00 :   22414:  addi    a6,a6,64
+    0.00 :   22418:  bne     a0,a7,22394 <cgemm_oncopy+0x18e>
+    0.00 :   2241c:  add     s1,s1,s7
+    0.00 :   2241e:  j       22278 <cgemm_oncopy+0x72>
+         : 165   if (n & 2){
+    0.00 :   22420:  andi    a5,s2,2
+    0.00 :   22424:  beqz    a5,2235a <cgemm_oncopy+0x154>
+         : 171   if (i > 0){
+    0.00 :   22426:  blez    a0,2237a <cgemm_oncopy+0x174>
+    0.00 :   2242a:  mv      a3,a1
+    0.00 :   2242c:  slli    t4,s6,0x3
+    0.00 :   22430:  j       22324 <cgemm_oncopy+0x11e>
+    0.00 :   22432:  vsetivli        zero,2,e32,mf2,ta,ma
+    0.00 :   22436:  j       222a0 <cgemm_oncopy+0x9a>

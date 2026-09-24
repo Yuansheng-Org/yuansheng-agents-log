@@ -1,0 +1,314 @@
+ Percent |	Source code & Disassembly of sgemv.goto for cpu-clock (17 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3    Disassembly of section .text:
+         :
+         : 5    0000000000004a0a <sgemv_n>:
+         : 6    sgemv_n():
+         : 49   #define VSSEV_FLOAT             RISCV_RVV(vsse64_v_f64m8)
+         : 50   #define VFMACCVF_FLOAT          RISCV_RVV(vfmacc_vf_f64m8)
+         : 51   #endif
+         :
+         : 53   int CNAME(BLASLONG m, BLASLONG n, BLASLONG dummy1, FLOAT alpha, FLOAT *a, BLASLONG lda, FLOAT *x, BLASLONG inc_x, FLOAT *y, BLASLONG inc_y, FLOAT *buffer)
+         : 54   {
+    0.00 :   4a0a:   addi    sp,sp,-80
+    0.00 :   4a0c:   sd      s0,64(sp)
+    0.00 :   4a0e:   sd      ra,72(sp)
+    0.00 :   4a10:   addi    s0,sp,80
+    0.00 :   4a12:   ld      t0,0(s0)
+         : 50   if (n < 0) return(0);
+    0.00 :   4a16:   bltz    a1,4ab0 <sgemv_n+0xa6>
+    0.00 :   4a1a:   sd      s1,56(sp)
+    0.00 :   4a1c:   sd      s2,48(sp)
+    0.00 :   4a1e:   sd      s3,40(sp)
+    0.00 :   4a20:   mv      s1,a5
+         :
+         : 57   FLOAT *a_ptr, *y_ptr, *a2_ptr, temp, temp2;
+         : 58   BLASLONG i, j, vl;
+         : 59   FLOAT_V_T va, vy, va2;
+         :
+         : 61   if (inc_y == 1) {
+    0.00 :   4a22:   li      a5,1
+    0.00 :   4a24:   mv      s2,a1
+         : 57   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4a26:   srai    s3,a1,0x1
+         : 56   if (inc_y == 1) {
+    0.00 :   4a2a:   beq     t0,a5,4aba <sgemv_n+0xb0>
+         : 93   y_ptr += vl;
+         : 94   a_ptr += vl;
+         : 95   }
+         : 96   }
+         : 97   } else {
+         : 98   BLASLONG stride_y = inc_y * sizeof(FLOAT);
+    0.00 :   4a2e:   slli    t6,t0,0x2
+         : 94   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4a32:   beqz    s3,4a6e <sgemv_n+0x64>
+    0.00 :   4a36:   sd      s6,16(sp)
+    0.00 :   4a38:   sd      s7,8(sp)
+         : 113  y_ptr += vl * inc_y;
+         : 114  a_ptr += vl;
+         : 115  a2_ptr += vl;
+         : 116  }
+         : 117  x += inc_x * 2;
+         : 118  a += lda * 2;
+    0.00 :   4a3a:   slli    s6,a4,0x3
+         : 112  x += inc_x * 2;
+    0.00 :   4a3e:   slli    s7,a6,0x3
+         : 113  a += lda * 2;
+    0.00 :   4a42:   mv      t2,s1
+    0.00 :   4a44:   mv      a5,a3
+         : 94   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4a46:   li      a1,0
+         : 100  for (i = m; i > 0; i -= vl) {
+    0.00 :   4a48:   bgtz    a0,4b2c <sgemv_n+0x122>
+         : 94   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4a4c:   addi    a1,a1,1
+         : 112  x += inc_x * 2;
+    0.00 :   4a4e:   add     t2,t2,s7
+         : 113  a += lda * 2;
+    0.00 :   4a50:   add     a5,a5,s6
+         : 94   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4a52:   bne     a1,s3,4a48 <sgemv_n+0x3e>
+    0.00 :   4a56:   addi    s3,s3,-1
+    0.00 :   4a58:   mul     a5,s6,s3
+    0.00 :   4a5c:   add     s6,s6,a3
+    0.00 :   4a5e:   add     s1,s1,s7
+    0.00 :   4a60:   mul     s3,s7,s3
+    0.00 :   4a64:   add     a3,a5,s6
+    0.00 :   4a68:   ld      s7,8(sp)
+    0.00 :   4a6a:   ld      s6,16(sp)
+    0.00 :   4a6c:   add     s1,s1,s3
+         : 115  }
+         : 116  if (n & 1) {
+    0.00 :   4a6e:   andi    s2,s2,1
+    0.00 :   4a72:   beqz    s2,4aaa <sgemv_n+0xa0>
+         : 119  temp = alpha * x[0];
+         : 120  y_ptr = y;
+         : 121  a_ptr = a;
+         : 122  for (i = m; i > 0; i -= vl) {
+    0.00 :   4a76:   blez    a0,4aaa <sgemv_n+0xa0>
+         : 116  temp = alpha * x[0];
+    0.00 :   4a7a:   flw     fa5,0(s1)
+    0.00 :   4a7e:   fmul.s  fa0,fa0,fa5
+         : 120  vl = VSETVL(i);
+    0.00 :   4a82:   vsetvli a5,a0,e32,m8,ta,ma
+         : 121  vy = VLSEV_FLOAT(y_ptr, stride_y, vl);
+    0.00 :   4a86:   vlse32.v        v8,(a7),t6
+         : 122  va = VLEV_FLOAT(a_ptr, vl);
+    0.00 :   4a8a:   vle32.v v16,(a3)
+         : 125  vy = VFMACCVF_FLOAT(vy, temp, va, vl);
+         : 126  VSSEV_FLOAT(y_ptr, stride_y, vy, vl);
+         : 127  y_ptr += vl * inc_y;
+    0.00 :   4a8e:   mul     a4,t0,a5
+         : 126  a_ptr += vl;
+    0.00 :   4a92:   slli    a2,a5,0x2
+         : 119  for (i = m; i > 0; i -= vl) {
+    0.00 :   4a96:   sub     a0,a0,a5
+         : 126  a_ptr += vl;
+    0.00 :   4a98:   add     a3,a3,a2
+         : 123  vy = VFMACCVF_FLOAT(vy, temp, va, vl);
+    0.00 :   4a9a:   vfmacc.vf       v8,fa0,v16
+         : 125  y_ptr += vl * inc_y;
+    0.00 :   4a9e:   slli    a4,a4,0x2
+         : 124  VSSEV_FLOAT(y_ptr, stride_y, vy, vl);
+    0.00 :   4aa0:   vsse32.v        v8,(a7),t6
+         : 125  y_ptr += vl * inc_y;
+    0.00 :   4aa4:   add     a7,a7,a4
+         : 119  for (i = m; i > 0; i -= vl) {
+    0.00 :   4aa6:   bgtz    a0,4a82 <sgemv_n+0x78>
+    0.00 :   4aaa:   ld      s1,56(sp)
+    0.00 :   4aac:   ld      s2,48(sp)
+    0.00 :   4aae:   ld      s3,40(sp)
+         : 131  }
+         : 132  }
+         : 133  }
+         : 134  return(0);
+         : 135  }
+    0.00 :   4ab0:   ld      ra,72(sp)
+    0.00 :   4ab2:   ld      s0,64(sp)
+    0.00 :   4ab4:   li      a0,0
+    0.00 :   4ab6:   addi    sp,sp,80
+    0.00 :   4ab8:   ret
+         : 57   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4aba:   beqz    s3,4aee <sgemv_n+0xe4>
+         : 75   x += inc_x * 2;
+    0.00 :   4abe:   slli    t6,a6,0x3
+         : 76   a += lda * 2;
+    0.00 :   4ac2:   slli    t0,a4,0x3
+    0.00 :   4ac6:   mv      a1,s1
+    0.00 :   4ac8:   mv      a5,a3
+         : 57   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4aca:   li      t5,0
+         : 63   for (i = m; i > 0; i -= vl) {
+    0.00 :   4acc:   bgtz    a0,4b9a <sgemv_n+0x190>
+         : 57   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4ad0:   addi    t5,t5,1
+         : 75   x += inc_x * 2;
+    0.00 :   4ad2:   add     a1,a1,t6
+         : 76   a += lda * 2;
+    0.00 :   4ad4:   add     a5,a5,t0
+         : 57   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4ad6:   bne     t5,s3,4acc <sgemv_n+0xc2>
+    0.00 :   4ada:   addi    s3,s3,-1
+    0.00 :   4adc:   mul     a5,t6,s3
+    0.00 :   4ae0:   add     a3,a3,t0
+    0.00 :   4ae2:   add     t6,t6,s1
+    0.00 :   4ae4:   mul     t0,t0,s3
+    0.00 :   4ae8:   add     s1,a5,t6
+    0.00 :   4aec:   add     a3,a3,t0
+         : 78   if (n & 1) {
+    0.00 :   4aee:   andi    s2,s2,1
+    0.00 :   4af2:   beqz    s2,4aaa <sgemv_n+0xa0>
+         : 82   for (i = m; i > 0; i -= vl) {
+    0.00 :   4af6:   blez    a0,4aaa <sgemv_n+0xa0>
+         : 79   temp = alpha * x[0];
+    0.00 :   4afa:   flw     fa5,0(s1)
+    0.00 :   4afe:   fmul.s  fa0,fa0,fa5
+         : 83   vl = VSETVL(i);
+    0.00 :   4b02:   vsetvli a5,a0,e32,m8,ta,ma
+         : 84   vy = VLEV_FLOAT(y_ptr, vl);
+    0.00 :   4b06:   vle32.v v8,(a7)
+         : 85   va = VLEV_FLOAT(a_ptr, vl);
+    0.00 :   4b0a:   vle32.v v16,(a3)
+         : 88   y_ptr += vl;
+    0.00 :   4b0e:   slli    a4,a5,0x2
+         : 82   for (i = m; i > 0; i -= vl) {
+    0.00 :   4b12:   sub     a0,a0,a5
+         : 89   a_ptr += vl;
+    0.00 :   4b14:   add     a3,a3,a4
+         : 86   vy = VFMACCVF_FLOAT(vy, temp, va, vl);
+    0.00 :   4b16:   vfmacc.vf       v8,fa0,v16
+         : 87   VSEV_FLOAT(y_ptr, vy, vl);
+    0.00 :   4b1a:   vse32.v v8,(a7)
+         : 88   y_ptr += vl;
+    0.00 :   4b1e:   add     a7,a7,a4
+         : 82   for (i = m; i > 0; i -= vl) {
+    0.00 :   4b20:   bgtz    a0,4b02 <sgemv_n+0xf8>
+    0.00 :   4b24:   ld      s1,56(sp)
+    0.00 :   4b26:   ld      s2,48(sp)
+    0.00 :   4b28:   ld      s3,40(sp)
+    0.00 :   4b2a:   j       4ab0 <sgemv_n+0xa6>
+    0.00 :   4b2c:   sd      s4,32(sp)
+    0.00 :   4b2e:   sd      s5,24(sp)
+         : 99   a2_ptr = a + lda;
+    0.00 :   4b30:   slli    s4,a4,0x2
+         : 96   temp2 = alpha * x[inc_x];
+    0.00 :   4b34:   slli    s5,a6,0x2
+    0.00 :   4b38:   add     a4,t2,s5
+    0.00 :   4b3c:   flw     fa4,0(a4)
+         : 95   temp = alpha * x[0];
+    0.00 :   4b40:   flw     fa5,0(t2)
+         : 99   a2_ptr = a + lda;
+    0.00 :   4b44:   add     t4,a5,s4
+         : 96   temp2 = alpha * x[inc_x];
+    0.00 :   4b48:   fmul.s  fa4,fa0,fa4
+         : 95   temp = alpha * x[0];
+    0.00 :   4b4c:   fmul.s  fa5,fa0,fa5
+         : 100  for (i = m; i > 0; i -= vl) {
+    0.00 :   4b50:   mv      a6,a0
+         : 97   y_ptr = y;
+    0.00 :   4b52:   mv      a2,a7
+         : 98   a_ptr = a;
+    0.00 :   4b54:   mv      t3,a5
+         : 101  vl = VSETVL(i);
+    0.00 :   4b56:   vsetvli a4,a6,e32,m8,ta,ma
+         : 102  vy = VLSEV_FLOAT(y_ptr, stride_y, vl);
+    0.00 :   4b5a:   vlse32.v        v8,(a2),t6
+         : 103  va = VLEV_FLOAT(a_ptr, vl);
+    0.00 :   4b5e:   vle32.v v24,(t3)
+         : 104  va2 = VLEV_FLOAT(a2_ptr, vl);
+    0.00 :   4b62:   vle32.v v16,(t4)
+         : 108  y_ptr += vl * inc_y;
+    0.00 :   4b66:   mul     t1,t0,a4
+         : 109  a_ptr += vl;
+    0.00 :   4b6a:   slli    t5,a4,0x2
+         : 100  for (i = m; i > 0; i -= vl) {
+    0.00 :   4b6e:   sub     a6,a6,a4
+         : 109  a_ptr += vl;
+    0.00 :   4b72:   add     t3,t3,t5
+         : 105  vy = VFMACCVF_FLOAT(vy, temp, va, vl);
+    0.00 :   4b74:   vfmacc.vf       v8,fa5,v24
+         : 110  a2_ptr += vl;
+    0.00 :   4b78:   add     t4,t4,t5
+         : 106  vy = VFMACCVF_FLOAT(vy, temp2, va2, vl);
+    0.00 :   4b7a:   vfmacc.vf       v8,fa4,v16
+         : 108  y_ptr += vl * inc_y;
+    0.00 :   4b7e:   slli    t1,t1,0x2
+         : 107  VSSEV_FLOAT(y_ptr, stride_y, vy, vl);
+    0.00 :   4b80:   vsse32.v        v8,(a2),t6
+         : 108  y_ptr += vl * inc_y;
+    0.00 :   4b84:   add     a2,a2,t1
+         : 100  for (i = m; i > 0; i -= vl) {
+    0.00 :   4b86:   bgtz    a6,4b56 <sgemv_n+0x14c>
+         : 94   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4b8a:   addi    a1,a1,1
+         : 112  x += inc_x * 2;
+    0.00 :   4b8c:   add     t2,t2,s7
+         : 113  a += lda * 2;
+    0.00 :   4b8e:   add     a5,a5,s6
+         : 94   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4b90:   bne     a1,s3,4b38 <sgemv_n+0x12e>
+    0.00 :   4b94:   ld      s4,32(sp)
+    0.00 :   4b96:   ld      s5,24(sp)
+    0.00 :   4b98:   j       4a56 <sgemv_n+0x4c>
+    0.00 :   4b9a:   sd      s4,32(sp)
+    0.00 :   4b9c:   sd      s5,24(sp)
+         : 62   a2_ptr = a + lda;
+    0.00 :   4b9e:   slli    s4,a4,0x2
+         : 59   temp2 = alpha * x[inc_x];
+    0.00 :   4ba2:   slli    s5,a6,0x2
+    0.00 :   4ba6:   add     a4,a1,s5
+    0.00 :   4baa:   flw     fa4,0(a4)
+         : 58   temp = alpha * x[0];
+    0.00 :   4bae:   flw     fa5,0(a1)
+         : 62   a2_ptr = a + lda;
+    0.00 :   4bb2:   add     t4,a5,s4
+         : 59   temp2 = alpha * x[inc_x];
+    0.00 :   4bb6:   fmul.s  fa4,fa0,fa4
+         : 58   temp = alpha * x[0];
+    0.00 :   4bba:   fmul.s  fa5,fa0,fa5
+         : 63   for (i = m; i > 0; i -= vl) {
+    0.00 :   4bbe:   mv      a6,a0
+         : 60   y_ptr = y;
+    0.00 :   4bc0:   mv      a2,a7
+         : 61   a_ptr = a;
+    0.00 :   4bc2:   mv      t3,a5
+         : 64   vl = VSETVL(i);
+    0.00 :   4bc4:   vsetvli a4,a6,e32,m8,ta,ma
+         : 65   vy = VLEV_FLOAT(y_ptr, vl);
+    0.00 :   4bc8:   vle32.v v8,(a2)
+         : 66   va = VLEV_FLOAT(a_ptr, vl);
+    5.88 :   4bcc:   vle32.v v24,(t3)
+         : 67   va2 = VLEV_FLOAT(a2_ptr, vl);
+   47.06 :   4bd0:   vle32.v v16,(t4)
+         : 71   y_ptr += vl;
+   41.18 :   4bd4:   slli    t1,a4,0x2
+         : 63   for (i = m; i > 0; i -= vl) {
+    0.00 :   4bd8:   sub     a6,a6,a4
+         : 72   a_ptr += vl;
+    0.00 :   4bdc:   add     t3,t3,t1
+         : 73   a2_ptr += vl;
+    0.00 :   4bde:   add     t4,t4,t1
+         : 68   vy = VFMACCVF_FLOAT(vy, temp, va, vl);
+    0.00 :   4be0:   vfmacc.vf       v8,fa5,v24
+         : 69   vy = VFMACCVF_FLOAT(vy, temp2, va2, vl);
+    0.00 :   4be4:   vfmacc.vf       v8,fa4,v16
+         : 70   VSEV_FLOAT(y_ptr, vy, vl);
+    0.00 :   4be8:   vse32.v v8,(a2)
+         : 71   y_ptr += vl;
+    5.88 :   4bec:   add     a2,a2,t1
+         : 63   for (i = m; i > 0; i -= vl) {
+    0.00 :   4bee:   bgtz    a6,4bc4 <sgemv_n+0x1ba>
+         : 57   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4bf2:   addi    t5,t5,1
+         : 75   x += inc_x * 2;
+    0.00 :   4bf4:   add     a1,a1,t6
+         : 76   a += lda * 2;
+    0.00 :   4bf6:   add     a5,a5,t0
+         : 57   for (j = 0; j < (n >> 1); j++) {
+    0.00 :   4bf8:   bne     s3,t5,4ba6 <sgemv_n+0x19c>
+    0.00 :   4bfc:   ld      s4,32(sp)
+    0.00 :   4bfe:   ld      s5,24(sp)
+    0.00 :   4c00:   j       4ada <sgemv_n+0xd0>

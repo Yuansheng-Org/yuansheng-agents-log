@@ -1,0 +1,126 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-openblas-cblas_zgemm_512x512-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-15T02:11:18.008Z",
+    "software": "openblas",
+    "testcaseIds": [
+      "cblas_zgemm_512x512"
+    ],
+    "diagnosisId": "diag-20260915T021118008Z-da747413",
+    "targetHardware": "SpacemiT X100 (K3), RVV 1.0, VLEN=256, out-of-order",
+    "repositoryUrl": "https://github.com/OpenMathLib/OpenBLAS.git",
+    "testBranch": "develop",
+    "commitHash": "70c2410f17b60575f34dbb7eac88d16a9f485861"
+  },
+  "problem": {
+    "summary": "cblas_zgemm 512x512x512 在 SpacemiT X100 上仅达 8.30 GFLOPS（约为 256-bit FP64 FMA 管道理论峰值的 50%）。热点 zgemm_kernel_n（self 92.91%）的 k-loop 为 issue-bandwidth-bound：每 k-step 66 条指令中仅 32 条 FMA（FMA 密度 48%，IPC 0.984），复数 MAC 采用 tmp 寄存器 + 16 条 vfadd.vv 分步累加（未折叠进 FMA 链），且 A 面板用 4 条 stride-16B 的 vlse64 gather；C-tile epilogue（16 条 8KB 行 stride 的 C-load/store）为 memory-latency-bound，占函数 23% 样本但执行频率仅为 k-loop 的 1/512。",
+    "evidence": [
+      "benchmark_ms: 1939.98（RV 单架构运行，无 ARM 对比数据）",
+      "GFLOPS = 8.302，仅为 256-bit FP64 FMA 峰值（≈16.6 GFLOPS @2.19GHz）的约 50%",
+      "IPC = 0.984（4,477,009,433 cycles / 4,406,578,593 instructions）；L1_dcache_load_miss_rate = 1.345%；branch_miss_rate = 1.327%；threads = 1",
+      "zgemm_kernel_n self = 92.91%（944/1016 cpu-clock samples）；调用链 main → cblas_zgemm → zgemm_nn → zgemm_kernel_n",
+      "k-loop body（17b88–17c8c）每 k-step 66 条指令 = 12 loads（4 vlse64 A + 8 fld B）+ 48 向量 FP（16 vfmul + 16 vfmsac/vfmacc + 16 vfadd）+ 6 scalar，占函数样本 ≈77%",
+      "单行热点：8.37% @ 17ba0 vlse64.v v2,(t6),a4（A 面板 A1i 跨步 gather）；vfadd 簇合计 ≈7.95%（17c04/17c78/17c6c/17c84 等 16 条）",
+      "C-tile epilogue（17c90–17de0）16 条 strided C-load + 16 条 strided C-store（行 stride = ldc×16B = 8KB），占函数样本 ≈23%，单次执行成本 ≈150× k-step"
+    ]
+  },
+  "rootCause": {
+    "summary": "zgemm_kernel_n k-loop 的复数乘加使用 tmp 寄存器 + 16 条 vfadd.vv 分步累加（未折叠为成对 accumulator 的直接 FMA 累加），每 k-step 48 条向量 FP 中仅 32 条 FMA，IPC≈1.0 issue-bound 下 FMA 密度 48% 成为吞吐上限；A 面板 interleaved 二字段 vlse64 gather 叠加 L2 load-use 延迟；C-tile epilogue 的 8KB 行 stride 访存为 compulsory refill，memory-latency-bound。",
+    "candidateFiles": [
+      "kernel/riscv64/zgemm_kernel_n.c"
+    ],
+    "performanceFactors": [
+      "RVV Complex Arithmetic Kernels",
+      "Cache-Aware Blocking for Tiled Kernels"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "复数乘加/共轭符号约定（VFMACC_RR=vfmsac、VFMACC_RI=vfnmacc 方向与 S0..S3 常量）",
+      "OpenBLAS 数值误差合同：折叠累加改变 FP rounding 顺序，需通过 GEMM checksum/相对误差测试",
+      "A/B/C packing 布局合同与 alpha/beta 语义、alias 行为",
+      "各 tail 路径（M&4/M&2/M&1、N&2/N&1）行为不变"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "cblas_zgemm_512x512",
+      "OpenBLAS level3 zgemm correctness tests"
+    ],
+    "regressionCommand": "agent1 patch_regression --case cblas_zgemm_512x512"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.8,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=0.984 且 k-loop 每 k-step 66 条指令中只有 32 条 FMA（FMA 密度 48%），证明该内核是 issue-bandwidth-bound 而非 memory-bandwidth-bound（L1 miss 仅 1.345%）；annotate 直接显示 16 条 vfadd.vv 分步累加（合计 ≈7.95%）与 4 条 stride-16B vlse64 A-gather（A1i 单行 8.37%），命中 RVV Complex Arithmetic Kernels 的 interleaved 二字段 strided 访问与成对 accumulator 修复方向；C-tile epilogue 占 23% 样本但执行频率仅 k-loop 的 1/512，单次执行成本 ≈150× k-step，指向 cache-refill load-stall（Cache-Aware Blocking）；OpenBLAS 上游复数 kernel 累加结构与 cache-aware blocking 相关提交支撑同一根因链。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "若 X100 的 FP64 向量 FMA 实际吞吐仅为 2 lanes/cycle（而非 4），则 8.3 GFLOPS 可能已接近硬件峰值，收益上界需相应下调——需以 PMU/微架构资料确认",
+      "vfadd 未折叠可能部分是编译器调度/优化级别所致；不同编译器版本或 -O 参数下指令数可能变化",
+      "epilogue 高份额可能部分来自 cpu-clock 采样对 stall 的归因（Sampling IP precision 未确认），实际 memory 成本可能略低"
+    ],
+    "currentGaps": "build ISA 无 readelf -A 证据（本 run 无 ELF binary，baseline_gap: build ISA）；Sampling IP precision 未确认（precise_ip 未知，baseline_gap: sampling IP precision）；无 cache refill/尺寸扫描 counter，epilogue 的尺寸拐点未直接验证；源码文件路径为推断（无 debug symbols，annotate 仅给函数符号）",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV (riscv64) + cblas_zgemm_512x512",
+    "recommendedFirstAction": "kernel/riscv64/zgemm_kernel_n.c：把 k-loop 的 tmp 寄存器 + vfadd.vv 分步累加改写为 16 个 ACC 寄存器上的 32 条 signed-FMA 直接累加（每 ACC 每条 2 条 FMA，保持 VFMACC_RR=vfmsac / VFMACC_RI=vfnmacc 符号约定），消除 16 条 vfadd 与 16 个 tmp 向量；随后在 zgemm_oncopy/zgemm_itcopy 的 packing 中按 re/im 分离布局输出 A/B 面板，使 kernel 用 2 条 unit-stride vle64 替代 4 条 vlse64，并对 A 做 load pre-issue",
+    "recommendedVerification": "重新运行 cblas_zgemm_512x512 基准（OPENBLAS_LOOPS=15）与 OpenBLAS level3 zgemm 正确性测试：GFLOPS 应从 8.3 上升（issue-bound 上界约 +24%），checksum/相对误差在合同内；对 zgemm_kernel_n 重跑 perf annotate，确认 16 条 vfadd.vv 消失、k-loop 份额自 77% 下降、vlse64 簇被 vle64 替代；随后对 C-tile epilogue 加 zicbop prefetch.w（ISA 已支持）并复查 epilogue 份额自 23% 下降",
+    "metricEvidence": [
+      {
+        "metric": "GFLOPS",
+        "rv": 8.302,
+        "anomalyNote": "约为 256-bit FP64 FMA 管道峰值（≈16.6 @2.19GHz）的 50%；k-loop FMA 密度 48%、IPC 0.984 表明 issue-bound"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.984,
+        "anomalyNote": "逼近 1.0 的发射上限；k-loop 66 指令/k-step 中仅 32 条 FMA"
+      },
+      {
+        "metric": "L1 dcache load miss rate (%)",
+        "rv": 1.345,
+        "anomalyNote": "低 miss 率说明 k-loop 非带宽瓶颈；A 面板流式 L1-missing（vlse64 8.37% 单行）为延迟源"
+      },
+      {
+        "metric": "Branch miss rate (%)",
+        "rv": 1.327,
+        "anomalyNote": "低，非分支瓶颈"
+      },
+      {
+        "metric": "benchmark_ms",
+        "rv": 1939.98,
+        "anomalyNote": "单架构（RV）运行，无 ARM 对比数据"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "zgemm_kernel_n",
+        "fileModule": "kernel/riscv64/zgemm_kernel_n.c（推断，无 debug symbols）",
+        "rvvPattern": "RVV Complex Arithmetic Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.187,
+        "note": "复数双精度 GEMM 微内核（8×4 complex tile，VLEN=256 下 e64m1=4 lanes）；k-loop 占函数样本约 77%，issue-bound"
+      },
+      {
+        "hotspotFunction": "zgemm_kernel_n",
+        "fileModule": "kernel/riscv64/zgemm_kernel_n.c（推断，无 debug symbols）",
+        "rvvPattern": "Cache-Aware Blocking for Tiled Kernels",
+        "patternConfidence": "MEDIUM",
+        "benefitUpperbound": 0.23,
+        "note": "C-tile epilogue（16 strided C-load + 16 strided C-store，8KB 行 stride）memory-latency-bound，占函数样本约 23%"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "kernel/riscv64/zgemm_kernel_n.c（annotate 地址：k-loop body 17b88–17c8c；C-tile epilogue 17c90–17de0）",
+      "relatedKnowledge": "https://github.com/OpenMathLib/OpenBLAS/commit/d3bf5a5401e623e107a23fb70151c7102cbd14c7; https://github.com/OpenMathLib/OpenBLAS/commit/18d7afe69daa196902cd68b63cc381aaafc9d26e; https://github.com/OpenMathLib/OpenBLAS/commit/63cf4d01668f8f6c73a05039bc36785ba78b0940; https://github.com/OpenMathLib/OpenBLAS/commit/269e1cd505b9bf531a76ffeb0cc7dc753eacb346; https://github.com/OpenMathLib/OpenBLAS/commit/7c1839899e81829b096c62e73804d6859a0beed1",
+      "evidenceExplanation": "OpenBLAS 上游 RVV 复数 kernel 提交（成对累加/复数符号约定/复数 level-3 kernel）与 cache-aware blocking 提交，与本地 annotate 证据（vfadd 分步累加、vlse64 A-gather、C-tile refill stall）指向同一根因链：k-loop 累加结构未折叠为直接 FMA 累加，且 C-tile 访存延迟未隐藏"
+    }
+  }
+}
