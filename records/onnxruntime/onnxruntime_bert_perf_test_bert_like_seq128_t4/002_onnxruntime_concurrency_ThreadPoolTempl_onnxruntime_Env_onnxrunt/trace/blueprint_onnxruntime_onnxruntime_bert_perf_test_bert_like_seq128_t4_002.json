@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-onnxruntime-onnxruntime_bert_perf_test_bert_like_seq128_t4-002",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-11T08:08:11.294Z",
+    "software": "onnxruntime",
+    "testcaseIds": [
+      "onnxruntime_bert_perf_test_bert_like_seq128_t4"
+    ],
+    "diagnosisId": "diag-20260911T080811294Z-12dfc25b",
+    "targetHardware": "SpacemiT X100 (K3)",
+    "repositoryUrl": "https://github.com/microsoft/onnxruntime.git",
+    "testBranch": "main",
+    "commitHash": "d4d792f545760ab292c5e68b2bb547d89306a7f0"
+  },
+  "problem": {
+    "summary": "onnxruntime_bert_perf_test_bert_like_seq128_t4 测试中，线程池 WorkerLoop 排名第 2 热点，其 self-time 几乎全部来自空闲自旋/等待机制：RISC-V 上 SpinPause() 没有任何 pause 发射路径（落入 std::atomic_signal_fence 纯编译器屏障），而硬件支持 zihintpause，默认配置 spin_count=1<<20 且 spin_backoff_max=1（无退避斜坡），导致 idle worker 以全流水线速度执行昂贵的轮询循环（seq_cst done_ 装载 + 队列探测 + 空 std::function 构造）。",
+    "evidence": [
+      "perf stat：duration 7.30s，task-clock 13207.60ms → CPUs utilized≈1.81；cycles=29,044,472,040，instructions=35,584,357,019，IPC≈1.23（4 线程 bert 测试，worker 大量空闲）",
+      "perf annotate：WorkerLoop 自旋/等待区间 f38658–f38fba 占函数本地样本≈89.9%（109 samples，cpu-clock，local period；任务执行与阻塞路径均为 0.00%）",
+      "spin_pause.cc:30-63：SpinPause() 对 RISC-V 无专用分支，落入 #else 的 std::atomic_signal_fence(std::memory_order_seq_cst) 纯编译器屏障，不发射任何架构 pause 指令",
+      "hardware cpuinfo 含 zihintpause；build Tag_RISCV_arch 不含 zihintpause；默认 spin_duration_us=-1（spin_count=1<<20）、spin_backoff_max=1"
+    ]
+  },
+  "rootCause": {
+    "summary": "WorkerLoop 的 idle 自旋/等待机制在 RISC-V 上以全速运行：SpinPause() 缺失架构 spin hint（Zihintpause），退避循环每轮只执行一次编译器屏障，无法降低轮询密度与资源争用，使该函数 ~90% 的本地样本沉淀在轮询机制上。",
+    "candidateFiles": [
+      "onnxruntime/core/common/spin_pause.cc",
+      "include/onnxruntime/core/platform/EigenNonBlockingThreadPool.h"
+    ],
+    "performanceFactors": [
+      "RISC-V ISA Extension-Specific Instruction Substitution"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "SpinPause() 语义：pause 是架构 hint，不得替代 fence/acquire/release/atomic，不得改变任何内存序",
+      "线程池同步协议：done_ 装载、互斥锁、条件变量、RunQueue 的 LR/SC CAS 语义保持不变",
+      "公共 API 与函数签名（SpinPause/ThreadPoolWaiter/WorkerLoop）不变",
+      "推理正确性与数值输出不变；CalibrateSpinPauseNs 校准-自校正关系保持（time-based spin 窗口语义不变）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "onnxruntime_bert_perf_test_bert_like_seq128_t4"
+    ],
+    "regressionCommand": "agent1 patch_regression --case onnxruntime_bert_perf_test_bert_like_seq128_t4"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "impact 幅度依赖 SpacemiT X100 微架构实测（pause 为微架构属性 hint）；需人工确认 build -march 增补 zihintpause 与默认 spin_backoff_max 是否随修复一并调整；overallConfidence 0.72 < 0.80。",
+    "reasoning": "perf stat 显示整轮运行 CPUs utilized≈1.81（4 线程测试，worker 大量空闲）且 IPC=1.23，与 WorkerLoop 热点吻合——worker 的大部分时间不在执行任务而在等待机制中；perf annotate 进一步将 ~89.9% 的函数内局部样本定位到自旋/等待区间 f38658–f38fba，该区间即 for(spin_count_=1<<20) 自旋循环 + ThreadPoolWaiter 退避 + 队列探测；源码证据直接证明 SpinPause() 对 RISC-V 落入编译器屏障（spin_pause.cc:57-62），不退避、不发 pause hint，而硬件 cpuinfo 明确含 zihintpause，命中 RISC-V ISA Extension-Specific Instruction Substitution pattern（busy-wait 已有健康有界退避与阻塞 crossover，仅缺架构 spin hint 的载体）。三类证据共同指向同一根因：RISC-V 缺失架构 spin hint 使 idle 自旋以全速运行。",
+    "rootCauseType": "arch_gap",
+    "alternativeExplanations": [
+      "默认 spin_count=1<<20 的自旋窗口本身过长是设计权衡，即使补上 pause hint，长 idle 窗口仍消耗资源；可用 spin_duration_us=0 关闭自旋做对照实验验证自旋窗口长度 vs pause hint 各自的贡献",
+      "自旋条件 !done_ 的 seq_cst 装载每轮 2 条 fence 独立贡献一部分样本（已作为附加杠杆记录）；仅改 relaxed load 不加 pause 也可能获得部分收益",
+      "无 precise_ip（sampling IP precision 未知），个别高占比行可能受 PMU skid 影响，但 ~90% 样本集中在自旋/等待区间（interval 级聚合）不改变机制结论"
+    ],
+    "currentGaps": "无 ARM 侧对照 duration/ratio 数据（无 ys-trace-execution-summary 输出）；无 precise_ip/Exact-IP（baseline_gap: sampling IP precision）；无 cache/branch-miss counter（baseline_gap: bound type）；未确认 perftest 运行时实际生效的 spin 配置（默认 spin_duration_us=-1、spin_backoff_max=1，假定未传参覆盖）；annotate 所指 DSO（onnxruntime_pybind11_state.so）的 readelf -A 未单独提供，build ISA 按同构建 libonnxruntime.so 属性推定。",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认在 X100 上为 SpinPause() 增补 zihintpause pause 后的实测收益方向（throughput/latency/energy）与构建 flag 变更；确认默认 spin_backoff_max=1 是否需要随真实 pause 一并调整。",
+    "affectedTarget": "RV + 测试用例 onnxruntime_bert_perf_test_bert_like_seq128_t4",
+    "recommendedFirstAction": "在 onnxruntime/core/common/spin_pause.cc 的 SpinPause() 中，于 #else fallback 之前加入 RISC-V 分支：在 #if defined(__riscv_zihintpause) 下发射架构 hint（__asm__ __volatile__(\"pause\" ::: \"memory\")），否则保留 std::atomic_signal_fence(seq_cst) fallback；同步在 RISC-V 构建的 -march 中增补 zihintpause（或按 pattern 提供等价编码的 feature gate 发射）。",
+    "recommendedVerification": "重新运行 onnxruntime_bert_perf_test_bert_like_seq128_t4，对比端到端时延、IPC 与 CPUs utilized；对 WorkerLoop 重新 perf annotate，观察自旋/等待区间 f38658–f38fba（lb/fence/zext.b/addiw/空 std::function 构造各行）的单位墙钟样本密度是否下降；用 perf stat -e cache-misses,branch-misses 补齐 bound type；覆盖 spin_duration_us=0（关闭自旋）与 spin_backoff_max=8 对照。",
+    "metricEvidence": [
+      {
+        "metric": "Duration (s)",
+        "rv": 7.303832298,
+        "anomalyNote": "整轮采样窗口 7.30s，task-clock 13.21s"
+      },
+      {
+        "metric": "Task-clock (ms)",
+        "rv": 13207.6,
+        "anomalyNote": "CPUs utilized=1.808，4 线程 bert 测试 worker 大量空闲"
+      },
+      {
+        "metric": "Cycles",
+        "rv": 29044472040,
+        "anomalyNote": "2.199 GHz 下 13.2s 内 29.04B cycles"
+      },
+      {
+        "metric": "Instructions",
+        "rv": 35584357019,
+        "anomalyNote": "35.58B instructions，IPC=1.23，无 cache/branch counter 佐证 bound type"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "onnxruntime::concurrency::ThreadPoolTempl<onnxruntime::Env, onnxruntime::concurrency::WorkNoCallbackPolicy>::WorkerLoop(int)",
+        "fileModule": "include/onnxruntime/core/platform/EigenNonBlockingThreadPool.h（源码）；annotate DSO: onnxruntime_pybind11_state.so",
+        "rvvPattern": "RISC-V ISA Extension-Specific Instruction Substitution",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.899,
+        "note": "线程池并发协调（idle 自旋/等待/队列探测/任务分发）：函数 self-time 几乎全部为自旋/等待机制（f38658–f38fba 占本地样本≈89.9%），任务计算样本落在被调用的 kernel 中"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "onnxruntime/core/common/spin_pause.cc:30-63",
+      "relatedKnowledge": "https://github.com/openjdk/jdk/commit/8cb9b479c529c058aee50f83920db650b0c18045; https://github.com/openjdk/jdk/pull/11921; https://github.com/ggml-org/llama.cpp/pull/17784",
+      "evidenceExplanation": "这些关联 PR 与本次场景一致：线程池 barrier busy-wait / spin-wait 在 RISC-V 上通过 Zihintpause 的 pause 补上架构 spin hint，降低自旋对流水线与内存系统资源的占用；本次 SpinPause() 对 RISC-V 落入编译器屏障（无任何 pause 发射路径），正是这些 PR 所修复的缺失形态，而硬件 cpuinfo 明确支持 zihintpause"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-onnxruntime-onnxruntime-perf-test-conv-relu-t1-002",
+  "blueprintId": "bp-onnxruntime-onnxruntime_perf_test_conv_relu_t1-002",
+  "createdAt": "2026-09-12T04:45:06.683Z",
+  "objective": "MlasActivationKernel 使用编译期固定 128-bit（4-float）的 MLAS_FLOAT32X4 抽象，RVV lowering 固定为 vsetivli zero,4,e32,m1，在 VLEN=256 下仅利用一半 lane 带宽，每轮 4 个 float 摊销的循环 induction 开销主导热点区间（98.95% 样本）。",
+  "changes": [
+    {
+      "filePath": "onnxruntime/core/mlas/lib/activate.cpp",
+      "action": "modify",
+      "rationale": "MlasActivationKernel 使用编译期固定 128-bit（4-float）的 MLAS_FLOAT32X4 抽象，RVV lowering 固定为 vsetivli zero,4,e32,m1，在 VLEN=256 下仅利用一半 lane 带宽，每轮 4 个 float 摊销的循环 induction 开销主导热点区间（98.95% 样本）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 onnxruntime/core/mlas/lib/activate.cpp 来解决 blueprint bp-onnxruntime-onnxruntime_perf_test_conv_relu_t1-002。"
+}

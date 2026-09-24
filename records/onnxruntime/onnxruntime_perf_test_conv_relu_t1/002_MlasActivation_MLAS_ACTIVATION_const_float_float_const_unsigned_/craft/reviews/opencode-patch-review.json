@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-bp-onnxruntime-onnxruntime_perf_test_conv_relu_t1-002",
+  "patchCandidateId": "pc-bp-onnxruntime-onnxruntime_perf_test_conv_relu_t1-002",
+  "reviewedAt": "2026-09-12T05:00:00.000Z",
+  "reviewer": "opencode-ai-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "补丁为 MlasActivationKernel 主循环新增 RVV runtime-VL 路径（vsetvl_e32m1 动态 VL，VLEN=256 时 8 lanes/轮），并为 MLAS_BIAS_ADDITION/各 MLAS_ACTIVATION_FUNCTION 新增 AddRvv/ActivateRvv，用比较选择保持与通用 fallback 一致的 NaN round-trip 语义。非 RVV 构建路径不变；cmake 仅在有 HAS_RISCV64_RVV 时为 activate.cpp 追加 -march=rv64gcv。vsetvl/vl 使用一致，无死循环（vl!=0 保护）。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": []
+}

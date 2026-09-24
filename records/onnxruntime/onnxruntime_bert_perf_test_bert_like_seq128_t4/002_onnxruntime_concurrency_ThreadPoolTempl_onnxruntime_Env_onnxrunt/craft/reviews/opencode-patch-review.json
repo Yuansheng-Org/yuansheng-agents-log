@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-bp-onnxruntime-onnxruntime_bert_perf_test_bert_like_seq128_t4-002",
+  "patchCandidateId": "pc-bp-onnxruntime-onnxruntime_bert_perf_test_bert_like_seq128_t4-002",
+  "reviewedAt": "2026-09-12T04:35:00.000Z",
+  "reviewer": "opencode-ai-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "补丁为 SpinPause() 增加 RISC-V Zihintpause 分支（__riscv_zihintpause feature-gate 内发射 pause hint，memory clobber 保持语义）。目标硬件 SpacemiT X100 cpuinfo 含 zihintpause（blueprint evidence），feature-gate 确保未启用 zihintpause 的构建落入原 fallback，行为与基线一致。未涉及向量指令，未混入 x86/ARM 专属指令。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": []
+}
