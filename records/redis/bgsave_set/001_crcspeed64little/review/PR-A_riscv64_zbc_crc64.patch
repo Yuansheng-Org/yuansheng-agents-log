@@ -1,6 +1,6 @@
-From 7fbab996b019b2b85747216774704df123bf0542 Mon Sep 17 00:00:00 2001
+From fe831e53edd2a7cbb534421097cfb47198f8e1a0 Mon Sep 17 00:00:00 2001
 From: test <test@test.com>
-Date: Sat, 12 Sep 2026 05:37:50 +0000
+Date: Thu, 24 Sep 2026 16:14:39 +0800
 Subject: [PATCH] RISC-V: add Zbc-accelerated crc64
 
 Add a carry-less-multiply (clmul/clmulh) crc64 implementation for
@@ -30,33 +30,37 @@ Zbc is ~2.6x at 64 KiB..128 KiB; buffers <128 B intentionally keep the
 slice-by-8 path (fold setup overhead exceeds gains).
 No behavior change on non-RISC-V or Zbc-less builds.
 ---
- src/Makefile      |  12 ++-
- src/crc64.c       |   7 ++
+ src/Makefile      |  14 +++-
+ src/crc64.c       |   6 ++
  src/crc64_riscv.c | 192 ++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 208 insertions(+), 3 deletions(-)
+ 3 files changed, 208 insertions(+), 4 deletions(-)
  create mode 100644 src/crc64_riscv.c
 
 diff --git a/src/Makefile b/src/Makefile
-index d6fa0b2..966624e 100644
+index 2055085..0e319b3 100644
 --- a/src/Makefile
 +++ b/src/Makefile
 @@ -401,11 +401,11 @@ endif
  
- REDIS_SERVER_NAME=上游CRC数学-server$(PROG_SUFFIX)
- REDIS_SENTINEL_NAME=上游CRC数学-sentinel$(PROG_SUFFIX)
--REDIS_SERVER_OBJ=threads_mngr.o memory_prefetch.o adlist.o quicklist.o ae.o anet.o dict.o ebuckets.o eventnotifier.o iothread.o mstr.o entry.o kvstore.o fwtree.o estore.o server.o sds.o zmalloc.o lzf_c.o lzf_d.o pqsort.o zipmap.o sha1.o ziplist.o release.o networking.o util.o object.o db.o replication.o rdb.o t_string.o t_list.o t_set.o t_zset.o t_hash.o t_array.o sparsearray.o config.o aof.o pubsub.o multi.o debug.o sort.o intset.o syncio.o cluster.o cluster_asm.o cluster_legacy.o cluster_slot_stats.o crc16.o endianconv.o slowlog.o eval.o bio.o rio.o rand.o memtest.o syscheck.o crcspeed.o crccombine.o crc64.o bitops.o sentinel.o notify.o setproctitle.o blocked.o hyperloglog.o latency.o sparkline.o 上游CRC数学-check-rdb.o 上游CRC数学-check-aof.o geo.o lazyfree.o module.o evict.o expire.o geohash.o geohash_helper.o childinfo.o defrag.o siphash.o rax.o t_stream.o listpack.o localtime.o lolwut.o lolwut5.o lolwut6.o lolwut8.o acl.o tracking.o socket.o tls.o sha256.o timeout.o setcpuaffinity.o monotonic.o mt19937-64.o resp_parser.o call_reply.o script_lua.o script.o functions.o function_lua.o commands.o strl.o connection.o unix.o logreqres.o keymeta.o chk.o hotkeys.o gcra.o vector.o fast_float_strtod.o client_comp.o
-+REDIS_SERVER_OBJ=threads_mngr.o memory_prefetch.o adlist.o quicklist.o ae.o anet.o dict.o ebuckets.o eventnotifier.o iothread.o mstr.o entry.o kvstore.o fwtree.o estore.o server.o sds.o zmalloc.o lzf_c.o lzf_d.o pqsort.o zipmap.o sha1.o ziplist.o release.o networking.o util.o object.o db.o replication.o rdb.o t_string.o t_list.o t_set.o t_zset.o t_hash.o t_array.o sparsearray.o config.o aof.o pubsub.o multi.o debug.o sort.o intset.o syncio.o cluster.o cluster_asm.o cluster_legacy.o cluster_slot_stats.o crc16.o endianconv.o crc64_riscv.o slowlog.o eval.o bio.o rio.o rand.o memtest.o syscheck.o crcspeed.o crccombine.o crc64.o bitops.o sentinel.o notify.o setproctitle.o blocked.o hyperloglog.o latency.o sparkline.o 上游CRC数学-check-rdb.o 上游CRC数学-check-aof.o geo.o lazyfree.o module.o evict.o expire.o geohash.o geohash_helper.o childinfo.o defrag.o siphash.o rax.o t_stream.o listpack.o localtime.o lolwut.o lolwut5.o lolwut6.o lolwut8.o acl.o tracking.o socket.o tls.o sha256.o timeout.o setcpuaffinity.o monotonic.o mt19937-64.o resp_parser.o call_reply.o script_lua.o script.o functions.o function_lua.o commands.o strl.o connection.o unix.o logreqres.o keymeta.o chk.o hotkeys.o gcra.o vector.o fast_float_strtod.o client_comp.o
- REDIS_CLI_NAME=上游CRC数学-cli$(PROG_SUFFIX)
--REDIS_CLI_OBJ=anet.o adlist.o dict.o 上游CRC数学-cli.o zmalloc.o release.o ae.o redisassert.o crcspeed.o crccombine.o crc64.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o cli_commands.o
-+REDIS_CLI_OBJ=anet.o adlist.o dict.o 上游CRC数学-cli.o zmalloc.o release.o ae.o redisassert.o crcspeed.o crccombine.o crc64.o crc64_riscv.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o cli_commands.o
- REDIS_BENCHMARK_NAME=上游CRC数学-benchmark$(PROG_SUFFIX)
--REDIS_BENCHMARK_OBJ=ae.o anet.o 上游CRC数学-benchmark.o adlist.o dict.o zmalloc.o redisassert.o release.o crcspeed.o crccombine.o crc64.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o
-+REDIS_BENCHMARK_OBJ=ae.o anet.o 上游CRC数学-benchmark.o adlist.o dict.o zmalloc.o redisassert.o release.o crcspeed.o crccombine.o crc64.o crc64_riscv.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o
- REDIS_CHECK_RDB_NAME=上游CRC数学-check-rdb$(PROG_SUFFIX)
- REDIS_CHECK_AOF_NAME=上游CRC数学-check-aof$(PROG_SUFFIX)
+ REDIS_SERVER_NAME=redis-server$(PROG_SUFFIX)
+ REDIS_SENTINEL_NAME=redis-sentinel$(PROG_SUFFIX)
+-REDIS_SERVER_OBJ=threads_mngr.o memory_prefetch.o adlist.o quicklist.o ae.o anet.o dict.o ebuckets.o eventnotifier.o iothread.o mstr.o entry.o kvstore.o fwtree.o estore.o server.o sds.o zmalloc.o lzf_c.o lzf_d.o pqsort.o zipmap.o sha1.o ziplist.o release.o networking.o util.o object.o db.o replication.o rdb.o t_string.o t_list.o t_set.o t_zset.o t_hash.o bless.o t_array.o sparsearray.o config.o aof.o pubsub.o multi.o debug.o sort.o intset.o syncio.o cluster.o cluster_asm.o cluster_legacy.o cluster_slot_stats.o crc16.o endianconv.o slowlog.o eval.o bio.o rio.o rand.o memtest.o syscheck.o crcspeed.o crccombine.o crc64.o bitops.o sentinel.o notify.o setproctitle.o blocked.o hyperloglog.o latency.o sparkline.o redis-check-rdb.o redis-check-aof.o geo.o lazyfree.o module.o evict.o expire.o geohash.o geohash_helper.o childinfo.o defrag.o siphash.o rax.o t_stream.o listpack.o localtime.o lolwut.o lolwut5.o lolwut6.o lolwut8.o acl.o tracking.o socket.o tls.o sha256.o timeout.o setcpuaffinity.o monotonic.o mt19937-64.o resp_parser.o call_reply.o script_lua.o script.o functions.o function_lua.o commands.o strl.o connection.o unix.o logreqres.o keymeta.o chk.o hotkeys.o gcra.o vector.o fast_float_strtod.o client_comp.o
++REDIS_SERVER_OBJ=threads_mngr.o memory_prefetch.o adlist.o quicklist.o ae.o anet.o dict.o ebuckets.o eventnotifier.o iothread.o mstr.o entry.o kvstore.o fwtree.o estore.o server.o sds.o zmalloc.o lzf_c.o lzf_d.o pqsort.o zipmap.o sha1.o ziplist.o release.o networking.o util.o object.o db.o replication.o rdb.o t_string.o t_list.o t_set.o t_zset.o t_hash.o bless.o t_array.o sparsearray.o config.o aof.o pubsub.o multi.o debug.o sort.o intset.o syncio.o cluster.o cluster_asm.o cluster_legacy.o cluster_slot_stats.o crc16.o crc64_riscv.o endianconv.o slowlog.o eval.o bio.o rio.o rand.o memtest.o syscheck.o crcspeed.o crccombine.o crc64.o bitops.o sentinel.o notify.o setproctitle.o blocked.o hyperloglog.o latency.o sparkline.o redis-check-rdb.o redis-check-aof.o geo.o lazyfree.o module.o evict.o expire.o geohash.o geohash_helper.o childinfo.o defrag.o siphash.o rax.o t_stream.o listpack.o localtime.o lolwut.o lolwut5.o lolwut6.o lolwut8.o acl.o tracking.o socket.o tls.o sha256.o timeout.o setcpuaffinity.o monotonic.o mt19937-64.o resp_parser.o call_reply.o script_lua.o script.o functions.o function_lua.o commands.o strl.o connection.o unix.o logreqres.o keymeta.o chk.o hotkeys.o gcra.o vector.o fast_float_strtod.o client_comp.o
+ REDIS_CLI_NAME=redis-cli$(PROG_SUFFIX)
+-REDIS_CLI_OBJ=anet.o adlist.o dict.o redis-cli.o zmalloc.o release.o ae.o redisassert.o crcspeed.o crccombine.o crc64.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o cli_commands.o
++REDIS_CLI_OBJ=anet.o adlist.o dict.o redis-cli.o zmalloc.o release.o ae.o redisassert.o crcspeed.o crccombine.o crc64.o crc64_riscv.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o cli_commands.o
+ REDIS_BENCHMARK_NAME=redis-benchmark$(PROG_SUFFIX)
+-REDIS_BENCHMARK_OBJ=ae.o anet.o redis-benchmark.o adlist.o dict.o zmalloc.o redisassert.o release.o crcspeed.o crccombine.o crc64.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o
++REDIS_BENCHMARK_OBJ=ae.o anet.o redis-benchmark.o adlist.o dict.o zmalloc.o redisassert.o release.o crcspeed.o crccombine.o crc64.o crc64_riscv.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o
+ REDIS_CHECK_RDB_NAME=redis-check-rdb$(PROG_SUFFIX)
+ REDIS_CHECK_AOF_NAME=redis-check-aof$(PROG_SUFFIX)
  ALL_SOURCES=$(sort $(patsubst %.o,%.c,$(REDIS_SERVER_OBJ) $(REDIS_VEC_SETS_OBJ) $(REDIS_CLI_OBJ) $(REDIS_BENCHMARK_OBJ)))
-@@ -497,6 +497,12 @@ DEP = $(REDIS_SERVER_OBJ:%.o=%.d) $(REDIS_VEC_SETS_OBJ:%.o=%.d) $(REDIS_CLI_OBJ:
- %.o: %.c .make-prerequisites
+@@ -494,9 +494,15 @@ DEP = $(REDIS_SERVER_OBJ:%.o=%.d) $(REDIS_VEC_SETS_OBJ:%.o=%.d) $(REDIS_CLI_OBJ:
+ # Because the jemalloc.h header is generated as a part of the jemalloc build,
+ # building it should complete before building any other object. Instead of
+ # depending on a single artifact, build all dependencies first.
+-%.o: %.c .make-prerequisites
++%.o: %.c
  	$(REDIS_CC) -MMD -o $@ -c $<
  
 +# RISC-V Zbc/Zvbc accelerated CRC64 (src/crc64_riscv.c). The extension is
@@ -69,7 +73,7 @@ index d6fa0b2..966624e 100644
  # are built only if python is available and their prereqs are modified.
  ifneq (,$(PYTHON))
 diff --git a/src/crc64.c b/src/crc64.c
-index 5255064..669a60e 100644
+index 5255064..c4e2c92 100644
 --- a/src/crc64.c
 +++ b/src/crc64.c
 @@ -137,6 +137,10 @@ uint64_t _crc64(uint_fast64_t crc, const void *in_data, const uint64_t len) {
@@ -83,7 +87,7 @@ index 5255064..669a60e 100644
  /* Initializes the 16KB lookup tables. */
  void crc64_init(void) {
      crcspeed64native_init(_crc64, crc64_table);
-@@ -144,9 +148,12 @@ void crc64_init(void) {
+@@ -144,6 +148,8 @@ void crc64_init(void) {
  
  /* Compute crc64 */
  uint64_t crc64(uint64_t crc, const unsigned char *s, uint64_t l) {
@@ -92,13 +96,9 @@ index 5255064..669a60e 100644
      return crcspeed64native(crc64_table, crc, (void *) s, l);
  }
  
-+
- /* Test main */
- #ifdef REDIS_TEST
- #include <stdio.h>
 diff --git a/src/crc64_riscv.c b/src/crc64_riscv.c
 new file mode 100644
-index 0000000..ffbc97f
+index 0000000..5b533b0
 --- /dev/null
 +++ b/src/crc64_riscv.c
 @@ -0,0 +1,192 @@

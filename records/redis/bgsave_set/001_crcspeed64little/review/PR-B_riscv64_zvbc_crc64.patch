@@ -1,6 +1,6 @@
-From e6b5aefe7eb0ef3de75d932b7cdfb6b215766ac1 Mon Sep 17 00:00:00 2001
+From 642d9bb534eca7788c1a54b5ac47bfc2104239e1 Mon Sep 17 00:00:00 2001
 From: test <test@test.com>
-Date: Sat, 12 Sep 2026 05:37:56 +0000
+Date: Thu, 24 Sep 2026 16:14:39 +0800
 Subject: [PATCH] RISC-V: add Zvbc vector crc64 (optional)
 
 Extend crc64_riscv with a vector carry-less-multiply path using Zvbc
@@ -33,7 +33,7 @@ gain at that size); 128 KiB is measured through the same Zvbc loop.
  2 files changed, 42 insertions(+), 5 deletions(-)
 
 diff --git a/src/Makefile b/src/Makefile
-index 966624e..7fc2057 100644
+index 0e319b3..242c5ba 100644
 --- a/src/Makefile
 +++ b/src/Makefile
 @@ -500,7 +500,7 @@ DEP = $(REDIS_SERVER_OBJ:%.o=%.d) $(REDIS_VEC_SETS_OBJ:%.o=%.d) $(REDIS_CLI_OBJ:
@@ -46,7 +46,7 @@ index 966624e..7fc2057 100644
  
  # The following files are checked in and don't normally need to be rebuilt. They
 diff --git a/src/crc64_riscv.c b/src/crc64_riscv.c
-index ffbc97f..b8b8e54 100644
+index 5b533b0..32be343 100644
 --- a/src/crc64_riscv.c
 +++ b/src/crc64_riscv.c
 @@ -6,9 +6,9 @@
