@@ -1,0 +1,178 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-postgresql-select-only-clients-16-024",
+  "blueprintId": "bp-postgresql-select_only_clients_16-024",
+  "createdAt": "2026-09-14T16:51:25.953Z",
+  "objective": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+  "changes": [
+    {
+      "filePath": "pin/unpin",
+      "action": "modify",
+      "rationale": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "471732/47179e",
+      "action": "modify",
+      "rationale": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "471738/4717a4",
+      "action": "modify",
+      "rationale": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/include/port/atomics.h",
+      "action": "modify",
+      "rationale": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/include/port/atomics/generic.h",
+      "action": "modify",
+      "rationale": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/include/port/atomics/arch-riscv.h",
+      "action": "modify",
+      "rationale": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "Go/Linux",
+      "action": "modify",
+      "rationale": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "Kernel/V8",
+      "action": "modify",
+      "rationale": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/backend/storage/buffer/bufmgr.c",
+      "action": "modify",
+      "rationale": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/include/port/atomics/generic.h:319-335",
+      "action": "modify",
+      "rationale": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/include/port/atomics.h:66-72",
+      "action": "modify",
+      "rationale": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "arm/x86/ppc",
+      "action": "modify",
+      "rationale": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应围绕 pin/unpin, 471732/47179e, 471738/4717a4, src/include/port/atomics.h, src/include/port/atomics/generic.h, src/include/port/atomics/arch-riscv.h, Go/Linux, Kernel/V8, src/backend/storage/buffer/bufmgr.c, src/include/port/atomics/generic.h:319-335, src/include/port/atomics.h:66-72, arm/x86/ppc 解决 blueprint bp-postgresql-select_only_clients_16-024 指出的根因。允许涉及 构建系统、平台适配、构建参数、注册入口；源码实现、汇编/kernel/intrinsic/SIMD/vector 后端、分发表。"
+}

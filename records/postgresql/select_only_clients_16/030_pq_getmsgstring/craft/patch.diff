@@ -1,0 +1,92 @@
+diff --git a/src/backend/libpq/pqformat.c b/src/backend/libpq/pqformat.c
+index 8b41aa4f1cb..19b0020436e 100644
+--- a/src/backend/libpq/pqformat.c
++++ b/src/backend/libpq/pqformat.c
+@@ -79,6 +79,10 @@
+ #include "port/pg_bswap.h"
+ #include "varatt.h"
+ 
++#ifdef __riscv_v
++#include <riscv_vector.h>
++#endif
++
+ 
+ /* --------------------------------
+  *		pq_beginmessage		- initialize for sending a message
+@@ -598,13 +602,54 @@ pq_getmsgstring(StringInfo msg)
+ }
+ 
+ /* --------------------------------
+- *		pq_getmsgrawstring - get a null-terminated text string - NO conversion
++ *		pq_getmsgstring - get a null-terminated text string
+  *
+  *		Returns a pointer directly into the message buffer.
+  * --------------------------------
+  */
++
++#ifdef __riscv_v
++/*
++ * RVV sentinel scan with LMUL=8.
++ *
++ * glibc's vectorized strlen is typically built with LMUL=1, scanning only
++ * VLEN bytes (16 on the C920v2) per iteration; the vsetvli/vmseq/vfirst/
++ * csrr/bltz configuration and mask-reduction overhead then dominates the
++ * loop.  Since a strlen carries only one live vector, the register budget
++ * allows LMUL up to 8 (LMUL * peak_live_vectors = 8 * 1 <= 32), scanning
++ * 8 * VLEN = 128 bytes per iteration and amortizing that overhead.
++ *
++ * fault-only-first (vle8ff.v) keeps the out-of-bounds safety contract:
++ * the load stops at the first faulting element, so scanning past the NUL
++ * never faults even if the string extends to the end of a page.  The
++ * returned length is exact.
++ */
++static int
++pq_strlen_rvv(const char *str)
++{
++	size_t		len = 0;
++
++	while (1)
++	{
++		size_t		avl = __riscv_vsetvlmax_e8m8();
++		size_t		new_vl = 0;
++		vuint8m8_t	chunk;
++		vbool1_t	mask;
++		long		pos;
++
++		chunk = __riscv_vle8ff_v_u8m8((const uint8_t *) str + len,
++									  &avl, new_vl);
++		mask = __riscv_vmseq_vx_u8m8_b1(chunk, 0, avl);
++		pos = __riscv_vfirst_m_b1(mask, avl);
++		if (pos >= 0)
++			return (int) (len + (size_t) pos);
++		len += avl;
++	}
++}
++#endif							/* __riscv_v */
++
+ const char *
+-pq_getmsgrawstring(StringInfo msg)
++pq_getmsgstring(StringInfo msg)
+ {
+ 	char	   *str;
+ 	int			slen;
+@@ -616,14 +661,18 @@ pq_getmsgrawstring(StringInfo msg)
+ 	 * have a trailing null byte.  But check we found a null inside the
+ 	 * message.
+ 	 */
++#ifdef __riscv_v
++	slen = pq_strlen_rvv(str);
++#else
+ 	slen = strlen(str);
++#endif
+ 	if (msg->cursor + slen >= msg->len)
+ 		ereport(ERROR,
+ 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+ 				 errmsg("invalid string in message")));
+ 	msg->cursor += slen + 1;
+ 
+-	return str;
++	return pg_client_to_server(str, slen);
+ }
+ 
+ /* --------------------------------

@@ -1,0 +1,83 @@
+ Percent |	Source code & Disassembly of postgres for cpu-clock (140 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000336b36 <pq_getmsgstring>:
+         : 6      pq_getmsgstring():
+         : 583    pq_getmsgstring(StringInfo msg)
+         : 584    {
+         : 585    char       *str;
+         : 586    int                     slen;
+         :
+         : 588    str = &msg->data[msg->cursor];
+    0.71 :   336b36: lw      a5,16(a0)
+   20.00 :   336b38: ld      a4,0(a0)
+         : 590    /*
+         : 591    * It's safe to use strlen() here because a StringInfo is guaranteed to
+         : 592    * have a trailing null byte.  But check we found a null inside the
+         : 593    * message.
+         : 594    */
+         : 595    slen = strlen(str);
+    0.71 :   336b3a: li      a3,0
+         : 583    str = &msg->data[msg->cursor];
+    0.00 :   336b3c: add     a4,a4,a5
+         : 590    slen = strlen(str);
+    0.00 :   336b3e: mv      a1,a4
+    4.29 :   336b40: vsetvli a2,zero,e8,m1,ta,ma
+    7.86 :   336b44: add     a1,a1,a3
+    0.00 :   336b46: vle8ff.v        v1,(a1)
+   15.00 :   336b4a: vmseq.vi        v1,v1,0
+   12.86 :   336b4e: csrr    a3,vl
+   15.71 :   336b52: vfirst.m        a6,v1
+   17.86 :   336b56: bltz    a6,336b40 <pq_getmsgstring+0xa>
+    1.43 :   336b5a: add     a1,a1,a6
+         : 591    if (msg->cursor + slen >= msg->len)
+    0.00 :   336b5c: lw      a3,8(a0)
+         : 590    slen = strlen(str);
+    0.00 :   336b5e: subw    a1,a1,a4
+         : 591    if (msg->cursor + slen >= msg->len)
+    0.00 :   336b60: addw    a5,a5,a1
+    0.71 :   336b62: bge     a5,a3,336b74 <pq_getmsgstring+0x3e>
+         : 595    ereport(ERROR,
+         : 596    (errcode(ERRCODE_PROTOCOL_VIOLATION),
+         : 597    errmsg("invalid string in message")));
+         : 598    msg->cursor += slen + 1;
+    0.71 :   336b66: addiw   a5,a5,1
+    1.43 :   336b68: sw      a5,16(a0)
+         :
+         : 598    return pg_client_to_server(str, slen);
+    0.71 :   336b6a: mv      a0,a4
+    0.00 :   336b6c: auipc   t1,0x2d9
+    0.00 :   336b70: jr      -1316(t1) # 60f648 <pg_client_to_server>
+         : 579    {
+    0.00 :   336b74: addi    sp,sp,-16
+    0.00 :   336b76: sd      ra,8(sp)
+         : 592    ereport(ERROR,
+    0.00 :   336b78: li      a1,0
+         : 579    {
+    0.00 :   336b7a: sd      s0,0(sp)
+         : 592    ereport(ERROR,
+    0.00 :   336b7c: li      a0,21
+         : 579    {
+    0.00 :   336b7e: addi    s0,sp,16
+         : 592    ereport(ERROR,
+    0.00 :   336b80: auipc   ra,0xffdbf
+    0.00 :   336b84: jalr    -1988(ra) # f53bc <errstart_cold>
+    0.00 :   336b88: lui     a0,0x1020
+    0.00 :   336b8c: addi    a0,a0,512 # 1020200 <__BSS_END__+0x5e7d20>
+    0.00 :   336b90: auipc   ra,0x2c8
+    0.00 :   336b94: jalr    -2026(ra) # 5fe3a6 <errcode>
+    0.00 :   336b98: auipc   a0,0x36a
+    0.00 :   336b9c: addi    a0,a0,952 # 6a0f50 <_IO_stdin_used+0x4ff50>
+    0.00 :   336ba0: auipc   ra,0x2c8
+    0.00 :   336ba4: jalr    -1532(ra) # 5fe5a4 <errmsg>
+    0.00 :   336ba8: auipc   a2,0x4c1
+    0.00 :   336bac: addi    a2,a2,-392 # 7f7a20 <__func__.2>
+    0.00 :   336bb0: li      a1,592
+    0.00 :   336bb4: auipc   a0,0x36a
+    0.00 :   336bb8: addi    a0,a0,820 # 6a0ee8 <_IO_stdin_used+0x4fee8>
+    0.00 :   336bbc: auipc   ra,0x2c7
+    0.00 :   336bc0: jalr    -110(ra) # 5fdb4e <errfinish>

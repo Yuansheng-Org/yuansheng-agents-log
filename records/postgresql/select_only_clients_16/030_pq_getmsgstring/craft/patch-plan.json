@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-postgresql-select-only-clients-16-030",
+  "blueprintId": "bp-postgresql-select_only_clients_16-030",
+  "createdAt": "2026-09-14T17:02:16.092Z",
+  "objective": "pq_getmsgstring 内 inlined 的 RVV strlen 哨兵扫描循环使用 vsetvli e8,m1（LMUL=1），在 VLEN=128 下每轮只扫描 16 字节，循环配置与 mask 归约开销主导函数内样本，属已向量化循环的 LMUL 欠利用（register-group frontier underutilization）。",
+  "changes": [
+    {
+      "filePath": "vsetvli/vmseq/csrr/vfirst.m/bltz",
+      "action": "modify",
+      "rationale": "pq_getmsgstring 内 inlined 的 RVV strlen 哨兵扫描循环使用 vsetvli e8,m1（LMUL=1），在 VLEN=128 下每轮只扫描 16 字节，循环配置与 mask 归约开销主导函数内样本，属已向量化循环的 LMUL 欠利用（register-group frontier underutilization）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/backend/libpq/pqformat.c",
+      "action": "modify",
+      "rationale": "pq_getmsgstring 内 inlined 的 RVV strlen 哨兵扫描循环使用 vsetvli e8,m1（LMUL=1），在 VLEN=128 下每轮只扫描 16 字节，循环配置与 mask 归约开销主导函数内样本，属已向量化循环的 LMUL 欠利用（register-group frontier underutilization）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "m4/m8",
+      "action": "modify",
+      "rationale": "pq_getmsgstring 内 inlined 的 RVV strlen 哨兵扫描循环使用 vsetvli e8,m1（LMUL=1），在 VLEN=128 下每轮只扫描 16 字节，循环配置与 mask 归约开销主导函数内样本，属已向量化循环的 LMUL 欠利用（register-group frontier underutilization）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "vmseq/vfirst/csrr/bltz",
+      "action": "modify",
+      "rationale": "pq_getmsgstring 内 inlined 的 RVV strlen 哨兵扫描循环使用 vsetvli e8,m1（LMUL=1），在 VLEN=128 下每轮只扫描 16 字节，循环配置与 mask 归约开销主导函数内样本，属已向量化循环的 LMUL 欠利用（register-group frontier underutilization）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "objdump/source",
+      "action": "modify",
+      "rationale": "pq_getmsgstring 内 inlined 的 RVV strlen 哨兵扫描循环使用 vsetvli e8,m1（LMUL=1），在 VLEN=128 下每轮只扫描 16 字节，循环配置与 mask 归约开销主导函数内样本，属已向量化循环的 LMUL 欠利用（register-group frontier underutilization）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "register-group/LMUL",
+      "action": "modify",
+      "rationale": "pq_getmsgstring 内 inlined 的 RVV strlen 哨兵扫描循环使用 vsetvli e8,m1（LMUL=1），在 VLEN=128 下每轮只扫描 16 字节，循环配置与 mask 归约开销主导函数内样本，属已向量化循环的 LMUL 欠利用（register-group frontier underutilization）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应围绕 vsetvli/vmseq/csrr/vfirst.m/bltz, src/backend/libpq/pqformat.c, m4/m8, vmseq/vfirst/csrr/bltz, objdump/source, register-group/LMUL 解决 blueprint bp-postgresql-select_only_clients_16-030 指出的根因。允许涉及 构建系统、平台适配、构建参数、注册入口；源码实现、汇编/kernel/intrinsic/SIMD/vector 后端、分发表。"
+}

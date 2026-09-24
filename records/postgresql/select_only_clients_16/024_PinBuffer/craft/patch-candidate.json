@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-postgresql-select-only-clients-16-024",
+  "patchPlanId": "pp-bp-postgresql-select-only-clients-16-024",
+  "createdAt": "2026-09-14T16:51:26.000Z",
+  "changedFiles": [
+    "src/include/port/atomics.h"
+  ],
+  "gitDiff": "diff --git a/src/include/port/atomics.h b/src/include/port/atomics.h\nindex 5266f2ccaa0..89405a2ea30 100644\n--- a/src/include/port/atomics.h\n+++ b/src/include/port/atomics.h\n@@ -69,6 +69,8 @@\n #include \"port/atomics/arch-x86.h\"\n #elif defined(__powerpc__) || defined(__powerpc64__)\n #include \"port/atomics/arch-ppc.h\"\n+#elif defined(__riscv)\n+#include \"port/atomics/arch-riscv.h\"\n #endif\n \n /*\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

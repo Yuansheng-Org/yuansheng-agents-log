@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-postgresql-select_only_clients_16-030",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-14T15:50:35.203Z",
+    "software": "postgresql",
+    "testcaseIds": [
+      "select_only_clients_16"
+    ],
+    "diagnosisId": "diag-20260914T155035203Z-3061d8f0",
+    "targetHardware": "SOPHGO SG2044 / T-Head XuanTie C920v2 (RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/postgres/postgres.git",
+    "testBranch": "master",
+    "commitHash": "86f7c82cf1023e3599f40f939727791a7090cd44"
+  },
+  "problem": {
+    "summary": "pgbench select-only（16 clients）下，协议解析热点函数 pq_getmsgstring 内 inlined 的 RVV strlen 哨兵扫描循环使用 LMUL=1，每轮仅扫描 16 字节，导致 vsetvli/vmseq/csrr/vfirst.m/bltz 等配置与 mask 归约开销在函数内 cpu-clock 样本中占比约 75%（含 skid 约 95%），成为该函数首要开销。",
+    "evidence": [
+      "perf annotate（cpu-clock, local period, 140 samples）：循环体 336b40–336b56 配置/归约指令 vmseq.vi(15.00%)+vfirst.m(15.71%)+csrr(12.86%)+bltz(17.86%)+vsetvli(4.29%) 合计约 61%，而数据访存 vle8ff.v 占 0.00%（非 memory-bound）",
+      "perf annotate：vsetvli a2,zero,e8,m1,ta,ma 使用 LMUL=1，VLEN=128 下 VLMAX=16 字节/轮",
+      "perf stat：整体 IPC=0.431100、L1_dcache_load_miss_rate=4.613%、branch_miss_rate=12.550%，无 ARM 对照基线"
+    ]
+  },
+  "rootCause": {
+    "summary": "pq_getmsgstring 内 inlined 的 RVV strlen 哨兵扫描循环使用 vsetvli e8,m1（LMUL=1），在 VLEN=128 下每轮只扫描 16 字节，循环配置与 mask 归约开销主导函数内样本，属已向量化循环的 LMUL 欠利用（register-group frontier underutilization）。",
+    "candidateFiles": [
+      "src/backend/libpq/pqformat.c"
+    ],
+    "performanceFactors": [
+      "RVV Register-Group Utilization and LMUL Sizing"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "strlen 返回值语义（slen 精确等于 NUL 下标）",
+      "fault-only-first（vle8ff.v）越界不 fault 的正确性契约",
+      "msg->cursor 前进量 = slen+1 及 cursor+slen>=len 的协议违规检查",
+      "pg_client_to_server 的字符集转换语义"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "select_only_clients_16"
+    ],
+    "regressionCommand": "agent1 patch_regression --case select_only_clients_16"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "LMUL 提升的收益幅度未实测（pattern 明确'更大 LMUL 不必然更快'）；向量化 strlen 的来源（glibc RVV strlen 内联 vs 编译器内置）待确认，若修复落点在 libc/toolchain 而非 PostgreSQL 源码，需转对应仓库处理；无 ARM 对照基线确认跨架构回归。",
+    "reasoning": "perf annotate 显示 pq_getmsgstring 热点集中在 336b40–336b56 的已向量化 RVV 哨兵扫描循环，其中数据访存 vle8ff.v 占 0.00% 而 vmseq/vfirst/csrr/bltz 配置+归约指令合计约 61%，说明瓶颈是控制/配置开销而非内存带宽；该循环 vsetvli 使用 e8,m1（VLEN=128 下 VLMAX=16 字节/轮），peak live 仅 1 个寄存器组（v1），LMUL 远低于合法候选边界（m8 下 8×1=8≤32）。全 workload perf stat IPC=0.431 与低 ILP 一致。因此根因指向已向量化循环的 LMUL 欠利用（rvv_register_group_utilization），route 置信 HIGH；因缺全局 sample share、采样 IP 精度（skid）与实测收益，impact 为 Medium。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "336b38: ld a4,0(a0) 占 20.00% 可能是 msg->data 指针的真实 cache miss（而非纯 skid），即首部指针加载访存延迟也是开销之一",
+      "vfirst.m 跨 lane 归约在 C920v2 上可能本身延迟较高，即使增大 LMUL 也受限于归约吞吐",
+      "整体 workload 为 memory-bound（IPC=0.431），本函数局部优化对端到端 TPS 的提升可能有限"
+    ],
+    "currentGaps": "无 ARM 对照基线（仅 RISC-V perf stat，无 ratio）；无函数级 global-period annotate（函数 workload 级贡献未知）；sampling IP precision 未确认（cpu-clock skid）；向量化 strlen 的确切来源（glibc RVV strlen 内联 vs 编译器内置）未经 objdump/source 确认；cache_miss_rate=100% 疑似计数器异常未排除。",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认向量化 strlen 的生成来源（glibc RVV strlen 内联还是编译器内置），确定 LMUL 提升的修复落点（PostgreSQL 源码内显式宽 LMUL 扫描，还是 libc/toolchain）；确认 m2/m4/m8 候选在 C920v2 上的 A/B 实测收益。",
+    "affectedTarget": "RV + select_only_clients_16",
+    "recommendedFirstAction": "在 src/backend/libpq/pqformat.c:590（slen = strlen(str)）处的哨兵扫描改为显式 RVV 扫描并提高 LMUL（候选 m4/m8，peak live=1 满足 LMUL×peak_live_vectors≤32），或用 strlen 之外的本地位扫描；先确认当前向量化 strlen 来自 libc 内联还是编译器内置再决定落点。",
+    "recommendedVerification": "重新运行 pgbench select-only（16 clients）并用 perf annotate 复核 pq_getmsgstring：期望 vsetvli 出现 e8,m4/m8、vmseq/vfirst/csrr/bltz 局部样本占比下降；对比 TPS 与 latency 是否改善。",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.4311,
+        "anomalyNote": "整体 IPC 仅 0.43，远低于 OoO 核典型水平，反映 memory/control stall 显著"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 4.613,
+        "anomalyNote": "L1 load miss 4.6%，整体访存压力中等"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 12.55,
+        "anomalyNote": "分支误预测 12.55%，控制流开销可见"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "pq_getmsgstring",
+        "fileModule": "src/backend/libpq/pqformat.c",
+        "rvvPattern": "RVV Register-Group Utilization and LMUL Sizing",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.96,
+        "note": "字符串/协议解析类；哨兵扫描（strlen）已向量化但 LMUL=m1，VLMAX=16B/轮；benefitUpperbound 为函数内 cpu-clock local-period 份额（loop 75.01%+skid 20.71%≈95.7%），非全局 Amdahl 上界。"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/backend/libpq/pqformat.c:590",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/26318 ; https://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5 ; https://github.com/opencv/opencv/pull/25586 ; https://github.com/torvalds/linux/commit/a4348546332c9fae12b29acb514535e0a52b9b3c ; https://github.com/torvalds/linux/commit/a894e8ed09c6c7fa239711819db83b8c050eb7b0 ; https://github.com/torvalds/linux/commit/c2a658d419246108c9bf065ec347355de5ba8a05 ; https://github.com/openjdk/jdk/commit/bdd37b0e5eaa984e2ad2e9010af37dcd612cc05e ; https://github.com/OpenMathLib/OpenBLAS/commit/cc1b5794a0409493ed470f4cced313ea0b560870 ; https://github.com/OpenMathLib/OpenBLAS/commit/d69be17b6ff7eea5371b03a199db9c112aa6dc4b ; https://github.com/OpenMathLib/OpenBLAS/commit/4a12cf53ec116c06e5d74073b54a3bca6046cb17 ; https://github.com/OpenMathLib/OpenBLAS/commit/240695862984d4de845f1c42821a883946932df7 ; https://github.com/v8/v8/commit/3844339936068c529170dcb4f2aa160654d25943 ; https://github.com/vllm-project/vllm/pull/47538",
+      "evidenceExplanation": "pqformat.c:590 的 strlen(str) 被编译为 LMUL=1 的 RVV 哨兵扫描；上述 RVV register-group/LMUL sizing 关联提交（OpenCV、Linux RISC-V、OpenBLAS、V8、vLLM）展示了在 register budget 允许时提高 LMUL 以减少迭代/配置开销的同类优化，佐证本根因属已向量化循环的 LMUL 欠利用。"
+    }
+  }
+}
