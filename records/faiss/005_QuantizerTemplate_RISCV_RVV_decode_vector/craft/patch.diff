@@ -1,0 +1,256 @@
+diff --git a/faiss/impl/scalar_quantizer/quantizers.h b/faiss/impl/scalar_quantizer/quantizers.h
+index 393983de95678eacf07f9e4340ae013bf1744e7f..16a78008023315c22da0714eff3f76d73e0a2ea1 100644
+--- a/faiss/impl/scalar_quantizer/quantizers.h
++++ b/faiss/impl/scalar_quantizer/quantizers.h
+@@ -89,7 +89,7 @@ struct QuantizerTemplate<
+         }
+     }
+ 
+-    void decode_vector(const uint8_t* code, float* x) const final {
++    void decode_vector(const uint8_t* code, float* x) const {
+         for (size_t i = 0; i < d; i++) {
+             float xi = Codec::decode_component(code, i);
+             x[i] = vmin + xi * vdiff;
+@@ -131,7 +131,7 @@ struct QuantizerTemplate<
+         }
+     }
+ 
+-    void decode_vector(const uint8_t* code, float* x) const final {
++    void decode_vector(const uint8_t* code, float* x) const {
+         for (size_t i = 0; i < d; i++) {
+             float xi = Codec::decode_component(code, i);
+             x[i] = vmin[i] + xi * vdiff[i];
+diff --git a/faiss/impl/scalar_quantizer/sq-rvv.cpp b/faiss/impl/scalar_quantizer/sq-rvv.cpp
+index 2b86e5c79e9cc9a05c44e34ccfc77729d270a777..22eb56884b0fc616ea90ebe28164098a52ae3a3a 100644
+--- a/faiss/impl/scalar_quantizer/sq-rvv.cpp
++++ b/faiss/impl/scalar_quantizer/sq-rvv.cpp
+@@ -14,12 +14,167 @@
+ #include <faiss/impl/scalar_quantizer/similarities.h>
+ 
+ #include <riscv_vector.h>
++
+ #include <cmath>
++#include <cstddef>
++#include <type_traits>
+ 
+ namespace faiss {
+ 
+ namespace scalar_quantizer {
+ 
++namespace {
++
++/*************************************************************************
++ * VLEN-agnostic 4-bit decode kernels.
++ *
++ * Codec4bit packs two 4-bit nibbles per byte: component 2*k lives in the
++ * low nibble of code[k] and component 2*k+1 in the high nibble. The scalar
++ * NONE reference is
++ *     xi = ((nibble(i) + 0.5f) / 15.0f);  x[i] = vmin[i] + xi * vdiff[i]
++ *
++ * The RVV loop below strip-mines over nibble PAIRS: each iteration derives
++ * vl = vsetvl(pairs_remaining) packed bytes and reconstructs 2*vl
++ * components, so no fixed VLEN or d multiple is ever assumed. The loop
++ * only ever runs on complete pairs (even component index), and any final
++ * odd component is finished by an exact scalar tail that reproduces the
++ * NONE-base bit pattern.
++ *
++ * Per iteration: vle8 of the packed bytes, low/high nibble unpack with
++ * vand/vsrl, u8 -> u16 -> f32 widening (vzext + vfwcvt.f.xu), the affine
++ * decode fused with vfmacc, and interleaved even/odd output via two
++ * strided vse32 (stride 2 floats) which restores component order.
++ ************************************************************************/
++
++void rvv_decode_4bit_uniform(
++        const uint8_t* code,
++        float* x,
++        size_t d,
++        float vmin,
++        float vdiff) {
++    const float inv15 = 1.0f / 15.0f;
++    const float half_inv15 = inv15 * 0.5f;
++    // x = vmin + (nibble + 0.5) * inv15 * vdiff
++    //   = nibble * scale + bias  with bias = vmin + 0.5 * inv15 * vdiff.
++    const float scale = vdiff * inv15;
++    const float bias = vmin + vdiff * half_inv15;
++    const ptrdiff_t stride = 2 * static_cast<ptrdiff_t>(sizeof(float));
++
++    size_t i = 0;
++    while (i + 1 < d) {
++        // Number of complete (low, high) nibble pairs still ahead.
++        const size_t byte_vl = __riscv_vsetvl_e8m1((d - i) / 2);
++        if (byte_vl == 0) {
++            break;
++        }
++
++        // Strip-mine the packed code bytes: one byte per pair.
++        vuint8m1_t packed = __riscv_vle8_v_u8m1(code + i / 2, byte_vl);
++        vuint8m1_t lo = __riscv_vand_vx_u8m1(packed, 0x0F, byte_vl);
++        vuint8m1_t hi = __riscv_vsrl_vx_u8m1(packed, 4, byte_vl);
++
++        // u8 nibbles -> u16 (vzext.vf2) -> f32 (vfwcvt.f.xu.v).
++        vuint16m2_t lo16 = __riscv_vzext_vf2_u16m2(lo, byte_vl);
++        vuint16m2_t hi16 = __riscv_vzext_vf2_u16m2(hi, byte_vl);
++        vfloat32m4_t vlo = __riscv_vfwcvt_f_xu_v_f32m4(lo16, byte_vl);
++        vfloat32m4_t vhi = __riscv_vfwcvt_f_xu_v_f32m4(hi16, byte_vl);
++
++        // Fused multiply-accumulate: out = scale * nibble + bias.
++        vfloat32m4_t vbias = __riscv_vfmv_v_f_f32m4(bias, byte_vl);
++        vfloat32m4_t out_lo =
++                __riscv_vfmacc_vf_f32m4(vbias, scale, vlo, byte_vl);
++        vfloat32m4_t out_hi =
++                __riscv_vfmacc_vf_f32m4(vbias, scale, vhi, byte_vl);
++
++        // Even (low-nibble) and odd (high-nibble) reconstructions,
++        // interleaved back into component order.
++        __riscv_vsse32_v_f32m4(x + i, stride, out_lo, byte_vl);
++        __riscv_vsse32_v_f32m4(x + i + 1, stride, out_hi, byte_vl);
++
++        i += 2 * byte_vl;
++    }
++
++    // Scalar tail: at most one leftover component (odd d) with the exact
++    // NONE-base arithmetic.
++    for (; i < d; i++) {
++        const uint8_t nib =
++                (i & 1) ? (code[i / 2] >> 4) : (code[i / 2] & 0x0F);
++        const float xi = (static_cast<float>(nib) + 0.5f) / 15.0f;
++        x[i] = vmin + xi * vdiff;
++    }
++}
++
++void rvv_decode_4bit_nonuniform(
++        const uint8_t* code,
++        float* x,
++        size_t d,
++        const float* vmin,
++        const float* vdiff) {
++    const float inv15 = 1.0f / 15.0f;
++    const float half_inv15 = inv15 * 0.5f;
++    const ptrdiff_t stride = 2 * static_cast<ptrdiff_t>(sizeof(float));
++
++    size_t i = 0;
++    while (i + 1 < d) {
++        const size_t byte_vl = __riscv_vsetvl_e8m1((d - i) / 2);
++        if (byte_vl == 0) {
++            break;
++        }
++
++        vuint8m1_t packed = __riscv_vle8_v_u8m1(code + i / 2, byte_vl);
++        vuint8m1_t lo = __riscv_vand_vx_u8m1(packed, 0x0F, byte_vl);
++        vuint8m1_t hi = __riscv_vsrl_vx_u8m1(packed, 4, byte_vl);
++
++        vuint16m2_t lo16 = __riscv_vzext_vf2_u16m2(lo, byte_vl);
++        vuint16m2_t hi16 = __riscv_vzext_vf2_u16m2(hi, byte_vl);
++        vfloat32m4_t vlo = __riscv_vfwcvt_f_xu_v_f32m4(lo16, byte_vl);
++        vfloat32m4_t vhi = __riscv_vfwcvt_f_xu_v_f32m4(hi16, byte_vl);
++
++        // Per-dimension range lookup in strict component order. The even
++        // lanes of one pair block sit at vmin[i], vmin[i+2], ... and the
++        // odd lanes at vmin[i+1], vmin[i+3], ..., so a 2-float strided
++        // load matches the low/high nibble split exactly.
++        vfloat32m4_t vmin_e = __riscv_vlse32_v_f32m4(vmin + i, stride, byte_vl);
++        vfloat32m4_t vmin_o =
++                __riscv_vlse32_v_f32m4(vmin + i + 1, stride, byte_vl);
++        vfloat32m4_t vdiff_e =
++                __riscv_vlse32_v_f32m4(vdiff + i, stride, byte_vl);
++        vfloat32m4_t vdiff_o =
++                __riscv_vlse32_v_f32m4(vdiff + i + 1, stride, byte_vl);
++
++        // x = vmin + (nibble * inv15 + half_inv15) * vdiff
++        //   = vmin + (nibble * vdiff) * inv15 + half_inv15 * vdiff
++        vfloat32m4_t out_lo = __riscv_vfmacc_vf_f32m4(
++                vmin_e,
++                inv15,
++                __riscv_vfmul_vv_f32m4(vlo, vdiff_e, byte_vl),
++                byte_vl);
++        out_lo =
++                __riscv_vfmacc_vf_f32m4(out_lo, half_inv15, vdiff_e, byte_vl);
++        vfloat32m4_t out_hi = __riscv_vfmacc_vf_f32m4(
++                vmin_o,
++                inv15,
++                __riscv_vfmul_vv_f32m4(vhi, vdiff_o, byte_vl),
++                byte_vl);
++        out_hi =
++                __riscv_vfmacc_vf_f32m4(out_hi, half_inv15, vdiff_o, byte_vl);
++
++        __riscv_vsse32_v_f32m4(x + i, stride, out_lo, byte_vl);
++        __riscv_vsse32_v_f32m4(x + i + 1, stride, out_hi, byte_vl);
++
++        i += 2 * byte_vl;
++    }
++
++    for (; i < d; i++) {
++        const uint8_t nib =
++                (i & 1) ? (code[i / 2] >> 4) : (code[i / 2] & 0x0F);
++        const float xi = (static_cast<float>(nib) + 0.5f) / 15.0f;
++        x[i] = vmin[i] + xi * vdiff[i];
++    }
++}
++
++} // namespace
++
+ /*************************************************************************
+  * Marker specializations.
+  *
+@@ -58,11 +213,26 @@ struct QuantizerTemplate<
+                   Codec,
+                   QuantizerTemplateScaling::UNIFORM,
+                   SIMDLevel::NONE> {
++    using Base = QuantizerTemplate<
++            Codec,
++            QuantizerTemplateScaling::UNIFORM,
++            SIMDLevel::NONE>;
++
+     QuantizerTemplate(size_t d, const std::vector<float>& trained)
+-            : QuantizerTemplate<
+-                      Codec,
+-                      QuantizerTemplateScaling::UNIFORM,
+-                      SIMDLevel::NONE>(d, trained) {}
++            : Base(d, trained) {}
++
++    /// VLEN-agnostic RVV decode for QT_4bit_uniform. Non-4bit codecs keep
++    /// the scalar NONE-base implementation.
++    void decode_vector(const uint8_t* code, float* x) const final {
++        if constexpr (std::is_same_v<
++                              Codec,
++                              Codec4bit<SIMDLevel::RISCV_RVV>>) {
++            rvv_decode_4bit_uniform(
++                    code, x, this->d, this->vmin, this->vdiff);
++        } else {
++            Base::decode_vector(code, x);
++        }
++    }
+ };
+ 
+ template <class Codec>
+@@ -74,11 +244,26 @@ struct QuantizerTemplate<
+                   Codec,
+                   QuantizerTemplateScaling::NON_UNIFORM,
+                   SIMDLevel::NONE> {
++    using Base = QuantizerTemplate<
++            Codec,
++            QuantizerTemplateScaling::NON_UNIFORM,
++            SIMDLevel::NONE>;
++
+     QuantizerTemplate(size_t d, const std::vector<float>& trained)
+-            : QuantizerTemplate<
+-                      Codec,
+-                      QuantizerTemplateScaling::NON_UNIFORM,
+-                      SIMDLevel::NONE>(d, trained) {}
++            : Base(d, trained) {}
++
++    /// VLEN-agnostic RVV decode for QT_4bit. Non-4bit codecs keep the
++    /// scalar NONE-base implementation.
++    void decode_vector(const uint8_t* code, float* x) const final {
++        if constexpr (std::is_same_v<
++                              Codec,
++                              Codec4bit<SIMDLevel::RISCV_RVV>>) {
++            rvv_decode_4bit_nonuniform(
++                    code, x, this->d, this->vmin, this->vdiff);
++        } else {
++            Base::decode_vector(code, x);
++        }
++    }
+ };
+ 
+ template <>

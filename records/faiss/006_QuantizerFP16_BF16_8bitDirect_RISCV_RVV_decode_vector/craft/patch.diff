@@ -1,0 +1,80 @@
+diff --git a/faiss/impl/scalar_quantizer/quantizers.h b/faiss/impl/scalar_quantizer/quantizers.h
+index 393983de95678eacf07f9e4340ae013bf1744e7f..d7a00851eaf842f7ef80e2f3c3445fd2bad0c38f 100644
+--- a/faiss/impl/scalar_quantizer/quantizers.h
++++ b/faiss/impl/scalar_quantizer/quantizers.h
+@@ -247,7 +247,7 @@ struct QuantizerFP16<SIMDLevel::NONE> : ScalarQuantizer::SQuantizer {
+         }
+     }
+ 
+-    void decode_vector(const uint8_t* code, float* x) const final {
++    void decode_vector(const uint8_t* code, float* x) const override {
+         for (size_t i = 0; i < d; i++) {
+             x[i] = decode_fp16(((uint16_t*)code)[i]);
+         }
+diff --git a/faiss/impl/scalar_quantizer/sq-rvv.cpp b/faiss/impl/scalar_quantizer/sq-rvv.cpp
+index 2b86e5c79e9cc9a05c44e34ccfc77729d270a777..dc651279e048dd3f9d1d94e551494d3bdb04b3ab 100644
+--- a/faiss/impl/scalar_quantizer/sq-rvv.cpp
++++ b/faiss/impl/scalar_quantizer/sq-rvv.cpp
+@@ -85,6 +85,62 @@ template <>
+ struct QuantizerFP16<SIMDLevel::RISCV_RVV> : QuantizerFP16<SIMDLevel::NONE> {
+     QuantizerFP16(size_t d, const std::vector<float>& trained)
+             : QuantizerFP16<SIMDLevel::NONE>(d, trained) {}
++
++#if defined(__riscv_v) && defined(__riscv_zvfhmin)
++    // RVV FP16 -> FP32 widening decode, the riscv per-SIMDLevel specialization
++    // of decode_vector (x86 equivalents live in sq-avx2.cpp /
++    // sq-avx512-impl.h). Each iteration converts a native-VL chunk:
++    // vle16 loads the two-byte FP16 codes, vfwcvt.f.f.v widens them to FP32,
++    // vse32 stores the four-byte floats. vsetvl trims the final iteration, so
++    // there is no fixed-width or alignment contract: any d and unaligned
++    // buffers are handled, unlike the AVX2/AVX512 d % 8 / d % 16 asserts.
++    //
++    // Bit parity with the scalar decode_fp16 (quantizers.h /
++    // fp16-inl.h) is kept for every 0x0000..0xFFFF code: vfwcvt.f.f.v is exact
++    // for finite values (normals, denormals, +/-0, +/-Inf), but it may quiet
++    // or clear sNaN and non-canonical qNaN payloads, while decode_fp16 is
++    // bit-preserving: floatbits((((h & 0x7FFF) << 13) + 0x70000000) |
++    // ((h & 0x8000) << 16)). NaN lanes (iff (h & 0x7FFF) > 0x7C00) are
++    // detected from the codes and overwritten with that expression; the
++    // vfirst test keeps the repair off the common all-finite path.
++    void decode_vector(const uint8_t* code, float* x) const final {
++        const auto* code16 = reinterpret_cast<const uint16_t*>(code);
++        size_t i = 0;
++        const size_t d = this->d;
++        while (i < d) {
++            const size_t vl = __riscv_vsetvl_e16m1(d - i);
++            vuint16m1_t vh = __riscv_vle16_v_u16m1(code16 + i, vl);
++            vfloat16m1_t vhf = __riscv_vreinterpret_v_u16m1_f16m1(vh);
++            // vfwcvt.f.f.v: FP16 -> FP32 widening conversion.
++            vfloat32m2_t vf = __riscv_vfwcvt_f_f_v_f32m2(vhf, vl);
++            // NaN predicate at 32-bit SEW so the mask matches the e32m2
++            // destination register group: NaN iff (h & 0x7FFF) > 0x7C00.
++            vuint32m2_t vh32 = __riscv_vzext_vf2_u32m2(vh, vl);
++            vuint32m2_t exp_mant = __riscv_vand_vx_u32m2(vh32, 0x7FFF, vl);
++            vbool32_t is_nan =
++                    __riscv_vmsgtu_vx_u32m2_b32(exp_mant, 0x7C00, vl);
++            if (__riscv_vfirst_m_b32(is_nan, vl) >= 0) {
++                // decode_fp16 NaN output: (((h & 0x7FFF) << 13) + 0x70000000)
++                // | ((h & 0x8000) << 16). The 32-bit adds below never carry
++                // out: max intermediate is 0x0FFFE000 + 0x80000000 and the
++                // final sum stays below 2^32, matching the scalar OR.
++                vuint32m2_t mant_lo =
++                        __riscv_vsll_vx_u32m2(exp_mant, 13, vl);
++                vuint32m2_t sign_bits =
++                        __riscv_vand_vx_u32m2(vh32, 0x8000, vl);
++                sign_bits = __riscv_vsll_vx_u32m2(sign_bits, 16, vl);
++                vuint32m2_t nan_bits =
++                        __riscv_vadd_vv_u32m2(mant_lo, sign_bits, vl);
++                nan_bits = __riscv_vadd_vx_u32m2(nan_bits, 0x70000000, vl);
++                vfloat32m2_t vrep =
++                        __riscv_vreinterpret_v_u32m2_f32m2(nan_bits);
++                vf = __riscv_vmerge_vvm_f32m2(vf, vrep, is_nan, vl);
++            }
++            __riscv_vse32_v_f32m2(x + i, vf, vl);
++            i += vl;
++        }
++    }
++#endif
+ };
+ 
+ template <>

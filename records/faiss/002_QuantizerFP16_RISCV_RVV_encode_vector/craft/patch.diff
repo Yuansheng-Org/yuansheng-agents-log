@@ -1,0 +1,166 @@
+diff --git a/faiss/impl/scalar_quantizer/quantizers.h b/faiss/impl/scalar_quantizer/quantizers.h
+index 393983de95678eacf07f9e4340ae013bf1744e7f..a6e83251a7b8715bf52ae8a23251553367da3245 100644
+--- a/faiss/impl/scalar_quantizer/quantizers.h
++++ b/faiss/impl/scalar_quantizer/quantizers.h
+@@ -241,7 +241,14 @@ struct QuantizerFP16<SIMDLevel::NONE> : ScalarQuantizer::SQuantizer {
+     QuantizerFP16(size_t d_in, const std::vector<float>& /* unused */)
+             : d(d_in) {}
+ 
+-    void encode_vector(const float* x, uint8_t* code) const final {
++    // NOTE: deliberately not `final` so SIMD-level specializations (in
++    // particular QuantizerFP16<SIMDLevel::RISCV_RVV>, which replaces this
++    // per-element ryg loop with a Zvfhmin vfncvt.f.f.w narrowing fast path
++    // in sq-rvv.cpp) can override the encode; the RVV path is gated on the
++    // blueprint conformance corpus before it is trusted on any silicon.
++    // This scalar ryg loop remains the bit-exact reference and the
++    // residual/SIMDLevel-0 fallback.
++    void encode_vector(const float* x, uint8_t* code) const override {
+         for (size_t i = 0; i < d; i++) {
+             ((uint16_t*)code)[i] = encode_fp16(x[i]);
+         }
+diff --git a/faiss/impl/scalar_quantizer/sq-rvv.cpp b/faiss/impl/scalar_quantizer/sq-rvv.cpp
+index 2b86e5c79e9cc9a05c44e34ccfc77729d270a777..9625d5f7f5c4ebbeea7a4698e7ff1e20bd51ab0f 100644
+--- a/faiss/impl/scalar_quantizer/sq-rvv.cpp
++++ b/faiss/impl/scalar_quantizer/sq-rvv.cpp
+@@ -83,8 +83,140 @@ struct QuantizerTemplate<
+ 
+ template <>
+ struct QuantizerFP16<SIMDLevel::RISCV_RVV> : QuantizerFP16<SIMDLevel::NONE> {
++    using Base = QuantizerFP16<SIMDLevel::NONE>;
++
+     QuantizerFP16(size_t d, const std::vector<float>& trained)
+-            : QuantizerFP16<SIMDLevel::NONE>(d, trained) {}
++            : Base(d, trained) {}
++
++    /*********************************************************************
++     * FP32 -> FP16 encode via the Zvfhmin vfncvt.f.f.w narrowing
++     * instruction (this file is compiled with -march=rv64gcv_zvfhmin).
++     *
++     * The scalar base implementation (QuantizerFP16<NONE>::encode_vector,
++     * quantizers.h) executes the ryg integer/FP bit trick per element:
++     * per-lane bit extraction, NaN/Inf branches, FP-multiply rescale,
++     * rounding add and a 2-byte store. For typical finite inputs the bulk
++     * of that work is a correctly-rounded f32 -> f16 narrowing conversion,
++     * which vfncvt.f.f.w performs on whole vector lanes with one vsetvli
++     * per block (e32 source, e16 destination; source LMUL m4 narrows to
++     * destination LMUL m2 per the widening/narrowing register budget rule)
++     * and a stable vtype -- no vtype switching per element.
++     *
++     * The masked repair envelope mirrors exactly the scalar ryg special
++     * handling, so the common finite bulk needs no per-lane branches:
++     *   - qNaN / sNaN   -> 0x7E00 | sign   (hardware canonicalizes NaN
++     *                    payloads, scalar pins qNaN 0x7E00)
++     *   - ±Inf          -> 0x7C00 | sign
++     *   - finite overflow (|f| >= 65504, abs bits >= 0x477fe000, the ryg
++     *                    "min clamp" limit) -> 0x7BFF | sign, i.e. max
++     *                    finite f16 65504. This covers the whole 65504..
++     *                    +Inf overflow interval: RNE alone would already
++     *                    yield 0x7BFF inside (65504, 65520) and would
++     *                    round into Inf (0x7C00) at/above 65520, while the
++     *                    scalar clamp keeps 0x7BFF for every finite value
++     *                    >= 65504, so those lanes must be repaired.
++     * Special lanes are detected on the integer f32 bit pattern and
++     * repaired with vmerge before the sign OR and the vse16 store. The
++     * merges are applied in widening order -- overflow first (broadest
++     * mask), then Inf, then NaN -- each restoring the exact scalar ryg
++     * bit pattern on its own lanes.
++     *
++     * Bit-identity for the denormal / underflow range is NOT asserted
++     * here: on some silicon the hardware RNE conversion of tiny finite
++     * values may round up to a min-denormal where the scalar ryg
++     * magic-multiply trick flushes to zero (blueprint gap-ir-000005).
++     * This fast path MUST be validated against the blueprint conformance
++     * corpus (NaN payloads, ±Inf, ±0, denormals, 65504/65520 boundaries,
++     * half-ties) with zero mismatches vs encode_fp16 before it is trusted
++     * on a given silicon; the untouched scalar ryg loop in quantizers.h
++     * remains the bit-exact reference and the SIMDLevel::NONE / fallback
++     * path.
++     *
++     * Deployment gate: compile-time SIMDLevel selection is the only gate.
++     * This TU is built only when COMPILE_SIMD_RISCV_RVV is set and it is
++     * compiled with -march=rv64gcv_zvfhmin, so __riscv_zvfhmin is
++     * guaranteed here; no runtime capability check is needed. Runtime
++     * dispatch between RISCV_RVV (this path) and NONE (scalar ryg) is
++     * handled by SIMDConfig / sq-dispatch. Short inputs below one native
++     * e32m4 block (vlmax = VLEN/8 = __riscv_vlenb() lanes, 32 on the
++     * VLEN=256 target) use the scalar ryg helper, where the vsetvli +
++     * masked-repair setup does not amortize; the benchmark d = 128 is far
++     * above this crossover.
++     *********************************************************************/
++    void encode_vector(const float* x, uint8_t* code) const override {
++        const size_t d = this->d;
++        uint16_t* codes = reinterpret_cast<uint16_t*>(code);
++
++        // Short-input crossover: one full e32m4 block carries
++        // VLEN*LMUL/SEW = __riscv_vlenb() lanes. Scalar ryg below that.
++        const size_t vlmax = __riscv_vlenb();
++        if (d < vlmax) {
++            for (size_t i = 0; i < d; i++) {
++                codes[i] = encode_fp16(x[i]);
++            }
++            return;
++        }
++
++        // ryg clamp limit: largest finite f16 is 65504 (f32 bits
++        // 0x477fe000, fp16 bits 0x7bff).
++        constexpr uint32_t kF32MaxFiniteBits = 0x477fe000u;
++        constexpr uint32_t kF32InfBits = 0x7f800000u;
++        constexpr uint16_t kF16MaxFinite = 0x7bffu;
++        constexpr uint16_t kF16QNaN = 0x7e00u;
++        constexpr uint16_t kF16Inf = 0x7c00u;
++        constexpr uint16_t kF16SignBit = 0x8000u;
++
++        size_t i = 0;
++        while (i < d) {
++            // One vsetvl per block; e32 LMUL=4 source, then e16 LMUL=2
++            // destination below. Neither SEW nor LMUL changes inside the
++            // block, so there is no per-element vtype churn.
++            const size_t vl = __riscv_vsetvl_e32m4(d - i);
++
++            vfloat32m4_t src = __riscv_vle32_v_f32m4(x + i, vl);
++
++            // Zvfhmin narrowing conversion f32 -> f16 (FRM stays RNE).
++            vfloat16m2_t conv = __riscv_vfncvt_f_f_w_f16m2_f32m4(src, vl);
++
++            // Detect the special lanes on the integer f32 bit pattern.
++            vuint32m4_t bits = __riscv_vreinterpret_v_f32m4_u32m4(src);
++            vuint32m4_t absv =
++                    __riscv_vand_vx_u32m4(bits, 0x7fffffffu, vl);
++            vbool8_t is_overflow =
++                    __riscv_vmsgeu_vx_u32m4_b8(absv, kF32MaxFiniteBits, vl);
++            vbool8_t is_nan =
++                    __riscv_vmsgtu_vx_u32m4_b8(absv, kF32InfBits, vl);
++            vbool8_t is_inf =
++                    __riscv_vmseq_vx_u32m4_b8(absv, kF32InfBits, vl);
++            vbool8_t is_neg = __riscv_vmsne_vx_u32m4_b8(
++                    __riscv_vand_vx_u32m4(bits, 0x80000000u, vl),
++                    0u,
++                    vl);
++
++            // f16 sign bit replicating the f32 sign bit (bit 31 -> bit 15).
++            vuint16m2_t sign16 = __riscv_vmerge_vx_u16m2(
++                    __riscv_vmv_v_x_u16m2(0, vl),
++                    kF16SignBit,
++                    is_neg,
++                    vl);
++
++            // Masked repair in widening mask order: overflow first
++            // (broadest), then Inf, then NaN. Finite overflow lanes
++            // (including the 65504..65520 half-way interval, where RNE
++            // alone would round into Inf) are clamped to 0x7BFF exactly as
++            // the scalar "min clamp" does; Inf/NaN lanes are restored to
++            // their exact scalar ryg patterns on top.
++            vuint16m2_t out = __riscv_vreinterpret_v_f16m2_u16m2(conv);
++            out = __riscv_vmerge_vx_u16m2(out, kF16MaxFinite, is_overflow, vl);
++            out = __riscv_vmerge_vx_u16m2(out, kF16Inf, is_inf, vl);
++            out = __riscv_vmerge_vx_u16m2(out, kF16QNaN, is_nan, vl);
++            out = __riscv_vor_vv_u16m2(out, sign16, vl);
++
++            __riscv_vse16_v_u16m2(codes + i, out, vl);
++
++            i += vl;
++        }
++    }
+ };
+ 
+ template <>

@@ -1,0 +1,43 @@
+diff --git a/faiss/impl/scalar_quantizer/quantizers.h b/faiss/impl/scalar_quantizer/quantizers.h
+index 393983de95678eacf07f9e4340ae013bf1744e7f..2b9fdc3429e8cd44246a255202d5b948d8648ef7 100644
+--- a/faiss/impl/scalar_quantizer/quantizers.h
++++ b/faiss/impl/scalar_quantizer/quantizers.h
+@@ -74,10 +74,27 @@ struct QuantizerTemplate<
+             : d(d_in), vmin(trained[0]), vdiff(trained[1]) {}
+ 
+     void encode_vector(const float* x, uint8_t* code) const final {
+-        for (size_t i = 0; i < d; i++) {
++        // Hoist d/vmin/vdiff into const locals before the loop: the uint8_t
++        // stores to `code` below force a conservative aliasing assumption in
++        // the compiler (it cannot prove `code` does not alias `this`), so
++        // member accesses inside the loop body were reloaded from memory on
++        // every component. Callers guarantee the code buffer is separately
++        // allocated (never aliasing this), so the loads are loop-invariant.
++        const size_t d_local = d;
++        const float vmin_local = vmin;
++        const float vdiff_local = vdiff;
++        const float* x_end = x + d_local;
++        // Traverse with pointer increments and a precomputed end pointer so
++        // the limit is held in a register. The component index `i` is still
++        // required by the bit-packed codecs (4/6 bit) that address sub-byte
++        // fields; for the byte-per-component codecs the compiler
++        // strength-reduces `code[i]` to an advancing store pointer.
++        size_t i = 0;
++        while (x < x_end) {
++            const float xv = *x++;
+             float xi = 0;
+-            if (vdiff != 0) {
+-                xi = (x[i] - vmin) / vdiff;
++            if (vdiff_local != 0) {
++                xi = (xv - vmin_local) / vdiff_local;
+                 if (xi < 0) {
+                     xi = 0;
+                 }
+@@ -86,6 +103,7 @@ struct QuantizerTemplate<
+                 }
+             }
+             Codec::encode_component(xi, code, i);
++            i++;
+         }
+     }
+ 

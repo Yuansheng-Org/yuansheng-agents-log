@@ -1,0 +1,64 @@
+diff --git a/faiss/impl/scalar_quantizer/quantizers.h b/faiss/impl/scalar_quantizer/quantizers.h
+index 393983de95678eacf07f9e4340ae013bf1744e7f..ee9d79dd069b65b39e6d5143b122e9d4951653ce 100644
+--- a/faiss/impl/scalar_quantizer/quantizers.h
++++ b/faiss/impl/scalar_quantizer/quantizers.h
+@@ -318,7 +318,11 @@ struct Quantizer8bitDirect<SIMDLevel::NONE> : ScalarQuantizer::SQuantizer {
+     Quantizer8bitDirect(size_t d_in, const std::vector<float>& /* unused */)
+             : d(d_in) {}
+ 
+-    void encode_vector(const float* x, uint8_t* code) const final {
++    // Note: deliberately not `final` so SIMD specializations (e.g.
++    // Quantizer8bitDirect<SIMDLevel::RISCV_RVV> in sq-rvv.cpp) may override
++    // this with a vectorized precision-conversion fast path. All existing
++    // non-RVV specializations inherit this implementation unchanged.
++    void encode_vector(const float* x, uint8_t* code) const override {
+         for (size_t i = 0; i < d; i++) {
+             code[i] = (uint8_t)x[i];
+         }
+diff --git a/faiss/impl/scalar_quantizer/sq-rvv.cpp b/faiss/impl/scalar_quantizer/sq-rvv.cpp
+index 2b86e5c79e9cc9a05c44e34ccfc77729d270a777..c3b58d640390f3fa427a8d3c0d548ac485eb3cb8 100644
+--- a/faiss/impl/scalar_quantizer/sq-rvv.cpp
++++ b/faiss/impl/scalar_quantizer/sq-rvv.cpp
+@@ -96,8 +96,41 @@ struct QuantizerBF16<SIMDLevel::RISCV_RVV> : QuantizerBF16<SIMDLevel::NONE> {
+ template <>
+ struct Quantizer8bitDirect<SIMDLevel::RISCV_RVV>
+         : Quantizer8bitDirect<SIMDLevel::NONE> {
++    using Base = Quantizer8bitDirect<SIMDLevel::NONE>;
++
+     Quantizer8bitDirect(size_t d, const std::vector<float>& trained)
+-            : Quantizer8bitDirect<SIMDLevel::NONE>(d, trained) {}
++            : Base(d, trained) {}
++
++    /// RVV precision-conversion fast path for code[i] = (uint8_t)x[i].
++    ///
++    /// The scalar lowering of `(uint8_t)x[i]` on RISC-V is
++    /// flw / fcvt.wu.s (rtz) / sb: float -> u32 with round-toward-zero and
++    /// saturation (negative -> 0, overflow/NaN -> 0xFFFFFFFF), then the low
++    /// byte is stored. This RVV path reproduces those bytes lane-exactly with
++    /// a dynamic-vsetvl strip-mined loop: vle32 loads, vfcvt.rtz.xu.f.v
++    /// converts f32 -> u32 with the same rtz/saturation semantics as the
++    /// scalar fcvt.wu.s, a pure narrowing shift (vnsrl.wi shift 0,
++    /// u32 -> u16 -> u8) keeps the low byte of each saturated conversion, and
++    /// vse8 stores the result. Each iteration's vl naturally covers the tail
++    /// (partial vl), so zero-length and odd-sized vectors are handled without
++    /// any out-of-bounds access and without changing the codec contract.
++    void encode_vector(const float* x, uint8_t* code) const final {
++        const size_t d = this->d;
++        size_t i = 0;
++        while (i < d) {
++            // Between 1 and VLMAX lanes per chunk; the final chunk is partial.
++            size_t vl = __riscv_vsetvl_e32m1(d - i);
++            vfloat32m1_t xv = __riscv_vle32_v_f32m1(x + i, vl);
++            // Same semantics as scalar fcvt.wu.s rtz (saturates out-of-range
++            // and NaN to 0 / 0xFFFFFFFF as appropriate), then keep the low
++            // byte exactly like the scalar value truncation.
++            vuint32m1_t xu = __riscv_vfcvt_rtz_xu_f_v_u32m1(xv, vl);
++            vuint16mf2_t xu16 = __riscv_vnsrl_wx_u16mf2(xu, 0, vl);
++            vuint8mf4_t xu8 = __riscv_vnsrl_wx_u8mf4(xu16, 0, vl);
++            __riscv_vse8_v_u8mf4(code + i, xu8, vl);
++            i += vl;
++        }
++    }
+ };
+ 
+ template <>
