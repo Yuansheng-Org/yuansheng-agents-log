@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-opencv-core-030",
+  "blueprintId": "bp-opencv-core-030",
+  "createdAt": "2026-09-09T06:33:59.925Z",
+  "objective": "reduceRowSum_8u32s 主累加循环以 LMUL=1（e16,m1 每指令 16 lane）处理 u16 累加域，v_expand 加宽出的 e16m2 组被拆成 lo/hi 两个 m1 半区消费，叠加循环不变 vsetvli 每迭代 4 次重建（VLMAX 派生）与索引地址每迭代重算，使配置与记账开销（约 90% 样本）主导、实际向量处理仅约 6%。",
+  "changes": [
+    {
+      "filePath": "modules/core/src/reduce.simd.hpp",
+      "action": "modify",
+      "rationale": "reduceRowSum_8u32s 主累加循环以 LMUL=1（e16,m1 每指令 16 lane）处理 u16 累加域，v_expand 加宽出的 e16m2 组被拆成 lo/hi 两个 m1 半区消费，叠加循环不变 vsetvli 每迭代 4 次重建（VLMAX 派生）与索引地址每迭代重算，使配置与记账开销（约 90% 样本）主导、实际向量处理仅约 6%。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 modules/core/src/reduce.simd.hpp 来解决 blueprint bp-opencv-core-030。"
+}

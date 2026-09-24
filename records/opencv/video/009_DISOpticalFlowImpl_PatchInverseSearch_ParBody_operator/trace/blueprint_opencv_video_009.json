@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-opencv-video-009",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-12T09:18:47.647Z",
+    "software": "opencv",
+    "testcaseIds": [
+      "video"
+    ],
+    "diagnosisId": "diag-20260912-091847",
+    "targetHardware": "SpacemiT K3 (spacemit-x100), RVV 1.0, VLEN=256",
+    "repositoryUrl": "https://github.com/opencv/opencv.git",
+    "testBranch": "5.x",
+    "commitHash": "f8ef5fd4c699671c9553f73d28c051abc6cf8e3d"
+  },
+  "problem": {
+    "summary": "video 第 9 热点 cv::DISOpticalFlowImpl::PatchInverseSearch_ParBody::operator()（libopencv_video 库代码，DIS 光流 patch 逆搜索）：已向量化（patch 差异计算 + vsetvli），但每 patch 向量运算后立即 vfmv.f.s 归约取标量（合计 ≈46%：26.91%+15.03%+多路各 2-3%，含采样归属放大）+ 分支判断（bnez 2.48%）。patch 小尺寸使向量化提取开销占比高。",
+    "evidence": [
+      "vfmv.f.s fa3,v3 26.91% + 15.03% + 多路 ×7 ≈20%（归约取标量 ≈46%）",
+      "vsetvli zero,a5,e32,m1 3.56%（VL 设置）",
+      "bnez a4 2.48%（分支判断）",
+      "patch 差异计算已向量化",
+      "perf_stat（用例级共享）: IPC=0.624、L1_dcache_load_miss_rate=1.686%、branch_miss_rate=1.468%"
+    ]
+  },
+  "rootCause": {
+    "summary": "DIS patch 逆搜索已向量化（patch 差异向量计算），但每 patch 计算后立即 vfmv.f.s 归约取标量（合计 ≈46%，含采样归属放大）——patch 尺寸小（向量 lane 利用受限）使向量化提取/归约开销占比高。可探索跨 patch 批量处理（多 patch 并行 lane）摊薄取标量，或小 patch 用标量。",
+    "candidateFiles": [
+      "modules/video/src/dis_flow.cpp"
+    ],
+    "performanceFactors": [
+      "vfmv.f.s 归约取标量 ≈46%（每 patch 向量计算后取标量，含采样归属放大）",
+      "patch 小尺寸向量化利用受限（e32,m1）",
+      "跨 patch 批量处理可摊薄取标量（探索性）"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "DIS patch 搜索数值语义（patch 差异、逆搜索匹配结果）逐位一致",
+      "金字塔层间传播与细化语义不变"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "video",
+      "DIS"
+    ]
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.52,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "conditional：无函数级 perf_stat（用例级共享指标）；vfmv.f.s 高占比含采样归属放大，跨 patch 向量化需保持搜索语义",
+    "reasoning": "DIS patch 逆搜索已向量化，但 vfmv.f.s 归约取标量合计 ≈46%（含采样归属放大）——patch 小尺寸使向量化提取开销占比高。可探索跨 patch 批量处理（多 patch 并行 lane）摊薄取标量开销，或评估小 patch 标量实现。置信度 MEDIUM 档。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "vfmv.f.s 高占比主要为采样归属放大 + 小 patch 向量化提取固有开销",
+      "跨 patch 批量（多 patch 各占 lane）可同时计算多个 patch 差异并一次归约",
+      "e32,m1 的 patch 向量利用率与 patch 尺寸（patch_size 典型 8x8）相关"
+    ],
+    "currentGaps": "无函数级 perf_stat；patch_size 与金字塔层数未知；跨 patch 向量化的搜索语义影响未评估",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 patch 尺寸（patch_size）与向量利用率；评估跨 patch 批量处理可行性（保持匹配语义）",
+    "affectedTarget": "RV + video",
+    "recommendedFirstAction": "探索性优化：DIS patch 逆搜索改为跨 patch 批量向量化（多个 patch 各占 lane 并行计算差异，一次归约取标量），摊薄 vfmv.f.s 取标量开销；或小 patch 场景评估标量实现",
+    "recommendedVerification": "运行 video DIS 光流基准对比耗时；验证光流输出与参考实现一致（容差）",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.624,
+        "anomalyNote": "用例级共享指标：IPC<1 与 patch 搜索/取标量特征相符"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "cv::DISOpticalFlowImpl::PatchInverseSearch_ParBody::operator()(cv::Range const&) const",
+        "fileModule": "modules/video/src/dis_flow.cpp",
+        "rvvPattern": "vector-state",
+        "patternConfidence": "MEDIUM",
+        "benefitUpperbound": 0.15,
+        "note": "已向量化 patch 搜索；vfmv.f.s 归约取标量 ≈46%（含采样归属放大），跨 patch 批量处理为探索性优化"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "modules/video/src/dis_flow.cpp (PatchInverseSearch_ParBody)",
+      "relatedKnowledge": "无关联提交",
+      "evidenceExplanation": "本地证据明确：patch 搜索已向量化但取标量频繁（小 patch 特性）；跨 patch 批量处理为通用向量化优化方向"
+    }
+  }
+}

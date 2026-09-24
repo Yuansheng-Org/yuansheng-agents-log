@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-opencv-core-008",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-09T05:03:20.169Z",
+    "software": "opencv",
+    "testcaseIds": [
+      "core"
+    ],
+    "diagnosisId": "diag-20260909T050320169Z-04c0c364",
+    "targetHardware": "SpacemiT K3 (spacemit-x100, OoO, RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://github.com/opencv/opencv.git",
+    "testBranch": "5.x",
+    "commitHash": "f8ef5fd4c699671c9553f73d28c051abc6cf8e3d"
+  },
+  "problem": {
+    "summary": "opencv perf core 基准中 cv::hal::normL2Sqr_ 的样本几乎全部集中在编译器自动向量化的 residual tail loop（函数内约 70.6% 局部样本份额），而 4×vl RVV 主循环基本健康（逐指令 <1%）。该 workload 以短向量调用为主（n<32 甚至 n<vl=8），tail 每处理 ≤8 个元素就支付一次回边分支、入口分支、3 次 vsetvli/vsetivli 与经标量 fa0 的串行水平归约链（vfmv.s.f→vfredosum.vs→vfmv.f.s），固定成本主导执行时间。",
+    "evidence": [
+      "perf stat: IPC=0.9176、L1_dcache_load_miss_rate=1.359%、branch_miss_rate=1.673% — 整体 compute/latency-bound，非 memory-bound",
+      "perf annotate (cpu-clock, 2629 samples, local period): tail interval [0x2a8d50..0x2a8d9c] 合计约 70.6% 函数内样本；2a8d58 bge 34.42%、2a8d9c bnez 回边 29.67%、2a8d7e vsetvli 3.20%",
+      "main 4×vl RVV loop [0x2a8cac..0x2a8d0c] 逐指令 <1%（最高 2a8cf4 vfmacc.vv 0.27%），说明主循环向量化健康，问题在 residual tail"
+    ]
+  },
+  "rootCause": {
+    "summary": "normL2Sqr_ 的执行时间被 compiler 生成的 residual tail loop 固定成本主导：短向量/非整倍长度调用下，tail 每迭代（≤8 元素）支付一次回边分支、3 次 vsetvli/vsetivli 与串行标量水平归约链，且样本集中在 tail 入口与回边分支（约 70.6% 函数内份额）；4×vl 主循环本身健康。",
+    "candidateFiles": [
+      "modules/core/src/arithm.cpp"
+    ],
+    "performanceFactors": [
+      "Scalar Remainder Handling for Wide Kernels",
+      "RVV Vector-State Management"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "low",
+    "mustPreserve": [
+      "函数语义与数值输出：保持输入顺序、accumulator 初始/最终状态",
+      "浮点归约顺序改动必须落在 OpenCV norm 既有容差内（main loop 已用 vfmacc 重排，tail 改为单次 vfredusum 需同等级容差验收）",
+      "不得 over-read：tail 加载必须使用 avl=r 的有界形式，不得用 VLMAX 全宽 load 越界读取"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "core"
+    ],
+    "regressionCommand": "agent1 patch_regression --case core"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=0.918、L1 miss rate 1.36%、branch miss rate 1.67%，将 workload 归类为 compute/latency-bound（非 memory-bound），确认本地计算结构修复是第一杠杆；perf annotate 中 residual tail interval [0x2a8d50..0x2a8d9c] 占函数内约 70.6% 样本（2a8d58 bge 34.42% + 2a8d9c bnez 回边 29.67%），而 4×vl 主循环逐指令 <1%，地址分账证明热点归属 tail 而非主循环；源码 `for(; j<n; j++) d += t*t` 与 remainder bound < vl=8 可证，模式命中 Scalar Remainder Handling for Wide Kernels（route High），tail 内 3 次 vsetvli/vsetivli 与 vfmv.s.f/vfmv.f.s 串行链由 RVV Vector-State Management（supporting, route Medium）解释；知识检索给出 zlib-ng bounded-remainder 与 QEMU/LLVM vector-state 合并的 Related PRs，均指向同一修复方向。因 sampling 为 local period 且无 precise_ip，收益上界只表述为函数内局部份额（70.6%），不做 workload 级 Amdahl 声明。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "workload 输入长度分布假设：本 profile 推断以短向量调用为主，但未实测真实 length distribution；若实际 n 大多为 vl 整倍数，tail 收益上界会大幅低于 70.6%（需补测长度分布验证）",
+      "Sampling IP precision 缺口：cpu-clock 无 precise_ip，分支上的 34%/30% 样本可能包含 skid 偏移，真实成本可能部分在 vfredosum 串行链而非分支本身；修复方向不变但收益拆分可能不同"
+    ],
+    "currentGaps": "percent type 为 local period（非 global-period），无法计算 workload 级样本贡献；Sampling IP precision 未知（baseline_gap: sampling IP precision）；未提供 ys-trace-execution-summary 的 rv_duration/arm_duration ratio；真实输入长度分布未实测（影响收益上界精度）",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV / core（cv::norm NORM_L2 平方和路径）",
+    "recommendedFirstAction": "modules/core/src/arithm.cpp：将 cv::hal::normL2Sqr_ 的标量残余循环 `for(; j<n; j++) d += t*t` 改为单次 avl=r（r=n-j，0<r<vl）有界向量化 tail——一次 vle32 双 load + vfsub + vfmacc 并入 vector accumulator，函数末尾仅一次 vfredusum，消除回边、3 次 vsetvli/vsetivli 与逐迭代 vfmv.s.f/vfmv.f.s 串行抽取",
+    "recommendedVerification": "重跑 opencv perf core 基准并对 normL2Sqr_ 重新 perf annotate，确认 2a8d9c bnez 回边消失、tail interval 样本占比显著下降、vsetvli 次数降至每 tail 一次或零次，且 n=0/1..vl-1/vl 整倍数/4*vl±1 对拍结果在 OpenCV norm 浮点容差内与 baseline 一致；用 perf stat 复核 IPC 变化",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.9176,
+        "anomalyNote": "整体 IPC 0.918，compute/latency-bound；residual tail 的串行水平归约链限制 tail 内 ILP"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 1.359,
+        "anomalyNote": "miss rate 1.36% 较低，排除 memory-bound 主导，确认 compute/latency 是第一瓶颈"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 1.673,
+        "anomalyNote": "branch miss 1.67% 不高，tail 的分支成本来自每迭代固定开销而非 mispredict"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "cv::hal::normL2Sqr_(float const*, float const*, int)",
+        "fileModule": "libopencv_core.so.5.1.0 (modules/core/src/arithm.cpp)",
+        "rvvPattern": "Scalar Remainder Handling for Wide Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.706,
+        "note": "线性代数类 L2 范数平方和归约 hal 入口；4×vl RVV 主循环健康，热点集中在 compiler 生成的 residual tail loop（样本 ~70.6%），tail 每迭代 ≤8 元素却支付回边/3×vsetvli/串行水平归约固定成本"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "modules/core/src/arithm.cpp: cv::hal::normL2Sqr_ 的残余循环 for(; j<n; j++) d += t*t（annotate 源码行 187-188 对应）",
+      "relatedKnowledge": "https://github.com/zlib-ng/zlib-ng/commit/5fd8b67c1a586302106606b2be3c784fb6dc2124 | https://github.com/v8/v8/commit/c81ffb7a356dc408940d479fbbec1d048181be71 | https://github.com/qemu/qemu/commit/d57dfe4b37ae542cec84a0cf751ecef313614cb6 | https://github.com/qemu/qemu/commit/944b6dfd3d67236882f2bc09d1d30ed923268e16 | https://github.com/qemu/qemu/commit/25669d275ce70346b94e3d5e4475d619eb979f5e | https://github.com/qemu/qemu/commit/bd2c82283d21e3400d7d89676a221935904c2fe6 | https://github.com/qemu/qemu/commit/81b9ef995a3b2fa5b08fab0615a1c9ed7cbe053e | https://github.com/qemu/qemu/commit/949b6bcb27295eb04350afac32a45b698fc50104 | https://github.com/qemu/qemu/commit/b8e1f32cda7805236c2bd497106a9356431c2d60 | https://github.com/llvm/llvm-project/pull/148246 | https://github.com/llvm/llvm-project/commit/d0554ae4cf264dd05024a753c66e15e4d16bf6e8 | https://github.com/llvm/llvm-project/pull/118285 | https://github.com/llvm/llvm-project/pull/123878 | https://github.com/llvm/llvm-project/commit/f59307bfdc01c584bfa7cd31a55226831bf5590f",
+      "evidenceExplanation": "OpenCV 的 normL2Sqr_ 残余循环源码结构（短向量下 tail 固定成本主导）与 zlib-ng 的 bounded descending remainder 提交指向同一修复形态（受 remainder 上界约束的尾处理）；tail 内重复 vsetvli/vsetivli 与 vfmv.s.f/vfmv.f.s 串行抽取的指令证据与 QEMU/LLVM 的 vector-state 合并/VSETVLI coalescing 提交属同一机制，支持将 tail 收敛为单次有界向量化 + 单次归约的修复方向"
+    }
+  }
+}

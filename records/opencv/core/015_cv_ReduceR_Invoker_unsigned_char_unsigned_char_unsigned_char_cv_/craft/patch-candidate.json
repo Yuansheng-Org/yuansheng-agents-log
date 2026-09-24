@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-opencv-core-015",
+  "patchPlanId": "pp-bp-opencv-core-015",
+  "createdAt": "2026-09-09T06:14:52.478Z",
+  "changedFiles": [
+    "modules/core/src/matrix_operations.cpp"
+  ],
+  "gitDiff": "diff --git a/modules/core/src/matrix_operations.cpp b/modules/core/src/matrix_operations.cpp\nindex 5d63a885cd..3bae0cca39 100644\n--- a/modules/core/src/matrix_operations.cpp\n+++ b/modules/core/src/matrix_operations.cpp\n@@ -337,6 +337,33 @@ struct ReduceR_SIMD\n     }\n };\n \n+#if defined(__riscv_v) && __riscv_v == 1000000\n+// RISC-V RVV 1.0 row-wise min reduction for cv::reduce REDUCE_MIN on uchar.\n+// OpMin<uchar> is CV_MIN_8U (a lookup-table min), which is bit-identical to the\n+// unsigned vector min vminu.vv — no FP semantics, so the running-min result is\n+// preserved elementwise.  The block loop covers every column in [start, end)\n+// (the last block is a bounded tail), and returns end so the caller's scalar\n+// CV_MIN_8U loops are skipped.\n+template <>\n+struct ReduceR_SIMD<uchar, uchar, OpMin<uchar> >\n+{\n+    int operator()(const uchar* src, int start, int end, uchar* buf, const OpMin<uchar>&) const\n+    {\n+        int i = start;\n+        size_t vl;\n+        for( ; i < end; i += (int)vl )\n+        {\n+            vl = __riscv_vsetvl_e8m1(end - i);\n+            vuint8m1_t vs = __riscv_vle8_v_u8m1(src + i, vl);\n+            vuint8m1_t vb = __riscv_vle8_v_u8m1(buf + i, vl);\n+            vb = __riscv_vminu_vv_u8m1(vb, vs, vl);\n+            __riscv_vse8_v_u8m1(buf + i, vb, vl);\n+        }\n+        return i;\n+    }\n+};\n+#endif\n+\n \n template<typename T, typename ST, typename WT, class Op, class OpInit>\n class ReduceR_Invoker : public ParallelLoopBody\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

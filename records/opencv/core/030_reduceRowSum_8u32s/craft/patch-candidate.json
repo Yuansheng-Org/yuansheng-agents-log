@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-opencv-core-030",
+  "patchPlanId": "pp-bp-opencv-core-030",
+  "createdAt": "2026-09-09T06:33:59.953Z",
+  "changedFiles": [
+    "modules/core/src/reduce.simd.hpp"
+  ],
+  "gitDiff": "diff --git a/modules/core/src/reduce.simd.hpp b/modules/core/src/reduce.simd.hpp\nindex 374853bb29..d489070764 100644\n--- a/modules/core/src/reduce.simd.hpp\n+++ b/modules/core/src/reduce.simd.hpp\n@@ -845,6 +845,20 @@ static void reduceRowSum_8u32s(const Mat& srcmat, Mat& dstmat)\n             }\n #else\n             const int vlanes8 = VTraits<v_uint8>::vlanes();\n+#if defined(__riscv_v) && __riscv_v == 1000000\n+            // RISC-V RVV: u16 累加域提升至 LMUL=2（e16,m2，VLEN=256 下 32 lane/op），\n+            // 消除 v_expand 的 e16m1 lo/hi 拆分与每迭代多次 vsetvli/地址重建。\n+            // vwcvtu 做 u8m1→u16m2 加宽；vsaddu 饱和加与 universal v_add（v_uint16\n+            // 在 RVV 后端映射为 __riscv_vsaddu）语义一致（flush_at=256 合同内不触发饱和）。\n+            for (; i <= len - vlanes8; i += vlanes8)\n+            {\n+                vuint8m1_t vs = __riscv_vle8_v_u8m1(src + i, vlanes8);\n+                vuint16m2_t vw = __riscv_vwcvtu_x(vs, vlanes8);\n+                vuint16m2_t va = __riscv_vle16_v_u16m2(buf16 + i, vlanes8);\n+                va = __riscv_vsaddu_vv_u16m2(va, vw, vlanes8);\n+                __riscv_vse16_v_u16m2(buf16 + i, va, vlanes8);\n+            }\n+#else\n             for (; i <= len - vlanes8; i += vlanes8)\n             {\n                 v_uint16 lo, hi;\n@@ -852,6 +866,7 @@ static void reduceRowSum_8u32s(const Mat& srcmat, Mat& dstmat)\n                 v_store(buf16 + i, v_add(vx_load(buf16 + i), lo));\n                 v_store(buf16 + i + vlanes16, v_add(vx_load(buf16 + i + vlanes16), hi));\n             }\n+#endif\n #endif\n             for (; i < len; i++)\n                 buf16[i] += (ushort)src[i];\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

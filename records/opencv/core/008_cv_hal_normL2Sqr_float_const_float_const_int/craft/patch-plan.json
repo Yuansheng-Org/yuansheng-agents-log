@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-opencv-core-008",
+  "blueprintId": "bp-opencv-core-008",
+  "createdAt": "2026-09-09T06:02:00.000Z",
+  "objective": "解决 cv::hal::normL2Sqr_ 在短向量调用下被 compiler 生成的 residual tail loop 固定成本主导（约 70.6% 函数内样本）：tail 每迭代（≤8 元素）支付回边分支、3 次 vsetvli/vsetivli 与 vfmv.s.f/vfredosum.vs/vfmv.f.s 串行水平归约链。将标量残余循环 for(; j<n; j++) d += t*t 改为单次 avl=r（r=n-j，0<r<vl）有界向量化 tail：一次 vle32 双 load + vfsub + tail-undisturbed vfmacc 并入向量累加器，函数末尾仅一次 v_reduce_sum 水平归约，消除回边/多余 vsetvli/逐迭代串行抽取。",
+  "changes": [
+    {
+      "filePath": "modules/core/src/norm.dispatch.cpp",
+      "action": "modify",
+      "rationale": "blueprint rootCause：normL2Sqr_ 的 4×vl 主循环健康（逐指令 <1%），热点集中在 compiler 生成的 residual tail（2a8d58 bge 34.42% + 2a8d9c 回边 29.67%）。源码 norm.dispatch.cpp:182-186 的 `for(; j<n; j++) d += t*t` 在 RVV 构建下被编译为带回边/重复 vsetvli/串行归约的尾循环。修复：在 v_reduce_sum 之前以 bounded avl=r 把 tail 并入 v_d0 向量累加器，使最终归约只发生一次。",
+      "instructions": [
+        "在 normL2Sqr_ 的第二个主循环 `for(; j <= n - vl; j += vl)` 结束之后、`d = v_reduce_sum(v_d0);` 之前，插入 `#if defined(__riscv_v) && __riscv_v == 1000000` 守卫的 bounded-avl tail 块（守卫条件与 hal/riscv-rvv/rvv_hal.hpp:12 的 CV_HAL_RVV_1P0_ENABLED 一致）。",
+        "tail 块逻辑：`if( j < n )` 时 `const size_t r = (size_t)(n - j);`（0 < r < vl），`vfloat32m1_t ta = __riscv_vle32_v_f32m1(a + j, r);` 与 `tb = __riscv_vle32_v_f32m1(b + j, r);`（avl=r 有界 load，不得 over-read），`td = __riscv_vfsub_vv_f32m1(ta, tb, r);`，`v_d0 = __riscv_vfmacc_vv_f32m1_tu(v_d0, td, td, r);`（tail-undisturbed FMA：仅更新 lane 0..r-1，lane r..vlmax-1 保留主循环部分和），最后 `j = n;` 消耗 tail，使下方标量循环不执行。",
+        "v_d0 为 v_float32（RVV scalable 后端即 vfloat32m1_t，intrin_rvv_scalable.hpp:54），可直接作为 __riscv intrinsic 参数/返回。",
+        "不改动主循环（4×vl 与 vl 循环）、不改动 v_reduce_sum 调用、不改动标量回退循环（非 RVV 构建继续走原路径）。",
+        "数值容差：tail 并入向量累加器后经单次 vfredusum 树归约，与主循环 vfmacc 重排同类，须落在 OpenCV norm 既有浮点容差内（blueprint constraints 第 2 条）。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "仅修改 modules/core/src/norm.dispatch.cpp：normL2Sqr_ 在 v_reduce_sum 前新增 #if __riscv_v==1000000 守卫的 bounded-avl tail（vle32×2 + vfsub + vfmacc_tu，avl=r，j=n）。预期 diff 为单文件 +18 行。"
+}

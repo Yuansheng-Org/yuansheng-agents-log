@@ -1,0 +1,51 @@
+7-OPENCV-PERF-BENCHMARK video RISC-V perf stat
+==============================================
+
+Source CSV: /workspace/results/7-opencv-perf-benchmark_results.csv
+TestName: video
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| IPC | 0.6236820000 |
+| L1_dcache_load_misses | 2,532,623,218 |
+| L1_dcache_loads | 150,223,154,755 |
+| LLC_load_misses | NA |
+| LLC_loads | NA |
+| branch_misses | 431,214,501 |
+| branches | 29,382,016,111 |
+| cache_misses | NA |
+| cache_references | NA |
+| cpu_cycle | 788,470,757,123 |
+| duration_time | 82,676,706,577 |
+| instruction | 491,755,047,140 |
+| task_clock | 360,187.1800000000 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 82.676707 |
+| branch_miss_rate | 1.468% |
+| L1_dcache_load_miss_rate | 1.686% |
+
+perf stat style summary
+-----------------------
+              0.6236820000  IPC
+             2,532,623,218  L1_dcache_load_misses
+           150,223,154,755  L1_dcache_loads
+                        NA  LLC_load_misses
+                        NA  LLC_loads
+               431,214,501  branch_misses
+            29,382,016,111  branches
+                        NA  cache_misses
+                        NA  cache_references
+           788,470,757,123  cpu_cycle
+            82,676,706,577  duration_time
+           491,755,047,140  instruction
+        360,187.1800000000  task_clock
+                 82.676707  duration_s
+                    1.468%  branch_miss_rate
+                    1.686%  L1_dcache_load_miss_rate

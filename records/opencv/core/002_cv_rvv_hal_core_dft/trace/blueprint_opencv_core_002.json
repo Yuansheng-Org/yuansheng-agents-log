@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-opencv-core-002",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-09T05:04:33.707Z",
+    "software": "opencv",
+    "testcaseIds": [
+      "core"
+    ],
+    "diagnosisId": "diag-20260909T050433707Z-aba3c7d8",
+    "targetHardware": "SpacemiT X100 (K3, RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://github.com/opencv/opencv.git",
+    "testBranch": "5.x",
+    "commitHash": "f8ef5fd4c699671c9553f73d28c051abc6cf8e3d",
+    "specBaseline": 3.014851
+  },
+  "problem": {
+    "summary": "OpenCV RVV 的 cv::rvv_hal::core::dft（libopencv_core.so.5.1.0）在 SpacemiT X100（VLEN=256）上 rank-002 热点，6802 samples：f32 radix 蝶形与重排循环全部使用 e32,mf2（每向量 op 仅 4 lane，天然 m1 下限为 8 lane），迭代/回边/配置开销按两倍次数摊薄；f64 m1 内核活寄存器集过大触发栈 spill；内层循环还重复 csrr vlenb 推导与 vl 不变的 vtype 往返切换。源码证实 dxt.cpp:15 将 rvv<float> 固定映射到 RVV_F32MF2，而 m1/m2/m4/m8 备选均存在未用。",
+    "evidence": [
+      "cpu-clock 6802 samples：f32 radix 内核 vtype 全为 e32,mf2（0.56 : 3283e6: vsetvli t6,zero,e32,mf2,ta,ma；0.54 : 328504: vsetvli zero,a5,e32,mf2,ta,ma），VLEN=256 下每 op 仅 4 lane（m1=8 lane）",
+      "回边分支与配置开销高：4.63 : 32855e: blt s3,a6（f32 radix-5 回边）、1.81 : 32a424: blt、1.48 : 32a498: blt、1.13 : 328904: blt",
+      "循环内重复 vector-state：2.56 : 32a480: vsetvli zero,zero,e32,m4（e64 gather 循环每轮 4 次 vtype 切换）、0.94 : 32851c: csrr a4,vlenb、0.15 : 328818: csrr a2,vlenb、0.10 : 32883c: csrr a2,vlenb",
+      "活寄存器集压力/栈溢出：1.57 : 328562: ld s6,8(sp)、0.75 : 328814: vs1r.v v10,(a2)",
+      "源码：hal/riscv-rvv/src/core/dxt.cpp:15 template<> struct rvv<float> : RVV_F32MF2（include/types.hpp:89 定义 RVV_F32MF2=LMUL_f2），dxt.cpp:25 rvv<double> : RVV_F64M1",
+      "全 workload perf stat：IPC=0.9176，L1_dcache_load_miss_rate=1.359%，branch_miss_rate=1.673%（compute/latency 型，非 memory-bound）"
+    ]
+  },
+  "rootCause": {
+    "summary": "OpenCV riscv-rvv HAL 的 DFT 模板把 f32 固定映射到 RVV_F32MF2（fractional LMUL mf2），在 VLEN=256 上每向量 op 只处理 4 个 f32 lane（m1 为 8 lane），蝶形/重排循环迭代数与回边/vsetvli/地址开销翻倍；f64 m1 内核活寄存器集超预算引发栈 spill；内层循环对循环不变量（vlenb、vtype）重复建立状态。",
+    "candidateFiles": [
+      "hal/riscv-rvv/src/core/dxt.cpp",
+      "hal/riscv-rvv/include/types.hpp"
+    ],
+    "performanceFactors": [
+      "RVV Register-Group Utilization and LMUL Sizing",
+      "RVV Vector-State Management"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "low",
+    "mustPreserve": [
+      "dft 的 nf/factors/scale/isInverse/noPermute 语义与输出布局",
+      "复数蝶形逐 lane 独立运算的数值结果（LMUL 改变不改变 FP 运算顺序与结果）",
+      "vloxei32 index 位宽语义（index=字节偏移/元素大小）",
+      "RVV 1.0 ISA 与 CV_HAL_RVV_1P0_ENABLED 构建门"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "core"
+    ],
+    "regressionCommand": "agent1 patch_regression --case core"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.8,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 workload 为 compute/latency 型（IPC=0.9176、L1 miss 1.36%、branch miss 1.67%），本地向量调优是正确杠杆；annotate 直接证据显示 f32 radix 蝶形/重排循环全程 e32,mf2 vtype（VLEN=256 下每 op 4 lane）、回边分支 4.63% 与循环内重复 csrr vlenb/vsetvli（合计约 3.75%）；源码在 hal/riscv-rvv/src/core/dxt.cpp:15 把 rvv<float> 固定继承 RVV_F32MF2（include/types.hpp:89），而 m1/m2/m4/m8 备选存在未用——三者共同指向模板级 LMUL 选型过保守与 vector-state bookkeeping 冗余，与命中 pattern（Register-Group Utilization / Vector-State Management）机制一致。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "mf2 可能是为 zvl128b 最小 VLEN 可移植性做的保守选择（build ISA 含 zvl128b1p0）；在 VLEN=256 上的收益需 A/B 实测，最终形态可能是 VLEN 感知选择而非全局提升 LMUL",
+      "itab 重排 gather-scatter 循环固有数据搬运（vloxei32+vsse32/vsse64，合计约 22% 局部份额）属算法层成本，Stockham autosort 消除位反转级是更大幅重构，超出 LMUL 调优范围"
+    ],
+    "currentGaps": "Sampling IP precision 未知（cpu-clock 软事件，单行占比只锚定区间）；f32/f64 radix 内核 m1/m2 候选的 instruction-level live-range 合法性未验证（implementation_shape_gap：需证明提升 LMUL 后无 vector spill）；local period 采样，workload 级份额未知",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV core",
+    "recommendedFirstAction": "在 hal/riscv-rvv/src/core/dxt.cpp:15（rvv<float> : RVV_F32MF2）与 dxt.cpp:25（rvv<double> : RVV_F64M1）评估将 DFT 蝶形/重排内核的 LMUL 从 mf2/m1 提升到 m1/m2（候选参考 include/types.hpp:85-93 的 RVV_F32M1/M2、RVV_F64M2），前提是按 per-kernel live-range 收缩（wave/twiddle 系数 load 移近 consumer、wave 改 split/SoA 布局）验证无新增 vector spill；并将在内层循环重复的 vlenb 推导提升到循环外",
+    "recommendedVerification": "以相同 -march（含 v1p0）重建，重跑 opencv_perf_core 并对 cv::rvv_hal::core::dft 重做 perf annotate：确认 e32,mf2 vsetvli（3283e6/328504）消失、回边分支（32855e 等）占比下降、32a480 vsetvli 与 csrr vlenb 各点退出循环体、无新增 vector spill；对比 core 测试 ratio 是否下降",
+    "metricEvidence": [
+      {
+        "metric": "Duration(s)",
+        "rv": 460.396,
+        "anomalyNote": "全 benchmark 窗口时长 460.4s，task_clock 872.7s（多核并发）"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.9176,
+        "anomalyNote": "compute/latency 型总体，本地向量调优杠杆成立"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 1.359,
+        "anomalyNote": "低位，非 memory-bound"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 1.673,
+        "anomalyNote": "低位，非 branch-bound；回边开销是执行频率而非预测失败问题"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "cv::rvv_hal::core::dft",
+        "fileModule": "hal/riscv-rvv/src/core/dxt.cpp",
+        "rvvPattern": "RVV Register-Group Utilization and LMUL Sizing",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.1724,
+        "note": "频域变换（DFT/FFT）HAL 内核：f32 radix 蝶形/重排循环固定 e32,mf2（VLEN=256 下 4 lane/op），回边分支 4.63% 与配置开销按两倍迭代摊薄；f64 m1 内核活寄存器集超预算引发栈 spill"
+      },
+      {
+        "hotspotFunction": "cv::rvv_hal::core::dft",
+        "fileModule": "hal/riscv-rvv/src/core/dxt.cpp",
+        "rvvPattern": "RVV Vector-State Management",
+        "patternConfidence": "MEDIUM",
+        "benefitUpperbound": 0.0375,
+        "note": "同一函数内独立机制：e64 gather 循环每轮 4 次 vl 不变的 vtype 往返（32a480 单行 2.56%），radix 循环内重复 csrr vlenb 推导栈偏移"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "hal/riscv-rvv/src/core/dxt.cpp:15 (template<> struct rvv<float> : RVV_F32MF2)、hal/riscv-rvv/src/core/dxt.cpp:25 (rvv<double> : RVV_F64M1)、hal/riscv-rvv/include/types.hpp:89 (using RVV_F32MF2 = struct RVV<float, LMUL_f2>)",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/26318\nhttps://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5\nhttps://github.com/opencv/opencv/pull/25586\nhttps://github.com/torvalds/linux/commit/a4348546332c9fae12b29acb514535e0a52b9b3c\nhttps://github.com/openjdk/jdk/commit/bdd37b0e5eaa984e2ad2e9010af37dcd612cc05e\nhttps://github.com/vllm-project/vllm/pull/47538\nhttps://github.com/v8/v8/commit/c81ffb7a356dc408940d479fbbec1d048181be71\nhttps://github.com/qemu/qemu/commit/d57dfe4b37ae542cec84a0cf751ecef313614cb6",
+      "evidenceExplanation": "源码 dxt.cpp:15 直接证明 f32 DFT 固定继承 RVV_F32MF2（types.hpp:89 定义 LMUL_f2），而 types.hpp:85-88 的 RVV_F32M1/M2/M4/M8 备选均未启用——对应 register-group pattern 的 LMUL 选型欠利用；annotate 中循环内重复 csrr vlenb/vsetvli 对应 vector-state pattern 的重复状态建立；关联 PR/commit 为该两 pattern 的 RVV LMUL 选型与 vector-state 消除提供跨项目佐证"
+    }
+  }
+}

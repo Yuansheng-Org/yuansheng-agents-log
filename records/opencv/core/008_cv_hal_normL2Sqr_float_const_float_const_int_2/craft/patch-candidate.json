@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-opencv-core-008",
+  "patchPlanId": "pp-bp-opencv-core-008",
+  "createdAt": "2026-09-09T05:56:04.390Z",
+  "changedFiles": [
+    "modules/core/src/norm.dispatch.cpp"
+  ],
+  "gitDiff": "diff --git a/modules/core/src/norm.dispatch.cpp b/modules/core/src/norm.dispatch.cpp\nindex ca9aac1f26..715a6fdcd1 100644\n--- a/modules/core/src/norm.dispatch.cpp\n+++ b/modules/core/src/norm.dispatch.cpp\n@@ -177,6 +177,24 @@ float normL2Sqr_(const float* a, const float* b, int n)\n         v_float32 t0 = v_sub(vx_load(a + j), vx_load(b + j));\n         v_d0 = v_muladd(t0, t0, v_d0);\n     }\n+#if defined(__riscv_v) && __riscv_v == 1000000\n+    // Bounded-avl tail (0 < r < vl): the compiler-generated scalar remainder loop\n+    // below pays a back-edge branch, 3x vsetvli/vsetivli and a serial\n+    // vfmv.s.f/vfredosum.vs/vfmv.f.s horizontal-reduction chain per short call,\n+    // dominating normL2Sqr_ (about 70.6% of in-function samples).  Fold the tail\n+    // into the vector accumulator with one bounded avl=r load pair + vfsub +\n+    // tail-undisturbed vfmacc, so a single v_reduce_sum below performs the final\n+    // horizontal reduction and j is consumed (no over-read: avl=r, r < vl).\n+    if( j < n )\n+    {\n+        const size_t r = (size_t)(n - j);\n+        vfloat32m1_t ta = __riscv_vle32_v_f32m1(a + j, r);\n+        vfloat32m1_t tb = __riscv_vle32_v_f32m1(b + j, r);\n+        vfloat32m1_t td = __riscv_vfsub_vv_f32m1(ta, tb, r);\n+        v_d0 = __riscv_vfmacc_vv_f32m1_tu(v_d0, td, td, r);\n+        j = n;\n+    }\n+#endif\n     d = v_reduce_sum(v_d0);\n #endif\n     for( ; j < n; j++ )\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

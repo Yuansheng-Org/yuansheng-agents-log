@@ -1,0 +1,218 @@
+ Percent |	Source code & Disassembly of libopencv_core.so.5.1.0 for cpu-clock (2629 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000002a8c64 <cv::hal::normL2Sqr_(float const*, float const*, int)>:
+         : 6      cv::hal_baseline::VTraits<__rvv_float32m1_t>::vlanes():
+         : 123    OPENCV_HAL_IMPL_RVV_TRAITS(vfloat16m2_t, hfloat, e16m2, 16)
+         : 124    OPENCV_HAL_IMPL_RVV_TRAITS(vfloat16m4_t, hfloat, e16m4, 16)
+         : 125    OPENCV_HAL_IMPL_RVV_TRAITS(vfloat16m8_t, hfloat, e16m8, 16)
+         : 126    #endif
+         :
+         : 128    OPENCV_HAL_IMPL_RVV_TRAITS(vfloat32m1_t, float, e32m1, 32)
+    2.55 :   2a8c64: vsetvli a5,zero,e32,m1,ta,ma
+         : 130    cv::hal_baseline::v_setzero_f32():
+         : 239    inline v_float16 v_setall_f16(hfloat v)
+         : 240    {
+         : 241    return __riscv_vfmv_v_f_f16m1((_Float16)v, VTraits<v_float16>::vlanes());
+         : 242    }
+         : 243    #endif
+         : 244    OPENCV_HAL_IMPL_RVV_INIT_FP(float32, float, f32, VTraits<v_float32>::vlanes())
+   10.00 :   2a8c68: vmv.v.i v13,0
+         : 246    cv::hal::normL2Sqr_(float const*, float const*, int):
+         : 157    result += tab[a[i] ^ b[i]];
+         : 158    return result;
+         : 159    }
+         :
+         : 161    float normL2Sqr_(const float* a, const float* b, int n)
+         : 162    {
+    0.00 :   2a8c6c: addi    sp,sp,-32
+    0.00 :   2a8c6e: sd      s2,8(sp)
+         : 163    int j = 0; float d = 0.f;
+         : 164    #if (CV_SIMD || CV_SIMD_SCALABLE)
+         : 165    const int vl = VTraits<v_float32>::vlanes();
+         : 166    v_float32 v_d0 = vx_setzero_f32(), v_d1 = vx_setzero_f32();
+         : 167    v_float32 v_d2 = vx_setzero_f32(), v_d3 = vx_setzero_f32();
+         : 168    for (; j <= n - 4 * vl; j += 4 * vl)
+    4.07 :   2a8c70: slliw   s2,a5,0x2
+         : 157    {
+    0.00 :   2a8c74: sd      s3,0(sp)
+         : 163    for (; j <= n - 4 * vl; j += 4 * vl)
+    0.00 :   2a8c76: subw    s3,a2,s2
+         : 165    cv::hal_baseline::v_setzero_f32():
+    1.22 :   2a8c7a: vmv1r.v v1,v13
+    0.00 :   2a8c7e: vmv1r.v v8,v13
+    0.00 :   2a8c82: vmv1r.v v6,v13
+    1.14 :   2a8c86: vmv1r.v v7,v13
+         : 243    cv::hal::normL2Sqr_(float const*, float const*, int):
+    0.00 :   2a8c8a: bltz    s3,2a8da6 <cv::hal::normL2Sqr_(float const*, float const*, int)+0x142>
+    0.00 :   2a8c8e: slli    a7,a5,0x1
+    0.00 :   2a8c92: add     a7,a7,a5
+    0.27 :   2a8c94: sd      s0,24(sp)
+    0.00 :   2a8c96: sd      s1,16(sp)
+    0.00 :   2a8c98: slli    a7,a7,0x2
+    0.00 :   2a8c9a: slli    t4,s2,0x2
+    0.00 :   2a8c9e: mv      a6,a0
+    0.15 :   2a8ca0: mv      a3,a1
+    0.00 :   2a8ca2: slli    t3,a5,0x2
+    0.00 :   2a8ca6: slli    t1,a5,0x3
+         : 158    int j = 0; float d = 0.f;
+    0.00 :   2a8caa: li      a4,0
+         : 166    {
+         : 167    v_float32 t0 = v_sub(vx_load(a + j), vx_load(b + j));
+         : 168    v_float32 t1 = v_sub(vx_load(a + j + vl), vx_load(b + j + vl));
+    0.00 :   2a8cac: add     s1,t3,a6
+    0.11 :   2a8cb0: add     s0,t3,a3
+         : 168    v_d0 = v_muladd(t0, t0, v_d0);
+         : 169    v_float32 t2 = v_sub(vx_load(a + j + 2 * vl), vx_load(b + j + 2 * vl));
+    0.00 :   2a8cb4: add     t2,a6,t1
+    0.00 :   2a8cb8: add     t0,a3,t1
+         : 170    v_d1 = v_muladd(t1, t1, v_d1);
+         : 171    v_float32 t3 = v_sub(vx_load(a + j + 3 * vl), vx_load(b + j + 3 * vl));
+    0.00 :   2a8cbc: add     t6,a6,a7
+    0.11 :   2a8cc0: add     t5,a3,a7
+         : 171    cv::hal_baseline::v_load(float const*):
+         : 535    OPENCV_HAL_IMPL_RVV_LOADSTORE_OP(v_uint64, vuint64m1_t, uint64, VTraits<v_uint64>::vlanes() / 2, VTraits<v_uint64>::vlanes(), 64, u64)
+         : 536    OPENCV_HAL_IMPL_RVV_LOADSTORE_OP(v_int64, vint64m1_t, int64, VTraits<v_int64>::vlanes() / 2, VTraits<v_int64>::vlanes(), 64, i64)
+         : 537    #if CV_SIMD_SCALABLE_FP16
+         : 538    OPENCV_HAL_IMPL_RVV_LOADSTORE_OP_FP16(v_float16, vfloat16m1_t, hfloat, VTraits<v_float16>::vlanes() /2 , VTraits<v_float16>::vlanes(), 16, f16)
+         : 539    #endif
+         : 540    OPENCV_HAL_IMPL_RVV_LOADSTORE_OP(v_float32, vfloat32m1_t, float, VTraits<v_float32>::vlanes() /2 , VTraits<v_float32>::vlanes(), 32, f32)
+    0.08 :   2a8cc4: vle32.v v2,(a6)
+    0.91 :   2a8cc8: vle32.v v9,(a3)
+    0.23 :   2a8ccc: vle32.v v5,(s1)
+    0.27 :   2a8cd0: vle32.v v12,(s0)
+    0.42 :   2a8cd4: vle32.v v4,(t2)
+    0.80 :   2a8cd8: vle32.v v11,(t0)
+    0.57 :   2a8cdc: vle32.v v3,(t6)
+    0.23 :   2a8ce0: vle32.v v10,(t5)
+         : 542    cv::hal_baseline::v_sub(__rvv_float32m1_t const&, __rvv_float32m1_t const&):
+         : 766    OPENCV_HAL_IMPL_RVV_BIN_OP(v_uint32, mul, __riscv_vmul)
+         : 767    OPENCV_HAL_IMPL_RVV_BIN_OP(v_int32, add, __riscv_vadd)
+         : 768    OPENCV_HAL_IMPL_RVV_BIN_OP(v_int32, sub, __riscv_vsub)
+         : 769    OPENCV_HAL_IMPL_RVV_BIN_OP(v_int32, mul, __riscv_vmul)
+         : 770    OPENCV_HAL_IMPL_RVV_BIN_OP(v_float32, add, __riscv_vfadd)
+         : 771    OPENCV_HAL_IMPL_RVV_BIN_OP(v_float32, sub, __riscv_vfsub)
+    0.23 :   2a8ce4: vfsub.vv        v2,v2,v9
+    0.04 :   2a8ce8: vfsub.vv        v5,v5,v12
+         : 774    cv::hal::normL2Sqr_(float const*, float const*, int):
+         : 163    for (; j <= n - 4 * vl; j += 4 * vl)
+    0.00 :   2a8cec: addw    a4,s2,a4
+         : 165    cv::hal_baseline::v_sub(__rvv_float32m1_t const&, __rvv_float32m1_t const&):
+    0.00 :   2a8cf0: vfsub.vv        v4,v4,v11
+         : 767    cv::hal_baseline::v_fma(__rvv_float32m1_t const&, __rvv_float32m1_t const&, __rvv_float32m1_t const&):
+         :
+         : 1332   ////////////// Multiply-Add //////////////
+         :
+         : 1334   inline v_float32 v_fma(const v_float32& a, const v_float32& b, const v_float32& c)
+         : 1335   {
+         : 1336   return __riscv_vfmacc(c, a, b, VTraits<v_float32>::vlanes());
+    0.27 :   2a8cf4: vfmacc.vv       v1,v2,v2
+         : 1338   cv::hal_baseline::v_sub(__rvv_float32m1_t const&, __rvv_float32m1_t const&):
+         : 766    OPENCV_HAL_IMPL_RVV_BIN_OP(v_float32, sub, __riscv_vfsub)
+    0.00 :   2a8cf8: vfsub.vv        v3,v3,v10
+         : 768    cv::hal_baseline::v_fma(__rvv_float32m1_t const&, __rvv_float32m1_t const&, __rvv_float32m1_t const&):
+         : 1331   return __riscv_vfmacc(c, a, b, VTraits<v_float32>::vlanes());
+    0.00 :   2a8cfc: vfmacc.vv       v8,v5,v5
+    0.27 :   2a8d00: vfmacc.vv       v6,v4,v4
+         : 1332   cv::hal::normL2Sqr_(float const*, float const*, int):
+    0.00 :   2a8d04: add     a6,a6,t4
+         : 164    cv::hal_baseline::v_fma(__rvv_float32m1_t const&, __rvv_float32m1_t const&, __rvv_float32m1_t const&):
+    0.00 :   2a8d06: vfmacc.vv       v7,v3,v3
+         : 1332   cv::hal::normL2Sqr_(float const*, float const*, int):
+    0.11 :   2a8d0a: add     a3,a3,t4
+    0.00 :   2a8d0c: bge     s3,a4,2a8cac <cv::hal::normL2Sqr_(float const*, float const*, int)+0x48>
+    0.00 :   2a8d10: ld      s0,24(sp)
+    0.27 :   2a8d12: ld      s1,16(sp)
+         : 167    cv::hal_baseline::v_add(__rvv_float32m1_t const&, __rvv_float32m1_t const&):
+         : 765    OPENCV_HAL_IMPL_RVV_BIN_OP(v_float32, add, __riscv_vfadd)
+    0.00 :   2a8d14: vfadd.vv        v1,v1,v8
+    0.00 :   2a8d18: vfadd.vv        v6,v6,v7
+         : 768    cv::hal::normL2Sqr_(float const*, float const*, int):
+         : 175    v_d2 = v_muladd(t2, t2, v_d2);
+         : 176    v_d3 = v_muladd(t3, t3, v_d3);
+         : 177    }
+         : 178    v_d0 = v_add(v_add(v_d0, v_d1), v_add(v_d2, v_d3));
+         : 179    for (; j <= n - vl; j += vl)
+    1.29 :   2a8d1c: subw    t1,a2,a5
+         : 181    cv::hal_baseline::v_add(__rvv_float32m1_t const&, __rvv_float32m1_t const&):
+    0.00 :   2a8d20: vfadd.vv        v1,v1,v6
+         : 766    cv::hal::normL2Sqr_(float const*, float const*, int):
+    0.00 :   2a8d24: blt     t1,a4,2a8d50 <cv::hal::normL2Sqr_(float const*, float const*, int)+0xec>
+    0.30 :   2a8d28: slli    a3,a4,0x2
+    0.00 :   2a8d2c: add     a6,a0,a3
+    0.00 :   2a8d30: slli    a7,a5,0x2
+    0.00 :   2a8d34: add     a3,a3,a1
+         : 179    cv::hal_baseline::v_load(float const*):
+         : 535    OPENCV_HAL_IMPL_RVV_LOADSTORE_OP(v_float32, vfloat32m1_t, float, VTraits<v_float32>::vlanes() /2 , VTraits<v_float32>::vlanes(), 32, f32)
+    0.23 :   2a8d36: vle32.v v2,(a6)
+    0.53 :   2a8d3a: vle32.v v3,(a3)
+         : 538    cv::hal::normL2Sqr_(float const*, float const*, int):
+    0.15 :   2a8d3e: addw    a4,a4,a5
+    0.00 :   2a8d40: add     a6,a6,a7
+    0.19 :   2a8d42: add     a3,a3,a7
+         : 177    cv::hal_baseline::v_sub(__rvv_float32m1_t const&, __rvv_float32m1_t const&):
+         : 766    OPENCV_HAL_IMPL_RVV_BIN_OP(v_float32, sub, __riscv_vfsub)
+    0.00 :   2a8d44: vfsub.vv        v2,v2,v3
+         : 768    cv::hal_baseline::v_fma(__rvv_float32m1_t const&, __rvv_float32m1_t const&, __rvv_float32m1_t const&):
+         : 1331   return __riscv_vfmacc(c, a, b, VTraits<v_float32>::vlanes());
+    0.00 :   2a8d48: vfmacc.vv       v1,v2,v2
+         : 1333   cv::hal::normL2Sqr_(float const*, float const*, int):
+    0.23 :   2a8d4c: bge     t1,a4,2a8d36 <cv::hal::normL2Sqr_(float const*, float const*, int)+0xd2>
+         : 176    cv::hal_baseline::v_reduce_sum(__rvv_float32m1_t const&):
+         : 1217   OPENCV_HAL_IMPL_RVV_REDUCE_SUM_FP(v_float32, v_float32, vfloat32m1_t, float, f32, VTraits<v_float32>::vlanes())
+    1.07 :   2a8d50: vfredusum.vs    v1,v1,v13
+         : 1219   cv::hal_baseline::v_get0(__rvv_float32m1_t const&):
+         : 169    return __riscv_vfmv_f(v); \
+    0.00 :   2a8d54: vfmv.f.s        fa0,v1
+         : 171    cv::hal::normL2Sqr_(float const*, float const*, int):
+         : 182    v_float32 t0 = v_sub(vx_load(a + j), vx_load(b + j));
+         : 183    v_d0 = v_muladd(t0, t0, v_d0);
+         : 184    }
+         : 185    d = v_reduce_sum(v_d0);
+         : 186    #endif
+         : 187    for( ; j < n; j++ )
+   34.42 :   2a8d58: bge     a4,a2,2a8d9e <cv::hal::normL2Sqr_(float const*, float const*, int)+0x13a>
+    0.00 :   2a8d5c: subw    a3,a2,a4
+    0.00 :   2a8d60: slli    a3,a3,0x20
+    0.00 :   2a8d62: slli    a4,a4,0x2
+    0.00 :   2a8d64: srli    a3,a3,0x20
+    0.00 :   2a8d66: add     a0,a0,a4
+    0.04 :   2a8d68: add     a1,a1,a4
+    0.49 :   2a8d6a: vsetvli a5,a3,e8,mf4,ta,ma
+         : 184    {
+         : 185    float t = a[j] - b[j];
+    0.00 :   2a8d6e: vle32.v v1,(a0)
+    0.27 :   2a8d72: vle32.v v3,(a1)
+         : 185    d += t*t;
+    0.53 :   2a8d76: vsetivli        zero,1,e32,m1,ta,ma
+    0.00 :   2a8d7a: vfmv.s.f        v2,fa0
+         : 184    float t = a[j] - b[j];
+    3.20 :   2a8d7e: vsetvli zero,a5,e32,m1,ta,ma
+    0.00 :   2a8d82: slli    a4,a5,0x2
+         : 182    for( ; j < n; j++ )
+    0.00 :   2a8d86: sub     a3,a3,a5
+         : 184    float t = a[j] - b[j];
+    0.00 :   2a8d88: vfsub.vv        v1,v1,v3
+         : 182    for( ; j < n; j++ )
+    0.08 :   2a8d8c: add     a0,a0,a4
+    0.00 :   2a8d8e: add     a1,a1,a4
+         : 185    d += t*t;
+    0.76 :   2a8d90: vfmul.vv        v1,v1,v1
+    0.00 :   2a8d94: vfredosum.vs    v2,v1,v2
+    0.15 :   2a8d98: vfmv.f.s        fa0,v2
+         : 182    for( ; j < n; j++ )
+   29.67 :   2a8d9c: bnez    a3,2a8d6a <cv::hal::normL2Sqr_(float const*, float const*, int)+0x106>
+         : 188    }
+         : 189    return d;
+         : 190    }
+    0.00 :   2a8d9e: ld      s2,8(sp)
+    0.00 :   2a8da0: ld      s3,0(sp)
+    0.00 :   2a8da2: addi    sp,sp,32
+    1.22 :   2a8da4: ret
+         : 158    int j = 0; float d = 0.f;
+    0.00 :   2a8da6: li      a4,0
+    0.87 :   2a8da8: j       2a8d14 <cv::hal::normL2Sqr_(float const*, float const*, int)+0xb0>

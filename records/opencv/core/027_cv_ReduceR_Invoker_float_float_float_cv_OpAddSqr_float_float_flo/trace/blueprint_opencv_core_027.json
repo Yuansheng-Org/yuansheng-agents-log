@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-opencv-core-027",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-09T05:34:52.461Z",
+    "software": "opencv",
+    "testcaseIds": [
+      "core"
+    ],
+    "diagnosisId": "diag-20260909T053452461Z-bee540ec",
+    "targetHardware": "SpacemiT X100 (SpacemiT K3)",
+    "repositoryUrl": "https://github.com/opencv/opencv.git",
+    "testBranch": "5.x",
+    "commitHash": "f8ef5fd4c699671c9553f73d28c051abc6cf8e3d"
+  },
+  "problem": {
+    "summary": "OpenCV core 的 REDUCE_SUM 平方和 row 归约（cv::ReduceR_Invoker<...,OpAddSqr<float>,OpSqr<float>...>::operator()）是 rank 027 热点。该编译器自动向量化的内循环在 VLEN=256 的 RISC-V 目标上固定使用 e32,m1（每轮仅 8 元素），峰值 live vector 只有 2 个，LMUL 严重欠利用，src 流式 load（76.38%）与迭代/控制开销（mv 19.43%）按过多迭代重复。",
+    "evidence": [
+      "perf annotate（cpu-clock, local period, 453 samples）：hot loop 0x242286-0x2422a4，`vle32.v v2,(s7)` 占 76.38%，`mv t6,s6` 占 19.43%，`vsetvli zero,a5,e32,m1,ta,ma` 占 0.22%（每迭代仅 1 条，AVL 逐轮变化）",
+      "峰值 live vector=2（v1 buf load、v2 src load；vfmacc.vv 就地累加 v1），LMUL*peak_live=m1*2=2 远小于 32，m2/m4 合法且无 spill",
+      "perf stat 整体：IPC=0.9176，L1_dcache_load_miss_rate=1.359%，branch_miss_rate=1.673%（函数级 bound 数据缺失）",
+      "同 rank 023 的 ReduceR_Invoker(OpMin) 命中同一 register-group pattern，但本函数无 vector-state churn（仅 1 条 vsetvli/迭代）"
+    ]
+  },
+  "rootCause": {
+    "summary": "REDUCE_SUM 平方和 row 归约热循环已向量化但 LMUL=m1 欠利用 VLEN=256（每轮 8 元素，峰值 live 仅 2 个 vector 寄存器组），迭代与循环控制开销偏高，src 流式 load（76.38%）随过多迭代重复。",
+    "candidateFiles": [
+      "modules/core/src/matrix_operations.cpp"
+    ],
+    "performanceFactors": [
+      "RVV Register-Group Utilization and LMUL Sizing"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "REDUCE_SUM 平方和逐元素数值输出一致",
+      "saturate_cast 语义（float→float 无饱和）与 OpAddSqr/OpSqr 的 a + b*b 语义",
+      "tail/mask（ta,ma）策略与函数公共 API 语义"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "core"
+    ],
+    "regressionCommand": "agent1 patch_regression --case core"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf annotate 显示热循环已向量化但固定 e32,m1（242286），VLEN=256 下每轮仅 8 元素，vle32.v v2,(s7) 占函数内 76.38%（src 流式 load）、mv 占 19.43%（循环控制），而峰值 live vector 仅 2 个（v1/v2），LMUL*peak_live=2 远小于 32，m2/m4 合法无 spill。perf stat 整体 IPC=0.9176、L1 miss 1.36% 佐证 loop 以流式访存为主，配置/循环开销为可修正部分。代码位于 matrix_operations.cpp 的 ReduceR_Invoker（base ReduceR_SIMD 未提供 RVV 专用路径，由 autovec 接手），与 rvv_register_group_utilization.md（OpenCV #26318/#25586 LMUL 调优）知识方向一致。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "该循环以 76.38% sample 落在 vle32.v 流式 load 上，可能本质为 memory-bandwidth/latency-bound，LMUL 放大的收益受内存上限约束，可能小于 LMUL 提升的线性预期",
+      "mv t6,s6 的 19.43% 高占比可能含 cpu-clock skid（sampling IP precision 未知），真实循环控制开销比例可能略低"
+    ],
+    "currentGaps": "函数级 perf stat（单函数 IPC/带宽）缺失；sampling IP precision 未知（cpu-clock 非精确）；无 compiler vectorization log 证明 autovec 的 LMUL 选择依据；未实测 m2/m4/m8 候选的 spill 与 benchmark",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + 测试用例 core",
+    "recommendedFirstAction": "在 modules/core/src/matrix_operations.cpp 的 ReduceR_Invoker::operator()/ReduceR_SIMD 路径上为 REDUCE_SUM/sqr float 提供显式 RVV universal-intrinsics SIMD specialization（经 reduce.dispatch.cpp dispatch），按 m1/m2/m4/m8×unroll=1/2/4/8 frontier 实测选定 LMUL，提升每轮覆盖元素与 src 流式 load 的 bytes-in-flight",
+    "recommendedVerification": "重跑 opencv core perf（REDUCE_SUM 用例），对比该函数 CPU 时间与 annotate 中 mv（19.43%）/vle32.v（76.38%）sample share 是否下降、函数热区间迭代数是否减少；用 objdump/perf annotate 确认 vsetvli 使用候选 LMUL 且无 vlmul_ext/vlmul_trunc/spill 回归，并逐元素比对 REDUCE_SUM 输出",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.9176,
+        "anomalyNote": "整体 workload IPC=0.9176，非函数级；未显异常但无法单独支撑函数级 bound 判定"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate",
+        "rv": 1.359,
+        "anomalyNote": "整体 1.359%，热循环 76.38% sample 落在流式 load 上，提示 memory-streaming 主导"
+      },
+      {
+        "metric": "branch_miss_rate",
+        "rv": 1.673,
+        "anomalyNote": "整体 1.673%，热循环分支非主导（bltu 0.44%），非 branch-bound"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "cv::ReduceR_Invoker<float, float, float, cv::OpAddSqr<float, float, float>, cv::OpSqr<float, float, float> >::operator()(cv::Range const&) const",
+        "fileModule": "modules/core/src/matrix_operations.cpp",
+        "rvvPattern": "RVV Register-Group Utilization and LMUL Sizing",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.2075,
+        "note": "REDUCE_SUM 平方和 row 归约内循环（buf[i]+=src[i]*src[i]），编译器自动向量化；e32,m1 欠利用 VLEN=256，src 流式 load 与迭代/控制开销随过多迭代重复"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "modules/core/src/matrix_operations.cpp:331-392 (ReduceR_SIMD base template 与 ReduceR_Invoker::operator())；modules/core/src/reduce.dispatch.cpp:14-30",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/26318 ; https://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5 ; https://github.com/opencv/opencv/pull/25586",
+      "evidenceExplanation": "当前 ReduceR sum/sqr 路径未提供 RVV universal-intrinsics SIMD specialization（ReduceR_SIMD base template 直接返回 start，循环由 GCC autovec 向量化并以 e32,m1 发射），annotate 显示 vle32.v（76.38%）与 mv/loop-control（19.43%）主导；OpenCV 上游 LMUL 调优 PR（#26318/#25586、5be158a2b6ed）与该根因方向一致，说明提升 LMUL 并保持 FMA 累加语义是同一修复方向"
+    }
+  }
+}

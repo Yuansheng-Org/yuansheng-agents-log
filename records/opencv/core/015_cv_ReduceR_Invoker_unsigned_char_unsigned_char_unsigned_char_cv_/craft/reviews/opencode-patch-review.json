@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-bp-opencv-core-015-r1",
+  "patchCandidateId": "pc-bp-opencv-core-015",
+  "reviewedAt": "2026-09-09T06:33:00.000Z",
+  "reviewer": "opencode-ai-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 判定 archSpecific=true（命中 riscv-macro）。RISC-V 专项核验通过：1) 新增 intrinsic（vsetvl_e8m1 / vle8_v_u8m1 / vminu_vv_u8m1 / vse8_v_u8m1）均为 RVV 1.0 标准指令，vminu 在 hal/riscv-rvv/src/core/norm.cpp:436 与 common.hpp:47 有既有用法；2) vtype 一致：全部 e8,m1（VLEN=256 下 vlmax=32）；3) 语义：vminu.vv 为无符号逐元素 min，与 CV_MIN_8U 查表（precomp.hpp:111 `(a) - CV_FAST_CAST_8U((a) - (b))`）逐位一致——查表实现当 a>=b 时返回 b（差值经饱和 8U 转换后为 0），a<b 时返回 a，等价 min(a,b)，无 FP 语义；4) tail 用 bounded avl（end-i）覆盖，无 over-read；5) 无 x86/ARM 指令。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F-015-01",
+      "file": "modules/core/src/matrix_operations.cpp",
+      "line": 337,
+      "evidence": "patch.diff hunk: `@@ -337,6 +337,33 @@ struct ReduceR_SIMD` / `+#if defined(__riscv_v) && __riscv_v == 1000000` / `+template <>` / `+struct ReduceR_SIMD<uchar, uchar, OpMin<uchar> >`",
+      "severity": "suggestion",
+      "category": "verification-gap",
+      "suggestion": "本环境无 riscv64 交叉编译器，无法本地编译验证。建议目标机构建后对 cv::ReduceR_Invoker<uchar,OpMin> 重做 perf annotate 确认 244002 addiw（13.70%）/243ff6 lbu（11.51%）/243ffa subw（8.49%）等查表指令消失、出现 vsetvli/vle8.v/vminu.vv/vse8.v；并以 empty/单列/vl 整倍数/tail、全相等/极值在首尾、range.start!=0、多行归约对拍 min 结果逐元素 bit 一致。"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-opencv-video-010",
+  "patchCandidateId": "pc-bp-opencv-video-010",
+  "reviewedAt": "2026-09-12T12:15:00.000Z",
+  "reviewer": "ys-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "补丁把 lkpyramid 的 6 处 #if CV_SIMD128&&!CV_NEON 块改为 (CV_SIMD128||CV_SIMD_SCALABLE)&&!CV_NEON，v_float32x4/v_int16x8/v_int32x4 替换为 scalable。注意：v_zip/v_dotprod/v_pack/v_interleave 的 128-bit 交错布局在 scalable 16-lane 下语义可能不匹配，需后续编译验证。类型均为 universal intrinsic，无 x86/ARM 指令。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": []
+}

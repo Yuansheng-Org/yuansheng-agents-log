@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-opencv-video-010",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-12T09:19:30.531Z",
+    "software": "opencv",
+    "testcaseIds": [
+      "video"
+    ],
+    "diagnosisId": "diag-20260912-091930",
+    "targetHardware": "SpacemiT K3 (spacemit-x100), RVV 1.0, VLEN=256",
+    "repositoryUrl": "https://github.com/opencv/opencv.git",
+    "testBranch": "5.x",
+    "commitHash": "f8ef5fd4c699671c9553f73d28c051abc6cf8e3d"
+  },
+  "problem": {
+    "summary": "video 第 10 热点 cv::detail::LKTrackerInvoker::operator()（libopencv_video 库代码，Lucas-Kanade 光流跟踪）：标量为主 + 部分向量化——坐标/索引计算（mulw 6.01% + fcvt.s.w 6.28% + slli 3.50% ≈16%）+ 部分向量化（vsetvli e16 9.96% + e8 3.32% ≈13%）+ 梯度/图像读取（lh/lbu 5.11%）+ 迭代分支（bnez 4.22%）。特征点迭代数据相关。",
+    "evidence": [
+      "mulw 6.01% + fcvt.s.w 6.28% + slli 3.50%（坐标/索引计算 ≈16%）",
+      "vsetvli e16 9.96% + e8 3.32%（部分向量化 patch 计算 ≈13%）",
+      "lh/lbu 5.11%（梯度/图像读取）+ bnez 4.22%（迭代分支）",
+      "特征点迭代数据相关（金字塔 LK 语义）",
+      "perf_stat（用例级共享）: IPC=0.624、L1_dcache_load_miss_rate=1.686%、branch_miss_rate=1.468%"
+    ]
+  },
+  "rootCause": {
+    "summary": "LK 光流跟踪为标量为主实现（特征点迭代：坐标/索引计算 + 梯度图像读取），部分向量化（vsetvli e16/e8 patch 梯度计算）。特征点坐标数据相关使坐标/索引计算（≈16%）与迭代分支（4.22%）为固有开销；已向量化部分（≈13%）为 patch 计算。",
+    "candidateFiles": [
+      "modules/video/src/lkpyramid.cpp"
+    ],
+    "performanceFactors": [
+      "坐标/索引计算 ≈16%（mulw/fcvt.s.w/slli，特征点数据相关）",
+      "部分向量化 ≈13%（vsetvli e16/e8，patch 梯度计算）",
+      "梯度/图像读取 ≈5%（lh/lbu）",
+      "迭代求解（bnez）为 LK 语义必需"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "LK 光流跟踪数值语义（金字塔迭代、收敛条件、边界）逐位一致",
+      "特征点坐标/位移计算语义不变"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "video",
+      "LK"
+    ]
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.5,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "conditional：无函数级 perf_stat（用例级共享指标）；LK 特征点迭代数据相关，热点分散无单一优化突破点",
+    "reasoning": "LK 跟踪为标量为主实现（特征点迭代），热点分散于坐标/索引计算（≈16%）、部分向量化（≈13%）、梯度读取（≈5%）。特征点坐标数据相关使直接向量化受限；已向量化部分（e16/e8 patch 计算）为合理实现。置信度 MEDIUM-LOW 档。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "vsetvli e16 9.96% 含采样归属放大，但向量配置为 patch 计算必需",
+      "特征点批量处理（多特征点并行）可探索，但金字塔迭代依赖数据",
+      "坐标转换（fcvt.s.w）为特征点子像素坐标语义必需"
+    ],
+    "currentGaps": "无函数级 perf_stat；特征点数量与金字塔层数未知",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认特征点批量向量化的可行性（金字塔迭代依赖）；确认已向量化 patch 计算无需进一步优化",
+    "affectedTarget": "RV + video",
+    "recommendedFirstAction": "评估特征点批量处理（多特征点并行 lane 计算 patch 梯度）摊薄坐标/索引计算与迭代开销；已向量化部分（e16/e8）保持",
+    "recommendedVerification": "运行 video LK 跟踪基准对比耗时；验证跟踪结果与参考实现一致（容差）",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.624,
+        "anomalyNote": "用例级共享指标：IPC<1 与 LK 迭代/坐标计算特征相符"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "cv::detail::LKTrackerInvoker::operator()(cv::Range const&) const",
+        "fileModule": "modules/video/src/lkpyramid.cpp",
+        "rvvPattern": "No vectorization (autovec gap / RVV kernel not built)",
+        "patternConfidence": "MEDIUM",
+        "benefitUpperbound": 0.08,
+        "note": "LK 跟踪标量为主（特征点迭代）+ 部分向量化（e16/e8 patch）；热点分散，特征点批量处理为探索性方向"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "modules/video/src/lkpyramid.cpp (LKTrackerInvoker)",
+      "relatedKnowledge": "无关联提交",
+      "evidenceExplanation": "本地证据明确：LK 特征点迭代数据相关，热点分散；已向量化部分合理，特征点批量处理为探索方向"
+    }
+  }
+}

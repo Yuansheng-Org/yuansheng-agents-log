@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "WARNING: 本补丁未检测到 RISC-V 架构相关代码（汇编/inline-asm/RVV intrinsic/ISA 特性），已跳过架构专项审核，仅做通用质量审核。",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-opencv-core-026",
+  "patchPlanId": "pp-bp-opencv-core-026",
+  "createdAt": "2026-09-09T06:24:41.897Z",
+  "changedFiles": [
+    "modules/core/src/convert.simd.hpp"
+  ],
+  "gitDiff": "diff --git a/modules/core/src/convert.simd.hpp b/modules/core/src/convert.simd.hpp\nindex e6a20be002..ec7c2de5c3 100644\n--- a/modules/core/src/convert.simd.hpp\n+++ b/modules/core/src/convert.simd.hpp\n@@ -153,8 +153,17 @@ cvt_( const _Ts* src, size_t sstep, _Td* dst, size_t dstep, Size size )\n     for( int i = 0; i < size.height; i++, src += sstep, dst += dstep )\n     {\n         int j = 0;\n-// Excluding GNU in CV_SIMD_SCALABLE because of \"opencv/issues/26936\"\n-#if (CV_SIMD || (CV_SIMD_SCALABLE && !(defined(__GNUC__) && !defined(__clang__))) )\n+// #26936 temporary GCC workaround, narrowed for cvt32f16s: the RVV universal\n+// intrinsic conversion path was disabled on GCC builds because of\n+// \"opencv/issues/26936\".  Only the float->short pair (DEF_CVT_FUNC 32f16s)\n+// re-enables the vector path here; every other pair keeps the scalar fallback\n+// on GCC, preserving the original workaround surface.  The condition is a\n+// compile-time constant per instantiation, so no runtime branch remains.\n+#if (CV_SIMD || CV_SIMD_SCALABLE)\n+        const bool useSimd = CV_SIMD != 0 || !defined(__GNUC__) || defined(__clang__) ||\n+            (std::is_same<_Ts, float>::value && std::is_same<_Td, short>::value);\n+        if( useSimd )\n+        {\n         const int VECSZ = VTraits<_Twvec>::vlanes()*2;\n         for( ; j < size.width; j += VECSZ )\n         {\n@@ -168,6 +177,7 @@ cvt_( const _Ts* src, size_t sstep, _Td* dst, size_t dstep, Size size )\n             vx_load_pair_as(src + j, v0, v1);\n             v_store_pair_as(dst + j, v0, v1);\n         }\n+        }\n #endif\n         for( ; j < size.width; j++ )\n             dst[j] = saturate_cast<_Td>(src[j]);\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}
