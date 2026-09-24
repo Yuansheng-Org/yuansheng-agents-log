@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-postgresql-select_only_clients_16-024",
+  "source": {
+    "agent": "trace",
+    "software": "postgresql",
+    "testcaseIds": [
+      "select_only_clients_16"
+    ],
+    "diagnosisId": "diag-20260914T151928744Z-18ee41da",
+    "targetHardware": "XuanTie C920v2 (SOPHGO SG2044)",
+    "repositoryUrl": "https://github.com/postgres/postgres.git",
+    "testBranch": "master",
+    "commitHash": "86f7c82cf1023e3599f40f939727791a7090cd44",
+    "createdAt": "2026-09-14T15:19:28.744Z"
+  },
+  "problem": {
+    "summary": "PostgreSQL 16-client pgbench select-only 场景下，共享缓冲 pin/unpin 热路径 PinBuffer 是 Top-30 热点（rank 024）。其 no-barrier 语义的 64 位缓冲状态原子读 pg_atomic_read_u64(&buf->state) 在 RISC-V 上被编译为 lr.d.aqrl + sc.d.rl zero 的 seq_cst compare-exchange 循环，而非一条对齐 64 位 load，在 16 后端并发 pin/unpin 同一共享缓冲头时放大 cache-line 保留/一致性流量与全屏障开销。",
+    "evidence": [
+      "perf stat: duration_time=38.91s, IPC=0.4311, branch_miss_rate=12.55%, L1_dcache_load_miss_rate=4.61%, LLC_load_miss_rate=3.35%; latency_average_ms=0.362, TPS=41204 (16 clients)",
+      "perf annotate PinBuffer: 152 samples; 471710 beq PrivateRefCountEntryLast==-1 = 42.11%, 4717e4 bnez SC-retry = 36.18%; pg_atomic_read_u64 被编译为 lr.d.aqrl(471732/47179e) + sc.d.rl zero(471738/4717a4) 而非 ld",
+      "code knowledge: generic.h 319-335 的 pg_atomic_read_u64_impl CAS-with-0 回退 + atomics.h 66-72 无 __riscv 分支 → PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY 在 RISC-V 上从未定义"
+    ]
+  },
+  "rootCause": {
+    "summary": "PostgreSQL 在 RISC-V 上未定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY（atomics.h 缺少 __riscv arch 头分支、无 arch-riscv.h），导致无屏障语义的 pg_atomic_read_u64() 走 generic.h 的 CAS-with-0 回退（__atomic_compare_exchange_n seq_cst），被编译为 lr.d.aqrl + sc.d.rl zero 循环；RV64 对齐 8 字节 load 本身单拷贝原子，应是一条 ld。",
+    "candidateFiles": [
+      "src/include/port/atomics.h",
+      "src/include/port/atomics/generic.h",
+      "src/include/port/atomics/arch-riscv.h"
+    ],
+    "performanceFactors": [
+      "Intrinsifying Atomic Operations for Hardware Synchronization"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "保持 pg_atomic_read_u64 的『无屏障语义』合约与单拷贝原子性（RV64 对齐 8 字节 load 本身原子）",
+      "不改变 PinBuffer 的 refcount/usagecount 语义与 BM_VALID 返回值",
+      "不修改 pg_atomic_compare_exchange_u64 的 seq_cst CAS 路径（refcount CAS loop 仍需 seq_cst）",
+      "PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY 仅在 __riscv_xlen==64 下定义（RV32 仍须回退）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "select_only_clients_16"
+    ],
+    "regressionCommand": "agent1 patch_regression --case select_only_clients_16"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "触及核心原子读原语 pg_atomic_read_u64（无屏障读被降为 seq_cst LR/SC），需人工确认 RV64 单拷贝原子性假定与无屏障语义在所有调用点成立后放行。",
+    "reasoning": "perf stat 显示 16-client select-only 下 IPC 仅 0.431、branch_miss 12.55%，指向 coherence/contention-bound；perf annotate 显示 PinBuffer（共享缓冲 pin/unpin 热路径，152 样本）中 no-barrier 的 pg_atomic_read_u64(&buf->state) 被编译为 lr.d.aqrl+sc.d.rl zero 的 seq_cst CAS-0 循环（471732/471738、47179e/4717a4）而非单条 ld；源码溯源证明根因是 atomics.h 无 __riscv 分支、PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY 未定义，使 generic.h 319-335 回退被采用。该 lowering 缺陷（Go/Linux Kernel/V8 均以硬件原子内联化处理同类问题）在 16 后端并发下放大 buf->state cache-line 的 reservation/一致性流量与全屏障开销。",
+    "rootCauseType": "arch_gap",
+    "alternativeExplanations": [
+      "CAS loop（4717d8-4717e4）的 SC 重试（36.18%）是 16 后端对 buf->state 的真实 cache-line 竞争，与读回退叠加；即使修复读回退，该固有竞争仍存在，可能是主导成本。",
+      "42.11% 落在 beq（PrivateRefCountEntryLast==-1 检查）可能含采样 IP skid（cpu-clock@99Hz 无 precise_ip），不能单独归因于该分支本身。"
+    ],
+    "currentGaps": "无独立 build_isa 文件（build ISA 由 metadata cpuinfo.isa 近似）；percent type 为 local period、函数 workload 贡献未知，无法给出 workload 级 Amdahl 上界；read fallback 指令自身 0.00% 直接样本（skid）；无 ARM 对照 ratio 数据。",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 RISC-V RV64 对齐 8 字节 load 的单拷贝原子性及 pg_atomic_read_u64 无屏障语义在所有调用点成立；确认无需在 RV32（__riscv_xlen!=64）构建上回退到 CAS-with-0。",
+    "affectedTarget": "RV — select_only_clients_16",
+    "recommendedFirstAction": "在 src/include/port/atomics.h 第 66-72 行 arch 头选择分支增加 __riscv 分支，并新建 src/include/port/atomics/arch-riscv.h，在 __riscv_xlen==64 时定义 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY，使 pg_atomic_read_u64_impl 走 generic.h 310-317 的 return ptr->value; 快速路径。",
+    "recommendedVerification": "以相同 -march 与优化级别重建，重跑 pgbench select-only（16 clients），perf annotate 确认 471732/47179e 的 lr.d.aqrl 被单条 ld 取代、sc.d.rl zero 消失，观察 PinBuffer 局部样本与 IPC 变化；运行 make check 及 buffer/lmgr 并发回归。",
+    "metricEvidence": [
+      {
+        "metric": "duration_time (s)",
+        "rv": 38.91,
+        "anomalyNote": "16 clients 完成 1.6M transactions，latency avg 0.362ms，TPS 41204"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.4311,
+        "anomalyNote": "IPC 0.43 偏低，与共享缓冲原子操作/一致性 stall 主导一致"
+      },
+      {
+        "metric": "branch_miss_rate (%)",
+        "rv": 12.55,
+        "anomalyNote": "12.55% 分支未命中率偏高，与 CAS 重试回跳及竞争分支相关"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate (%)",
+        "rv": 4.613,
+        "anomalyNote": "L1 load miss 4.6%，中等"
+      },
+      {
+        "metric": "LLC_load_miss_rate (%)",
+        "rv": 3.353,
+        "anomalyNote": "LLC miss 3.4%，非极端 memory-bound"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "PinBuffer",
+        "fileModule": "src/backend/storage/buffer/bufmgr.c",
+        "rvvPattern": "Intrinsifying Atomic Operations for Hardware Synchronization",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.78,
+        "note": "并发/同步热路径：共享缓冲头的原子状态读-改-写（refcount/usagecount/BM_VALID）。0.78 为函数内原子状态热区（4716fe-4717e4）的局部样本份额上限（local period，非 workload 级），其中 CAS loop 36% 是独立的固有竞争成本、不被读修复消除，实际收益低于此上限。"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/include/port/atomics/generic.h:319-335; src/include/port/atomics.h:66-72",
+      "relatedKnowledge": "https://github.com/golang/go/commit/42c25e65f321a75b9be1725d77ea3e7175dc34ad https://github.com/golang/go/commit/497feff168b44bdcb645ab0c2a956b0033d6100d https://github.com/golang/go/commit/ad61343f886cc5ce677e7bd62385144b2ba7b8f5 https://github.com/golang/go/pull/36765 https://github.com/torvalds/linux/commit/1c0196b878a69927449d649163388ad63cafcacb https://github.com/torvalds/linux/commit/de39d2c4cdb68ece47ff9609dd5c9e87b918d1bd https://github.com/v8/v8/commit/e8fa4b9c7e6cd0f10f3a2dc22470dd7fae980c76",
+      "evidenceExplanation": "generic.h 319-335 显示 pg_atomic_read_u64_impl 在 PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY 未定义时回退为 pg_atomic_compare_exchange_u64_impl(ptr,&old=0,0)（seq_cst CAS），而 atomics.h 66-72 只有 arm/x86/ppc 分支、无 __riscv，故 RISC-V 上该宏从未定义；这与 Go/Linux Kernel/V8 把原子操作内联为最小硬件指令（纯 load 用 ld、不得用 LR/SC）的同类实践一致，共同支撑『读被过度实现为 LR/SC』这一根因。"
+    }
+  }
+}

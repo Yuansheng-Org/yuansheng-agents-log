@@ -1,0 +1,295 @@
+ Percent |	Source code & Disassembly of postgres for cpu-clock (152 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000004716f4 <PinBuffer>:
+         : 6      PinBuffer():
+         : 3297   * (recently) invalid and has not been pinned.
+         : 3298   */
+         : 3299   static bool
+         : 3300   PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy,
+         : 3301   bool skip_if_not_valid)
+         : 3302   {
+    0.00 :   4716f4: addi    sp,sp,-80
+    0.00 :   4716f6: sd      s0,64(sp)
+    0.00 :   4716f8: sd      ra,72(sp)
+    0.00 :   4716fa: sd      s1,56(sp)
+    0.00 :   4716fc: addi    s0,sp,80
+         : 3308   BufferDescriptorGetBuffer():
+         : 438    }
+         :
+         : 440    static inline Buffer
+         : 441    BufferDescriptorGetBuffer(const BufferDesc *bdesc)
+         : 442    {
+         : 443    return (Buffer) (bdesc->buf_id + 1);
+    0.00 :   4716fe: lw      a3,20(a0)
+         : 445    GetPrivateRefCountEntry():
+         : 522    if (likely(PrivateRefCountEntryLast != -1) &&
+    8.55 :   471700: auipc   a5,0x56d
+    0.66 :   471704: lw      a5,-1436(a5) # 9de164 <PrivateRefCountEntryLast>
+         : 525    PinBuffer():
+         : 3297   {
+    0.00 :   471708: mv      a4,a0
+         : 3299   GetPrivateRefCountEntry():
+         : 522    if (likely(PrivateRefCountEntryLast != -1) &&
+    0.00 :   47170a: li      a0,-1
+         : 524    PinBuffer():
+         : 3297   {
+    0.00 :   47170c: mv      a7,a1
+         : 3299   BufferDescriptorGetBuffer():
+    0.00 :   47170e: addiw   a3,a3,1
+         : 439    GetPrivateRefCountEntry():
+         : 522    if (likely(PrivateRefCountEntryLast != -1) &&
+   42.11 :   471710: beq     a5,a0,471776 <PinBuffer+0x82>
+         : 523    likely(PrivateRefCountArray[PrivateRefCountEntryLast].buffer == buffer))
+    0.00 :   471714: slli    a5,a5,0x4
+    0.00 :   471716: auipc   a1,0x58a
+    0.00 :   47171a: addi    a1,a1,274 # 9fb828 <PrivateRefCountArrayKeys>
+    0.00 :   47171e: add     a1,a1,a5
+         : 522    if (likely(PrivateRefCountEntryLast != -1) &&
+    0.00 :   471720: lw      a1,32(a1)
+    0.00 :   471722: bne     a1,a3,471776 <PinBuffer+0x82>
+         : 525    return &PrivateRefCountArray[PrivateRefCountEntryLast];
+    0.00 :   471726: auipc   a6,0x58a
+    0.00 :   47172a: addi    a6,a6,290 # 9fb848 <PrivateRefCountArray>
+    0.00 :   47172e: add     a6,a6,a5
+         : 529    pg_atomic_compare_exchange_u64_impl():
+         : 249    static inline bool
+         : 250    pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
+         : 251    uint64 *expected, uint64 newval)
+         : 252    {
+         : 253    AssertPointerAlignment(expected, 8);
+         : 254    return __atomic_compare_exchange_n(&ptr->value, expected, newval, false,
+    0.00 :   471730: addi    a4,a4,24
+    0.00 :   471732: lr.d.aqrl       a5,(a4)
+    0.00 :   471736: bnez    a5,47173e <PinBuffer+0x4a>
+    0.00 :   471738: sc.d.rl a2,zero,(a4)
+    0.00 :   47173c: bnez    a2,471732 <PinBuffer+0x3e>
+         : 260    PinBuffer():
+         : 3381   * cannot meddle with that.
+         : 3382   */
+         : 3383   result = (pg_atomic_read_u64(&buf->state) & BM_VALID) != 0;
+         :
+         : 3385   Assert(ref->data.refcount > 0);
+         : 3386   ref->data.refcount++;
+    0.00 :   47173e: lw      a4,8(a6)
+         : 3382   ResourceOwnerRememberBuffer(CurrentResourceOwner, b);
+    0.00 :   471742: auipc   a2,0x565
+    0.00 :   471746: ld      a2,462(a2) # 9d6910 <_GLOBAL_OFFSET_TABLE_+0x228>
+         : 3385   ResourceOwnerRememberBuffer():
+         :
+         : 536    /* Convenience wrappers over ResourceOwnerRemember/Forget */
+         : 537    static inline void
+         : 538    ResourceOwnerRememberBuffer(ResourceOwner owner, Buffer buffer)
+         : 539    {
+         : 540    ResourceOwnerRemember(owner, Int32GetDatum(buffer), &buffer_resowner_desc);
+    0.00 :   47174a: ld      a0,0(a2)
+         : 542    PinBuffer():
+         : 3381   ref->data.refcount++;
+    0.00 :   47174c: addiw   a4,a4,1
+         : 3378   result = (pg_atomic_read_u64(&buf->state) & BM_VALID) != 0;
+    0.00 :   47174e: srli    a5,a5,0x18
+         : 3380   ResourceOwnerRememberBuffer():
+    0.00 :   471750: mv      a1,a3
+         : 536    PinBuffer():
+         : 3381   ref->data.refcount++;
+    0.00 :   471752: sw      a4,8(a6)
+         : 3383   ResourceOwnerRememberBuffer():
+    0.00 :   471756: auipc   a2,0x543
+    0.00 :   47175a: addi    a2,a2,-1718 # 9b40a0 <buffer_resowner_desc>
+         : 537    PinBuffer():
+         : 3378   result = (pg_atomic_read_u64(&buf->state) & BM_VALID) != 0;
+    0.00 :   47175e: andi    s1,a5,1
+         : 3380   ResourceOwnerRememberBuffer():
+    0.00 :   471762: auipc   ra,0x1b5
+    0.00 :   471766: jalr    -1086(ra) # 626324 <ResourceOwnerRemember>
+         : 537    PinBuffer():
+         : 3386   }
+         :
+         : 3388   return result;
+         : 3389   }
+    0.00 :   47176a: ld      ra,72(sp)
+    0.00 :   47176c: ld      s0,64(sp)
+    0.00 :   47176e: mv      a0,s1
+    0.00 :   471770: ld      s1,56(sp)
+    0.00 :   471772: addi    sp,sp,80
+    0.00 :   471774: ret
+         : 3396   GetPrivateRefCountEntry():
+         : 533    return GetPrivateRefCountEntrySlow(buffer, do_move);
+    0.00 :   471776: mv      a0,a3
+    0.00 :   471778: li      a1,1
+    0.00 :   47177a: sd      a4,-64(s0)
+    0.00 :   47177e: sd      a3,-56(s0)
+    0.00 :   471782: sd      a2,-48(s0)
+    0.66 :   471786: sd      a7,-40(s0)
+    0.00 :   47178a: jal     46b3fa <GetPrivateRefCountEntrySlow>
+         : 541    PinBuffer():
+         : 3307   if (ref == NULL)
+    0.00 :   47178e: ld      a3,-56(s0)
+    0.66 :   471792: ld      a4,-64(s0)
+         : 3310   GetPrivateRefCountEntry():
+         : 533    return GetPrivateRefCountEntrySlow(buffer, do_move);
+    0.00 :   471796: mv      a6,a0
+         : 535    PinBuffer():
+         : 3307   if (ref == NULL)
+    0.00 :   471798: bnez    a0,471730 <PinBuffer+0x3c>
+         : 3309   pg_atomic_compare_exchange_u64_impl():
+    0.00 :   47179a: addi    a1,a4,24
+    0.00 :   47179e: lr.d.aqrl       a0,(a1)
+    1.32 :   4717a2: bnez    a0,4717aa <PinBuffer+0xb6>
+    0.00 :   4717a4: sc.d.rl a5,zero,(a1)
+    0.00 :   4717a8: bnez    a5,47179e <PinBuffer+0xaa>
+         : 254    pg_atomic_read_u64_impl():
+         : 334    * fail or succeed, but always return the old value. Possibly might store
+         : 335    * a 0, but only if the previous value also was a 0 - i.e. harmless.
+         : 336    */
+         : 337    pg_atomic_compare_exchange_u64_impl(ptr, &old, 0);
+         :
+         : 339    return old;
+    0.00 :   4717aa: ld      a7,-40(s0)
+    0.00 :   4717ae: ld      a2,-48(s0)
+         : 342    PinBuffer():
+         : 3315   if (unlikely(skip_if_not_valid && !(old_buf_state & BM_VALID)))
+    0.00 :   4717b2: bnez    a2,471858 <PinBuffer+0x164>
+         : 3322   if (unlikely(old_buf_state & BM_LOCKED))
+    0.00 :   4717b4: slli    a5,a0,0x29
+    0.00 :   4717b8: bltz    a5,4718a2 <PinBuffer+0x1ae>
+         : 3333   buf_state += BUF_REFCOUNT_ONE;
+    0.00 :   4717bc: addi    a5,a0,1
+         : 3338   if (BUF_STATE_GET_USAGECOUNT(buf_state) < BM_MAX_USAGE_COUNT)
+    0.00 :   4717c0: srli    a6,a5,0x12
+    0.00 :   4717c4: andi    a6,a6,15
+         : 3335   if (strategy == NULL)
+    0.00 :   4717c8: beqz    a7,471850 <PinBuffer+0x15c>
+         : 3347   if (BUF_STATE_GET_USAGECOUNT(buf_state) == 0)
+    0.00 :   4717cc: bnez    a6,4717d8 <PinBuffer+0xe4>
+         : 3348   buf_state += BUF_USAGECOUNT_ONE;
+    0.00 :   4717d0: lui     a5,0x40
+    0.00 :   4717d4: addi    a5,a5,1 # 40001 <_PROCEDURE_LINKAGE_TABLE_-0xaee9f>
+    0.00 :   4717d6: add     a5,a5,a0
+         : 3352   pg_atomic_compare_exchange_u64_impl():
+    0.00 :   4717d8: lr.d.aqrl       a6,(a1)
+    5.92 :   4717dc: bne     a6,a0,4717e8 <PinBuffer+0xf4>
+    0.00 :   4717e0: sc.d.rl t1,a5,(a1)
+   36.18 :   4717e4: bnez    t1,4717d8 <PinBuffer+0xe4>
+         : 253    PinBuffer():
+         : 3351   if (pg_atomic_compare_exchange_u64(&buf->state, &old_buf_state,
+    0.00 :   4717e8: bne     a6,a0,4718d2 <PinBuffer+0x1de>
+         : 3353   NewPrivateRefCountEntry():
+         : 396    res = &PrivateRefCountArray[ReservedRefCountSlot];
+    0.00 :   4717ec: auipc   a6,0x56d
+    0.00 :   4717f0: lw      a6,-1676(a6) # 9de160 <ReservedRefCountSlot>
+         : 399    PrivateRefCountArrayKeys[ReservedRefCountSlot] = buffer;
+    0.00 :   4717f4: auipc   a4,0x58a
+    0.00 :   4717f8: addi    a4,a4,52 # 9fb828 <PrivateRefCountArrayKeys>
+         : 402    TrackNewBufferPin():
+         : 3542   PrivateRefCountEntry *ref;
+         :
+         : 3544   ref = NewPrivateRefCountEntry(buf);
+         : 3545   ref->data.refcount++;
+         :
+         : 3547   ResourceOwnerRememberBuffer(CurrentResourceOwner, buf);
+    0.00 :   4717fc: auipc   a0,0x565
+    0.00 :   471800: ld      a0,276(a0) # 9d6910 <_GLOBAL_OFFSET_TABLE_+0x228>
+         : 3550   NewPrivateRefCountEntry():
+         : 399    PrivateRefCountArrayKeys[ReservedRefCountSlot] = buffer;
+    0.00 :   471804: slli    a2,a6,0x2
+         : 400    res->buffer = buffer;
+    0.00 :   471808: slli    a1,a6,0x4
+         : 399    PrivateRefCountArrayKeys[ReservedRefCountSlot] = buffer;
+    0.00 :   47180c: add     a2,a2,a4
+         : 401    ResourceOwnerRememberBuffer():
+    0.00 :   47180e: ld      a0,0(a0)
+         : 536    NewPrivateRefCountEntry():
+         : 400    res->buffer = buffer;
+    0.66 :   471810: add     a4,a4,a1
+         : 399    PrivateRefCountArrayKeys[ReservedRefCountSlot] = buffer;
+    0.00 :   471812: sw      a3,0(a2)
+         : 401    TrackNewBufferPin():
+         : 3540   ref->data.refcount++;
+    0.00 :   471814: li      a2,1
+         : 3542   PinBuffer():
+         : 3354   result = (buf_state & BM_VALID) != 0;
+    0.00 :   471816: srli    a5,a5,0x18
+         : 3356   TrackNewBufferPin():
+         : 3540   ref->data.refcount++;
+    0.00 :   471818: sd      a2,40(a4)
+         : 3542   NewPrivateRefCountEntry():
+         : 407    ReservedRefCountSlot = -1;
+    0.00 :   47181a: li      a7,-1
+         : 409    ResourceOwnerRememberBuffer():
+    0.00 :   47181c: mv      a1,a3
+    0.00 :   47181e: auipc   a2,0x543
+    0.00 :   471822: addi    a2,a2,-1918 # 9b40a0 <buffer_resowner_desc>
+         : 538    PinBuffer():
+         : 3354   result = (buf_state & BM_VALID) != 0;
+    0.00 :   471826: andi    s1,a5,1
+         : 3356   NewPrivateRefCountEntry():
+         : 400    res->buffer = buffer;
+    0.00 :   47182a: sw      a3,32(a4)
+         : 405    PrivateRefCountEntryLast = ReservedRefCountSlot;
+    0.00 :   47182c: auipc   a5,0x56d
+    0.00 :   471830: sw      a6,-1736(a5) # 9de164 <PrivateRefCountEntryLast>
+         : 407    ReservedRefCountSlot = -1;
+    0.00 :   471834: auipc   a5,0x56d
+    0.00 :   471838: sw      a7,-1748(a5) # 9de160 <ReservedRefCountSlot>
+         : 410    ResourceOwnerRememberBuffer():
+    0.00 :   47183c: auipc   ra,0x1b5
+    0.00 :   471840: jalr    -1304(ra) # 626324 <ResourceOwnerRemember>
+         : 537    PinBuffer():
+         : 3386   }
+    0.00 :   471844: ld      ra,72(sp)
+    1.32 :   471846: ld      s0,64(sp)
+    0.66 :   471848: mv      a0,s1
+    0.00 :   47184a: ld      s1,56(sp)
+    0.00 :   47184c: addi    sp,sp,80
+    0.00 :   47184e: ret
+         : 3338   if (BUF_STATE_GET_USAGECOUNT(buf_state) < BM_MAX_USAGE_COUNT)
+    0.00 :   471850: li      t1,4
+    1.32 :   471852: bltu    t1,a6,4717d8 <PinBuffer+0xe4>
+    0.00 :   471856: j       4717d0 <PinBuffer+0xdc>
+         : 3315   if (unlikely(skip_if_not_valid && !(old_buf_state & BM_VALID)))
+    0.00 :   471858: slli    a5,a0,0x27
+    0.00 :   47185c: bgez    a5,47189e <PinBuffer+0x1aa>
+         : 3322   if (unlikely(old_buf_state & BM_LOCKED))
+    0.00 :   471860: slli    a5,a0,0x29
+    0.00 :   471864: bgez    a5,4717bc <PinBuffer+0xc8>
+         : 3324   old_buf_state = WaitBufHdrUnlocked(buf);
+    0.00 :   471868: mv      a0,a4
+    0.00 :   47186a: sd      a2,-72(s0)
+    0.00 :   47186e: sd      a7,-64(s0)
+    0.00 :   471872: sd      a3,-56(s0)
+    0.00 :   471876: sd      a1,-48(s0)
+    0.00 :   47187a: sd      a4,-40(s0)
+    0.00 :   47187e: jal     47163c <WaitBufHdrUnlocked>
+         : 3315   if (unlikely(skip_if_not_valid && !(old_buf_state & BM_VALID)))
+    0.00 :   471882: slli    a5,a0,0x27
+    0.00 :   471886: ld      a4,-40(s0)
+    0.00 :   47188a: ld      a1,-48(s0)
+    0.00 :   47188e: ld      a3,-56(s0)
+    0.00 :   471892: ld      a7,-64(s0)
+    0.00 :   471896: ld      a2,-72(s0)
+    0.00 :   47189a: bltz    a5,4717bc <PinBuffer+0xc8>
+         : 3316   return false;
+    0.00 :   47189e: li      s1,0
+    0.00 :   4718a0: j       47176a <PinBuffer+0x76>
+         : 3324   old_buf_state = WaitBufHdrUnlocked(buf);
+    0.00 :   4718a2: mv      a0,a4
+    0.00 :   4718a4: sd      a2,-72(s0)
+    0.00 :   4718a8: sd      a7,-64(s0)
+    0.00 :   4718ac: sd      a3,-56(s0)
+    0.00 :   4718b0: sd      a1,-48(s0)
+    0.00 :   4718b4: sd      a4,-40(s0)
+    0.00 :   4718b8: jal     47163c <WaitBufHdrUnlocked>
+         : 3322   if (unlikely(old_buf_state & BM_LOCKED))
+    0.00 :   4718bc: ld      a4,-40(s0)
+    0.00 :   4718c0: ld      a1,-48(s0)
+    0.00 :   4718c4: ld      a3,-56(s0)
+    0.00 :   4718c8: ld      a7,-64(s0)
+    0.00 :   4718cc: ld      a2,-72(s0)
+    0.00 :   4718d0: j       4717bc <PinBuffer+0xc8>
+    0.00 :   4718d2: mv      a0,a6
+    0.00 :   4718d4: j       4717b2 <PinBuffer+0xbe>

@@ -1,0 +1,46 @@
+{
+  "software_name": "postgresql",
+  "repository_url": "https://github.com/postgres/postgres.git",
+  "test_branch": "master",
+  "commit_hash": "86f7c82cf1023e3599f40f939727791a7090cd44",
+  "run_datetime": "2026-09-09T09:31:56+08:00",
+  "architecture": "riscv64",
+  "vendor": "SOPHGO",
+  "soc": "SG2044",
+  "core": "XuanTie C920v2",
+  "vector": {
+    "flavor": "RVV 1.0",
+    "vlen_bits": 128,
+    "vlenb": 16
+  },
+  "cpuinfo": {
+    "model_name": "T-Head C920v2 (mvendorid=0x5b7, marchid=0x80000000090c0d00)",
+    "isa": "rv64imafdcv_zicbom_zicboz_zicntr_zicond_zicsr_zifencei_zihintntl_zihintpause_zihpm_zawrs_zfa_zfh_zfhmin_zca_zcb_zcd_zba_zbb_zbc_zbs_zve32f_zve32x_zve64d_zve64f_zve64x_zvfh_zvfhmin_sscofpmf_sstc_svinval_svnapot_svpbmt"
+  },
+  "instruction scheduling method": "out-of-order",
+  "binaries": {
+    "postgres-elf-h": "ELF64 little-endian PIE; Machine: RISC-V; Flags: 0x5, RVC, double-float ABI"
+  },
+  "benchmark": {
+    "recipe": "19-postgresql-pgbench-benchmark",
+    "workload": "pgbench select-only",
+    "clients": [
+      2,
+      4,
+      8,
+      16,
+      32
+    ],
+    "jobs": 2,
+    "transactions_per_client": 100000,
+    "scale": 32,
+    "perf_record_event": "cpu-clock",
+    "perf_record_frequency": 99,
+    "perf_record_call_graph": "none",
+    "yuansheng_ci_commit": "5dcbc3292631c5585c0195edd608af4dafbdc98f"
+  },
+  "warnings": [
+    "The PostgreSQL Yuansheng CI performance recipe, perf stat, and perf record completed successfully for all five fixed pgbench cases on riscv-179.",
+    "Top-30 annotate artifacts were generated afterward from the retained perf.data files with the same container-v4 workflow used for the Go and Kubernetes publications; the benchmark was not rerun during annotation."
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-postgresql-select-only-clients-16-024-001",
+  "patchCandidateId": "pc-bp-postgresql-select-only-clients-16-024",
+  "reviewedAt": "2026-09-14T16:52:00.000Z",
+  "reviewer": "AI Reviewer (comet-review)",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "RISC-V 架构专项审核通过：RV64 对齐 8 字节 load 单拷贝原子性为 ISA 保证（blueprint rootCause 证据）；交叉编译器实测 pg_atomic_read_u64_impl 生成单条 ld；__riscv_xlen==64 编译期守卫使 RV32 保持 CAS 回退"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-024-S1",
+      "file": "src/include/port/atomics/arch-riscv.h",
+      "evidence": "#if defined(__riscv) && __riscv_xlen == 64\n#define PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY",
+      "severity": "suggestion",
+      "category": "scope",
+      "suggestion": "本修复只覆盖 pg_atomic_read_u64 读回退；pg_atomic_write_u64 等其他 64 位操作若后续出现性能敏感调用点可评估类似 lowering"
+    },
+    {
+      "id": "F-024-S2",
+      "file": "src/include/port/atomics.h",
+      "evidence": "#elif defined(__riscv)\n#include \"port/atomics/arch-riscv.h\"",
+      "severity": "suggestion",
+      "category": "verification",
+      "suggestion": "目标机重建后 perf annotate 确认 PinBuffer 内 lr.d.aqrl/sc.d.rl zero 消失、出现单条 ld；跑 make check 与 buffer/lmgr 并发回归"
+    }
+  ]
+}

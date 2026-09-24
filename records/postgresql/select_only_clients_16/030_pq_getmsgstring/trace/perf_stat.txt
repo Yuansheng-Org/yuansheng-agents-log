@@ -1,0 +1,75 @@
+19-POSTGRESQL-PGBENCH-BENCHMARK select_only_clients_16 RISC-V perf stat
+=======================================================================
+
+Source CSV: /workspace/results/19-postgresql-pgbench-benchmark_results.csv
+TestName: select_only_clients_16
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 38,910,039,784 |
+| task_clock | 281,077.04 |
+| cpu_cycle | 694,050,775,767 |
+| instruction | 299,205,502,306 |
+| cache_references | 20,572,392,913 |
+| cache_misses | 20,572,393,771 |
+| branches | 26,943,740,057 |
+| branch_misses | 3,381,340,789 |
+| L1_dcache_loads | 65,301,306,871 |
+| L1_dcache_load_misses | 3,012,425,087 |
+| LLC_loads | 20,572,398,745 |
+| LLC_load_misses | 689,871,920 |
+| IPC | 0.431100 |
+| transactions_processed | 1,600,000 |
+| transactions_expected | 1,600,000 |
+| failed_transactions | 0 |
+| latency_average_ms | 0.362 |
+| initial_connection_time_ms | 54.196 |
+| transactions_per_second | 41,204.000466 |
+| clients | 16 |
+| jobs | 2 |
+| transactions_per_client | 100,000 |
+| scale | 32 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 38.910040 |
+| cache_miss_rate | 100.000% |
+| branch_miss_rate | 12.550% |
+| L1_dcache_load_miss_rate | 4.613% |
+| LLC_load_miss_rate | 3.353% |
+
+perf stat style summary
+-----------------------
+         38,910,039,784  duration_time
+             281,077.04  task_clock
+        694,050,775,767  cpu_cycle
+        299,205,502,306  instruction
+         20,572,392,913  cache_references
+         20,572,393,771  cache_misses
+         26,943,740,057  branches
+          3,381,340,789  branch_misses
+         65,301,306,871  L1_dcache_loads
+          3,012,425,087  L1_dcache_load_misses
+         20,572,398,745  LLC_loads
+            689,871,920  LLC_load_misses
+               0.431100  IPC
+              1,600,000  transactions_processed
+              1,600,000  transactions_expected
+                      0  failed_transactions
+                  0.362  latency_average_ms
+                 54.196  initial_connection_time_ms
+          41,204.000466  transactions_per_second
+                     16  clients
+                      2  jobs
+                100,000  transactions_per_client
+                     32  scale
+              38.910040  duration_s
+               100.000%  cache_miss_rate
+                12.550%  branch_miss_rate
+                 4.613%  L1_dcache_load_miss_rate
+                 3.353%  LLC_load_miss_rate

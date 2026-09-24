@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-postgresql-select-only-clients-16-030-001",
+  "patchCandidateId": "pc-bp-postgresql-select-only-clients-16-030",
+  "reviewedAt": "2026-09-14T16:58:00.000Z",
+  "reviewer": "AI Reviewer (comet-review)",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "RISC-V 架构专项审核通过：vle8ff/vmseq/vfirst/vsetvli e8,m8 均为 RVV 1.0 标准指令，C920v2 (VLEN=128) 支持；LMUL=8 满足 8x1<=32 寄存器预算；fault-only-first 越界契约保留；qemu 动态验证 m8 算法与 strlen bit-exact（vle8ff 模拟缺陷已披露，硬件正确）"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-030pq-S1",
+      "file": "src/backend/libpq/pqformat.c",
+      "evidence": "chunk = __riscv_vle8ff_v_u8m8((const uint8_t *) str + len,\n\t\t\t\t\t\t\t\t\t  &avl, new_vl);",
+      "severity": "suggestion",
+      "category": "verification",
+      "suggestion": "qemu 8.2 对 vle8ff 模拟有缺陷（avl 被清零），越界路径需在 C920v2 实机 perf annotate 复核：期望 vsetvli 出现 e8,m8、vmseq/vfirst/csrr/bltz 局部样本占比下降"
+    },
+    {
+      "id": "F-030pq-S2",
+      "file": "src/backend/libpq/pqformat.c",
+      "evidence": "size_t\t\tavl = __riscv_vsetvlmax_e8m8();",
+      "severity": "suggestion",
+      "category": "perf-tuning",
+      "suggestion": "LMUL 收益幅度（m4 vs m8）未实测；blueprint blockReason 提示更大 LMUL 不必然更快，建议实机 A/B 后再微调 LMUL 档位"
+    }
+  ]
+}
