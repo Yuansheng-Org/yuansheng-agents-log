@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-pytorch-ao_sparsifier-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-14T15:55:54.742Z",
+    "software": "pytorch",
+    "testcaseIds": [
+      "ao_sparsifier"
+    ],
+    "diagnosisId": "diag-20260914-155554",
+    "targetHardware": "SOPHGO SG2044 / XuanTie C920v2 (RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/zhangfeiv0/pytorch.git",
+    "testBranch": "yuansheng-ci",
+    "commitHash": "5ceda0dab6db34a3c843531faf883226485d009c",
+    "specBaseline": 3.014851
+  },
+  "problem": {
+    "summary": "ao_sparsifier 用例中 mul_kernel 的 RVV 显式向量化循环虽然已发出 vfmul.vv，但热点样本集中在 Vectorized 临时值的 32 字节栈 spill/reload 与 e8,m1 字节搬运循环上，而非乘法算术本身，说明向量值未被寄存器化。",
+    "evidence": [
+      "热点函数 void at::native::RVV::vectorized_loop<...mul_kernel...> 占整机采样 1.81%(13 samples, percent: local period)，为该数据集 rank 001。",
+      "函数内最高占比行 53.85 : 38fc238: add a3,a3,a5 位于 out1/out2.store 的 32-byte std::memcpy 降级循环 38fc228-38fc23a，该循环用 vsetvli a5,a4,e8,m1 建立 e8/m1、vle8.v/vse8.v 每次搬运 16 字节。",
+      "相邻样本 7.69 : 38fc20c: ld a5,-560(s0) 与 7.69 : 38fc240: ld a2,-544(s0) 是从 576 字节栈帧槽位取回 Vectorized 地址/参数；真正的乘法算术行 0.00 : 38fbd4e: vfmul.vv v2,v2,v4 占比为 0.00。",
+      "源码确认 Vectorized<float> 的向量数据存放在内存数组 fixed_vfloat32m2_t values(aten/src/ATen/cpu/vec/rvv/vec_float.h:20)，构造经 __riscv_vse32_v_f32m2、取值经 __riscv_vle32_v_f32m2，store() 用 std::memcpy(vec_float.h:154-156)。",
+      "无 perf stat，bound type 与全局百分比不可得；采样为 local period，故只能给出函数内局部样本份额。"
+    ]
+  },
+  "rootCause": {
+    "summary": "RVV Vectorized<float> 以 32 字节内存数组 values 承载向量数据，使 vectorized_loop 每轮的 Vectorized 临时值必须经栈 spill/reload 与 std::memcpy 字节搬运往返内存，而非保持在 vfloat32m2_t 寄存器中。",
+    "candidateFiles": [
+      "aten/src/ATen/cpu/vec/rvv/vec_float.h",
+      "aten/src/ATen/native/cpu/Loops.h"
+    ],
+    "performanceFactors": [
+      "Register Pressure and Save/Restore Optimization"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "mul 的逐元素数值结果与 dtype 语义",
+      "Vectorized<float>::size()=8 与标量广播(S>0)语义",
+      "TensorIterator 步长/非连续/尾块 basic_loop 处理",
+      "公开算子 API 与 RVV_SUPPORT_UNALIGN 非对齐 loadu 行为"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "ao_sparsifier"
+    ],
+    "regressionCommand": "agent1 patch_regression --case ao_sparsifier"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.62,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "仅有 perf annotate(13 samples, local period)，无 perf stat bound type、无全局百分比与 Sampling IP precision；MEDIUM pattern match 且需先由人工确认大范围改动 Vectorized 表示是否可接受。",
+    "reasoning": "因无 perf stat，指标层证据仅有函数内 local sample share(mul 热点 1.81%)。热点 pattern 指向 Register Pressure and Save/Restore：53.85% 的样本落在 38fc228-38fc23a 的 32-byte memcpy 降级循环、其余落点在栈槽取回指令，而 vfmul.vv 为 0.00；源码知识(register_pressure_and_save_restore.md 与 vec_float.h/Loops.h)说明 values 为内存数组导致每轮 spill/reload，三者共同指向 Vectorized 未寄存器化。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "byte-copy 循环开销可能部分来自 RVV_SUPPORT_UNALIGN 未开启时 loadu 的 memcpy 兼容路径，而非 Vectorized 表示本身。",
+      "样本量仅 13、且为 local period，个别行占比可能受 PMU skid 影响，不能排除调度噪声。"
+    ],
+    "currentGaps": "缺 perf stat(cycles/instructions/cache)以判定 bound type 与收益幅度；缺 RA/live-interval dump 以直接证明 peak live/ spill 归因；缺 readelf -A 确认 build ISA；无 Exact-IP 精度。",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认将 Vectorized<float> 成员改为寄存器类型(vector register)在整个 RVV vec 层的 ABI/正确性影响，以及是否先用最小改动(store 直接 vse32.v、避免 memcpy)验证收益。",
+    "affectedTarget": "RV / ao_sparsifier",
+    "recommendedFirstAction": "在 aten/src/ATen/cpu/vec/rvv/vec_float.h 中将 store()(第154-156行)的 std::memcpy 改为单条 __riscv_vse32_v_f32m2 写出，并评估把 values(第20行 fixed_vfloat32m2_t)改为寄存器类型以消除 vectorized_loop(aten/src/ATen/native/cpu/Loops.h:212-219)中的栈往返；仅改变数据承载/存放方式，不改变 mul 的逐元素语义。",
+    "recommendedVerification": "重跑 perf annotate 于同一 mul_kernel symbol，确认 38fc228-38fc23a 的 e8/m1 字节搬运循环消失或显著缩小、栈槽 ld/sd 减少；对短/中/长输入与尾块长度做 mul 数值一致性对比，再运行 ao_sparsifier 回归。",
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::...>",
+        "fileModule": "aten/src/ATen/native/cpu/Loops.h",
+        "rvvPattern": "Register Pressure and Save/Restore Optimization",
+        "patternConfidence": "MEDIUM",
+        "benefitUpperbound": 0.8461,
+        "note": "elementwise mul 的显式 RVV 向量化循环；热点在 Vectorized 临时值的栈 spill/reload 与 std::memcpy 字节搬运，属寄存器压力/保存恢复类，而非算术体。"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "aten/src/ATen/cpu/vec/rvv/vec_float.h:20 (fixed_vfloat32m2_t values); vec_float.h:154 (store std::memcpy); aten/src/ATen/native/cpu/Loops.h:199-219 (vectorized_loop)",
+      "relatedKnowledge": "https://github.com/v8/v8/commit/023bbe3a249fa1890cf3d7dee309322ec92d83b6 ; https://github.com/v8/v8/commit/9e974a766900c7bf90625f43daebb78c35c3a82e ; https://github.com/qemu/qemu/commit/caf3bef5f01e85b8bbd24e1851b50616fa03a5bb ; https://github.com/zephyrproject-rtos/zephyr/commit/6cb74ad968478852d5a597e8f0507119850590d0",
+      "evidenceExplanation": "vec_float.h 的 values 内存数组与 store 的 std::memcpy 解释了 annotate 中 32-byte 栈搬运与 e8/m1 循环的来源；register_pressure_and_save_restore 的 Related PRs 提供了寄存器生命周期缩短/复用与保存恢复优化的先例，两者指向同一根因方向。"
+    }
+  }
+}

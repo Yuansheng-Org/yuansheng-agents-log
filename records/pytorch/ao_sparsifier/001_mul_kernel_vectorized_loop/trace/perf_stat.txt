@@ -1,0 +1,565 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 718  of event 'cpu-clock'
+# Event count (approx.): 7252525180
+#
+# Overhead  Command  Shared Object       Symbol                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+# ........  .......  ..................  .....................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+#
+     1.81%  python   libtorch_cpu.so     [.] void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]
+     1.53%  python   [kernel.kallsyms]   [k] 0xffffffff80e1598e
+     1.39%  python    (deleted)          [.] 0x000000000013647a
+     1.39%  python   libtorch_cpu.so     [.] void c10::function_ref<void (char**, long const*, long, long)>::callback_fn<at::native::RVV::VectorizedLoop2d<at::native::(anonymous namespace)::fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda()#1}, at::native::(anonymous namespace)::fill_kernel(at::TensorIterator&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda()#2}> >(long, char**, long const*, long, long)
+     1.25%  python   [kernel.kallsyms]   [k] 0xffffffff800552d6
+     1.25%  python   libtorch_cpu.so     [.] c10::impl::OperatorEntry::updateDispatchTableEntry_(c10::Dispatcher const&, c10::DispatchKey)
+     1.25%  python   libtorch_cpu.so     [.] torch::jit::SharedParserData::match(torch::jit::StringCordView::Iterator, bool, bool, int*, torch::jit::StringCordView::Iterator*, torch::jit::StringCordView::Iterator*)
+     0.97%  python    (deleted)          [.] 0x0000000000135944
+     0.56%  python    (deleted)          [.] 0x000000000012fe3c
+     0.56%  python    (deleted)          [.] 0x0000000000135c6c
+     0.56%  python    (deleted)          [.] 0x0000000000135c8c
+     0.56%  python    (deleted)          [.] 0x0000000000135f56
+     0.56%  python   [kernel.kallsyms]   [k] 0xffffffff80df1a84
+     0.56%  python   libc10.so           [.] c10::isIncludedInAlias(c10::DispatchKey, c10::DispatchKey)
+     0.56%  python   libtorch_cpu.so     [.] c10::DispatchKeyExtractor::setOperatorHasFallthroughForKey(c10::DispatchKey, bool)
+     0.56%  python   libtorch_cpu.so     [.] c10::impl::OperatorEntry::getKernelForDispatchKey(c10::DispatchKey) const
+     0.42%  python    (deleted)          [.] 0x0000000000075fd0
+     0.42%  python    (deleted)          [.] 0x00000000001300fe
+     0.42%  python    (deleted)          [.] 0x000000000013016a
+     0.42%  python    (deleted)          [.] 0x0000000000135450
+     0.42%  python    (deleted)          [.] 0x0000000000135c6a
+     0.42%  python    (deleted)          [.] 0x0000000000135c74
+     0.42%  python    (deleted)          [.] 0x0000000000136498
+     0.42%  python   [kernel.kallsyms]   [k] 0xffffffff80033e72
+     0.42%  python   [kernel.kallsyms]   [k] 0xffffffff800e0f1a
+     0.42%  python   [kernel.kallsyms]   [k] 0xffffffff80df1ad4
+     0.42%  python   libc10.so           [.] c10::DispatchKeySet::iterator::operator++()
+     0.42%  python   libtorch_cpu.so     [.] c10::FunctionSchema::cloneWithRealTypes(bool) const
+     0.42%  python   libtorch_cpu.so     [.] c10::impl::OperatorEntry::OperatorEntry(c10::OperatorName&&)
+     0.42%  python   libtorch_python.so  [.] pybind11::cpp_function::dispatcher(_object*, _object* const*, unsigned long, _object*)
+     0.42%  python   libtorch_python.so  [.] pybind11::detail::all_type_info_get_cache(_typeobject*)
+     0.42%  python   libtorch_python.so  [.] pybind11::detail::get_local_internals()
+     0.28%  python    (deleted)          [.] 0x0000000000003802
+     0.28%  python    (deleted)          [.] 0x00000000000038c0
+     0.28%  python    (deleted)          [.] 0x000000000002fdd4
+     0.28%  python    (deleted)          [.] 0x0000000000072a80
+     0.28%  python    (deleted)          [.] 0x000000000007571c
+     0.28%  python    (deleted)          [.] 0x0000000000075fe2
+     0.28%  python    (deleted)          [.] 0x0000000000077c18
+     0.28%  python    (deleted)          [.] 0x00000000000aedba
+     0.28%  python    (deleted)          [.] 0x000000000012d6c2
+     0.28%  python    (deleted)          [.] 0x00000000001300f8
+     0.28%  python    (deleted)          [.] 0x0000000000130a6c
+     0.28%  python    (deleted)          [.] 0x00000000001333fa
+     0.28%  python    (deleted)          [.] 0x000000000013590c
+     0.28%  python    (deleted)          [.] 0x0000000000135910
+     0.28%  python    (deleted)          [.] 0x0000000000135cca
+     0.28%  python    (deleted)          [.] 0x0000000000136122
+     0.28%  python    (deleted)          [.] 0x0000000000136476
+     0.28%  python    (deleted)          [.] 0x000000000013759e
+     0.28%  python    (deleted)          [.] 0x000000000013b336
+     0.28%  python    (deleted)          [.] 0x000000000013ecdc
+     0.28%  python    (deleted)          [.] 0x0000000000148a22
+     0.28%  python    (deleted)          [.] 0x000000000015c77e
+     0.28%  python    (deleted)          [.] 0x000000000017eed0
+     0.28%  python    (deleted)          [.] 0x000000000017ef72
+     0.28%  python    (deleted)          [.] 0x000000000018fb3e
+     0.28%  python   [kernel.kallsyms]   [k] 0xffffffff800dd632
+     0.28%  python   [kernel.kallsyms]   [k] 0xffffffff8023a36e
+     0.28%  python   [kernel.kallsyms]   [k] 0xffffffff8025ec5e
+     0.28%  python   [kernel.kallsyms]   [k] 0xffffffff80df1aec
+     0.28%  python   [kernel.kallsyms]   [k] 0xffffffff80df1afe
+     0.28%  python   [kernel.kallsyms]   [k] 0xffffffff80e0ad10
+     0.28%  python   [kernel.kallsyms]   [k] 0xffffffff80e15b5a
+     0.28%  python   libc10.so           [.] __extenddftf2@plt
+     0.28%  python   libtorch_cpu.so     [.] c10::FunctionSchema::FunctionSchema(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::vector<c10::Argument, std::allocator<c10::Argument> >, std::vector<c10::Argument, std::allocator<c10::Argument> >, bool, bool)
+     0.28%  python   libtorch_cpu.so     [.] c10::getDispatchTableIndexForDispatchKey(c10::DispatchKey)
+     0.28%  python   libtorch_cpu.so     [.] c10::impl::OperatorEntry::deregisterKernel_(c10::Dispatcher const&, std::optional<c10::DispatchKey>, std::_List_iterator<c10::impl::AnnotatedKernel>)
+     0.28%  python   libtorch_cpu.so     [.] c10::impl::OperatorEntry::hasKernelForAnyDispatchKey(c10::DispatchKeySet) const
+     0.28%  python   libtorch_cpu.so     [.] c10::impl::OperatorEntry::missingKernel() const
+     0.28%  python   libtorch_cpu.so     [.] function_traits<at::native::(anonymous namespace)::add_clamp_kernel(at::TensorIterator&, c10::Scalar const&, c10::Scalar const&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>::ArgsTuple at::native::RVV::dereference_vec_impl<function_traits<at::native::(anonymous namespace)::add_clamp_kernel(at::TensorIterator&, c10::Scalar const&, c10::Scalar const&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>, 0ul, 1ul>(char* restrict*, function_traits<at::native::(anonymous namespace)::add_clamp_kernel(at::TensorIterator&, c10::Scalar const&, c10::Scalar const&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>::result_type const&, unsigned long, long, std::integer_sequence<unsigned long, 0ul, 1ul>) [clone .isra.0]
+     0.28%  python   libtorch_cpu.so     [.] int register_conv_params<3>()@plt
+     0.28%  python   libtorch_cpu.so     [.] torch::jit::Lexer::lexRaw(bool)
+     0.28%  python   libtorch_cpu.so     [.] torch::jit::StringCordView::find(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, unsigned long) const
+     0.28%  python   libtorch_python.so  [.] torch::jit::SwapFunctionalLinear(torch::jit::Module&)@plt
+     0.14%  python    (deleted)          [.] 0x00000000000037fa
+     0.14%  python    (deleted)          [.] 0x00000000000038c8
+     0.14%  python    (deleted)          [.] 0x000000000000691a
+     0.14%  python    (deleted)          [.] 0x0000000000006986
+     0.14%  python    (deleted)          [.] 0x0000000000007086
+     0.14%  python    (deleted)          [.] 0x000000000000a042
+     0.14%  python    (deleted)          [.] 0x000000000000a114
+     0.14%  python    (deleted)          [.] 0x000000000000a118
+     0.14%  python    (deleted)          [.] 0x000000000000bfb0
+     0.14%  python    (deleted)          [.] 0x000000000001a112
+     0.14%  python    (deleted)          [.] 0x000000000001a124
+     0.14%  python    (deleted)          [.] 0x000000000001a34a
+     0.14%  python    (deleted)          [.] 0x000000000002fd2e
+     0.14%  python    (deleted)          [.] 0x000000000002fde4
+     0.14%  python    (deleted)          [.] 0x000000000002ffb6
+     0.14%  python    (deleted)          [.] 0x00000000000695d0
+     0.14%  python    (deleted)          [.] 0x00000000000695d8
+     0.14%  python    (deleted)          [.] 0x00000000000701ec
+     0.14%  python    (deleted)          [.] 0x00000000000701f2
+     0.14%  python    (deleted)          [.] 0x00000000000701f4
+     0.14%  python    (deleted)          [.] 0x0000000000070294
+     0.14%  python    (deleted)          [.] 0x0000000000071184
+     0.14%  python    (deleted)          [.] 0x00000000000711ce
+     0.14%  python    (deleted)          [.] 0x00000000000711d2
+     0.14%  python    (deleted)          [.] 0x0000000000071296
+     0.14%  python    (deleted)          [.] 0x0000000000071368
+     0.14%  python    (deleted)          [.] 0x000000000007137e
+     0.14%  python    (deleted)          [.] 0x0000000000071994
+     0.14%  python    (deleted)          [.] 0x0000000000071c30
+     0.14%  python    (deleted)          [.] 0x0000000000071f72
+     0.14%  python    (deleted)          [.] 0x0000000000071f78
+     0.14%  python    (deleted)          [.] 0x00000000000721d8
+     0.14%  python    (deleted)          [.] 0x000000000007299e
+     0.14%  python    (deleted)          [.] 0x00000000000729be
+     0.14%  python    (deleted)          [.] 0x00000000000729c2
+     0.14%  python    (deleted)          [.] 0x0000000000072a6e
+     0.14%  python    (deleted)          [.] 0x0000000000072d44
+     0.14%  python    (deleted)          [.] 0x0000000000072d4e
+     0.14%  python    (deleted)          [.] 0x0000000000072d5a
+     0.14%  python    (deleted)          [.] 0x0000000000072d6c
+     0.14%  python    (deleted)          [.] 0x0000000000072daa
+     0.14%  python    (deleted)          [.] 0x000000000007523e
+     0.14%  python    (deleted)          [.] 0x0000000000075260
+     0.14%  python    (deleted)          [.] 0x00000000000752b0
+     0.14%  python    (deleted)          [.] 0x0000000000075472
+     0.14%  python    (deleted)          [.] 0x0000000000075488
+     0.14%  python    (deleted)          [.] 0x000000000007577e
+     0.14%  python    (deleted)          [.] 0x0000000000075782
+     0.14%  python    (deleted)          [.] 0x0000000000075790
+     0.14%  python    (deleted)          [.] 0x0000000000075798
+     0.14%  python    (deleted)          [.] 0x0000000000076040
+     0.14%  python    (deleted)          [.] 0x00000000000769e6
+     0.14%  python    (deleted)          [.] 0x0000000000077c10
+     0.14%  python    (deleted)          [.] 0x000000000007a702
+     0.14%  python    (deleted)          [.] 0x000000000007a780
+     0.14%  python    (deleted)          [.] 0x00000000000a3390
+     0.14%  python    (deleted)          [.] 0x00000000000a3694
+     0.14%  python    (deleted)          [.] 0x00000000000a45d8
+     0.14%  python    (deleted)          [.] 0x00000000000ad036
+     0.14%  python    (deleted)          [.] 0x00000000000aeff8
+     0.14%  python    (deleted)          [.] 0x00000000000dc172
+     0.14%  python    (deleted)          [.] 0x00000000000e0882
+     0.14%  python    (deleted)          [.] 0x00000000000e88aa
+     0.14%  python    (deleted)          [.] 0x00000000000eff74
+     0.14%  python    (deleted)          [.] 0x00000000000f03c4
+     0.14%  python    (deleted)          [.] 0x00000000000f0fd4
+     0.14%  python    (deleted)          [.] 0x000000000012d68a
+     0.14%  python    (deleted)          [.] 0x000000000012d68e
+     0.14%  python    (deleted)          [.] 0x000000000012d690
+     0.14%  python    (deleted)          [.] 0x000000000012d6a4
+     0.14%  python    (deleted)          [.] 0x000000000012d6be
+     0.14%  python    (deleted)          [.] 0x000000000012d6cc
+     0.14%  python    (deleted)          [.] 0x000000000012d6d0
+     0.14%  python    (deleted)          [.] 0x000000000012d70a
+     0.14%  python    (deleted)          [.] 0x000000000012dea6
+     0.14%  python    (deleted)          [.] 0x000000000012decc
+     0.14%  python    (deleted)          [.] 0x000000000012e0c4
+     0.14%  python    (deleted)          [.] 0x000000000012eaf2
+     0.14%  python    (deleted)          [.] 0x000000000012eb36
+     0.14%  python    (deleted)          [.] 0x000000000012eb40
+     0.14%  python    (deleted)          [.] 0x000000000012eb66
+     0.14%  python    (deleted)          [.] 0x000000000012eb7a
+     0.14%  python    (deleted)          [.] 0x000000000012eb88
+     0.14%  python    (deleted)          [.] 0x000000000012f4a0
+     0.14%  python    (deleted)          [.] 0x000000000012f54a
+     0.14%  python    (deleted)          [.] 0x000000000012fa6a
+     0.14%  python    (deleted)          [.] 0x000000000012fa9e
+     0.14%  python    (deleted)          [.] 0x000000000012fe68
+     0.14%  python    (deleted)          [.] 0x000000000012fe74
+     0.14%  python    (deleted)          [.] 0x000000000012fe76
+     0.14%  python    (deleted)          [.] 0x00000000001300a8
+     0.14%  python    (deleted)          [.] 0x00000000001300aa
+     0.14%  python    (deleted)          [.] 0x00000000001300f4
+     0.14%  python    (deleted)          [.] 0x00000000001300fa
+     0.14%  python    (deleted)          [.] 0x000000000013016c
+     0.14%  python    (deleted)          [.] 0x0000000000130188
+     0.14%  python    (deleted)          [.] 0x00000000001301b6
+     0.14%  python    (deleted)          [.] 0x00000000001301d2
+     0.14%  python    (deleted)          [.] 0x000000000013021c
+     0.14%  python    (deleted)          [.] 0x00000000001304a2
+     0.14%  python    (deleted)          [.] 0x000000000013050e
+     0.14%  python    (deleted)          [.] 0x0000000000130784
+     0.14%  python    (deleted)          [.] 0x0000000000130c16
+     0.14%  python    (deleted)          [.] 0x0000000000130c32
+     0.14%  python    (deleted)          [.] 0x0000000000130c3e
+     0.14%  python    (deleted)          [.] 0x0000000000130c60
+     0.14%  python    (deleted)          [.] 0x0000000000130dfa
+     0.14%  python    (deleted)          [.] 0x000000000013101a
+     0.14%  python    (deleted)          [.] 0x00000000001334a0
+     0.14%  python    (deleted)          [.] 0x00000000001334c2
+     0.14%  python    (deleted)          [.] 0x0000000000133724
+     0.14%  python    (deleted)          [.] 0x0000000000133790
+     0.14%  python    (deleted)          [.] 0x00000000001337ac
+     0.14%  python    (deleted)          [.] 0x000000000013381e
+     0.14%  python    (deleted)          [.] 0x000000000013394e
+     0.14%  python    (deleted)          [.] 0x0000000000133a96
+     0.14%  python    (deleted)          [.] 0x0000000000133a98
+     0.14%  python    (deleted)          [.] 0x0000000000133b26
+     0.14%  python    (deleted)          [.] 0x0000000000133f10
+     0.14%  python    (deleted)          [.] 0x0000000000134082
+     0.14%  python    (deleted)          [.] 0x00000000001341de
+     0.14%  python    (deleted)          [.] 0x00000000001344b0
+     0.14%  python    (deleted)          [.] 0x000000000013459c
+     0.14%  python    (deleted)          [.] 0x00000000001345cc
+     0.14%  python    (deleted)          [.] 0x00000000001345e6
+     0.14%  python    (deleted)          [.] 0x0000000000135324
+     0.14%  python    (deleted)          [.] 0x000000000013545c
+     0.14%  python    (deleted)          [.] 0x0000000000135460
+     0.14%  python    (deleted)          [.] 0x000000000013550c
+     0.14%  python    (deleted)          [.] 0x00000000001358e8
+     0.14%  python    (deleted)          [.] 0x0000000000135c68
+     0.14%  python    (deleted)          [.] 0x0000000000135cae
+     0.14%  python    (deleted)          [.] 0x0000000000135cb0
+     0.14%  python    (deleted)          [.] 0x0000000000135cbe
+     0.14%  python    (deleted)          [.] 0x0000000000135cd4
+     0.14%  python    (deleted)          [.] 0x0000000000135da8
+     0.14%  python    (deleted)          [.] 0x0000000000135daa
+     0.14%  python    (deleted)          [.] 0x0000000000135e10
+     0.14%  python    (deleted)          [.] 0x0000000000135e14
+     0.14%  python    (deleted)          [.] 0x0000000000135e16
+     0.14%  python    (deleted)          [.] 0x0000000000135e1a
+     0.14%  python    (deleted)          [.] 0x0000000000135e1c
+     0.14%  python    (deleted)          [.] 0x0000000000135e40
+     0.14%  python    (deleted)          [.] 0x0000000000135f02
+     0.14%  python    (deleted)          [.] 0x0000000000135f5e
+     0.14%  python    (deleted)          [.] 0x0000000000135f74
+     0.14%  python    (deleted)          [.] 0x0000000000135fc4
+     0.14%  python    (deleted)          [.] 0x000000000013609a
+     0.14%  python    (deleted)          [.] 0x00000000001360de
+     0.14%  python    (deleted)          [.] 0x00000000001360e4
+     0.14%  python    (deleted)          [.] 0x0000000000136344
+     0.14%  python    (deleted)          [.] 0x000000000013647c
+     0.14%  python    (deleted)          [.] 0x000000000013647e
+     0.14%  python    (deleted)          [.] 0x0000000000136482
+     0.14%  python    (deleted)          [.] 0x00000000001364b8
+     0.14%  python    (deleted)          [.] 0x00000000001364d8
+     0.14%  python    (deleted)          [.] 0x000000000013654c
+     0.14%  python    (deleted)          [.] 0x0000000000136556
+     0.14%  python    (deleted)          [.] 0x0000000000136b84
+     0.14%  python    (deleted)          [.] 0x0000000000136cf4
+     0.14%  python    (deleted)          [.] 0x0000000000136d3a
+     0.14%  python    (deleted)          [.] 0x0000000000136d4e
+     0.14%  python    (deleted)          [.] 0x0000000000136e04
+     0.14%  python    (deleted)          [.] 0x000000000013742a
+     0.14%  python    (deleted)          [.] 0x0000000000137452
+     0.14%  python    (deleted)          [.] 0x0000000000137480
+     0.14%  python    (deleted)          [.] 0x00000000001374f4
+     0.14%  python    (deleted)          [.] 0x00000000001374fa
+     0.14%  python    (deleted)          [.] 0x0000000000137520
+     0.14%  python    (deleted)          [.] 0x0000000000137570
+     0.14%  python    (deleted)          [.] 0x000000000013759c
+     0.14%  python    (deleted)          [.] 0x00000000001379d8
+     0.14%  python    (deleted)          [.] 0x0000000000137d7e
+     0.14%  python    (deleted)          [.] 0x00000000001388f8
+     0.14%  python    (deleted)          [.] 0x0000000000138904
+     0.14%  python    (deleted)          [.] 0x0000000000139266
+     0.14%  python    (deleted)          [.] 0x000000000013a4de
+     0.14%  python    (deleted)          [.] 0x000000000013b2ae
+     0.14%  python    (deleted)          [.] 0x000000000013b2c2
+     0.14%  python    (deleted)          [.] 0x000000000013b2ce
+     0.14%  python    (deleted)          [.] 0x000000000013b340
+     0.14%  python    (deleted)          [.] 0x000000000013b3b4
+     0.14%  python    (deleted)          [.] 0x000000000013b5e8
+     0.14%  python    (deleted)          [.] 0x000000000013bb2a
+     0.14%  python    (deleted)          [.] 0x000000000013c770
+     0.14%  python    (deleted)          [.] 0x000000000013ca82
+     0.14%  python    (deleted)          [.] 0x000000000013cb04
+     0.14%  python    (deleted)          [.] 0x000000000013cb6a
+     0.14%  python    (deleted)          [.] 0x000000000013e442
+     0.14%  python    (deleted)          [.] 0x000000000013ee46
+     0.14%  python    (deleted)          [.] 0x000000000013f1ea
+     0.14%  python    (deleted)          [.] 0x000000000013f524
+     0.14%  python    (deleted)          [.] 0x000000000013f804
+     0.14%  python    (deleted)          [.] 0x000000000013fef0
+     0.14%  python    (deleted)          [.] 0x00000000001407fc
+     0.14%  python    (deleted)          [.] 0x0000000000140854
+     0.14%  python    (deleted)          [.] 0x0000000000140a16
+     0.14%  python    (deleted)          [.] 0x0000000000140a28
+     0.14%  python    (deleted)          [.] 0x000000000014149a
+     0.14%  python    (deleted)          [.] 0x00000000001414f2
+     0.14%  python    (deleted)          [.] 0x0000000000141552
+     0.14%  python    (deleted)          [.] 0x0000000000141556
+     0.14%  python    (deleted)          [.] 0x0000000000142700
+     0.14%  python    (deleted)          [.] 0x00000000001442be
+     0.14%  python    (deleted)          [.] 0x00000000001445ec
+     0.14%  python    (deleted)          [.] 0x00000000001445fa
+     0.14%  python    (deleted)          [.] 0x0000000000144628
+     0.14%  python    (deleted)          [.] 0x000000000014463a
+     0.14%  python    (deleted)          [.] 0x0000000000144668
+     0.14%  python    (deleted)          [.] 0x0000000000144672
+     0.14%  python    (deleted)          [.] 0x0000000000144684
+     0.14%  python    (deleted)          [.] 0x000000000014468a
+     0.14%  python    (deleted)          [.] 0x000000000014477a
+     0.14%  python    (deleted)          [.] 0x0000000000144786
+     0.14%  python    (deleted)          [.] 0x0000000000144802
+     0.14%  python    (deleted)          [.] 0x0000000000144866
+     0.14%  python    (deleted)          [.] 0x00000000001448e8
+     0.14%  python    (deleted)          [.] 0x0000000000144926
+     0.14%  python    (deleted)          [.] 0x00000000001449b8
+     0.14%  python    (deleted)          [.] 0x0000000000144a22
+     0.14%  python    (deleted)          [.] 0x0000000000144a2e
+     0.14%  python    (deleted)          [.] 0x0000000000144a60
+     0.14%  python    (deleted)          [.] 0x0000000000144a7a
+     0.14%  python    (deleted)          [.] 0x0000000000144c36
+     0.14%  python    (deleted)          [.] 0x0000000000144c8a
+     0.14%  python    (deleted)          [.] 0x0000000000144cd0
+     0.14%  python    (deleted)          [.] 0x0000000000144d46
+     0.14%  python    (deleted)          [.] 0x0000000000144d78
+     0.14%  python    (deleted)          [.] 0x0000000000145064
+     0.14%  python    (deleted)          [.] 0x0000000000145106
+     0.14%  python    (deleted)          [.] 0x0000000000145124
+     0.14%  python    (deleted)          [.] 0x00000000001451ba
+     0.14%  python    (deleted)          [.] 0x00000000001451d4
+     0.14%  python    (deleted)          [.] 0x00000000001453bc
+     0.14%  python    (deleted)          [.] 0x000000000014544c
+     0.14%  python    (deleted)          [.] 0x000000000014592c
+     0.14%  python    (deleted)          [.] 0x000000000014599c
+     0.14%  python    (deleted)          [.] 0x0000000000145a76
+     0.14%  python    (deleted)          [.] 0x0000000000145b44
+     0.14%  python    (deleted)          [.] 0x0000000000145b6a
+     0.14%  python    (deleted)          [.] 0x0000000000145d18
+     0.14%  python    (deleted)          [.] 0x0000000000145dd8
+     0.14%  python    (deleted)          [.] 0x0000000000146154
+     0.14%  python    (deleted)          [.] 0x000000000014622a
+     0.14%  python    (deleted)          [.] 0x0000000000146268
+     0.14%  python    (deleted)          [.] 0x000000000014660c
+     0.14%  python    (deleted)          [.] 0x00000000001468aa
+     0.14%  python    (deleted)          [.] 0x0000000000147904
+     0.14%  python    (deleted)          [.] 0x0000000000147d02
+     0.14%  python    (deleted)          [.] 0x0000000000147d8a
+     0.14%  python    (deleted)          [.] 0x0000000000147e96
+     0.14%  python    (deleted)          [.] 0x0000000000148748
+     0.14%  python    (deleted)          [.] 0x0000000000148896
+     0.14%  python    (deleted)          [.] 0x000000000014970a
+     0.14%  python    (deleted)          [.] 0x000000000014a892
+     0.14%  python    (deleted)          [.] 0x000000000014adb0
+     0.14%  python    (deleted)          [.] 0x000000000014c922
+     0.14%  python    (deleted)          [.] 0x000000000014ede4
+     0.14%  python    (deleted)          [.] 0x000000000014f516
+     0.14%  python    (deleted)          [.] 0x000000000014f53e
+     0.14%  python    (deleted)          [.] 0x000000000014f59a
+     0.14%  python    (deleted)          [.] 0x000000000014f8d2
+     0.14%  python    (deleted)          [.] 0x0000000000150f6a
+     0.14%  python    (deleted)          [.] 0x0000000000151082
+     0.14%  python    (deleted)          [.] 0x00000000001515b8
+     0.14%  python    (deleted)          [.] 0x00000000001520ce
+     0.14%  python    (deleted)          [.] 0x000000000015211c
+     0.14%  python    (deleted)          [.] 0x00000000001522e0
+     0.14%  python    (deleted)          [.] 0x0000000000152434
+     0.14%  python    (deleted)          [.] 0x000000000015245c
+     0.14%  python    (deleted)          [.] 0x0000000000152718
+     0.14%  python    (deleted)          [.] 0x00000000001527ac
+     0.14%  python    (deleted)          [.] 0x00000000001527b0
+     0.14%  python    (deleted)          [.] 0x00000000001527b8
+     0.14%  python    (deleted)          [.] 0x0000000000152824
+     0.14%  python    (deleted)          [.] 0x0000000000154b6a
+     0.14%  python    (deleted)          [.] 0x0000000000154dce
+     0.14%  python    (deleted)          [.] 0x0000000000154ea6
+     0.14%  python    (deleted)          [.] 0x00000000001552f8
+     0.14%  python    (deleted)          [.] 0x0000000000155376
+     0.14%  python    (deleted)          [.] 0x0000000000155692
+     0.14%  python    (deleted)          [.] 0x0000000000155bbc
+     0.14%  python    (deleted)          [.] 0x00000000001571b6
+     0.14%  python    (deleted)          [.] 0x00000000001571c8
+     0.14%  python    (deleted)          [.] 0x00000000001572cc
+     0.14%  python    (deleted)          [.] 0x00000000001572f0
+     0.14%  python    (deleted)          [.] 0x0000000000158350
+     0.14%  python    (deleted)          [.] 0x0000000000158c86
+     0.14%  python    (deleted)          [.] 0x0000000000159842
+     0.14%  python    (deleted)          [.] 0x000000000015c878
+     0.14%  python    (deleted)          [.] 0x000000000015c886
+     0.14%  python    (deleted)          [.] 0x000000000015d3ee
+     0.14%  python    (deleted)          [.] 0x000000000015d4b0
+     0.14%  python    (deleted)          [.] 0x000000000015e4e4
+     0.14%  python    (deleted)          [.] 0x00000000001606d6
+     0.14%  python    (deleted)          [.] 0x0000000000160cc4
+     0.14%  python    (deleted)          [.] 0x0000000000161c02
+     0.14%  python    (deleted)          [.] 0x0000000000162664
+     0.14%  python    (deleted)          [.] 0x0000000000164dd8
+     0.14%  python    (deleted)          [.] 0x000000000016541e
+     0.14%  python    (deleted)          [.] 0x0000000000165de4
+     0.14%  python    (deleted)          [.] 0x00000000001662ba
+     0.14%  python    (deleted)          [.] 0x00000000001663e4
+     0.14%  python    (deleted)          [.] 0x0000000000167642
+     0.14%  python    (deleted)          [.] 0x0000000000167704
+     0.14%  python    (deleted)          [.] 0x0000000000167c02
+     0.14%  python    (deleted)          [.] 0x00000000001681c2
+     0.14%  python    (deleted)          [.] 0x000000000016878e
+     0.14%  python    (deleted)          [.] 0x000000000016ac7e
+     0.14%  python    (deleted)          [.] 0x000000000016c552
+     0.14%  python    (deleted)          [.] 0x0000000000170f02
+     0.14%  python    (deleted)          [.] 0x0000000000171c10
+     0.14%  python    (deleted)          [.] 0x000000000017268a
+     0.14%  python    (deleted)          [.] 0x0000000000173d38
+     0.14%  python    (deleted)          [.] 0x0000000000173d44
+     0.14%  python    (deleted)          [.] 0x0000000000174f66
+     0.14%  python    (deleted)          [.] 0x00000000001792d8
+     0.14%  python    (deleted)          [.] 0x0000000000179568
+     0.14%  python    (deleted)          [.] 0x0000000000179bcc
+     0.14%  python    (deleted)          [.] 0x000000000017a99c
+     0.14%  python    (deleted)          [.] 0x000000000017aa38
+     0.14%  python    (deleted)          [.] 0x000000000017c7b6
+     0.14%  python    (deleted)          [.] 0x000000000017c878
+     0.14%  python    (deleted)          [.] 0x000000000017ef48
+     0.14%  python    (deleted)          [.] 0x000000000017f1a2
+     0.14%  python    (deleted)          [.] 0x000000000017f72a
+     0.14%  python    (deleted)          [.] 0x0000000000182b8c
+     0.14%  python    (deleted)          [.] 0x000000000018344c
+     0.14%  python    (deleted)          [.] 0x0000000000183b04
+     0.14%  python    (deleted)          [.] 0x0000000000183ba0
+     0.14%  python    (deleted)          [.] 0x000000000018471c
+     0.14%  python    (deleted)          [.] 0x0000000000184818
+     0.14%  python    (deleted)          [.] 0x000000000018508a
+     0.14%  python    (deleted)          [.] 0x000000000018579a
+     0.14%  python    (deleted)          [.] 0x000000000018722c
+     0.14%  python    (deleted)          [.] 0x000000000018b2b0
+     0.14%  python    (deleted)          [.] 0x000000000018fb42
+     0.14%  python    (deleted)          [.] 0x0000000000191d5a
+     0.14%  python    (deleted)          [.] 0x0000000000192322
+     0.14%  python    (deleted)          [.] 0x0000000000192438
+     0.14%  python    (deleted)          [.] 0x00000000001924fe
+     0.14%  python    (deleted)          [.] 0x0000000000195502
+     0.14%  python    (deleted)          [.] 0x0000000000195554
+     0.14%  python    (deleted)          [.] 0x00000000001a1a0c
+     0.14%  python    (deleted)          [.] 0x00000000001a53b8
+     0.14%  python    (deleted)          [.] 0x00000000001b821c
+     0.14%  python    (deleted)          [.] 0x00000000001b85c4
+     0.14%  python    (deleted)          [.] 0x00000000001bacc0
+     0.14%  python    (deleted)          [.] 0x00000000001bbc8c
+     0.14%  python    (deleted)          [.] 0x00000000001bdf52
+     0.14%  python    (deleted)          [.] 0x00000000001be9c6
+     0.14%  python    (deleted)          [.] 0x00000000001cd758
+     0.14%  python    (deleted)          [.] 0x00000000001d08e0
+     0.14%  python    (deleted)          [.] 0x00000000001d1cfa
+     0.14%  python    (deleted)          [.] 0x00000000001d9642
+     0.14%  python    (deleted)          [.] 0x00000000001e2fa8
+     0.14%  python    (deleted)          [.] 0x00000000001e6444
+     0.14%  python    (deleted)          [.] 0x00000000001f6074
+     0.14%  python    (deleted)          [.] 0x00000000001fde80
+     0.14%  python    (deleted)          [.] 0x000000000021273e
+     0.14%  python    (deleted)          [.] 0x0000000000214120
+     0.14%  python    (deleted)          [.] 0x000000000021f6ae
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff8000f73c
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80024498
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80025740
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff8004b758
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff8004baa6
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff800dded4
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff800e0706
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff800e0eba
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff800e1454
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff8011b56a
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff801dd284
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff801dd290
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff801eace4
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff8023dc62
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff802413b6
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80241ef8
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80241fc4
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff802423ee
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff802423f0
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80245852
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff8024e29e
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff8025bdc2
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80261910
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff8026373c
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff8027014a
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80281036
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff802ac774
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff802ac784
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff802c912c
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff802d002c
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff802d1688
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff802dcea0
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff802ddade
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff802fb2d4
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff8031b634
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80538de2
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff8067bc24
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff8067bccc
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80dd9bc6
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80de0a04
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df1a76
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df1a92
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df1aa6
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df1ab4
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df1ac6
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df1ae0
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df1ae6
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df2404
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df266c
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df268c
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df26a8
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df26ac
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80df2b44
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80e0deb4
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80e0eb32
+     0.14%  python   [kernel.kallsyms]   [k] 0xffffffff80e15b60
+     0.14%  python   libc10.so           [.] c10::TensorImpl::_fw_grad(unsigned long, at::TensorBase const&) const
+     0.14%  python   libc10.so           [.] c10::getAutogradKeyFromBackend(c10::BackendComponent)
+     0.14%  python   libc10.so           [.] c10::runtimeDispatchKeySetHas(c10::DispatchKey, c10::DispatchKey)
+     0.14%  python   libc10.so           [.] std::ios_base::~ios_base()@plt
+     0.14%  python   libtorch_cpu.so     [.] at::_ops::divide_Tensor::redispatch(c10::DispatchKeySet, at::Tensor const&, at::Tensor const&)@plt
+     0.14%  python   libtorch_cpu.so     [.] at::_ops::linalg_matrix_exp::redispatch(c10::DispatchKeySet, at::Tensor const&)@plt
+     0.14%  python   libtorch_cpu.so     [.] at::native::_foreach_log1p_out(c10::ArrayRef<at::Tensor>, c10::ArrayRef<at::Tensor>)@plt
+     0.14%  python   libtorch_cpu.so     [.] at::native::div_sparse(at::Tensor const&, at::Tensor const&)@plt
+     0.14%  python   libtorch_cpu.so     [.] atanh@plt
+     0.14%  python   libtorch_cpu.so     [.] c10::Argument::cloneWithType(c10::Type::SingletonOrSharedTypePtr<c10::Type> const&) const
+     0.14%  python   libtorch_cpu.so     [.] c10::DispatchKeySet::iterator::operator*() const
+     0.14%  python   libtorch_cpu.so     [.] c10::Dispatcher::deregisterImpl_(c10::OperatorHandle const&, c10::OperatorName const&, std::optional<c10::DispatchKey>, std::_List_iterator<c10::impl::AnnotatedKernel>)
+     0.14%  python   libtorch_cpu.so     [.] c10::Dispatcher::registerImpl(c10::OperatorName, std::optional<c10::DispatchKey>, c10::KernelFunction, std::optional<c10::impl::CppSignature>, std::unique_ptr<c10::FunctionSchema, std::default_delete<c10::FunctionSchema> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >)
+     0.14%  python   libtorch_cpu.so     [.] c10::InternedStrings::InternedStrings()
+     0.14%  python   libtorch_cpu.so     [.] c10::InternedStrings::symbol(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+     0.14%  python   libtorch_cpu.so     [.] c10::MemoryFormatType::get()
+     0.14%  python   libtorch_cpu.so     [.] c10::OptionalType::OptionalType(c10::Type::SingletonOrSharedTypePtr<c10::Type> const&)
+     0.14%  python   libtorch_cpu.so     [.] c10::Symbol::ns() const
+     0.14%  python   libtorch_cpu.so     [.] c10::Type::SingletonOrSharedTypePtr<c10::Type> c10::getTypePtrCopy<at::Tensor>()
+     0.14%  python   libtorch_cpu.so     [.] c10::impl::OperatorEntry::registerSchema(c10::FunctionSchema&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::vector<torch::headeronly::Tag, std::allocator<torch::headeronly::Tag> >)
+     0.14%  python   libtorch_cpu.so     [.] fmt::v12::basic_appender<char> fmt::v12::detail::write<char, fmt::v12::basic_appender<char>, unsigned int, 0>(fmt::v12::basic_appender<char>, unsigned int) [clone .isra.0]
+     0.14%  python   libtorch_cpu.so     [.] ska::detailv3::sherwood_v3_table<std::pair<c10::DispatchKey, std::__cxx11::list<c10::impl::AnnotatedKernel, std::allocator<c10::impl::AnnotatedKernel> > >, c10::DispatchKey, std::hash<c10::DispatchKey>, ska::detailv3::KeyOrValueHasher<c10::DispatchKey, std::pair<c10::DispatchKey, std::__cxx11::list<c10::impl::AnnotatedKernel, std::allocator<c10::impl::AnnotatedKernel> > >, std::hash<c10::DispatchKey> >, std::equal_to<c10::DispatchKey>, ska::detailv3::KeyOrValueEquality<c10::DispatchKey, std::pair<c10::DispatchKey, std::__cxx11::list<c10::impl::AnnotatedKernel, std::allocator<c10::impl::AnnotatedKernel> > >, std::equal_to<c10::DispatchKey> >, std::allocator<std::pair<c10::DispatchKey, std::__cxx11::list<c10::impl::AnnotatedKernel, std::allocator<c10::impl::AnnotatedKernel> > > >, std::allocator<ska::detailv3::sherwood_v3_entry<std::pair<c10::DispatchKey, std::__cxx11::list<c10::impl::AnnotatedKernel, std::allocator<c10::impl::AnnotatedKernel> > > > > >::rehash(unsigned long)
+     0.14%  python   libtorch_cpu.so     [.] std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)1>::_M_release()
+     0.14%  python   libtorch_cpu.so     [.] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)
+     0.14%  python   libtorch_cpu.so     [.] std::unique_ptr<c10::FunctionSchema, std::default_delete<c10::FunctionSchema> > c10::detail::inferFunctionSchemaFromFunctor<at::Tensor (at::Tensor const&, at::Tensor const&, c10::SymInt, bool, bool)>()
+     0.14%  python   libtorch_cpu.so     [.] std::unique_ptr<c10::FunctionSchema, std::default_delete<c10::FunctionSchema> > c10::detail::inferFunctionSchemaFromFunctor<at::Tensor& (at::Tensor const&, long, bool, at::Tensor&)>()
+     0.14%  python   libtorch_cpu.so     [.] std::vector<std::unique_ptr<torch::jit::Function, std::default_delete<torch::jit::Function> >, std::allocator<std::unique_ptr<torch::jit::Function, std::default_delete<torch::jit::Function> > > >::~vector()
+     0.14%  python   libtorch_cpu.so     [.] torch::(anonymous namespace)::debugString(char const*, unsigned int)
+     0.14%  python   libtorch_cpu.so     [.] torch::jit::(anonymous namespace)::SchemaParser::parseDeclaration()
+     0.14%  python   libtorch_cpu.so     [.] torch::jit::Lexer::next()
+     0.14%  python   libtorch_cpu.so     [.] torch::jit::SchemaTypeParser::parseFakeAndRealType()
+     0.14%  python   libtorch_cpu.so     [.] torch::jit::canonicalSchemaString[abi:cxx11](c10::FunctionSchema const&)
+     0.14%  python   libtorch_cpu.so     [.] torch::jit::getAllOperatorsFor(c10::Symbol)
+     0.14%  python   libtorch_cpu.so     [.] torch::jit::getOptionsFromGlobal()@plt
+     0.14%  python   libtorch_cpu.so     [.] torch::jit::parseName(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+     0.14%  python   libtorch_cpu.so     [.] torch::jit::registerOperator(torch::jit::Operator&&)
+     0.14%  python   libtorch_cpu.so     [.] torch::jit::sharedParserData()
+     0.14%  python   libtorch_python.so  [.] THPUtils_unpackString[abi:cxx11](_object*)
+     0.14%  python   libtorch_python.so  [.] at::_ops::scatter__src::call(at::Tensor&, long, at::Tensor const&, at::Tensor const&)@plt
+     0.14%  python   libtorch_python.so  [.] c10::KernelFunction::~KernelFunction()
+     0.14%  python   libtorch_python.so  [.] c10::intrusive_ptr<c10::OperatorKernel, c10::detail::intrusive_target_default_null_type<c10::OperatorKernel> >::reset_not_null_(c10::OperatorKernel*)
+     0.14%  python   libtorch_python.so  [.] pybind11::detail::accessor<pybind11::detail::accessor_policies::str_attr>::get_cache() const
+     0.14%  python   libtorch_python.so  [.] pybind11::detail::generate_function_signature[abi:cxx11](char const*, pybind11::detail::function_record*, std::type_info const* const*, unsigned long&, unsigned long&)
+     0.14%  python   libtorch_python.so  [.] pybind11::detail::get_global_type_info_lock_held(std::type_info const&)
+     0.14%  python   libtorch_python.so  [.] pybind11::detail::get_internals()
+     0.14%  python   libtorch_python.so  [.] pybind11::detail::make_new_python_type(pybind11::detail::type_record const&)
+     0.14%  python   libtorch_python.so  [.] pybind11::detail::register_instance(pybind11::detail::instance*, void*, pybind11::detail::type_info const*)
+     0.14%  python   libtorch_python.so  [.] pybind11::detail::type_caster<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, void>& pybind11::detail::load_type<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, void>(pybind11::detail::type_caster<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, void>&, pybind11::handle const&) [clone .isra.0]
+     0.14%  python   libtorch_python.so  [.] pybind11::detail::type_caster_generic::load_value(pybind11::detail::value_and_holder&&)
+     0.14%  python   libtorch_python.so  [.] std::_Hashtable<void const*, std::pair<void const* const, pybind11::detail::instance*>, std::allocator<std::pair<void const* const, pybind11::detail::instance*> >, std::__detail::_Select1st, std::equal_to<void const*>, std::hash<void const*>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, false, false> >::erase(std::__detail::_Node_const_iterator<std::pair<void const* const, pybind11::detail::instance*>, false, false>) [clone .isra.0]
+     0.14%  python   libtorch_python.so  [.] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::push_back(char)
+     0.14%  python   libtorch_python.so  [.] std::optional<pybind11::tuple> pybind11::detail::function_ref<std::optional<pybind11::tuple> (std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>::callback_fn<torch::jit::initJITBindings(_object*)::{lambda(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)#2}>(long, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)
+     0.14%  python   libtorch_python.so  [.] std::pair<std::__detail::_Node_iterator<c10::Symbol, true, false>, bool> std::_Hashtable<c10::Symbol, c10::Symbol, std::allocator<c10::Symbol>, std::__detail::_Identity, std::equal_to<c10::Symbol>, std::hash<c10::Symbol>, std::__detail::_Mod_range_hashing, std::__detail::_Default_ranged_hash, std::__detail::_Prime_rehash_policy, std::__detail::_Hashtable_traits<false, true, true> >::_M_emplace_uniq<c10::Symbol const&>(c10::Symbol const&)
+     0.14%  python   libtorch_python.so  [.] torch::PythonArgParser::check_deprecated(torch::FunctionSignature const&)
+     0.14%  python   libtorch_python.so  [.] torch::autograd::registerCppFunction(std::type_info const&, _typeobject*)
+     0.14%  python   libtorch_python.so  [.] void std::__detail::__to_chars_10_impl<unsigned long>(char*, unsigned int, unsigned long)
+
+
+#
+# (Tip: Print event counts in CSV format with: perf stat -x,)
+#

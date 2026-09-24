@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-pytorch-ao-sparsifier-001",
+  "patchPlanId": "pp-bp-pytorch-ao-sparsifier-001",
+  "createdAt": "2026-09-15T02:10:27.840Z",
+  "changedFiles": [
+    "aten/src/ATen/cpu/vec/rvv/vec_float.h"
+  ],
+  "gitDiff": "diff --git a/aten/src/ATen/cpu/vec/rvv/vec_float.h b/aten/src/ATen/cpu/vec/rvv/vec_float.h\nindex b477830e298..f9a814f3769 100644\n--- a/aten/src/ATen/cpu/vec/rvv/vec_float.h\n+++ b/aten/src/ATen/cpu/vec/rvv/vec_float.h\n@@ -152,7 +152,8 @@ class Vectorized<float> {\n   }\n \n   void store(void* ptr, int64_t count = size()) const {\n-    std::memcpy(ptr, this->values, count * sizeof(float));\n+    vfloat32m2_t v = __riscv_vle32_v_f32m2(this->values, VFLOAT32_VL);\n+    __riscv_vse32_v_f32m2(reinterpret_cast<float*>(ptr), v, count);\n   }\n \n   const float& operator[](int idx) const = delete;\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}
