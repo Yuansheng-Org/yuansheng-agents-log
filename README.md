@@ -13,11 +13,12 @@
 
 ## 2. 19 款软件追踪总表
 
-本表按“每个开源专家复核有效补丁一行”登记。依据各软件 README 中的“开源专家复核后补丁数量”，现预列 **90 行**，另预留 **30 行**，合计 **120 行**；预留行不计入有效补丁数量。
+本表按“每个开源专家复核有效补丁一行”登记。OpenCV 按已核实的 10 份补丁登记后，现预列 **89 行**，另预留 **30 行**，合计 **119 行**；预留行不计入有效补丁数量。
 
-- 序号 1–90 按软件现有统计数量分配，具体补丁文件、用例、函数、Trace 日志和复核意见待逐项关联。
-- 序号 91–120 为待分配预留行，补充真实补丁及所属软件后再纳入统计。
+- 序号 1–89 沿用既有总表的软件分配，并将 OpenCV 调整为已核实的 10 份补丁；已核实的行关联具体补丁文件、用例、函数、Trace 日志和复核意见，其余行待逐项关联。
+- 序号 90–119 为待分配预留行，补充真实补丁及所属软件后再纳入统计。
 - 软件汇总数量保留在各软件页面；逐补丁的上游提交/接收状态依据实际链接填写。
+- OpenCV 的 10 条已提供 PR 与本仓库 10 份 `reviews/*.patch` 逐字节一致，对应下表第 44–53 行。
 
 | 序号  | 被测软件                                                   | 测试用例 | 热点函数 | Trace 日志 | Craft 补丁生成 | 开源专家复核有效补丁  | 上游社区提交   |
 | ---:| ------------------------------------------------------ | ---- | ---- | -------- | ---------- | ----------- | -------- |
@@ -64,18 +65,18 @@
 | 41  | [pixman](records/pixman/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 42  | [pixman](records/pixman/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 43  | [pixman](records/pixman/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 44  | [OpenCV](records/opencv/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 45  | [OpenCV](records/opencv/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 46  | [OpenCV](records/opencv/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 47  | [OpenCV](records/opencv/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 48  | [OpenCV](records/opencv/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 49  | [OpenCV](records/opencv/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 50  | [OpenCV](records/opencv/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 51  | [OpenCV](records/opencv/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 52  | [OpenCV](records/opencv/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 53  | [OpenCV](records/opencv/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 54  | [OpenCV](records/opencv/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 55  | [PyTorch](records/pytorch/README.md)                   | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
+| 44 | [OpenCV](records/opencv/README.md) | [core](records/opencv/core/) | [002_cv_rvv_hal_core_dft](records/opencv/core/002_cv_rvv_hal_core_dft/) | [诊断日志](records/opencv/core/002_cv_rvv_hal_core_dft/trace/diaglog_opencv_core_002.md) | [原始补丁](records/opencv/core/002_cv_rvv_hal_core_dft/craft/patch.diff) | [复核补丁](records/opencv/core/002_cv_rvv_hal_core_dft/reviews/002_cv_rvv_hal_core_dft.patch)、[复核说明](records/opencv/core/002_cv_rvv_hal_core_dft/reviews/002_cv_rvv_hal_core_dft.md) | [PR #29906](https://github.com/opencv/opencv/pull/29906) |
+| 45 | [OpenCV](records/opencv/README.md) | [core](records/opencv/core/) | [026_cv_cpu_baseline_cvt32f16s_unsigned_char_const_unsigned_long_unsi](records/opencv/core/026_cv_cpu_baseline_cvt32f16s_unsigned_char_const_unsigned_long_unsi/) | [诊断日志](records/opencv/core/026_cv_cpu_baseline_cvt32f16s_unsigned_char_const_unsigned_long_unsi/trace/diaglog_opencv_core_026.md) | [原始补丁](records/opencv/core/026_cv_cpu_baseline_cvt32f16s_unsigned_char_const_unsigned_long_unsi/craft/patch.diff) | [复核补丁](records/opencv/core/026_cv_cpu_baseline_cvt32f16s_unsigned_char_const_unsigned_long_unsi/reviews/026_cv_cpu_baseline_cvt32f16s_unsigned_char_const_unsigned_long_unsi.patch)、[复核说明](records/opencv/core/026_cv_cpu_baseline_cvt32f16s_unsigned_char_const_unsigned_long_unsi/reviews/026_cv_cpu_baseline_cvt32f16s_unsigned_char_const_unsigned_long_unsi.md) | [PR #29917](https://github.com/opencv/opencv/pull/29917) |
+| 46 | [OpenCV](records/opencv/README.md) | [core](records/opencv/core/) | [030_reduceRowSum_8u32s](records/opencv/core/030_reduceRowSum_8u32s/) | [诊断日志](records/opencv/core/030_reduceRowSum_8u32s/trace/diaglog_opencv_core_030.md) | [原始补丁](records/opencv/core/030_reduceRowSum_8u32s/craft/patch.diff) | [复核补丁](records/opencv/core/030_reduceRowSum_8u32s/reviews/030_reduceRowSum_8u32s.patch)、[复核说明](records/opencv/core/030_reduceRowSum_8u32s/reviews/030_reduceRowSum_8u32s.md) | [PR #29923](https://github.com/opencv/opencv/pull/29923) |
+| 47 | [OpenCV](records/opencv/README.md) | [core](records/opencv/core/) | [027_cv_ReduceR_Invoker_float_float_float_cv_OpAddSqr_float_float_flo](records/opencv/core/027_cv_ReduceR_Invoker_float_float_float_cv_OpAddSqr_float_float_flo/) | [诊断日志](records/opencv/core/027_cv_ReduceR_Invoker_float_float_float_cv_OpAddSqr_float_float_flo/trace/diaglog_opencv_core_027.md) | [原始补丁](records/opencv/core/027_cv_ReduceR_Invoker_float_float_float_cv_OpAddSqr_float_float_flo/craft/patch.diff) | [复核补丁](records/opencv/core/027_cv_ReduceR_Invoker_float_float_float_cv_OpAddSqr_float_float_flo/reviews/027_cv_ReduceR_Invoker_float_float_float_cv_OpAddSqr_float_float_flo.patch)、[复核说明](records/opencv/core/027_cv_ReduceR_Invoker_float_float_float_cv_OpAddSqr_float_float_flo/reviews/027_cv_ReduceR_Invoker_float_float_float_cv_OpAddSqr_float_float_flo.md) | [PR #29967](https://github.com/opencv/opencv/pull/29967) |
+| 48 | [OpenCV](records/opencv/README.md) | [core](records/opencv/core/) | [015_cv_ReduceR_Invoker_unsigned_char_unsigned_char_unsigned_char_cv_](records/opencv/core/015_cv_ReduceR_Invoker_unsigned_char_unsigned_char_unsigned_char_cv_/) | [诊断日志](records/opencv/core/015_cv_ReduceR_Invoker_unsigned_char_unsigned_char_unsigned_char_cv_/trace/diaglog_opencv_core_015.md) | [原始补丁](records/opencv/core/015_cv_ReduceR_Invoker_unsigned_char_unsigned_char_unsigned_char_cv_/craft/patch.diff) | [复核补丁](records/opencv/core/015_cv_ReduceR_Invoker_unsigned_char_unsigned_char_unsigned_char_cv_/reviews/015_cv_ReduceR_Invoker_unsigned_char_unsigned_char_unsigned_char_cv_.patch)、[复核说明](records/opencv/core/015_cv_ReduceR_Invoker_unsigned_char_unsigned_char_unsigned_char_cv_/reviews/015_cv_ReduceR_Invoker_unsigned_char_unsigned_char_unsigned_char_cv_.md) | [PR #29930](https://github.com/opencv/opencv/pull/29930) |
+| 49 | [OpenCV](records/opencv/README.md) | [core](records/opencv/core/) | [008_cv_hal_normL2Sqr_float_const_float_const_int](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int/) | [诊断日志](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int/trace/diaglog_opencv_core_008.md) | [原始补丁](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int/craft/patch.diff) | [复核补丁](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int/reviews/008_cv_hal_normL2Sqr_float_const_float_const_int.patch)、[复核说明](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int/reviews/008_cv_hal_normL2Sqr_float_const_float_const_int.md) | [PR #29944](https://github.com/opencv/opencv/pull/29944) |
+| 50 | [OpenCV](records/opencv/README.md) | [video](records/opencv/video/) | [010_cv_detail_LKTrackerInvoker_operator](records/opencv/video/010_cv_detail_LKTrackerInvoker_operator/) | [诊断日志](records/opencv/video/010_cv_detail_LKTrackerInvoker_operator/trace/diaglog_opencv_video_010.md) | [原始补丁](records/opencv/video/010_cv_detail_LKTrackerInvoker_operator/craft/patch.diff) | [复核补丁](records/opencv/video/010_cv_detail_LKTrackerInvoker_operator/reviews/010_cv_detail_LKTrackerInvoker_operator.patch)、[复核说明](records/opencv/video/010_cv_detail_LKTrackerInvoker_operator/reviews/010_cv_detail_LKTrackerInvoker_operator.md) | [PR #29947](https://github.com/opencv/opencv/pull/29947) |
+| 51 | [OpenCV](records/opencv/README.md) | [video](records/opencv/video/) | [009_DISOpticalFlowImpl_PatchInverseSearch_ParBody_operator](records/opencv/video/009_DISOpticalFlowImpl_PatchInverseSearch_ParBody_operator/) | [诊断日志](records/opencv/video/009_DISOpticalFlowImpl_PatchInverseSearch_ParBody_operator/trace/diaglog_opencv_video_009.md) | [原始补丁](records/opencv/video/009_DISOpticalFlowImpl_PatchInverseSearch_ParBody_operator/craft/patch.diff) | [复核补丁](records/opencv/video/009_DISOpticalFlowImpl_PatchInverseSearch_ParBody_operator/reviews/009_DISOpticalFlowImpl_PatchInverseSearch_ParBody_operator.patch)、[复核说明](records/opencv/video/009_DISOpticalFlowImpl_PatchInverseSearch_ParBody_operator/reviews/009_DISOpticalFlowImpl_PatchInverseSearch_ParBody_operator.md) | [PR #29961](https://github.com/opencv/opencv/pull/29961) |
+| 52 | [OpenCV](records/opencv/README.md) | [core](records/opencv/core/) | [008_cv_hal_normL2Sqr_float_const_float_const_int_2](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int_2/) | [诊断日志](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int_2/trace/diaglog_opencv_core_008.md) | [原始补丁](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int_2/craft/patch.diff) | [复核补丁](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int_2/reviews/008_cv_hal_normL2Sqr_float_const_float_const_int_2.patch)、[复核说明](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int_2/reviews/008_cv_hal_normL2Sqr_float_const_float_const_int_2.md) | [PR #30000](https://github.com/opencv/opencv/pull/30000) |
+| 53 | [OpenCV](records/opencv/README.md) | [core](records/opencv/core/) | [008_cv_hal_normL2Sqr_float_const_float_const_int_1](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int_1/) | [诊断日志](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int_1/trace/diaglog_opencv_core_008.md) | [原始补丁](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int_1/craft/patch.diff) | [复核补丁](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int_1/reviews/008_cv_hal_normL2Sqr_float_const_float_const_int_1.patch)、[复核说明](records/opencv/core/008_cv_hal_normL2Sqr_float_const_float_const_int_1/reviews/008_cv_hal_normL2Sqr_float_const_float_const_int_1.md) | [PR #30018](https://github.com/opencv/opencv/pull/30018) |
+| 54  | [PyTorch](records/pytorch/README.md)                   | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
+| 55  | [FFmpeg/H264/H265](records/ffmpeg-h264-h265/README.md) | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 56  | [FFmpeg/H264/H265](records/ffmpeg-h264-h265/README.md) | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 57  | [FFmpeg/H264/H265](records/ffmpeg-h264-h265/README.md) | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 58  | [FFmpeg/H264/H265](records/ffmpeg-h264-h265/README.md) | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
@@ -87,7 +88,7 @@
 | 64  | [FFmpeg/H264/H265](records/ffmpeg-h264-h265/README.md) | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 65  | [FFmpeg/H264/H265](records/ffmpeg-h264-h265/README.md) | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 66  | [FFmpeg/H264/H265](records/ffmpeg-h264-h265/README.md) | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 67  | [FFmpeg/H264/H265](records/ffmpeg-h264-h265/README.md) | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
+| 67  | [oneDNN](records/onednn/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 68  | [oneDNN](records/onednn/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 69  | [oneDNN](records/onednn/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 70  | [oneDNN](records/onednn/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
@@ -99,10 +100,10 @@
 | 76  | [oneDNN](records/onednn/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 77  | [oneDNN](records/onednn/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 78  | [oneDNN](records/onednn/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 79  | [oneDNN](records/onednn/README.md)                     | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
+| 79  | [Caffe](records/caffe/README.md)                       | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 80  | [Caffe](records/caffe/README.md)                       | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 81  | [Caffe](records/caffe/README.md)                       | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 82  | [Caffe](records/caffe/README.md)                       | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
+| 82  | [MXNet](records/mxnet/README.md)                       | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 83  | [MXNet](records/mxnet/README.md)                       | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 84  | [MXNet](records/mxnet/README.md)                       | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 85  | [MXNet](records/mxnet/README.md)                       | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
@@ -110,7 +111,7 @@
 | 87  | [MXNet](records/mxnet/README.md)                       | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 88  | [MXNet](records/mxnet/README.md)                       | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
 | 89  | [MXNet](records/mxnet/README.md)                       | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
-| 90  | [MXNet](records/mxnet/README.md)                       | 待关联  | 待关联  | 待归档      | 原始补丁待归档    | 复核后补丁/意见待归档 | 链接/状态待补录 |
+| 90  | 待分配（预留）                                                | 待补充  | 待补充  | 待补充      | 待补充        | 预留，不计入有效数   | 待补充      |
 | 91  | 待分配（预留）                                                | 待补充  | 待补充  | 待补充      | 待补充        | 预留，不计入有效数   | 待补充      |
 | 92  | 待分配（预留）                                                | 待补充  | 待补充  | 待补充      | 待补充        | 预留，不计入有效数   | 待补充      |
 | 93  | 待分配（预留）                                                | 待补充  | 待补充  | 待补充      | 待补充        | 预留，不计入有效数   | 待补充      |
@@ -140,7 +141,6 @@
 | 117 | 待分配（预留）                                                | 待补充  | 待补充  | 待补充      | 待补充        | 预留，不计入有效数   | 待补充      |
 | 118 | 待分配（预留）                                                | 待补充  | 待补充  | 待补充      | 待补充        | 预留，不计入有效数   | 待补充      |
 | 119 | 待分配（预留）                                                | 待补充  | 待补充  | 待补充      | 待补充        | 预留，不计入有效数   | 待补充      |
-| 120 | 待分配（预留）                                                | 待补充  | 待补充  | 待补充      | 待补充        | 预留，不计入有效数   | 待补充      |
 
 ## 3. 已筛选产物索引
 
