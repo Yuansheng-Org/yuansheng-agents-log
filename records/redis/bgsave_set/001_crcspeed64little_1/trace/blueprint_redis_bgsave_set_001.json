@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-redis-bgsave_set-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-23T09:49:04.029Z",
+    "software": "redis",
+    "testcaseIds": [
+      "bgsave_set"
+    ],
+    "diagnosisId": "diag-20260923T094904029Z-7b8d62e0",
+    "targetHardware": "SOPHGO SG2044 (XuanTie C920v2)",
+    "repositoryUrl": "https://github.com/redis/redis.git",
+    "testBranch": "unstable",
+    "commitHash": "0d6266f2deb9c401b686898e263ebd6fe35bc2b0"
+  },
+  "problem": {
+    "summary": "RISC-V（SG2044/C920v2）上 redis bgsave_set 场景的 rank-001 热点函数 crcspeed64little（CRC-64/GO-ISO 表驱动 slice-by-8）的 dual loop 占函数样本约 94%：GF(2) 二元域乘法以 16KB 查表模拟，每 8 字节 8 次依赖表 load+shift/xor。硬件暴露 zbc（clmul/clmulh）而 build ISA 无任何 zb* 且无运行时派发，carry-less 指令从未被使用。",
+    "evidence": [
+      "perf annotate: crcspeed64little 共 215 samples（cpu-clock:u），dual loop 区间 0x18faf2–0x18fbfe 占函数内样本约 94%",
+      "hot 行: 18fb08 srli a0,a4,0x5 (6.98%)、18fb5a ld a6,-2048(a0) (6.51%)、18fb04 zext.b t2,a4 (4.19%) —— 表索引链与表 load 主导",
+      "cpuinfo isa 含 zbc；build Tag_RISCV_arch（rv64i2p1_..._v1p0_..._zvl128b）不含任何 zb*；全函数 zero clmul/clmulh",
+      "redis-benchmark bgsave_set: avg_latency_ms=2.732、p99_latency_ms=10.703、max_latency_ms=210.047"
+    ]
+  },
+  "rootCause": {
+    "summary": "CRC-64（反射序，Jones 多项式）是 GF(2^64) 二元域多项式运算，当前以预计算查表模拟该无进位乘法，而硬件原生 clmul/clmulh（Zbc）存在却因 build 缺 zb* 且无派发而从未使用，热循环被 16 次/迭代的依赖表 load 与 shift/xor 索引链主导。",
+    "candidateFiles": [
+      "src/crcspeed.c",
+      "src/crc64.c"
+    ],
+    "performanceFactors": [
+      "Carry-less Multiplication for Binary-Field Arithmetic"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "CRC-64/GO-ISO 数值语义：多项式 0xad93d23594c935a9、ReflectIn/ReflectOut=true、initial/final XOR 由调用方控制",
+      "KAT 已知答案逐字节一致：crc64(0,\"123456789\",9)=e9c6d914c4b8d9ca、Lorem ipsum 向量=c7794709e69683b3",
+      "crcspeed64little/crc64 公共 API 与返回语义不变",
+      "跨平台可移植性：无 zbc 的硬件必须经运行时 gate 回退现有查表路径，禁止静态全局切换 -march"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "bgsave_set",
+      "crc64"
+    ],
+    "regressionCommand": "agent1 patch_regression --case bgsave_set"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "",
+    "reasoning": "redis-benchmark bgsave_set 在 RISC-V 上 avg_latency 2.732ms、max_latency 210.047ms（metricEvidence）；perf annotate 显示 rank-001 热点 crcspeed64little 的 dual loop 占函数样本约 94%，逐字行 18fb08 srli a0,a4,0x5 与 18fb5a ld a6,-2048(a0) 证明 GF(2) 二元域乘法以查表+shift/xor 模拟；cpuinfo 暴露 zbc 而 build Tag_RISCV_arch 无任何 zb*、函数内 zero clmul/clmulh，说明硬件原生 carry-less 乘法从未被构建产物派发；patterns/carry_less_multiplication_for_binary_field_arithmetic.md 及其 Related PRs（Linux 内核 Zbc CRC、OpenJDK CRC32 Zvbc folding、OpenSSL GHASH clmul）支撑该路由。因无 perf stat cycle 计数，bound type 未确认，指标层证据仅 benchmark 级延迟，故为 probable_root_cause。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "workload 可能为写盘 IO/memory-bound：bgsave 期间 max_latency 210ms 长尾可能由磁盘/页缓存主导，crc64 提速的端到端可见性受限（缺 cycles/instructions 计数，bound type 未确认）",
+      "若 bgsave_set 实际写入块长分布进入 >16KB 的 tri 区间，热点形态将切换（当前 tri loop 0 样本），收益上界与验证对象需按 chunk 分布复核",
+      "构建层备选：直接给 redis 全局 -march 加 zbc 会破坏跨平台可移植性；正确做法是运行时 riscv_hwprobe gate + 独立 clmul 例程，否则无 zbc 的核上可能 illegal instruction"
+    ],
+    "currentGaps": "缺少 perf stat 的 cycles/instructions/IPC/cache 计数（bound type 未确认）；percent type=local period，crcspeed64little 占 bgsave_set workload 的整体样本份额未知（无 workload 级 Amdahl 上界）；采样 IP precision 未确认（单行只锚定 interval）；无 ARM 侧对照数据",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认在 redis 跨平台二进制中引入 Zbc CLMUL CRC-64 反射域 folding 例程的运行时 gate（riscv_hwprobe 检测 zbc）与查表回退路径设计，以及 KAT 向量 e9c6d914c4b8d9ca / c7794709e69683b3 的位精确验证方案；评估 bound type 对收益可见性的影响",
+    "affectedTarget": "RV + bgsave_set",
+    "recommendedFirstAction": "在 src/crcspeed.c 新增基于 Zbc clmul/clmulh 的 CRC-64 反射域 folding 例程（如 crcspeed64little_zbc），并在 src/crcspeed.c:381 crcspeed64native（端序分派点）旁以 riscv_hwprobe 检测 zbc 后选择该例程，保留现有查表路径为回退",
+    "recommendedVerification": "重新运行 redis-benchmark bgsave_set 与 redis-server test crc64，确认 KAT 向量逐字节一致且延迟/吞吐改善；重新 perf annotate crcspeed64little，观察 clmul/clmulh 出现、18fb5a 等表 load 行消失",
+    "metricEvidence": [
+      {
+        "metric": "avg_latency_ms",
+        "rv": 2.732,
+        "anomalyNote": "redis-benchmark bgsave_set 平均延迟；无 ARM 对照与 cycle 级 perf stat，bound type 未知"
+      },
+      {
+        "metric": "p99_latency_ms",
+        "rv": 10.703,
+        "anomalyNote": "尾部延迟 p99=10.7ms 为 avg(2.7ms) 的约 3.9 倍，bgsave 后台路径引入明显尾部"
+      },
+      {
+        "metric": "max_latency_ms",
+        "rv": 210.047,
+        "anomalyNote": "最大延迟 210ms 远超 p99(10.7ms)，极可能由 bgsave 写盘/IO 长尾主导，非 crc64 计算本身"
+      },
+      {
+        "metric": "requests_per_second",
+        "rv": 15457.14,
+        "anomalyNote": "bgsave_set 场景整体吞吐基线；无 ARM 对照值，仅作场景上下文"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "crcspeed64little",
+        "fileModule": "src/crcspeed.c",
+        "rvvPattern": "Carry-less Multiplication for Binary-Field Arithmetic",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.94,
+        "note": "CRC-64/GO-ISO（Jones 多项式，反射序）表驱动 slice-by-8 校验和（GF(2) 二元域运算/密码学类）；dual loop 0x18faf2–0x18fbfe 占函数样本约 94%，硬件 zbc 存在而 build 无 zb*，clmul 从未发射"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/crcspeed.c:179（crcspeed64little；DO_8_2 宏 src/crcspeed.c:134-142；crcspeed64native 分派 src/crcspeed.c:381）",
+      "relatedKnowledge": "https://github.com/openssl/openssl/commit/003f5698146b; https://github.com/openssl/openssl/commit/999376dcf339; https://github.com/openssl/openssl/commit/b24684369b76; https://github.com/torvalds/linux/commit/ee6740fd34eb53c5c76be01201c15310f461b69f; https://github.com/torvalds/linux/commit/72acff5f81851fe0858d2430b35b4b08f8f27a72; https://github.com/torvalds/linux/commit/bbe2610bc5ada51418a4191e799cfb4577302a31; https://github.com/openjdk/jdk/commit/2f4f6cc34c10c5519c74abbce8d1715013b50d5d; https://github.com/openjdk/jdk/commit/c517ffba7d9388e75b5d7bba77e565e71c0a7d76; https://github.com/openjdk/jdk/pull/22475",
+      "evidenceExplanation": "patterns/carry_less_multiplication_for_binary_field_arithmetic.md 明确 CRC 属 GF(2^k) 无进位乘法家族、可用标量 Zbc clmul/clmulh 直接计算并归约；其 Related PRs 中 Linux 内核 Zbc carry-less CRC（ee6740fd34eb 等）与 OpenJDK CRC32 Zvbc folding（2f4f6cc34c10 等）直接证明该技术路线在 CRC 场景的可行性与既有实现来源，与本次 evidence（表驱动 hot loop + HW zbc + build 无 zb*）共同指向同一根因"
+    }
+  }
+}
