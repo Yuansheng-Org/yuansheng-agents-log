@@ -1,0 +1,231 @@
+commit 2460ae1d9b87103707a5b0cd6b0d9624334a3ae4
+Author: root <root@LAPTOP-FVNNQNU9.localdomain>
+Date:   Wed Sep 9 18:53:18 2026 +0800
+
+    cpu: rv64: add fwd bnorm training path via JIT stat kernel
+    
+    Add a fwd stat kernel (sum/sumsq vector reduction) and drop the
+    use_global_stats gate so the rv64 JIT bnorm handles training: compute
+    per-channel mean/variance into scratchpad, write them back, then run the
+    existing transform kernel.
+
+diff --git a/src/cpu/rv64/jit_uni_batch_normalization.cpp b/src/cpu/rv64/jit_uni_batch_normalization.cpp
+index 4598e2cba7..6c10c7c600 100644
+--- a/src/cpu/rv64/jit_uni_batch_normalization.cpp
++++ b/src/cpu/rv64/jit_uni_batch_normalization.cpp
+@@ -60,8 +60,6 @@ status_t jit_uni_batch_normalization_fwd_t<isa>::execute_forward(
+ 
+     void *dst = CTX_OUT_MEM(void *, DNNL_ARG_DST);
+     const void *src = CTX_IN_MEM(const void *, DNNL_ARG_SRC);
+-    const float *mean = CTX_IN_MEM(const float *, DNNL_ARG_MEAN);
+-    const float *var = CTX_IN_MEM(const float *, DNNL_ARG_VARIANCE);
+     const float *scale = pd()->use_scale()
+             ? CTX_IN_MEM(const float *, DNNL_ARG_SCALE)
+             : nullptr;
+@@ -83,6 +81,44 @@ status_t jit_uni_batch_normalization_fwd_t<isa>::execute_forward(
+ 
+     const bool channels_dense = data_d.blocking_desc().strides[1] == 1;
+ 
++    // Mean/variance: either global (inference) or computed here (training).
++    const float *mean, *var;
++    if (pd()->use_global_stats()) {
++        mean = CTX_IN_MEM(const float *, DNNL_ARG_MEAN);
++        var = CTX_IN_MEM(const float *, DNNL_ARG_VARIANCE);
++    } else {
++        auto &grantor = ctx.get_scratchpad_grantor();
++        float *mean_buf = grantor.template get<float>(
++                memory_tracking::names::key_bnorm_tmp_mean);
++        float *var_buf = grantor.template get<float>(
++                memory_tracking::names::key_bnorm_tmp_var);
++        mean = mean_buf;
++        var = var_buf;
++
++        const dim_t SP = D * H * W;
++        const dim_t count = N * SP;
++        parallel_nd(C, [&](dim_t c) {
++            float sum = 0.f, sumsq = 0.f;
++            for (dim_t n = 0; n < N; ++n) {
++                const size_t base = channels_dense ? (n * C + c) * SP
++                                                   : off(n, c, 0, 0, 0);
++                jit_uni_batch_normalization_fwd_stat(
++                        static_cast<const char *>(src) + base * data_size, SP,
++                        &sum, &sumsq, dtsrc);
++            }
++            const float m = sum / static_cast<float>(count);
++            mean_buf[c] = m;
++            var_buf[c] = sumsq / static_cast<float>(count) - m * m;
++        });
++
++        float *mean_out = CTX_OUT_MEM(float *, DNNL_ARG_MEAN);
++        float *var_out = CTX_OUT_MEM(float *, DNNL_ARG_VARIANCE);
++        for (dim_t c = 0; c < C; ++c) {
++            mean_out[c] = mean_buf[c];
++            var_out[c] = var_buf[c];
++        }
++    }
++
+     if (!channels_dense) {
+         // abx data tag: vectorize over W for fixed channel
+         parallel_nd(C, N, D, H, [&](dim_t c, dim_t n, dim_t d, dim_t h) {
+diff --git a/src/cpu/rv64/jit_uni_batch_normalization.hpp b/src/cpu/rv64/jit_uni_batch_normalization.hpp
+index 034dc422cb..cf4cf1ab0e 100644
+--- a/src/cpu/rv64/jit_uni_batch_normalization.hpp
++++ b/src/cpu/rv64/jit_uni_batch_normalization.hpp
+@@ -65,11 +65,8 @@ struct jit_uni_batch_normalization_fwd_t : public primitive_t {
+ 
+             VDISPATCH_BNORM(!has_zero_dim_memory(), VERBOSE_EMPTY_TENSOR, "");
+ 
+-            // Require global stats (G). Flags C/H/R(inference) are optional. Disallow none and A.
+             VDISPATCH_BNORM(!fuse_norm_add_relu(), VERBOSE_UNSUPPORTED_FEATURE,
+                     "fuse_norm_add_relu not supported");
+-            VDISPATCH_BNORM(use_global_stats(), VERBOSE_UNSUPPORTED_FEATURE,
+-                    "stats must already have been computed (use global stats)");
+             using smask_t = primitive_attr_t::skip_mask_t;
+             VDISPATCH_BNORM(!(fuse_norm_relu()
+                                     && desc()->prop_kind
+diff --git a/src/cpu/rv64/jit_uni_batch_normalization_kernel.cpp b/src/cpu/rv64/jit_uni_batch_normalization_kernel.cpp
+index 684a45bfc1..a087275aad 100644
+--- a/src/cpu/rv64/jit_uni_batch_normalization_kernel.cpp
++++ b/src/cpu/rv64/jit_uni_batch_normalization_kernel.cpp
+@@ -51,8 +51,104 @@ void dispatch_jit_batch_normalization_bwd_apply(
+     kernel(p);
+ }
+ 
++template <data_type_t data_type>
++void dispatch_jit_batch_normalization_fwd_stat(
++        const jit_uni_batch_normalization_fwd_stat_kernel_t::call_params_t *p) {
++    static const jit_uni_batch_normalization_fwd_stat_kernel_t kernel(
++            data_type);
++    kernel(p);
++}
++
+ } // namespace
+ 
++jit_uni_batch_normalization_fwd_stat_kernel_t::
++        jit_uni_batch_normalization_fwd_stat_kernel_t(data_type_t data_type)
++    : jit_generator_t("jit_uni_batch_normalization_fwd_stat_kernel")
++    , data_type_(data_type) {
++    create_kernel();
++}
++
++void jit_uni_batch_normalization_fwd_stat(const void *src, dim_t len,
++        float *sum, float *sumsq, data_type_t dt) {
++    const jit_uni_batch_normalization_fwd_stat_kernel_t::call_params_t p {
++            src, len, sum, sumsq};
++    if (dt == data_type::f16)
++        dispatch_jit_batch_normalization_fwd_stat<data_type::f16>(&p);
++    else
++        dispatch_jit_batch_normalization_fwd_stat<data_type::f32>(&p);
++}
++
++void jit_uni_batch_normalization_fwd_stat_kernel_t::generate() {
++#if defined(XBYAK_RISCV_V) && XBYAK_RISCV_V == 1
++    const bool is_f16 = data_type_ == data_type::f16;
++
++    const Reg reg_param = a0;
++    const Reg reg_src = a1;
++    const Reg reg_len = a2;
++    const Reg reg_sum = a3;
++    const Reg reg_sumsq = a4;
++    const Reg reg_vl = t0;
++    const Reg reg_bytes = t1;
++
++    const FReg f_sum = fa0;
++    const FReg f_sumsq = fa1;
++
++    const VReg v_src16(2);
++    const VReg v_src(4);
++    const VReg v_sq(8);
++    const VReg v_red_sum(12);
++    const VReg v_red_sq(14);
++
++    ld(reg_src, reg_param, 0);
++    ld(reg_len, reg_param, 8);
++    ld(reg_sum, reg_param, 16);
++    ld(reg_sumsq, reg_param, 24);
++
++    // Seed the running sum/sumsq from the caller-provided scalars.
++    flw(f_sum, reg_sum, 0);
++    flw(f_sumsq, reg_sumsq, 0);
++
++    Label loop, done;
++    L(loop);
++    beqz(reg_len, done);
++
++    if (is_f16) {
++        vsetvli(reg_vl, reg_len, SEW::e16, LMUL::m1, VTA::ta, VMA::ma);
++        vle16_v(v_src16, reg_src);
++        vfwcvt_f_f_v(v_src, v_src16);
++        vsetvli(reg_vl, reg_vl, SEW::e32, LMUL::m2, VTA::ta, VMA::ma);
++    } else {
++        vsetvli(reg_vl, reg_len, SEW::e32, LMUL::m1, VTA::ta, VMA::ma);
++        vle32_v(v_src, reg_src);
++    }
++    vfmul_vv(v_sq, v_src, v_src);
++
++    // per-chunk ordered reduction folded into the scalar seed.
++    vfmv_v_f(v_red_sum, f_sum);
++    vfredosum_vs(v_red_sum, v_src, v_red_sum);
++    vfmv_f_s(f_sum, v_red_sum);
++
++    vfmv_v_f(v_red_sq, f_sumsq);
++    vfredosum_vs(v_red_sq, v_sq, v_red_sq);
++    vfmv_f_s(f_sumsq, v_red_sq);
++
++    if (is_f16)
++        slli(reg_bytes, reg_vl, 1);
++    else
++        slli(reg_bytes, reg_vl, 2);
++    add(reg_src, reg_src, reg_bytes);
++    sub(reg_len, reg_len, reg_vl);
++    j_(loop);
++
++    L(done);
++    fsw(f_sum, reg_sum, 0);
++    fsw(f_sumsq, reg_sumsq, 0);
++    ret();
++#else
++    ret();
++#endif
++}
++
+ jit_uni_batch_normalization_fwd_kernel_t::
+         jit_uni_batch_normalization_fwd_kernel_t(
+                 data_type_t data_type, bool per_elem_params, bool with_relu)
+diff --git a/src/cpu/rv64/jit_uni_batch_normalization_kernel.hpp b/src/cpu/rv64/jit_uni_batch_normalization_kernel.hpp
+index fad847778d..ffa6962164 100644
+--- a/src/cpu/rv64/jit_uni_batch_normalization_kernel.hpp
++++ b/src/cpu/rv64/jit_uni_batch_normalization_kernel.hpp
+@@ -112,6 +112,32 @@ private:
+     bool per_elem_params_;
+ };
+ 
++struct jit_uni_batch_normalization_fwd_stat_kernel_t : public jit_generator_t {
++    struct call_params_t {
++        const void *src;
++        dim_t len;
++        float *sum;
++        float *sumsq;
++    };
++
++    DECLARE_CPU_JIT_AUX_FUNCTIONS(jit_uni_batch_normalization_fwd_stat_kernel_t)
++
++    jit_uni_batch_normalization_fwd_stat_kernel_t(data_type_t data_type);
++
++    void operator()(const call_params_t *p) const {
++        jit_generator_t::operator()(p);
++    }
++
++protected:
++    void generate() override;
++
++private:
++    data_type_t data_type_;
++};
++
++void jit_uni_batch_normalization_fwd_stat(const void *src, dim_t len,
++        float *sum, float *sumsq, data_type_t data_type);
++
+ void jit_uni_batch_normalization_apply(const void *src, void *dst, dim_t len,
+         const float *mean, const float *scale_mul, const float *scale_add,
+         data_type_t data_type, bool per_elem_params, bool with_relu);
