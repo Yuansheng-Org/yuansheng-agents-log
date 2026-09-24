@@ -1,0 +1,155 @@
+ Percent |	Source code & Disassembly of libcaffe.so.1.0.0 for cpu-clock (6 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000231b74 <void vPowx<float>(int, float const*, float, float*)>:
+         : 6      void vPowx<float>(int, float const*, float, float*):
+         : 62     inline void vd##name( \
+         : 63     const int n, const double* a, const float b, double* y) { \
+         : 64     v##name<double>(n, a, b, y); \
+         : 65     }
+         :
+         : 67     DEFINE_VSL_UNARY_FUNC_WITH_PARAM(Powx, y[i] = pow(a[i], b))
+    0.00 :   231b74: addi    sp,sp,-176
+    0.00 :   231b76: sd      s0,160(sp)
+    0.00 :   231b78: sd      s1,152(sp)
+    0.00 :   231b7a: addi    s0,sp,176
+    0.00 :   231b7c: sd      s2,144(sp)
+    0.00 :   231b7e: sd      s4,128(sp)
+    0.00 :   231b80: sd      ra,168(sp)
+    0.00 :   231b82: sd      s3,136(sp)
+    0.00 :   231b84: auipc   s4,0xd4
+    0.00 :   231b88: ld      s4,-476(s4) # 3059a8 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   231b8c: sw      a0,-160(s0)
+    0.00 :   231b90: sw      zero,-152(s0)
+    0.00 :   231b94: ld      a5,0(s4)
+    0.00 :   231b98: sd      a5,-56(s0)
+    0.00 :   231b9c: li      a5,0
+    0.00 :   231b9e: mv      s1,a1
+    0.00 :   231ba0: mv      s2,a2
+         : 85     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >* google::Check_GTImpl<int, int>(int const&, int const&, char const*):
+    0.00 :   231ba2: blez    a0,231bfa <void vPowx<float>(int, float const*, float, float*)+0x86>
+         : 858    google::CheckOpString::CheckOpString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >*):
+    0.00 :   231ba6: addi    s3,s0,-152
+         : 718    void vPowx<float>(int, float const*, float, float*):
+    0.00 :   231baa: beqz    a1,231c5e <void vPowx<float>(int, float const*, float, float*)+0xea>
+    0.00 :   231bac: addi    s3,s0,-152
+    0.00 :   231bb0: beqz    a2,231c98 <void vPowx<float>(int, float const*, float, float*)+0x124>
+    0.00 :   231bb2: fmv.s   fa1,fa0
+    0.00 :   231bb6: slli    a0,a0,0x2
+    0.00 :   231bb8: add     s3,a1,a0
+         : 63     std::pow(float, float):
+         : 384    using ::pow;
+         :
+         : 386    #ifndef __CORRECT_ISO_CPP_MATH_H_PROTO
+         : 387    inline _GLIBCXX_CONSTEXPR float
+         : 388    pow(float __x, float __y)
+         : 389    { return __builtin_powf(__x, __y); }
+   50.00 :   231bbc: flw     fa0,0(s1)
+    0.00 :   231bc0: fsw     fa1,-168(s0)
+         : 392    void vPowx<float>(int, float const*, float, float*):
+    0.00 :   231bc4: addi    s1,s1,4
+         : 63     std::pow(float, float):
+   33.33 :   231bc6: auipc   ra,0xffeb2
+    0.00 :   231bca: jalr    1162(ra) # e4050 <powf@plt>
+         : 386    void vPowx<float>(int, float const*, float, float*):
+   16.67 :   231bce: fsw     fa0,0(s2)
+    0.00 :   231bd2: flw     fa1,-168(s0)
+    0.00 :   231bd6: addi    s2,s2,4
+    0.00 :   231bd8: bne     s1,s3,231bbc <void vPowx<float>(int, float const*, float, float*)+0x48>
+    0.00 :   231bdc: ld      a4,-56(s0)
+    0.00 :   231be0: ld      a5,0(s4)
+    0.00 :   231be4: xor     a5,a5,a4
+    0.00 :   231be6: li      a4,0
+    0.00 :   231be8: bnez    a5,231ccc <void vPowx<float>(int, float const*, float, float*)+0x158>
+    0.00 :   231bea: ld      ra,168(sp)
+    0.00 :   231bec: ld      s0,160(sp)
+    0.00 :   231bee: ld      s1,152(sp)
+    0.00 :   231bf0: ld      s2,144(sp)
+    0.00 :   231bf2: ld      s3,136(sp)
+    0.00 :   231bf4: ld      s4,128(sp)
+    0.00 :   231bf6: addi    sp,sp,176
+    0.00 :   231bf8: ret
+         : 75     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >* google::Check_GTImpl<int, int>(int const&, int const&, char const*):
+    0.00 :   231bfa: addi    a3,s0,-160
+    0.00 :   231bfe: addi    s3,s0,-152
+    0.00 :   231c02: mv      a1,s3
+    0.00 :   231c04: mv      a0,a3
+    0.00 :   231c06: auipc   a2,0x3f
+    0.00 :   231c0a: addi    a2,a2,-1358 # 2706b8 <google::protobuf::MessageLite* google::protobuf::internal::RepeatedPtrFieldBase::CopyMessage<caffe::V1LayerParameter>(google::protobuf::Arena*, google::protobuf::MessageLite const&)+0x96c>
+    0.00 :   231c0e: auipc   t1,0xd3
+    0.00 :   231c12: ld      t1,1050(t1) # 305028 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >* google::MakeCheckOpString<int, int>(int const&, int const&, char const*)@@Base+0x2177b0>
+    0.00 :   231c16: sd      a3,-168(s0)
+    0.00 :   231c1a: jalr    t1
+         : 866    google::CheckOpString::CheckOpString(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >*):
+    0.00 :   231c1c: sd      a0,-160(s0)
+         : 718    void vPowx<float>(int, float const*, float, float*):
+    0.00 :   231c20: beqz    a0,231c92 <void vPowx<float>(int, float const*, float, float*)+0x11e>
+    0.00 :   231c22: ld      a3,-168(s0)
+    0.00 :   231c26: mv      a0,s3
+    0.00 :   231c28: li      a2,62
+    0.00 :   231c2c: auipc   a1,0x47
+    0.00 :   231c30: addi    a1,a1,-36 # 278c08 <google::protobuf::MessageLite* google::protobuf::internal::RepeatedPtrFieldBase::CopyMessage<caffe::V1LayerParameter>(google::protobuf::Arena*, google::protobuf::MessageLite const&)+0x8ebc>
+    0.00 :   231c34: auipc   ra,0xffeb1
+    0.00 :   231c38: jalr    1820(ra) # e3350 <google::LogMessageFatal::LogMessageFatal(char const*, int, google::CheckOpString const&)@plt>
+    0.00 :   231c3c: mv      a0,s3
+    0.00 :   231c3e: auipc   ra,0xffeb3
+    0.00 :   231c42: jalr    -158(ra) # e4ba0 <google::LogMessage::stream()@plt>
+    0.00 :   231c46: ld      a4,-56(s0)
+    0.00 :   231c4a: ld      a5,0(s4)
+    0.00 :   231c4e: xor     a5,a5,a4
+    0.00 :   231c50: li      a4,0
+    0.00 :   231c52: bnez    a5,231ccc <void vPowx<float>(int, float const*, float, float*)+0x158>
+    0.00 :   231c54: mv      a0,s3
+    0.00 :   231c56: auipc   ra,0xffeb2
+    0.00 :   231c5a: jalr    1754(ra) # e4330 <google::LogMessageFatal::~LogMessageFatal()@plt>
+    0.00 :   231c5e: mv      a0,s3
+    0.00 :   231c60: li      a2,62
+    0.00 :   231c64: auipc   a1,0x47
+    0.00 :   231c68: addi    a1,a1,-92 # 278c08 <google::protobuf::MessageLite* google::protobuf::internal::RepeatedPtrFieldBase::CopyMessage<caffe::V1LayerParameter>(google::protobuf::Arena*, google::protobuf::MessageLite const&)+0x8ebc>
+    0.00 :   231c6c: auipc   ra,0xffeb4
+    0.00 :   231c70: jalr    -1292(ra) # e5760 <google::LogMessageFatal::LogMessageFatal(char const*, int)@plt>
+    0.00 :   231c74: mv      a0,s3
+    0.00 :   231c76: auipc   ra,0xffeb3
+    0.00 :   231c7a: jalr    -214(ra) # e4ba0 <google::LogMessage::stream()@plt>
+         : 65     std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*):
+         : 739    operator<<(basic_ostream<char, _Traits>& __out, const char* __s)
+         : 740    {
+         : 741    if (!__s)
+         : 742    __out.setstate(ios_base::badbit);
+         : 743    else
+         : 744    __ostream_insert(__out, __s,
+    0.00 :   231c7e: li      a2,16
+    0.00 :   231c80: auipc   a1,0x47
+    0.00 :   231c84: addi    a1,a1,-64 # 278c40 <google::protobuf::MessageLite* google::protobuf::internal::RepeatedPtrFieldBase::CopyMessage<caffe::V1LayerParameter>(google::protobuf::Arena*, google::protobuf::MessageLite const&)+0x8ef4>
+    0.00 :   231c88: auipc   ra,0xffeb3
+    0.00 :   231c8c: jalr    -712(ra) # e49c0 <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+    0.00 :   231c90: j       231c46 <void vPowx<float>(int, float const*, float, float*)+0xd2>
+         : 751    void vPowx<float>(int, float const*, float, float*):
+    0.00 :   231c92: beqz    s1,231c5e <void vPowx<float>(int, float const*, float, float*)+0xea>
+    0.00 :   231c94: bnez    s2,231bdc <void vPowx<float>(int, float const*, float, float*)+0x68>
+    0.00 :   231c98: mv      a0,s3
+    0.00 :   231c9a: li      a2,62
+    0.00 :   231c9e: auipc   a1,0x47
+    0.00 :   231ca2: addi    a1,a1,-150 # 278c08 <google::protobuf::MessageLite* google::protobuf::internal::RepeatedPtrFieldBase::CopyMessage<caffe::V1LayerParameter>(google::protobuf::Arena*, google::protobuf::MessageLite const&)+0x8ebc>
+    0.00 :   231ca6: auipc   ra,0xffeb4
+    0.00 :   231caa: jalr    -1350(ra) # e5760 <google::LogMessageFatal::LogMessageFatal(char const*, int)@plt>
+    0.00 :   231cae: mv      a0,s3
+    0.00 :   231cb0: auipc   ra,0xffeb3
+    0.00 :   231cb4: jalr    -272(ra) # e4ba0 <google::LogMessage::stream()@plt>
+         : 65     std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*):
+    0.00 :   231cb8: li      a2,16
+    0.00 :   231cba: auipc   a1,0x3f
+    0.00 :   231cbe: addi    a1,a1,1566 # 2712d8 <google::protobuf::MessageLite* google::protobuf::internal::RepeatedPtrFieldBase::CopyMessage<caffe::V1LayerParameter>(google::protobuf::Arena*, google::protobuf::MessageLite const&)+0x158c>
+    0.00 :   231cc2: auipc   ra,0xffeb3
+    0.00 :   231cc6: jalr    -770(ra) # e49c0 <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+    0.00 :   231cca: j       231c46 <void vPowx<float>(int, float const*, float, float*)+0xd2>
+         : 745    void vPowx<float>(int, float const*, float, float*):
+    0.00 :   231ccc: auipc   ra,0xffeb1
+    0.00 :   231cd0: jalr    -1564(ra) # e26b0 <__stack_chk_fail@plt>
+    0.00 :   231cd4: j       231c46 <void vPowx<float>(int, float const*, float, float*)+0xd2>
+    0.00 :   231cd6: j       231c46 <void vPowx<float>(int, float const*, float, float*)+0xd2>
+    0.00 :   231cd8: j       231c46 <void vPowx<float>(int, float const*, float, float*)+0xd2>
