@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-bp-mnn-benchmark-mobilenetv2-224-mnn-1-004",
+  "patchCandidateId": "pc-bp-mnn-benchmark-mobilenetv2-224-mnn-1-004",
+  "reviewedAt": "2026-09-14T11:05:00.000Z",
+  "reviewer": "opencode-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "新增 __riscv_vsetvl_e8m8/vle8/vse8（RVV 1.0 e8,m8），均在 SpacemiT K3（RVV 1.0, VLEN=256）ISA 内；vsetvl/vtype 配置（e8,m8）与数据流一致，无 mask/tail 语义问题，无 x86/ARM 专属指令混入（由 MNN_USE_RVV 守卫）。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": []
+}

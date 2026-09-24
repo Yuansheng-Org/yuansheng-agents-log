@@ -1,0 +1,94 @@
+From 3b51b4274b81a8245b0fbb593747fac7b6678765 Mon Sep 17 00:00:00 2001
+From: Zhang Jinhan <zhangjinhan@isrc.iscas.ac.cn>
+Date: Wed, 16 Sep 2026 17:27:34 +0800
+Subject: [PATCH] RVV: vectorize depthwise-conv input padding copy
+
+The per-row input padding copy in
+CPUConvolutionDepthwise::BasicFloatExecution::onResize is a ::memcpy over
+src_width * unit * bytes. That is the width of one row of a packed depthwise
+input tensor, and on the low-resolution stages of a vision backbone it is only
+a few dozen bytes.
+
+Add MNNMemcpyBytes_RVV (e8, m8, VLEN-agnostic) and call it when the CPU reports
+the V extension at runtime, keeping ::memcpy otherwise.
+
+The kernel goes in source/backend/cpu/riscv/rvv/ rather than next to the call
+site: only MNNRVV is compiled with -march=${MNN_RVV_BASE_MARCH}, while
+CPUConvolutionDepthwise.cpp is part of MNNCPU, which receives -DMNN_USE_RVV but
+no vector ISA flag. This is the same constraint the other riscv/rvv kernels
+work under -- compute/CommonOptFunction.cpp declares each *_RVV kernel extern
+and selects it at runtime, and compute/ImageProcessFunction.cpp keeps its
+generic body under #ifndef MNN_USE_RVV so the RVV translation unit supplies it.
+Dispatch here is likewise gated on core->supportRVV so an RVV build running on
+a board without the V extension stays on ::memcpy.
+
+Co-authored-by: ihb2032 <hebome@foxmail.com>
+Co-authored-by: lyd1992 <liuyudong@iscas.ac.cn>
+Co-authored-by: Yuansheng <yuansheng@isrc.iscas.ac.cn>
+---
+ source/backend/cpu/CPUConvolutionDepthwise.cpp | 18 ++++++++++++++++++
+ .../backend/cpu/riscv/rvv/MNNMemcpyBytes.cpp   | 18 ++++++++++++++++++
+ 2 files changed, 36 insertions(+)
+ create mode 100644 source/backend/cpu/riscv/rvv/MNNMemcpyBytes.cpp
+
+diff --git a/source/backend/cpu/CPUConvolutionDepthwise.cpp b/source/backend/cpu/CPUConvolutionDepthwise.cpp
+index 5cda18c06e..6e068c75bc 100644
+--- a/source/backend/cpu/CPUConvolutionDepthwise.cpp
++++ b/source/backend/cpu/CPUConvolutionDepthwise.cpp
+@@ -15,6 +15,16 @@
+ #include "backend/cpu/compute/CommonOptFunction.h"
+ #include "backend/cpu/compute/ConvOpt.h"
+ 
++#ifdef MNN_USE_RVV
++// Defined in source/backend/cpu/riscv/rvv/MNNMemcpyBytes.cpp, which is built
++// into the MNNRVV object library. Only MNNRVV is compiled with
++// -march=${MNN_RVV_BASE_MARCH}; this file belongs to MNNCPU, which receives
++// -DMNN_USE_RVV but no vector ISA flag, so the intrinsics cannot live here.
++// Same split as the other riscv/rvv kernels: compute/CommonOptFunction.cpp
++// declares every *_RVV kernel extern and selects it at runtime.
++void MNNMemcpyBytes_RVV(void* dst, const void* src, size_t size);
++#endif // MNN_USE_RVV
++
+ #ifdef MNN_KLEIDIAI_ENABLED
+ #include "backend/cpu/kleidiai/KleidiAIConvolutionDepthwise.hpp"
+ #include "backend/cpu/CPURuntime.hpp"
+@@ -227,7 +237,15 @@ ErrorCode CPUConvolutionDepthwise::BasicFloatExecution::onResize(const std::vect
+             for (int y = 0; y < src_height; ++y) {
+                 auto src = srcOrigin + y * src_width * unit * bytes;
+                 auto dst = inputPadPtr + ((y + padY) * paddedWidth + padX) * unit * bytes;
++#ifdef MNN_USE_RVV
++                if (core->supportRVV) {
++                    MNNMemcpyBytes_RVV(dst, src, src_width * unit * bytes);
++                } else {
++                    ::memcpy(dst, src, src_width * unit * bytes);
++                }
++#else
+                 ::memcpy(dst, src, src_width * unit * bytes);
++#endif // MNN_USE_RVV
+             }
+ 
+             // Compute
+diff --git a/source/backend/cpu/riscv/rvv/MNNMemcpyBytes.cpp b/source/backend/cpu/riscv/rvv/MNNMemcpyBytes.cpp
+new file mode 100644
+index 0000000000..6d8899a095
+--- /dev/null
++++ b/source/backend/cpu/riscv/rvv/MNNMemcpyBytes.cpp
+@@ -0,0 +1,18 @@
++#include <riscv_vector.h>
++#include <stddef.h>
++#include <stdint.h>
++
++// Byte-wise copy for RVV: one vle8.v/vse8.v pair per iteration at LMUL=m8, so a
++// VLEN=256 board moves up to 256 bytes per iteration. The padding rows in a
++// depthwise input tensor are only src_width * pack * bytes long and can be a few
++// dozen bytes on the low-resolution stages, which is where a dedicated short
++// kernel has the most headroom.
++void MNNMemcpyBytes_RVV(void* dst, const void* src, size_t size) {
++    uint8_t* d = static_cast<uint8_t*>(dst);
++    const uint8_t* s = static_cast<const uint8_t*>(src);
++    for (size_t vl; size > 0; size -= vl, s += vl, d += vl) {
++        vl = __riscv_vsetvl_e8m8(size);
++        vuint8m8_t v = __riscv_vle8_v_u8m8(s, vl);
++        __riscv_vse8_v_u8m8(d, v, vl);
++    }
++}

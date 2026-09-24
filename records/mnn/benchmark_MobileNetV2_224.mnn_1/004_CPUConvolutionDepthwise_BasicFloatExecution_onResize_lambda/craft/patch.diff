@@ -1,0 +1,48 @@
+diff --git a/source/backend/cpu/CPUConvolutionDepthwise.cpp b/source/backend/cpu/CPUConvolutionDepthwise.cpp
+index 5cda18c0..55cf0e82 100644
+--- a/source/backend/cpu/CPUConvolutionDepthwise.cpp
++++ b/source/backend/cpu/CPUConvolutionDepthwise.cpp
+@@ -15,12 +15,31 @@
+ #include "backend/cpu/compute/CommonOptFunction.h"
+ #include "backend/cpu/compute/ConvOpt.h"
+ 
++#ifdef MNN_USE_RVV
++#include <riscv_vector.h>
++#endif // MNN_USE_RVV
++
+ #ifdef MNN_KLEIDIAI_ENABLED
+ #include "backend/cpu/kleidiai/KleidiAIConvolutionDepthwise.hpp"
+ #include "backend/cpu/CPURuntime.hpp"
+ #endif //MNN_KLEIDIAI_ENABLED
+ 
+ namespace MNN {
++
++#ifdef MNN_USE_RVV
++// 使用更大 LMUL（e8,m8）的字节拷贝，减少循环控制/配置开销。
++// 相较编译器默认的 e8,m1 自动向量化 memcpy，单次迭代覆盖字节数更多。
++static void _memcpyBytesRVV(void* dst, const void* src, size_t n) {
++    uint8_t* d = static_cast<uint8_t*>(dst);
++    const uint8_t* s = static_cast<const uint8_t*>(src);
++    for (size_t vl; n > 0; n -= vl, s += vl, d += vl) {
++        vl = __riscv_vsetvl_e8m8(n);
++        vuint8m8_t v = __riscv_vle8_v_u8m8(s, vl);
++        __riscv_vse8_v_u8m8(d, v, vl);
++    }
++}
++#endif // MNN_USE_RVV
++
+ CPUConvolutionDepthwise::FloatExecution::FloatExecution(const Convolution2DCommon* common, Backend* b,
+                                                         const float* originWeight, size_t originWeightSize,
+                                                         const float* bias, size_t biasSize)
+@@ -227,7 +246,11 @@ ErrorCode CPUConvolutionDepthwise::BasicFloatExecution::onResize(const std::vect
+             for (int y = 0; y < src_height; ++y) {
+                 auto src = srcOrigin + y * src_width * unit * bytes;
+                 auto dst = inputPadPtr + ((y + padY) * paddedWidth + padX) * unit * bytes;
++#ifdef MNN_USE_RVV
++                _memcpyBytesRVV(dst, src, src_width * unit * bytes);
++#else
+                 ::memcpy(dst, src, src_width * unit * bytes);
++#endif
+             }
+ 
+             // Compute
