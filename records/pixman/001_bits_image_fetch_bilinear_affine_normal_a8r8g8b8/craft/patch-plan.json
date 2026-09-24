@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-pixman-affine-bench-bilinear-rotate-30deg-001",
+  "blueprintId": "bp-pixman-affine-bench-bilinear-rotate-30deg-001",
+  "createdAt": "2026-09-09T06:05:00.612Z",
+  "objective": "热点 bilinear affine 重采样 fetcher 主循环为全标量实现：逐输出重复坐标/权重计算 + 数据相关四 tap scalar gather + 逐通道 8.8 定点插值（标量通道拆/装位运算与 mul/add），且 build ISA 无 v 使任何 RVV 实现当前不可达；该函数在支持 RVV 1.0（VLEN=256）的 X100 上应走按行预计算 index/weight + indexed-load 向量化插值路径。",
+  "changes": [
+    {
+      "filePath": "libpixman-1.so.0.46.5 符号 bits_image_fetch_bilinear_affine_normal_a8r8g8b8（无 DWARF source mapping；按 pixman 源码布局推测位于 pixman/pixman-bits-image.c，待 DWARF/源码映射复核，见 diagnosis.currentGaps）",
+      "action": "modify",
+      "rationale": "热点 bilinear affine 重采样 fetcher 主循环为全标量实现：逐输出重复坐标/权重计算 + 数据相关四 tap scalar gather + 逐通道 8.8 定点插值（标量通道拆/装位运算与 mul/add），且 build ISA 无 v 使任何 RVV 实现当前不可达；该函数在支持 RVV 1.0（VLEN=256）的 X100 上应走按行预计算 index/weight + indexed-load 向量化插值路径。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "构建配置（meson.build / CFLAGS -march 项）——build ISA 需加入 v 扩展（L0 finding）",
+      "action": "modify",
+      "rationale": "热点 bilinear affine 重采样 fetcher 主循环为全标量实现：逐输出重复坐标/权重计算 + 数据相关四 tap scalar gather + 逐通道 8.8 定点插值（标量通道拆/装位运算与 mul/add），且 build ISA 无 v 使任何 RVV 实现当前不可达；该函数在支持 RVV 1.0（VLEN=256）的 X100 上应走按行预计算 index/weight + indexed-load 向量化插值路径。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 libpixman-1.so.0.46.5 符号 bits_image_fetch_bilinear_affine_normal_a8r8g8b8（无 DWARF source mapping；按 pixman 源码布局推测位于 pixman/pixman-bits-image.c，待 DWARF/源码映射复核，见 diagnosis.currentGaps）, 构建配置（meson.build / CFLAGS -march 项）——build ISA 需加入 v 扩展（L0 finding） 来解决 blueprint bp-pixman-affine-bench-bilinear-rotate-30deg-001。"
+}

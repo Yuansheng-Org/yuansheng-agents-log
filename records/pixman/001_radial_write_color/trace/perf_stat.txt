@@ -1,0 +1,33 @@
+21-PIXMAN-BENCHMARK radial-perf-full RISC-V perf stat
+=====================================================
+
+Source CSV: /workspace/results/21-pixman-benchmark_results.csv
+TestName: radial-perf-full
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 4,664,234,052 |
+| task_clock | 4,677,380,363 |
+| cpu_cycle | 10,286,327,313 |
+| instruction | 13,996,423,021 |
+| IPC | 1.360682 |
+| status | PASSED |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 4.664234 |
+
+perf stat style summary
+-----------------------
+         4,664,234,052  duration_time
+         4,677,380,363  task_clock
+        10,286,327,313  cpu_cycle
+        13,996,423,021  instruction
+              1.360682  IPC
+                PASSED  status
+              4.664234  duration_s

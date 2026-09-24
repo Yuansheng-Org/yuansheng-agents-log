@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-pixman-radial-perf-full-001",
+  "blueprintId": "bp-pixman-radial-perf-full-001",
+  "createdAt": "2026-09-09T06:22:48.321Z",
+  "objective": "radial_write_color 每像素标量 double 二次方程求解未向量化；构建目标 rv64gc 缺 v 使硬件 RVV 1.0（zve64d, VLEN=256）完全闲置，fsqrt→fmul 依赖链与逐像素间接尾调用主导 hot 区间（函数内局部样本 89.35%）。",
+  "changes": [
+    {
+      "filePath": "pixman/pixman/pixman-radial-gradient.c",
+      "action": "modify",
+      "rationale": "radial_write_color 每像素标量 double 二次方程求解未向量化；构建目标 rv64gc 缺 v 使硬件 RVV 1.0（zve64d, VLEN=256）完全闲置，fsqrt→fmul 依赖链与逐像素间接尾调用主导 hot 区间（函数内局部样本 89.35%）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 pixman/pixman/pixman-radial-gradient.c 来解决 blueprint bp-pixman-radial-perf-full-001。"
+}

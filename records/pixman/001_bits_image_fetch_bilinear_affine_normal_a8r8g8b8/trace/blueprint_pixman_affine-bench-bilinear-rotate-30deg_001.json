@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-pixman-affine-bench-bilinear-rotate-30deg-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T08:05:32.911Z",
+    "software": "pixman",
+    "testcaseIds": [
+      "affine-bench-bilinear-rotate-30deg"
+    ],
+    "diagnosisId": "diag-20260908T080532911Z-7f71dc7f",
+    "targetHardware": "SpacemiT K3 (spacemit-x100)",
+    "repositoryUrl": "https://gitlab.freedesktop.org/pixman/pixman.git",
+    "testBranch": "master",
+    "commitHash": "14735ced17e0053abbb925f9cf18c05ed9f52378"
+  },
+  "problem": {
+    "summary": "affine-bench-bilinear-rotate-30deg 中 rank 001 热点 bits_image_fetch_bilinear_affine_normal_a8r8g8b8 的 bilinear affine 重采样主循环（31e62–32016）为全标量实现：逐输出重复 16.16 分数坐标/权重推导、四 tap 数据相关 scalar gather 与逐通道 8.8 定点插值（通道拆/装位运算 + mul/add），插值计算区间 31ef4–32012 承载 ≈92% 局部样本；硬件支持 RVV 1.0（VLEN=256）而 build ISA 无 v，不存在可达的向量化实现。",
+    "evidence": [
+      "perf stat（cycles:u 同一运行窗口）：duration=7.327869s，cycles=16,125,136,481，instructions=22,675,535,924，IPC=1.406223（无 ARM 对照、无 cache/memory/branch counter）",
+      "annotate（703 samples, cycles:u, percent: local period）：hot loop 31e62–32016 全 scalar、zero v*；插值计算区间 31ef4–32012 承载 ≈92% 局部样本，最高行 19.08 : 31f98: and t2,a0,t6、16.51 : 31f50: srli s3,s9,0x10、8.76 : 31fc0: and s9,a1,t6、5.28 : 31fca: mul a7,s3,a7",
+      "hardware ISA 含 v（RVV 1.0, vlenb=32）而 build ISA（rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcd1p0）无 v → L0 baseline mismatch"
+    ]
+  },
+  "rootCause": {
+    "summary": "热点 bilinear affine 重采样 fetcher 主循环为全标量实现：逐输出重复坐标/权重计算 + 数据相关四 tap scalar gather + 逐通道 8.8 定点插值（标量通道拆/装位运算与 mul/add），且 build ISA 无 v 使任何 RVV 实现当前不可达；该函数在支持 RVV 1.0（VLEN=256）的 X100 上应走按行预计算 index/weight + indexed-load 向量化插值路径。",
+    "candidateFiles": [
+      "libpixman-1.so.0.46.5 符号 bits_image_fetch_bilinear_affine_normal_a8r8g8b8（无 DWARF source mapping；按 pixman 源码布局推测位于 pixman/pixman-bits-image.c，待 DWARF/源码映射复核，见 diagnosis.currentGaps）",
+      "构建配置（meson.build / CFLAGS -march 项）——build ISA 需加入 v 扩展（L0 finding）"
+    ],
+    "performanceFactors": [
+      "RVV Resampling Kernels",
+      "No vectorization",
+      "build ISA 缺 v（L0 hardware/build mismatch）"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "16.16 定点坐标与 floor/rounding 语义（half-pixel/align-corners 等坐标合同）",
+      "border clamp/reflect 语义（annotate 31e94–31ef0 内循环合同）",
+      "8-bit 通道 packed ARGB8888 布局与通道插值算术顺序",
+      "8.8 权重归一化：水平/垂直两权重之和 = 256（subw t2,s5,a2 合同）",
+      "reference 定义的插值 arithmetic order 与舍入（FMA/定点 widening 不得改变）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "affine-bench-bilinear-rotate-30deg"
+    ]
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=1.406223（compute/latency 方向）且无 cache/memory counter，热点函数 rank 001 的 annotate（cycles:u, 703 samples, local period）显示插值计算区间 31ef4–32012 承载 ≈92% 局部样本，其中样本主导行为标量通道拆/装（19.08% and、16.51% srli、8.76% and）与定点乘加（5.28% mul、0.85% add）以及四 tap 数据相关 load（3.39%+3.11% lw）——与 RVV Resampling Kernels pattern 的 '每个输出 lane 有运行期 source index/weight' 正向信号及 scalar gather + 标量插值慢因完全一致；hardware 支持 RVV 1.0（VLEN=256）而 build ISA 无 v（L0 finding），进一步确认当前 binary 不存在可达的向量化实现；MNN 的 RVV resize 实现（#4053/f4fcff3）提供同类 lever（预计算 index/weight + indexed load）的实施先例。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "config_mismatch：build ISA 缺 v 是前置门槛——即使修复代码引入向量化路径，也需要重建 build；若仅依赖编译器 autovec 且不重写为 resampling 专用向量路径，四 tap gather 与通道插值可能得不到有效向量化，收益有限",
+      "bound-type 未完全排除 memory-bound：无 cache/memory counter，若实际为 cache-miss 主导，向量化本地插值算术的收益上界低于 92% 局部样本份额（方向性表述）",
+      "sampling IP precision 未知：高占比行仅锚定插值计算区间，不排除个别行的指令级成本归因偏移"
+    ],
+    "currentGaps": "无 DWARF source mapping，candidateFiles 中源码文件路径为推测（需 readelf/debug info 复核实际源码位置）；缺 cache/memory counter 细分 bound type；采样语义为 local period 且函数级 workload 贡献未知（收益上界仅为局部样本份额 ≈92%，禁称 workload 级 Amdahl）；缺 sampling IP precision 信息（单行不做指令级归因）",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 pixman bilinear affine fetcher 的实际源码文件位置（DWARF/源码映射），以及该函数是否适合按行预计算 index/weight + vluxei32 向量化（含短 scanline 的预计算开销权衡与 border 合同保持）",
+    "affectedTarget": "RV（SpacemiT X100）；affine-bench-bilinear-rotate-30deg",
+    "recommendedFirstAction": "在含 v 的精确 -march（如 rv64gcv 变体，X100 另支持 zvbb）重建 libpixman（构建配置 meson.build/CFLAGS），并在 bits_image_fetch_bilinear_affine_normal_a8r8g8b8（推测 pixman/pixman-bits-image.c，需 DWARF 复核）内引入按行预计算 x0/x1 byte offset 与水平权重 + RVV indexed load（vluxei32）+ 16-bit 定点 widening 插值（vwmulu/vwmacc）的向量化路径，保持 8.8 权重和=256 与 border clamp 合同",
+    "recommendedVerification": "重建后重跑 affine-bench-bilinear-rotate-30deg 的 perf record/annotate：插值计算区间 31ef4–32012 的标量 and/srli/slli/mul/add 行与四 tap lw 行局部样本份额应显著下降，出现 vsetvli/vle32/vluxei32/vwmacc（或 vfmacc）指令行；与 scalar reference 对比覆盖空/小/整倍数/tail 长度并报告 cycles per pixel；同时做 16.16 坐标、border clamp、8.8 权重归一化与算术顺序的回归验证",
+    "metricEvidence": [
+      {
+        "metric": "Duration(s)",
+        "rv": 7.327869,
+        "anomalyNote": "单次运行总时长 7.33s；无 ARM 对照，无法直接跨架构比较，仅作为 workload 规模上下文"
+      },
+      {
+        "metric": "IPC",
+        "rv": 1.406223,
+        "anomalyNote": "cycles=16,125,136,481 / instructions=22,675,535,924；IPC 中等偏高，指向 compute/latency 主导方向；缺 cache/memory counter，无法细分 memory-bound"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "bits_image_fetch_bilinear_affine_normal_a8r8g8b8",
+        "fileModule": "libpixman-1.so.0.46.5（无 DWARF source mapping，见 currentGaps）",
+        "rvvPattern": "RVV Resampling Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.92,
+        "note": "bilinear affine 重采样（ARGB8888 四 tap 标量插值）；插值计算区间 31ef4–32012 承载 ≈92% 局部样本，样本主导在标量通道拆/装位运算与定点乘加及数据相关 tap load；supporting pattern：No vectorization（主循环 zero v*，hardware 有 v、build 无 v）"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "libpixman-1.so.0.46.5 符号 bits_image_fetch_bilinear_affine_normal_a8r8g8b8；annotate hot loop 31e62–32016（无 DWARF，源码行位置见 currentGaps）",
+      "relatedKnowledge": "https://github.com/alibaba/MNN/pull/4053; https://github.com/alibaba/MNN/commit/f4fcff3436a9d95c5367699b1c53d4eb1cbc3b7d",
+      "evidenceExplanation": "RVV Resampling Kernels pattern 的 leverage 为预计算/批量生成 index/weight、使用 indexed loads（vluxei32，index 为 byte offset）并保持坐标变换与 border 语义——与本函数 annotate 中逐像素重复 sraiw/andi/subw 权重推导、四 tap 数据相关 lw 与标量通道插值（mul/add）的证据形态一致；MNN RVV resize 实现为同类 bilinear resampling 向量化的上游先例，证明该 lever 在 RVV 目标上成立，不替代本次 perf evidence 的置信度判定"
+    }
+  }
+}

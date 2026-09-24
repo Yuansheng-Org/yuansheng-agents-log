@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-pc-bp-pixman-lowlevel-blt-bilinear-068-068-007",
+  "patchCandidateId": "pc-bp-pixman-lowlevel-blt-bilinear-068-068-007",
+  "reviewedAt": "2026-09-08T13:20:00.000Z",
+  "reviewer": "yuansheng-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "补丁在 pixman/pixman-rvv.c 新增 _pixman_rvv_fetch_scanline_a8，使用 RVV 1.0 基础整数向量指令（vsetvli/vle8.v/vzext.vf4/vsll.vi/vse32.v）。目标硬件为 SpacemiT X100（RVV 1.0, VLEN=256），构建以 -march=rv64gcv1p0 编译该文件，指令均落在目标 ISA 内；已用 riscv64-linux-gnu-gcc -march=rv64gcv1p0 独立编译验证内核可编译并反汇编确认生成正确的 vsetvli(e8,m1)/vle8.v/vzext.vf4(e32,m4)/vsll.vi/vse32.v 序列，SEW/LMUL 一致、tail/mask 采用默认 ta/ma 语义（无掩码尾，逐 vl 整段处理），未混入 x86/ARM 指令。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": []
+}

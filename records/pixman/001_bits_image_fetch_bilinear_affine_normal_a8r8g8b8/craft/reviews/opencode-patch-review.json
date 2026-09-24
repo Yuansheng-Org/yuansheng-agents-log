@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-pc-bp-pixman-affine-bench-bilinear-rotate-30deg-001",
+  "patchCandidateId": "pc-bp-pixman-affine-bench-bilinear-rotate-30deg-001",
+  "reviewedAt": "2026-09-09T06:05:00.000Z",
+  "reviewer": "yuansheng-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "verification_status=compile-only; 新增 RVV 内核：vid+vwmul 展开坐标、vrem 做 NORMAL 取模、vluxei64 4-tap gather、SWAR 双线性插值；仅注册 NORMAL+8888 子集"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": []
+}

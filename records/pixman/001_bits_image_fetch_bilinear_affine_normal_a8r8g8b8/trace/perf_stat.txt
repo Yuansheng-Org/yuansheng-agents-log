@@ -1,0 +1,33 @@
+21-PIXMAN-BENCHMARK affine-bench-bilinear-rotate-30deg RISC-V perf stat
+=======================================================================
+
+Source CSV: /workspace/results/21-pixman-benchmark_results.csv
+TestName: affine-bench-bilinear-rotate-30deg
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 7,327,869,162 |
+| task_clock | 7,332,270,649 |
+| cpu_cycle | 16,125,136,481 |
+| instruction | 22,675,535,924 |
+| IPC | 1.406223 |
+| status | PASSED |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 7.327869 |
+
+perf stat style summary
+-----------------------
+         7,327,869,162  duration_time
+         7,332,270,649  task_clock
+        16,125,136,481  cpu_cycle
+        22,675,535,924  instruction
+              1.406223  IPC
+                PASSED  status
+              7.327869  duration_s

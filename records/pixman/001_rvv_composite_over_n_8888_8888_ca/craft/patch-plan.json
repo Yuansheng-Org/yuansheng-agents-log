@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-pixman-lowlevel-blt-bilinear-094-094-001",
+  "blueprintId": "bp-pixman-lowlevel-blt-bilinear-094-094-001",
+  "createdAt": "2026-09-09T02:24:48.303Z",
+  "objective": "已向量化的 OVER 合成 kernel 每 32-pixel chunk 重复建立 15 次 vtype 状态（完全相同 e8/m4,vl=128 与 e16/m8,vl=128 状态在同一无 clobber 基本块内被重建 4/6 次），并因 3 个并发 e16/m8 widening 累加器使峰值 live set 达到 32 groups 整满而把 vsrc 逐 chunk 128B 栈往返 spill/reload，造成 vsetvli 重配置与栈流量主导热点区间。",
+  "changes": [
+    {
+      "filePath": "pixman/pixman-rvv.c",
+      "action": "modify",
+      "rationale": "已向量化的 OVER 合成 kernel 每 32-pixel chunk 重复建立 15 次 vtype 状态（完全相同 e8/m4,vl=128 与 e16/m8,vl=128 状态在同一无 clobber 基本块内被重建 4/6 次），并因 3 个并发 e16/m8 widening 累加器使峰值 live set 达到 32 groups 整满而把 vsrc 逐 chunk 128B 栈往返 spill/reload，造成 vsetvli 重配置与栈流量主导热点区间。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 pixman/pixman-rvv.c 来解决 blueprint bp-pixman-lowlevel-blt-bilinear-094-094-001。"
+}

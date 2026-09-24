@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-pixman-radial-perf-full-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T10:16:51.497Z",
+    "software": "pixman",
+    "testcaseIds": [
+      "radial-perf-full"
+    ],
+    "diagnosisId": "diag-20260908T101651497Z-fe62e2ee",
+    "targetHardware": "SpacemiT K3 (spacemit-x100, RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://gitlab.freedesktop.org/pixman/pixman.git",
+    "testBranch": "master",
+    "commitHash": "14735ced17e0053abbb925f9cf18c05ed9f52378"
+  },
+  "problem": {
+    "summary": "radial-perf-full 基准中径向渐变逐像素求解完全未向量化：radial_write_color 每像素以标量 double FP 执行二次方程求根（fneg/fmul/fmadd → fsqrt → fadd/fsub → fmul → fcvt.l.d → 间接尾调用），hot 求解区间（435f0–43666）占函数内 cycles 样本 89.35%，最高单行 435fc fmul.d 占 40.82%。硬件暴露 RVV 1.0（zve64d、VLEN=256）但构建目标 rv64gc 不含 v（L0 mismatch），vector FP 单元完全未参与。",
+    "evidence": [
+      "perf stat: duration_time=4,664,234,052 ns; cpu_cycle=10,286,327,313; instruction=13,996,423,021; IPC=1.360682",
+      "annotate (cycles:u, local period, 204 samples): 求解区间 435ca–43666 样本加总 89.35%；最高行 40.82% @ 435fc: fmul.d fa2,fa0,fa3 (t0=(b+sqrtdiscr)*inva)；12.62% @ 435f0: fsqrt.d fa2,fa2；19.94% @ 43656: bnez a5,435bc",
+      "L0 baseline finding: hardware isa 含 v（RVV 1.0, zve64d），build Tag_RISCV_arch=rv64i2p1_..._zcd1p0 不含 v，热点 object 不可能发出 RVV 指令",
+      "provenance: pixman/pixman/pixman-radial-gradient.c:70 静态 C 函数（compiler-generated）；树内 pixman-rvv.c 仅覆盖 combine fast paths，无任何 radial/gradient RVV kernel"
+    ]
+  },
+  "rootCause": {
+    "summary": "radial_write_color 每像素标量 double 二次方程求解未向量化；构建目标 rv64gc 缺 v 使硬件 RVV 1.0（zve64d, VLEN=256）完全闲置，fsqrt→fmul 依赖链与逐像素间接尾调用主导 hot 区间（函数内局部样本 89.35%）。",
+    "candidateFiles": [
+      "pixman/pixman/pixman-radial-gradient.c"
+    ],
+    "performanceFactors": [
+      "No vectorization (autovec gap / RVV kernel not built)"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "IEEE double 逐 lane 数值语义：discr 符号判定、sqrt 舍入、a>0 时 t0 优先的根选择顺序（pixman-radial-gradient.c:82-97 误差传播契约）",
+      "repeat 模式 t*dr>=mindr 与 PIXMAN_REPEAT_NONE 0<=t<=pixman_fixed_1 的边界判定",
+      "无效根 lane 写 0（memset）语义与 pixman_gradient_walker_write_t 逐像素写契约",
+      "fcvt.l.d rtz 舍入与 pixman_fixed_48_16_t walker 索引合同",
+      "公共 API（pixman_image_create_radial_gradient / pixman_image_t 迭代接口）不变"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "radial-perf-full"
+    ],
+    "regressionCommand": "agent1 patch_regression --case radial-perf-full"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=1.3607、duration 4.66s，指令组合为标量 double FP（fsqrt/fmul/fdiv），归为 compute/latency-bound；annotate 中求解区间 435ca–43666 占函数内 cycles 样本 89.35%（最高行 435fc fmul.d 40.82%、435f0 fsqrt.d 12.62%、43656 bnez 19.94%），且全函数 zero v*；硬件快照确认 RVV 1.0/zve64d/VLEN=256 可用而构建 Tag_RISCV_arch 无 v（L0）；源码树确认 radial gradient 无任何 RVV kernel（pixman-rvv.c 仅 combine 层），no-vectorization pattern 的 OpenCV Related PRs 证明同型标量循环可改写为 scalable RVV。三路证据共同指向：构建目标缺 v 叠加 radial 求解区间未向量化，为确认根因。",
+    "rootCauseType": "config_mismatch",
+    "alternativeExplanations": [
+      "重建含 v 后编译器 autovec 可能仍无法向量化带数据相关分支（双根选择/边界检查）的求根区间，实际修复载体需 intrinsic 或手写 kernel（code_path 层面，作为后续独立工作项）",
+      "prologue/tailcall 区间样本（43580/43588/435c2/435c8 合计约 10.6%）可能含 PMU skid 成分（baseline_gap: sampling IP precision），逐像素调用结构占比存在高估可能"
+    ],
+    "currentGaps": "缺 cache/memory/branch PMU counters（bound 分类无交叉确认）；缺 precise_ip/Exact-IP 信息（40.82% 单行只能锚定求解区间，不承担单指令 latency 归因）；采样 percent type 为 local period 且函数 workload 级贡献未知，无法给出 workload 级 Amdahl 上界；ARM 侧 perf 数据未采集，无跨架构 ratio",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + radial-perf-full",
+    "recommendedFirstAction": "先用硬件与工具链共同支持的精确 -march（含 v，如 rv64gcv，最小需含 zve64d）clean rebuild libpixman（构建配置：meson/CMake 的 riscv64 march 参数）；随后在 pixman/pixman/pixman-radial-gradient.c 的 radial_write_color（70 行起）与 radial_get_scanline（185 行起）中将每像素标量二次求解改写为跨像素向量化（SEW=64，VLEN=256 下 m1 即 4 lanes/迭代，LMUL 按 live-vector budget 选择；b/c 用 373-375 行递推生成向量，双根选择与边界判定用掩码，写像素批量执行）",
+    "recommendedVerification": "重跑 radial-perf-full benchmark 并重新 perf annotate：确认承载 object 的 Tag_RISCV_arch 含 v、annotate 出现 vsetvli/vfsqrt.v/vfadd.vv/vfmul.vv/vmflt 等 v* 指令、435fc 等标量行份额消失或骤降；对比 cycles/instructions 与耗时；覆盖 repeat=NONE 与 repeat!=NONE 两条路径及 masked 全无效根区间",
+    "metricEvidence": [
+      {
+        "metric": "Duration(ns)",
+        "rv": 4664234052,
+        "anomalyNote": "radial-perf-full 基准总时长 4.66s；ARM 侧未采集，无 ratio"
+      },
+      {
+        "metric": "IPC",
+        "rv": 1.360682,
+        "anomalyNote": "cycles 10.29G / instructions 14.00G；热区间为标量 double FP 链，compute/latency-bound，缺 cache/memory/branch counters 交叉确认"
+      },
+      {
+        "metric": "cpu_cycle",
+        "rv": 10286327313,
+        "anomalyNote": "基准全程周期数；热函数内求解区间占 cycles 样本 89.35%（函数内局部份额）"
+      },
+      {
+        "metric": "instruction",
+        "rv": 13996423021,
+        "anomalyNote": "基准全程指令数；标量求解每像素执行约 20+ 条 FP/整数指令，无向量摊薄"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "radial_write_color",
+        "fileModule": "pixman/pixman/pixman-radial-gradient.c",
+        "rvvPattern": "No vectorization (autovec gap / RVV kernel not built)",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.8935,
+        "note": "每像素标量 double 二次方程求根（fneg/fmul/fmadd → fsqrt → fadd/fsub → fmul → fcvt.l.d）加逐像素间接尾调用；硬件 RVV 1.0/zve64d（VLEN=256）可用但构建目标无 v，vector FP 单元未参与"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "pixman/pixman/pixman-radial-gradient.c:70 (radial_write_color)；hot 区间 435f0–43666；递推基础 pixman-radial-gradient.c:373-375",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/22179, https://github.com/opencv/opencv/pull/22520, https://github.com/opencv/opencv/pull/23980, https://github.com/opencv/opencv/pull/24058, https://github.com/opencv/opencv/pull/24132, https://github.com/opencv/opencv/pull/24166, https://github.com/opencv/opencv/pull/24301, https://github.com/opencv/opencv/pull/24325, https://github.com/opencv/opencv/pull/27160, https://github.com/opencv/opencv/pull/27119, https://github.com/opencv/opencv/pull/27097, https://github.com/opencv/opencv/pull/27007, https://github.com/opencv/opencv/pull/26958, https://github.com/opencv/opencv/pull/26865, https://github.com/opencv/opencv/commit/b902a8e792e1702b40f19dbd48dff0bfdca8b36d, https://github.com/opencv/opencv/commit/2c16f3b7d2b28f6cac444046b8f95b40d9266a6a, https://github.com/opencv/opencv/commit/e06502a254f79f9d3184de2803d087c6914b7706, https://github.com/opencv/opencv/commit/a2d784b6f53aa1fdfde21ab8e3787a93b59af24f, https://github.com/opencv/opencv/commit/83104bed32093ff0c5c935e8920c72b6b74ae07a",
+      "evidenceExplanation": "源码 pixman-radial-gradient.c:70 为 compiler-generated 静态 C 函数（annotate 全 scalar 佐证），树内无任何 radial/gradient RVV kernel（pixman-rvv.c 仅 combine fast paths），与 no-vectorization pattern 的 '缺失专用 kernel / build target 缺能力' 两种成因直接对应；该 pattern 的 Related PRs（OpenCV scalable RVV universal-intrinsic/HAL）证明同型标量循环改写为 VLEN-agnostic RVV 的可行性与上游先例"
+    }
+  }
+}

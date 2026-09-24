@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-pixman-affine-bench-bilinear-scale-2x-002",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T08:11:01.618Z",
+    "software": "pixman",
+    "testcaseIds": [
+      "affine-bench-bilinear-scale-2x"
+    ],
+    "diagnosisId": "diag-20260908T081101618Z-63ecf0cc",
+    "targetHardware": "SpacemiT X100 (K3)",
+    "repositoryUrl": "https://gitlab.freedesktop.org/pixman/pixman.git",
+    "testBranch": "master",
+    "commitHash": "14735ced17e0053abbb925f9cf18c05ed9f52378"
+  },
+  "problem": {
+    "summary": "pixman affine-bench-bilinear-scale-2x 测试中热点函数 fast_fetch_bilinear_cover（libpixman-1.so.0.46.5，120 samples，批次 rank 002）的垂直插值主循环（3cd80-3cdfa，占函数局部样本约 100%）完全为标量实现：每像素约 40 条指令，对 fetch_horizontal 预插值的 top/bottom 双行 64-bit 像素做定点插值（sub/mul/add 链）与 8→16→8 位字节打包（srli/and/zext.b/or）。目标硬件 SpacemiT X100 暴露 RVV 1.0（VLEN=256），但构建产物 Tag_RISCV_arch 无 v（L0 finding），循环无法发出 RVV 指令；循环内另有约 22.7% 局部样本落在寻址/循环控制（index scaling、limit reload、不变式基址重载）。",
+    "evidence": [
+      "Duration_time(RV): 3360.708 ms（perf stat，RISC-V-only 运行，无 ARM 对照）",
+      "IPC(RV): 2.756689（20.387 G instructions / 7.396 G cycles，全 workload counting）",
+      "热点函数 fast_fetch_bilinear_cover：垂直插值 loop 3cd80-3cdfa 局部样本份额 ≈100%（120 samples），最高行 14.96% @ 3cdee: or a5,t3,a5（字节打包）与 11.61% @ 3cdd4: and t3,t3,a6",
+      "L0 baseline finding：hardware isa 含 v（RVV 1.0），build ISA（bench binaries Tag_RISCV_arch rv64i2p1...zca1p0_zcd1p0）无 v",
+      "循环控制/寻址开销：index scaling（slli+add 每轮 3 处）、limit reload（lw 24(s1)，6.16%）、不变式基址重载（ld 8(a2)/8(s2)/8(s1) ≈9.1%）"
+    ]
+  },
+  "rootCause": {
+    "summary": "RVV-capable 目标上 bilinear 重采样垂直插值 pass 未向量化（build 未开启 v 且无 RVV kernel），标量双行 load + 定点插值链 + 字节打包主导样本，循环内另有索引归纳变量与 limit/基址重载的循环控制开销。",
+    "candidateFiles": [
+      "fast_fetch_bilinear_cover（bilinear fetch 垂直插值 pass，源文件名待 DWARF 定位）",
+      "pixman 构建配置（meson.build riscv64 -march 开启 v）"
+    ],
+    "performanceFactors": [
+      "RVV Resampling Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)",
+      "Loop Induction Variable Strength Reduction"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "pixman 垂直定点插值合同：权重 (y>>8)&0xfe、掩码 0x000fffff000fffff、top*256 + delta*w 算术顺序与截断舍入",
+      "字节提取/打包顺序（>>40&0xff00、>>16&0xff、&0xff00ff、>>24&0xff000000）与 _cover 无 border 检查语义",
+      "输出 32-bit 像素连续布局与 pixman 公共 fetch API 语义"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "affine-bench-bilinear-scale-2x",
+      "scaling-bench"
+    ],
+    "regressionCommand": "agent1 patch_regression --case affine-bench-bilinear-scale-2x"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.73,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "bound type 未确认（无 cache/memory counters）、hot DSO 自身 Tag_RISCV_arch 未直接取证、pixman 源码/DWARF 映射缺失，需人工确认后转发",
+    "reasoning": "perf stat 显示 duration_time=3360.708 ms、IPC=2.756689（counting 级，bound type 未定）。perf annotate 显示热点 fast_fetch_bilinear_cover 的垂直插值 loop（3cd80-3cdfa）占函数局部样本 ≈100%（120 samples）：权重预计算（srli a0,s4,0x8 + andi a0,a0,254）、top/bottom 双行 unit-stride load（ld 0(a4)/0(a5)）、插值链（sub 5.94% → mul → add 8.27%）、字节打包（and 11.61% / or 14.96%）——完整命中 RVV Resampling Kernels row（route High）。冻结快照显示 hardware 有 v 而 build ISA 无 v（L0 finding），解释 loop 为何零 v*；另循环内 index scaling（slli+add）与 limit reload（lw 24(s1) 6.16%）命中 Loop Induction Variable Strength Reduction（supporting，L4）。同类实现经 MNN RVV resize PR（#4053/f4fcff3）证明该算子合同可向量化，垂直 pass 为 unit-stride 可直接 vle64/vse32 处理，修复方向为开启 RVV 构建并实现/注册 RVV 垂直插值 kernel。",
+    "rootCauseType": "config_mismatch",
+    "alternativeExplanations": [
+      "loop 可能部分 memory-bound（每像素两次 64-bit 行 load + 一次 32-bit store），向量化实际收益低于纯指令数缩减比例",
+      "若 pixman 在其它 arch 已注册 fast-path 而 RISC-V 未接线，则根因部分是 dispatch/kernel-selection 缺口（L0 层），而非仅 build 配置",
+      "仅做 LISR 修复（指针递增 + end-pointer）与不变式 load 提升也可降低约 22.7% 局部循环控制开销，但属次要杠杆，不构成主因"
+    ],
+    "currentGaps": "hot DSO 自身 Tag_RISCV_arch 未在冻结快照；无 cache/memory counters → bound type 未确认；sampling IP precision 未知 → 归因限于 interval 级；percent=local period 且函数 workload 级贡献未知 → 收益上界仅局部样本份额；workspace 无 pixman 源码/DWARF → candidateFiles 以函数名占位；pixman RISC-V fast-path dispatch 集成点未核实",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 hot DSO（libpixman-1.so.0.46.5）的 Tag_RISCV_arch 是否含 v；补充 cache/memory counters 判定 bound type；定位 fast_fetch_bilinear_cover 实际源文件与 fast-path 注册点；确认垂直插值定点舍入/打包合同后放行 RVV kernel 实施",
+    "affectedTarget": "RV: affine-bench-bilinear-scale-2x（SpacemiT X100；无 ARM 对照数据）",
+    "recommendedFirstAction": "在 pixman 构建配置（meson.build 的 riscv64 cpu/march flags）启用硬件与工具链共同支持的精确含 v -march；随后在 fast_fetch_bilinear_cover 垂直插值 pass 对应源文件实现并注册 RVV kernel：以 vle64 对 top/bottom 预插值行做 unit-stride 双行 load，保持 0x000fffff000fffff 掩码与 top*256+delta*w 定点插值顺序（vsub/vmul/vadd），按参考字节提取顺序（vsrl/vand/vor 或 vnsrl 组合）打包后 vse32 存储，fixed-VL main loop + runtime-VL tail，按 LMUL m1/m2 预算与逐指令 live interval 校验，循环界值外提、基址改指针递增，保留 scalar fallback",
+    "recommendedVerification": "重新运行 affine-bench-bilinear-scale-2x 并对此函数重采 perf annotate：3cdee/3cdd4/3cdde/3cd84/3cdf8 等行样本应消失或骤降，出现 vsetvli/vle64/vse32；与 scalar reference 对比覆盖空、小 n、main-loop 整倍数与全部 tail 长度；用 pixman 像素级回归（checkerboard/scaling）验证 bilinear 输出逐位一致",
+    "metricEvidence": [
+      {
+        "metric": "duration_time(ms)",
+        "rv": 3360.708,
+        "anomalyNote": "RISC-V-only 单侧运行（无 ARM 对照），duration 3.36 s 为 perf stat 记录值"
+      },
+      {
+        "metric": "IPC",
+        "rv": 2.756689,
+        "anomalyNote": "全 workload counting IPC=2.76；热点函数内 loop 为长串行依赖链（ld→sub/mul/add→打包→sw），无 cache/memory counters，bound type 未确认"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "fast_fetch_bilinear_cover",
+        "fileModule": "unknown（libpixman-1.so.0.46.5，无 DWARF）",
+        "rvvPattern": "RVV Resampling Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.99,
+        "note": "bilinear 重采样垂直插值 pass（像素插值/内存密集混合）：标量双行 unit-stride load + 定点插值链 + 字节打包，占函数局部样本 ≈100%（120 samples），批次 rank 002"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "fast_fetch_bilinear_cover（libpixman-1.so.0.46.5，3cd80-3cdfa）+ 构建配置需开启 RVV（build ISA 现无 v）",
+      "relatedKnowledge": "https://github.com/alibaba/MNN/pull/4053 ; https://github.com/alibaba/MNN/commit/f4fcff3436a9d95c5367699b1c53d4eb1cbc3b7d",
+      "evidenceExplanation": "MNN 的 RVV resize/interpolation kernel（PR #4053 与 commit f4fcff3）展示了同算子合同（separable bilinear 重采样、运行期权重）的可向量化形态；本函数反汇编中的权重预计算（srli/andi 0xfe）、top/bottom 双行 load 与 sub/mul/add 插值链正是该 pattern §7/§8 描述的标量形态（垂直 pass 为 unit-stride，无需 gather），知识证据支撑 vle64/vse32 向量化路径在该类算子上可行。"
+    }
+  }
+}

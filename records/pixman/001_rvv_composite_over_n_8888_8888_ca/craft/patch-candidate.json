@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-pixman-lowlevel-blt-bilinear-094-094-001",
+  "patchPlanId": "pp-bp-pixman-lowlevel-blt-bilinear-094-094-001",
+  "createdAt": "2026-09-09T02:24:48.440Z",
+  "changedFiles": [
+    "pixman/pixman-rvv.c"
+  ],
+  "gitDiff": "diff --git a/pixman/pixman-rvv.c b/pixman/pixman-rvv.c\nindex 570799c..c741f46 100644\n--- a/pixman/pixman-rvv.c\n+++ b/pixman/pixman-rvv.c\n@@ -2421,6 +2421,7 @@ rvv_composite_over_n_8888_8888_ca (pixman_implementation_t *__restrict__ imp,\n     int         dst_stride, mask_stride;\n     uint32_t    src, srca;\n     vuint32m4_t vsrc;\n+    const size_t vlmax = __riscv_vsetvlmax_e32m4 ();\n \n     src = _pixman_image_get_solid (imp, src_image, dest_image->bits.format);\n     if (src == 0)\n@@ -2440,16 +2441,34 @@ rvv_composite_over_n_8888_8888_ca (pixman_implementation_t *__restrict__ imp,\n \tmask = mask_line;\n \tmask_line += mask_stride;\n \n-\tRVV_FOREACH_2 (width, vl, e32m4, mask, dst)\n \t{\n-\t    vuint32m4_t m = __riscv_vle32_v_u32m4 (mask, vl);\n-\t    __riscv_vse32 (\n-\t\tdst,\n-\t\trvv_UN8x4_MUL_UN8x4_ADD_UN8x4_vvv_m4 (\n-\t\t    __riscv_vle32_v_u32m4 (dst, vl),\n-\t\t    __riscv_vnot (rvv_UN8x4_MUL_UN8_vx_m4 (m, srca, vl), vl),\n-\t\t    rvv_UN8x4_MUL_UN8x4_vv_m4 (m, vsrc, vl), vl),\n-\t\tvl);\n+\t    size_t n = (size_t)width;\n+\t    while (n >= vlmax)\n+\t    {\n+\t\tvuint32m4_t m = __riscv_vle32_v_u32m4 (mask, vlmax);\n+\t\t__riscv_vse32 (\n+\t\t    dst,\n+\t\t    rvv_UN8x4_MUL_UN8x4_ADD_UN8x4_vvv_m4 (\n+\t\t\t__riscv_vle32_v_u32m4 (dst, vlmax),\n+\t\t\t__riscv_vnot (rvv_UN8x4_MUL_UN8_vx_m4 (m, srca, vlmax), vlmax),\n+\t\t\trvv_UN8x4_MUL_UN8x4_vv_m4 (m, vsrc, vlmax), vlmax),\n+\t\t    vlmax);\n+\t\tmask += vlmax;\n+\t\tdst += vlmax;\n+\t\tn -= vlmax;\n+\t    }\n+\t    if (n > 0)\n+\t    {\n+\t\tsize_t vl = __riscv_vsetvl_e32m4 (n);\n+\t\tvuint32m4_t m = __riscv_vle32_v_u32m4 (mask, vl);\n+\t\t__riscv_vse32 (\n+\t\t    dst,\n+\t\t    rvv_UN8x4_MUL_UN8x4_ADD_UN8x4_vvv_m4 (\n+\t\t\t__riscv_vle32_v_u32m4 (dst, vl),\n+\t\t\t__riscv_vnot (rvv_UN8x4_MUL_UN8_vx_m4 (m, srca, vl), vl),\n+\t\t\trvv_UN8x4_MUL_UN8x4_vv_m4 (m, vsrc, vl), vl),\n+\t\t    vl);\n+\t    }\n \t}\n     }\n }\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

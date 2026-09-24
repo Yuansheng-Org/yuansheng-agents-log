@@ -1,0 +1,32 @@
+ Percent |	Source code & Disassembly of libpixman-1.so.0.46.5 for cycles:u (592 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------------------
+         :
+         : 1    /home/yuansheng-ci/workspaces/runs/20260812-run-9-296d9110de22/results/perf_record/lowlevel-blt-bilinear-068-068/annotate_all/symfs//workspace/build/pixman/libpixman-1.so.0.46.5：     文件格式 elf64-littleriscv
+         :
+         :
+         : 4    Disassembly of section .text:
+         :
+         : 6    000000000000c3ca <fetch_scanline_a8>:
+    0.00 :   c3ca:   addi    sp,sp,-16
+    0.34 :   c3cc:   sd      s0,0(sp)
+    0.00 :   c3ce:   sd      ra,8(sp)
+    0.17 :   c3d0:   addi    s0,sp,16
+    0.17 :   c3d2:   blez    a3,c400 <fetch_scanline_a8+0x36>
+    0.00 :   c3d6:   lw      a5,184(a0)
+    0.17 :   c3da:   ld      a0,168(a0)
+    0.00 :   c3dc:   slli    a3,a3,0x2
+    0.00 :   c3de:   mulw    a5,a5,a2
+    0.00 :   c3e2:   add     a0,a0,a1
+    0.00 :   c3e4:   add     a3,a3,a4
+    0.17 :   c3e6:   slli    a5,a5,0x2
+    0.00 :   c3e8:   add     a1,a5,a0
+    1.52 :   c3ec:   lbu     a5,0(a1)
+    8.94 :   c3f0:   addi    a4,a4,4
+    0.00 :   c3f2:   addi    a1,a1,1
+    0.34 :   c3f4:   slliw   a5,a5,0x18
+   41.84 :   c3f8:   sw      a5,-4(a4)
+   44.49 :   c3fc:   bne     a3,a4,c3ec <fetch_scanline_a8+0x22>
+    0.34 :   c400:   ld      ra,8(sp)
+    0.84 :   c402:   ld      s0,0(sp)
+    0.51 :   c404:   addi    sp,sp,16
+    0.17 :   c406:   ret

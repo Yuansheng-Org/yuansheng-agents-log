@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-pixman-lowlevel-blt-bilinear-068-068-007",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T09:03:02.833Z",
+    "software": "pixman",
+    "testcaseIds": [
+      "lowlevel-blt-bilinear-068-068"
+    ],
+    "diagnosisId": "diag-20260908T090302833Z-a8abeff0",
+    "targetHardware": "SpacemiT X100 (spacemit-x100)",
+    "repositoryUrl": "https://gitlab.freedesktop.org/pixman/pixman.git",
+    "testBranch": "master",
+    "commitHash": "14735ced17e0053abbb925f9cf18c05ed9f52378"
+  },
+  "problem": {
+    "summary": "lowlevel-blt-bilinear-068-068 下 fetch_scanline_a8 为最高热度函数（rank 007，592 samples）：A8 alpha 逐像素扩为 32-bit ARGB 的布局转换以全标量循环执行（lbu→slliw 0x18→sw，6 指令/像素），hot loop 区间占函数内样本 97.5%。根因两层：build Tag_RISCV_arch 不含 v（硬件有 RVV 1.0，二进制无法发出向量指令），且该扩位转换未以 layout-packing 形态批量执行。",
+    "evidence": [
+      "perf stat: duration_time 96.7694s, cpu_cycle 212.68G, instruction 486.52G, IPC 2.287515, status PASSED",
+      "annotate fetch_scanline_a8: hot loop c3ec–c3fc 占 592 samples 的 97.47%；`41.84 : c3f8: sw a5,-4(a4)`、`44.49 : c3fc: bne a3,a4,c3ec`、`1.52 : c3ec: lbu a5,0(a1)`、`0.34 : c3f4: slliw a5,a5,0x18`",
+      "build ISA mismatch: Tag_RISCV_arch=rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcd1p0（无 v） vs hardware isa=rv64imafdcvh_...（含 v, RVV 1.0, VLEN 256）"
+    ]
+  },
+  "rootCause": {
+    "summary": "A8→ARGB32 取数循环以逐像素标量形态执行且二进制构建不含 v，导致 RVV 1.0 向量单元完全未参与该 97.5% 函数内份额的热循环；需先修正 build ISA，再按 layout/channel packing 形态向量化扩位转换。",
+    "candidateFiles": [
+      "fetch_scanline_a8"
+    ],
+    "performanceFactors": [
+      "RVV Layout and Channel Packing Kernels"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "输出像素位布局：alpha 位于 bits 24–31、低 24 位为零（即 a<<24）",
+      "A8 fetcher 的函数指针分派语义与 fetch slot 注册（pixman fetcher_info 表）",
+      "行宽/stride、tail 完整性、little-endian 字节序与 in-place/overlap 边界"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "lowlevel-blt-bilinear-068-068"
+    ]
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示整体 IPC 2.29、非带宽主导，hot loop 为 latency/ILP 受限的标量逐元素转换；annotate 证据链 lbu→slliw 0x18→sw 直接证明固定 bit-field 布局扩位（alpha 注入），hot loop 区间样本份额 0.975；readelf 冻结的 Tag_RISCV_arch 无 v 与 cpuinfo 快照含 v 构成已确认的 L0 build/hardware mismatch，解释二进制为何零 v*；三者共同指向'build 未启用 v + 布局扩位未向量化'这一根因，且 knowledge 证据（layout-packing 的 Related PRs）支持同类转换在 RVV 生态中的批量实现形态。",
+    "rootCauseType": "config_mismatch",
+    "alternativeExplanations": [
+      "采样 IP skid 可能使 sw/bne 行占比虚高、真实成本偏向 lbu 加载延迟——影响收益幅度估算，不改变'标量逐像素+无 v'的结论方向",
+      "pixman 可能出于跨架构维护策略有意保留标量 fetcher（未见 policy 证据）——需项目级确认，当前无任何支持证据"
+    ],
+    "currentGaps": "annotate 无 DWARF 源码行（无法给 file:line）；无 precise_ip/Exact-IP 信息；percent type=local period 且函数 workload 级贡献未知，收益上界仅函数内局部份额；无 ARM 侧 perf stat 对照；构建文件路径未提供（candidateFiles 以函数名占位）",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV (riscv64) + lowlevel-blt-bilinear-068-068",
+    "recommendedFirstAction": "在构建配置中为 RISC-V 目标启用含 v 的精确 -march（如 rv64gcv_zvl256b），并将 fetch_scanline_a8 的逐像素 lbu→slliw 0x18→sw 循环以 RVV intrinsic（vle8→vzext.vf4→vsll.vi 24→vse32，fixed-VL main loop + runtime-VL tail）批量重写，保持输出像素位布局与 tail 语义不变",
+    "recommendedVerification": "以新 -march 重建后重跑 lowlevel-blt-bilinear-068-068，对 fetch_scanline_a8 重新 perf annotate：应出现 vle8/vzext/vsll/vse32、c3ec–c3fc 标量份额显著下降；与 scalar reference 对比覆盖 n=0/小 n/main-loop 整倍数/全部 0..vl-1 tail；检查反汇编无 per-iteration vsetvli",
+    "metricEvidence": [
+      {
+        "metric": "duration_time (s)",
+        "rv": 96.76940005,
+        "anomalyNote": "共享 perf stat 全测试用例时长；fetch_scanline_a8 为本批 3 个热点函数中样本量最大（592/649），rank 007"
+      },
+      {
+        "metric": "IPC",
+        "rv": 2.287515,
+        "anomalyNote": "整体 IPC 2.29；hot loop 为 6 指令/像素的标量转换链（lbu→slliw→sw + 2×addi + bne），latency/ILP 受限而非带宽主导"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "fetch_scanline_a8",
+        "fileModule": "fetch_scanline_a8（annotate 无 DWARF 源码行）",
+        "rvvPattern": "RVV Layout and Channel Packing Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.975,
+        "note": "图像取数（内存密集布局转换）：A8 alpha 逐像素扩为 32-bit ARGB，1B→4B 固定位域扩位；全标量零 v*；硬件 RVV 1.0 VLEN=256 而 build 无 v"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "fetch_scanline_a8（无 DWARF；同链路分派：bits_image_fetch_untransformed_32 @ 0x17890 jalr a6 → fetch slot）",
+      "relatedKnowledge": "https://github.com/OpenMathLib/OpenBLAS/commit/c00afc86a6fd318473e14150fec8964104b9cfe6; https://github.com/OpenMathLib/OpenBLAS/commit/ef7f54b35713a315671f64f03fe0d417f1bb0360; https://github.com/OpenMathLib/OpenBLAS/commit/07d0e742c2ac18d6342f6a792dc3f8da04499674; https://github.com/OpenMathLib/OpenBLAS/commit/a8a00bbf4f9169646e1f42ee419a3cc3b4badd82; https://github.com/opencv/opencv/commit/8a36f119cee5a90c59f03a24f8a6efda3179600a; https://github.com/opencv/opencv/commit/189f64726437a3756329890ea75c8ca5fde46bcf; https://github.com/uxlfoundation/oneDNN/commit/ba07c4e658a1ccbb2f6587ab0e5df9831984ee5b; https://github.com/uxlfoundation/oneDNN/commit/79a1557d2119ceb79ab50897b5c481d66b5381f4; https://github.com/uxlfoundation/oneDNN/pull/4548; https://github.com/uxlfoundation/oneDNN/commit/aadd85dd6a2d100fed3a42bc01e669fe4ef0297a; https://github.com/alibaba/MNN/pull/4079; https://github.com/alibaba/MNN/commit/73bfaa46fe4f9c0e24e0238073f5ab1a94edca6c; https://github.com/alibaba/MNN/pull/4021; https://github.com/alibaba/MNN/commit/0a5ee52e7d209b3b5735419f52dd5dd366657478; https://github.com/alibaba/MNN/pull/4067; https://github.com/alibaba/MNN/commit/2c2d7fa68675191bcdad9ebd9727e9c271b0db07; https://github.com/alibaba/MNN/pull/3813; https://github.com/alibaba/MNN/commit/6afcf99fedaec90b5b363ce4c78317800f291443; https://github.com/alibaba/MNN/pull/4426; https://github.com/vllm-project/vllm/pull/47538",
+      "evidenceExplanation": "命中 pattern（RVV Layout and Channel Packing Kernels）的 Related PRs 展示 OpenBLAS/OpenCV/oneDNN/MNN 生态中同类 layout/channel 转换以批量 RVV 形态实现并被采纳；当前 annotate 显示同一语义（alpha 注入扩位）仍为逐像素标量，且 build 无 v，知识与 profile 证据共同指向向量化 layout-packing 修复方向"
+    }
+  }
+}
