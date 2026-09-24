@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-openssl-x448-003",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T16:23:58.647Z",
+    "software": "openssl",
+    "testcaseIds": [
+      "x448"
+    ],
+    "diagnosisId": "diag-20260908T162358647Z-9b120b9d",
+    "targetHardware": "SpacemiT X100 (spacemit-x100, RVV 1.0, VLEN=256, out-of-order)",
+    "repositoryUrl": "https://github.com/openssl/openssl.git",
+    "testBranch": "master",
+    "commitHash": "2924476b5591e691e904c4baf57894c526c4b8de"
+  },
+  "problem": {
+    "summary": "openssl speed x448 在 SpacemiT X100（RVV 1.0, VLEN=256）上，热点函数 ossl_x448_int 的 gf_weak_reduce 被 GCC 以 vsetivli zero,2,e64,m1（vl=2，仅用半宽 VLEN）配合 vrgather 反转索引的方式向量化，8-limb 弱归约每次调用产生约 27 个向量操作与 9 个 vrgather，占该函数约 70% 局部样本；另有 gf_sub_RAW/gf_cond_swap 的 8-limb 标量循环未向量化（约 18% 局部样本）。整体 workload 为 compute-bound（IPC 2.338，L1 miss 0.212%），非访存/分支瓶颈。",
+    "evidence": [
+      "perf stat: IPC=2.338（compute-bound，无 LLC counter）、L1_dcache_load_miss_rate=0.212%、branch_miss_rate=0.474%、throughput_ops_per_second=784.76（cpu-clock, 71 samples, local period）",
+      "热点 1: ossl_x448_int 的 weak_reduce 向量区间局部样本 ≈70%——六处 vle64.v v5 锚点合计 42.3%（15ddc2/15de88 各 8.45%，15df82/15e048 各 5.63%，15e146/15e1f8 各 4.23%）+ 同区间标量 epilogue ≈26.8%",
+      "热点 2: gf_sub_RAW（15dcac/15dc9e/15df36/15df48/15df4c/15e0fe/15e10e ≈11.3%）与 gf_cond_swap（15dbb4/15dbca/15dbee ≈7.0%）标量 8-limb 循环未向量化，合计 ≈18.3%",
+      "代码知识证据: curve448.c ladder 每 bit 执行 ~8 次 gf_weak_reduce（gf_add_nr×4+gf_sub_nr×3+gf_mulw×1）×448 bit；OpenSSL 全架构无 curve448/x448 asm（crypto/ec/asm 仅 ecp_sm2p256-riscv64.pl、x25519-x86_64.pl 等）"
+    ]
+  },
+  "rootCause": {
+    "summary": "GCC 对 Curve448 素数域 gf_weak_reduce 的自动向量化公式化欠利用：vl=2（VLEN=256 半宽）+ vrgather 反转索引实现相邻 limb 移位窗口，且 gf_sub_RAW/gf_cond_swap 的 8-limb 纯 elementwise 标量循环未被向量化。",
+    "candidateFiles": [
+      "crypto/ec/curve448/field.h",
+      "crypto/ec/curve448/curve448.c",
+      "crypto/ec/curve448/f_generic.c"
+    ],
+    "performanceFactors": [
+      "RVV Register-Group Utilization and LMUL Sizing",
+      "RVV Contiguous Elementwise Arithmetic Kernels"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "常数时间（constant-time）语义：标量条件处理、掩码交换（gf_cond_swap/value_barrier_64）不得引入任何数据相关分支",
+      "gf_weak_reduce/gf_add_RAW/gf_sub_RAW 的 56-bit limb 算术语义与数值输出（含 limb[4]+=tmp、limb[0]+=tmp 及 co1/co2 bias 精确还原）",
+      "ossl_x448_int 公共 API 行为：输出字节序列、错误返回语义、OPENSSL_cleanse 清理行为"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "x448",
+      "ed448-sign",
+      "ed448-verify"
+    ],
+    "regressionCommand": "agent1 patch_regression --case x448"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "采样语义缺 global-period 与函数级 workload 贡献、Sampling IP precision 未知，收益上界仅为函数内局部样本份额；且为常数时间密码学代码，需人工确认 RVV 改写不破坏 CT 语义后在实机 A/B。",
+    "reasoning": "perf stat 显示 IPC=2.338、L1_dcache_load_miss_rate=0.212%、branch_miss_rate=0.474%，workload 为 compute-bound，排除访存/分支瓶颈；annotate 显示热点集中在 GCC 生成的 weak_reduce 向量循环（六处 vle64.v v5 合计 42.3% 局部样本，全机制约 70%），该循环使用 vsetivli zero,2,e64,m1（VLEN=256 下仅用 2/4 lane）并每 2-limb chunk 执行 3 个 vrgather 反转——8-limb（64B）数组本可以 m1/vl=4 或 m2/vl=8 一次/两次覆盖且用 vslide1up 或窗口装载消除全部 vrgather，对应 RVV Register-Group Utilization and LMUL Sizing 的欠利用机制；同时 gf_sub_RAW/gf_cond_swap 的 8-limb 标量循环（约 18.3% 局部样本）为纯 elementwise/select，符合 RVV Contiguous Elementwise Arithmetic Kernels 的直接 lowering 场景。代码层证据（curve448.c ladder 每 bit ~8 次 weak_reduce ×448 bit、OpenSSL 全架构无 x448 asm、field.h 源语义）与知识证据（register-group LMUL 选型、elementwise 向量化相关 PR）共同指向同一根因：编译器对固定 8-limb 域运算的向量化公式化与 LMUL 选型欠优。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "Sampling IP precision 未知，单行样本可能含 skid，weak_reduce 的实际周期份额可能略低于统计值",
+      "跨调用强制重建向量状态（psABI call clobber）与 736B 栈帧流量会放大或缩小各机制占比",
+      "GCC 版本与 -march 优化选项不同时向量化形态会变化，vslide1up 在 X100 上的实机吞吐若劣于 vrgather，收益可能低于预期（需 A/B）"
+    ],
+    "currentGaps": "ARM 侧对比数据缺失（无 rv/arm ratio 基线）；采样 percent type 为 local period、函数级 workload 贡献未知；Sampling IP precision 未知；libcrypto.so.4 的 Tag_RISCV_arch 未直接提供（冻结快照仅含 openssl_bench 可执行文件 attribute）；无 LLC/缓存 counter。",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 RVV 改写后的 gf_weak_reduce/gf_cond_swap 不引入数据相关分支（常数时间安全）；在 X100 实机核对 vslide1up vs vrgather、m1/vl=4 vs m2 的吞吐与 spill；确认 GCC 生成代码形态变化不改变 56-bit limb 数值语义。",
+    "affectedTarget": "RV + x448",
+    "recommendedFirstAction": "在 crypto/ec/curve448/field.h 的 64-bit 分支 gf_weak_reduce（第 156-166 行）中按 RVV 公式化重写 8-limb 弱归约：以全宽 vl（VLEN=256 下 e64/m1 vl=4 两段或 m2 vl=8 一段）+ vslide1up.vx（lane0=tmp）替代 vrgather 反转窗口，保留 limb[4]+=tmp 标量前置与 56-bit mask；gf_sub_RAW（第 141-150 行）与 gf_cond_swap（第 251 行起）同步改为 vle64/vsub/vand/vxor 向量形态，bias 常量向量循环外构建。",
+    "recommendedVerification": "重新运行 openssl speed x448（同 workload）并 perf annotate ossl_x448_int，观察 weak_reduce 区间 vle64.v v5 六处锚点（15ddc2/15de88/15df82/15e048/15e146/15e1f8）样本份额是否显著下降、vrgather.vv 是否消失、vsetivli 是否出现 vl=4/8；用 openssl speed -evp X448 与 KAT 向量核对输出逐字节一致，并复查无数据相关分支（CT）。",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 2.338,
+        "anomalyNote": "高 IPC 且 L1/branch miss 极低，判定为 compute-bound，向量级修正不被访存/分支瓶颈压制"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.212,
+        "anomalyNote": "远低于访存瓶颈阈值，排除 memory-bound"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.474,
+        "anomalyNote": "极低，排除 branch-bound"
+      },
+      {
+        "metric": "throughput_ops_per_second",
+        "rv": 784.76,
+        "anomalyNote": "x448 操作吞吐基线，供修复后对比"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "ossl_x448_int",
+        "fileModule": "crypto/ec/curve448/curve448.c",
+        "rvvPattern": "RVV Register-Group Utilization and LMUL Sizing",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.7,
+        "note": "密码学（Curve448 素数域 X448 蒙哥马利梯子）：weak_reduce 向量区间（含 vle64.v v5 六处 42.3% + 同区间标量 epilogue ≈26.8%）合计约 70% 局部样本，vl=2 半宽 + vrgather 公式化欠利用"
+      },
+      {
+        "hotspotFunction": "ossl_x448_int",
+        "fileModule": "crypto/ec/curve448/curve448.c",
+        "rvvPattern": "RVV Contiguous Elementwise Arithmetic Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.183,
+        "note": "密码学（同上）：gf_sub_RAW（≈11.3%）与 gf_cond_swap（≈7.0%）8-limb 标量循环未向量化，合计 ≈18.3% 局部样本"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "crypto/ec/curve448/field.h:156-166 (gf_weak_reduce, 64-bit)、crypto/ec/curve448/field.h:141-150 (gf_sub_RAW)、crypto/ec/curve448/field.h:251-263 (gf_cond_swap)、crypto/ec/curve448/curve448.c:395-437 (ladder 主循环)",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/26318, https://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5, https://github.com/opencv/opencv/pull/25586, https://github.com/torvalds/linux/commit/a4348546332c9fae12b29acb514535e0a52b9b3c, https://github.com/torvalds/linux/commit/a894e8ed09c6c7fa239711819db83b8c050eb7b0, https://github.com/torvalds/linux/commit/c2a658d419246108c9bf065ec347355de5ba8a05, https://github.com/openjdk/jdk/commit/bdd37b0e5eaa984e2ad2e9010af37dcd612cc05e, https://github.com/OpenMathLib/OpenBLAS/commit/cc1b5794a0409493ed470f4cced313ea0b560870, https://github.com/OpenMathLib/OpenBLAS/commit/d69be17b6ff7eea5371b03a199db9c112aa6dc4b, https://github.com/OpenMathLib/OpenBLAS/commit/4a12cf53ec116c06e5d74073b54a3b604ca6cb17, https://github.com/OpenMathLib/OpenBLAS/commit/240695862984d4de845f1c42821a883946df9327, https://github.com/v8/v8/commit/3844339936068c529170dcb4f1602aa654d25943, https://github.com/vllm-project/vllm/pull/47538, https://github.com/OpenMathLib/OpenBLAS/commit/45fd2d9b0790c5ca3698502d65d59d38d911ef4f, https://github.com/alibaba/MNN/pull/3913, https://github.com/alibaba/MNN/commit/5376580ba19ac4034dc373f566fca846326fd612, https://github.com/alibaba/MNN/pull/3779, https://github.com/alibaba/MNN/commit/b35da10227477e90d5e5be55e1e5e646d4af41e4, https://github.com/alibaba/MNN/commit/815ed5d6cb7052e2294d9eb6298e9e23b2fdf91d, https://github.com/uxlfoundation/oneDNN/commit/2b1dfe2d6233696bc2c803b48c06c00b29f7f866, https://github.com/uxlfoundation/oneDNN/pull/5265, https://github.com/uxlfoundation/oneDNN/commit/1184757c286814e552c137ca354060a30a9872bb, https://github.com/uxlfoundation/oneDNN/pull/5079, https://github.com/uxlfoundation/oneDNN/commit/de1342a9d1dfe8419dd5159a16013529e567a6bc, https://github.com/uxlfoundation/oneDNN/commit/580b9c80484f5df175ad36870280703ea5767cbe, https://github.com/uxlfoundation/oneDNN/commit/a0961ab37e4ccf7dec0a0fd05fab92c1fc812e38, https://github.com/uxlfoundation/oneDNN/commit/1147a0739a1fa1ee881075ac1cb8dd8f05e26cb5, https://github.com/uxlfoundation/oneDNN/commit/595fc3b9bf46a5381d337af4ae0d7c529e2a9bcd, https://github.com/openjdk/jdk/commit/6700baa5052046f53eb1b04ed3205bbd8e9e9070, https://github.com/openjdk/jdk/commit/885be2efa6b1359a7c7ab36882e19a7eaba77fb3, https://github.com/openjdk/jdk/commit/9b61a7608efff13fc3685488f3f54a810ec0ac22, https://github.com/v8/v8/commit/2b368def484809ad8d35b0c5d5f913bd95ad23ef, https://github.com/v8/v8/commit/56dd6a2f1ee28b2d37989a7888ad178a89f4f5ea, https://github.com/alibaba/MNN/pull/4042, https://github.com/alibaba/MNN/commit/672c5862392393c171f1513bf7994d3b95e2a6a1",
+      "evidenceExplanation": "field.h/curve448.c 源码证明 8-limb（56-bit）固定尺寸域运算结构与每 bit ~8 次 weak_reduce 的调用频度，annotate 证明 GCC 生成的 vl=2+vrgather 形态与未向量化的标量循环；register-group LMUL 选型与 elementwise 向量化的相关 PR/commit（OpenCV/Linux kernel/OpenJDK/OpenBLAS/MNN/oneDNN/V8/vLLM）提供了同类固定尺寸循环在 RVV 上按 LMUL 枚举与直接 lowering 的实践证据，支撑本根因结论。"
+    }
+  }
+}

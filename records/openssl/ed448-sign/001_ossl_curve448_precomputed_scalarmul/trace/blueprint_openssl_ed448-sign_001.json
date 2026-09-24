@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-openssl-ed448-sign-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T13:40:33.303Z",
+    "software": "openssl",
+    "testcaseIds": [
+      "ed448-sign"
+    ],
+    "diagnosisId": "diag-20260908T134033303Z-67c93a2f",
+    "targetHardware": "SpacemiT X100 (K3)",
+    "repositoryUrl": "https://github.com/openssl/openssl.git",
+    "testBranch": "master",
+    "commitHash": "2924476b5591e691e904c4baf57894c526c4b8de"
+  },
+  "problem": {
+    "summary": "ed448-sign 测试用例中 rank 001 热点函数 ossl_curve448_precomputed_scalarmul 的 100% 局部样本（157/157，cpu-clock）落在 constant_time_lookup 内层 j-loop：一个逐字节标量 masked select + OR 累加循环（8 条指令/字节，2 load + 1 store/字节）。该函数是 ed448 签名最热的 comb 预计算标量乘查表路径。同 DSO（libcrypto.so.4）已按含 v 构建（function 002-005 annotate 直接包含 vsetivli/vle64.v/vadd.vv/vrgather.vv/vse64.v 等 RVV 1.0 指令），硬件 RVV 1.0（VLEN=256）能力齐备，但本循环执行代码零 v*——属 autovec 覆盖缺口而非 build-ISA 缺失，向量执行资源在该循环完全闲置。",
+    "evidence": [
+      "Duration: 单平台 RISC-V 运行，duration_time=2,611,684,903ns（5000 iterations），无 ARM 对照",
+      "热点: ossl_curve448_precomputed_scalarmul（rank 001），interval 0x15d662-0x15d676 合计 ≈100% 局部样本，锚点行 17.83 : 15d66e: or a5,a5,a1",
+      "perf stat: IPC=2.829（compute-bound），L1_dcache_load_miss_rate=0.017%，branch_miss_rate=0.537%",
+      "build 证据: libcrypto.so.4 已含 RVV 1.0 代码（同 DSO function 002-005 annotate 直接含 vsetivli/vle64.v/vadd.vv/vrgather.vv/vse64.v）；本函数执行代码零 v* → autovec 覆盖缺口",
+      "代码知识: 命中 patterns/rvv_contiguous_elementwise_arithmetic_kernels.md，Related PRs 提供 22 条同类 scalar→RVV elementwise 改写上游记录"
+    ]
+  },
+  "rootCause": {
+    "summary": "constant_time_lookup 内层 j-loop 以逐字节标量实现 masked select + OR 累加（每字节 8 条动态指令、3 次内存操作），硬件与 build 均支持 RVV 1.0（VLEN=256，SEW=8/LMUL=8 时 VLMAX=256≥192，整行一次向量迭代即可覆盖）但该循环未被编译器自动向量化（autovec 覆盖缺口，constant_time.h 的 value_barrier 空 asm 与循环结构为候选阻碍），RVV 执行能力在承担全部局部样本的此循环中闲置。",
+    "candidateFiles": [
+      "crypto/ec/curve448/curve448.c",
+      "include/crypto/constant_time.h"
+    ],
+    "performanceFactors": [
+      "RVV Contiguous Elementwise Arithmetic Kernels",
+      "No vectorization"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "constant-time 不变量：无秘密依赖的分支或索引，位运算无 timing 侧信道，mask 全 0/全 1 路径逐位一致",
+      "constant_time_lookup 语义：out 先 memset 后逐行 OR 累加，与标量实现逐位一致",
+      "内存边界：rowsize=192 字节/行、16 行，动态 vl 与 word 加宽均不得越界读（无 over-read）",
+      "table 行与 out 为不同缓冲区，不得引入别名/overlap 假设"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "ed448-sign",
+      "ed448-verify"
+    ],
+    "regressionCommand": "agent1 patch_regression --case ed448-sign"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 compute-bound（IPC=2.829、L1 miss 0.017%、branch miss 0.537%），排除 memory/branch 瓶颈；perf annotate 显示该函数 157/157 局部样本集中于 constant_time_lookup 内层 j-loop 的逐字节 lbu/and/or/sb（8 指令/字节），与 patterns/rvv_contiguous_elementwise_arithmetic_kernels.md 的 elementwise select 语义合同完全吻合（每个输出只依赖同 index 输入、unit-stride、mask 为行内不变量）；硬件 ISA 含 v（RVV 1.0）且同 DSO 内 function 002-005 已含 vsetivli/vle64.v/vadd.vv/vrgather.vv/vse64.v 直接证明 build 已启用 v，本循环零 v* 属 autovec 覆盖缺口（no-vectorization supporting），修复无需重建；Related PRs 中 22 条上游记录证明同类连续逐元素循环的 scalar→RVV 改写是成熟方向。三层证据指向同一根因：逐字节标量 masked select+OR 循环未被自动向量化。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "autovec 未覆盖的具体原因可能是 constant_time.h 的 value_barrier 空 asm 阻碍循环加宽/向量化，也可能是 profitability 判断——若为前者，需显式 RVV intrinsic 改写；若为后者，调整循环结构即可",
+      "采样为 local period 且样本量 157，存在采样分布偏差可能，需以 global-period 重采复核 100% 份额结论"
+    ],
+    "currentGaps": "libcrypto.so.4 的 readelf -A（精确 build extension 集）未提供（但 build 已含 v 由同 DSO 内 v* 指令直接证明）；采样 percent-type 为 local period（非 global-period）且无 precise_ip 证据，样本仅锚定 interval 级；autovec 未覆盖的具体阻碍因素（value_barrier vs profitability）未从 -fopt-info-vec/-Rpass 报告确认；本批为单平台 RISC-V 采集，无 ARM 侧对照 duration；无 debug symbols，candidateFiles 路径基于 OpenSSL 仓库结构（annotate 内嵌 constant_time.h 源码行佐证）。",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + ed448-sign",
+    "recommendedFirstAction": "include/crypto/constant_time.h 的 constant_time_lookup：将内层 j-loop（192 字节行逐字节 masked select+OR）显式改写为 RVV strip-mined masked-select 形态（vsetvli e8m8 / vle8.v / vand.vx / vor.vv / vse8.v，LMUL 按 live-set 预算选择；build 已含 v 无需重建），并保留 64-bit word-wide masked select（每 8 字节 ld/and/or/sd）作为无需向量路径的即时收益方案；保持 constant-time 与逐位一致语义",
+    "recommendedVerification": "重跑 ed448-sign benchmark 并重采 ossl_curve448_precomputed_scalarmul annotate：lbu/or/sb 逐字节循环样本份额应从 100% 降至近 0，出现 vsetvli/vle8.v/vand.vx/vor.vv/vse8.v；ed448-verify 回归通过；与标量 reference 逐位一致（mask 全 0/全 1/随机交错）；readelf -A libcrypto.so.4 确认 attribute 含 v 及精确 extension 集",
+    "metricEvidence": [
+      {
+        "metric": "Duration(ns)",
+        "rv": 2611684903,
+        "anomalyNote": "5000 iterations 整 run；单平台 RISC-V 无 ARM 对照，仅作 workload 上下文"
+      },
+      {
+        "metric": "IPC",
+        "rv": 2.829,
+        "anomalyNote": "IPC 2.829 属 compute/latency-bound 特征；无竞争 bottleneck"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.017,
+        "anomalyNote": "极低 miss 率，排除 memory-bound"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.537,
+        "anomalyNote": "低 branch miss，排除 branch-bound"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "ossl_curve448_precomputed_scalarmul",
+        "fileModule": "unknown",
+        "rvvPattern": "RVV Contiguous Elementwise Arithmetic Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 1,
+        "note": "密码学（ed448 签名）：comb 预计算标量乘；热点为 constant_time_lookup 内层 192 字节行逐字节 masked select+OR 累加循环（constant-time 查表），157/157 局部样本集中于此；同 DSO 已含 RVV 代码（build 支持 v），本循环为 autovec 覆盖缺口"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "include/crypto/constant_time.h: constant_time_lookup（annotate 内嵌源码行 469-475 对应；调用方 crypto/ec/curve448/curve448.c 的 ossl_curve448_precomputed_scalarmul）",
+      "relatedKnowledge": "https://github.com/OpenMathLib/OpenBLAS/commit/45fd2d9b0790c5ca3698502d65d59d38d911ef4f; https://github.com/alibaba/MNN/pull/3913; https://github.com/alibaba/MNN/commit/5376580ba19ac4034dc373f566fca846326fd612; https://github.com/alibaba/MNN/pull/3779; https://github.com/alibaba/MNN/commit/b35da10227477e90d5e5be55e1e5e646d4af41e4; https://github.com/alibaba/MNN/commit/815ed5d6cb7052e2294d9eb6298e9e23b2fdf91d; https://github.com/uxlfoundation/oneDNN/commit/2b1dfe2d6233696bc2c803b48c06c00b29f7f866; https://github.com/uxlfoundation/oneDNN/pull/5265; https://github.com/uxlfoundation/oneDNN/commit/1184757c286814e552c137ca354060a30a9872bb; https://github.com/uxlfoundation/oneDNN/pull/5079; https://github.com/uxlfoundation/oneDNN/commit/de1342a9d1dfe8419dd5159a16013529e567a6bc; https://github.com/uxlfoundation/oneDNN/commit/580b9c80484f5df175ad36870280703ea5767cbe; https://github.com/uxlfoundation/oneDNN/commit/a0961ab37e4ccf7dec0a0fd05fab92c1fc812e38; https://github.com/uxlfoundation/oneDNN/commit/1147a0739a1fa1ee881075ac1cb8dd8f05e26cb5; https://github.com/uxlfoundation/oneDNN/commit/595fc3b9bf46a5381d337af4ae0d7c529e2a9bcd; https://github.com/openjdk/jdk/commit/6700baa5052046f53eb1b04ed3205bbd8e9e9070; https://github.com/openjdk/jdk/commit/885be2efa6b1359a7c7ab36882e19a7eaba77fb3; https://github.com/openjdk/jdk/commit/9b61a7608efff13fc3685488f3f54a810ec0ac22; https://github.com/v8/v8/commit/2b368def484809ad8d35b0c5d5f913bd95ad23ef; https://github.com/v8/v8/commit/56dd6a2f1ee28b2d37989a7888ad178a89f4f5ea; https://github.com/alibaba/MNN/pull/4042; https://github.com/alibaba/MNN/commit/672c5862392393c171f1513bf7994d3b95e2a6a1",
+      "evidenceExplanation": "patterns/rvv_contiguous_elementwise_arithmetic_kernels.md 的 Related PRs 记录了大量把连续逐元素标量 load-compute-store 循环改写为 scalable RVV 的成熟案例（OpenBLAS/MNN/oneDNN/OpenJDK/V8）；本热点循环的语义合同（同 index 依赖、unit-stride、简单 select+OR、mask 行内不变量）与 pattern 完全一致，constant_time_lookup 的 C 源行直接在 annotate 中可见指向 include/crypto/constant_time.h，且同 DSO 已含 RVV 代码证明 build 支持，知识与代码证据共同支撑同一根因（autovec 覆盖缺口）。"
+    }
+  }
+}

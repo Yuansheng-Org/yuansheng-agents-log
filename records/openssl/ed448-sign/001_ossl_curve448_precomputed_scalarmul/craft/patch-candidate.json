@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-openssl-ed448-sign-001",
+  "patchPlanId": "pp-bp-openssl-ed448-sign-001",
+  "createdAt": "2026-09-10T12:51:23.100Z",
+  "changedFiles": [
+    "include/internal/constant_time.h"
+  ],
+  "gitDiff": "diff --git a/include/internal/constant_time.h b/include/internal/constant_time.h\nindex ddb15d7b6f..1dbb0975e3 100644\n--- a/include/internal/constant_time.h\n+++ b/include/internal/constant_time.h\n@@ -15,6 +15,10 @@\n #include <string.h>\n #include <openssl/e_os2.h> /* For 'ossl_inline' */\n \n+#if defined(__riscv_vector)\n+# include <riscv_vector.h>\n+#endif\n+\n /*-\n  * The boolean methods return a bitmask of all ones (0xff...f) for true\n  * and 0 for false. This is useful for choosing a value based on the result\n@@ -463,6 +467,36 @@ static ossl_inline void constant_time_lookup(void *out,\n \n     memset(out, 0, rowsize);\n \n+#if defined(__riscv_vector)\n+    /*\n+     * Vectorized masked-select OR accumulation.  For each table row, load the\n+     * row a full vector group at a time (e8/m8 => VLMAX=128 at VLEN=128,\n+     * 256 at VLEN=256), AND with the constant-time row mask, and OR into\n+     * |out|.  The mask is invariant within a row, so it is applied as a\n+     * scalar operand (vand.vx); the strip-mined vsetvl makes this\n+     * VLEN-agnostic and falls back to the scalar loop for the final tail.\n+     * Bit-exact with the scalar path below for all mask values.\n+     */\n+    {\n+        size_t vl = __riscv_vsetvl_e8m8(rowsize);\n+        if (vl > 0) {\n+            for (i = 0; i < numrows; i++, idx--) {\n+                mask = (unsigned char)constant_time_is_zero_s(idx);\n+                const unsigned char *row = tablec + i * rowsize;\n+                for (j = 0; j < rowsize; j += vl) {\n+                    vl = __riscv_vsetvl_e8m8(rowsize - j);\n+                    vuint8m8_t vr = __riscv_vle8_v_u8m8(row + j, vl);\n+                    vuint8m8_t vm = __riscv_vand_vx_u8m8(vr, mask, vl);\n+                    vuint8m8_t vo = __riscv_vle8_v_u8m8(outc + j, vl);\n+                    __riscv_vse8_v_u8m8(outc + j,\n+                                        __riscv_vor_vv_u8m8(vo, vm, vl), vl);\n+                }\n+            }\n+            return;\n+        }\n+    }\n+#endif\n+\n     /* Note idx may underflow - but that is well defined */\n     for (i = 0; i < numrows; i++, idx--) {\n         mask = (unsigned char)constant_time_is_zero_s(idx);\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

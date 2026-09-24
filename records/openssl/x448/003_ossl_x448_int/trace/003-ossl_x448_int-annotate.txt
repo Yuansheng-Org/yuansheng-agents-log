@@ -1,0 +1,1182 @@
+ Percent |	Source code & Disassembly of libcrypto.so.4 for cpu-clock (71 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      000000000015da3c <ossl_x448_int>:
+         : 6      ossl_x448_int():
+         :
+         : 384    c448_error_t
+         : 385    ossl_x448_int(uint8_t out[X_PUBLIC_BYTES],
+         : 386    const uint8_t base[X_PUBLIC_BYTES],
+         : 387    const uint8_t scalar[X_PRIVATE_BYTES])
+         : 388    {
+    0.00 :   15da3c: addi    sp,sp,-736
+    0.00 :   15da40: sd      s0,720(sp)
+    0.00 :   15da44: sd      s1,712(sp)
+    0.00 :   15da48: addi    s0,sp,736
+    0.00 :   15da4a: sd      ra,728(sp)
+    0.00 :   15da4e: sd      s2,704(sp)
+    0.00 :   15da52: sd      s3,696(sp)
+    0.00 :   15da56: sd      s4,688(sp)
+    0.00 :   15da5a: sd      s5,680(sp)
+    0.00 :   15da5e: sd      s6,672(sp)
+    0.00 :   15da62: sd      s7,664(sp)
+    0.00 :   15da66: sd      s8,656(sp)
+    0.00 :   15da6a: sd      s9,648(sp)
+    0.00 :   15da6e: sd      s10,640(sp)
+    0.00 :   15da72: sd      s11,632(sp)
+         : 389    gf x1, x2, z2, x3, z3, t1, t2;
+         : 390    int t;
+         : 391    mask_t swap = 0;
+         : 392    mask_t nz;
+         :
+         : 394    (void)gf_deserialize(x1, base, 1, 0);
+    0.00 :   15da76: addi    a5,s0,-576
+         : 383    {
+    0.00 :   15da7a: auipc   a4,0x3ce
+    0.00 :   15da7e: ld      a4,-1274(a4) # 52b580 <__stack_chk_guard@GLIBC_2.27>
+         : 389    (void)gf_deserialize(x1, base, 1, 0);
+    0.00 :   15da82: sd      a5,-696(s0)
+         : 383    {
+    0.00 :   15da86: sd      a2,-728(s0)
+         : 389    (void)gf_deserialize(x1, base, 1, 0);
+    0.00 :   15da8a: li      a3,0
+    0.00 :   15da8c: li      a2,1
+         : 383    {
+    0.00 :   15da8e: mv      s1,a0
+         : 389    (void)gf_deserialize(x1, base, 1, 0);
+    0.00 :   15da90: mv      a0,a5
+         : 383    {
+    0.00 :   15da92: ld      a5,0(a4)
+    0.00 :   15da94: sd      a5,-120(s0)
+    0.00 :   15da98: li      a5,0
+         : 389    (void)gf_deserialize(x1, base, 1, 0);
+    0.00 :   15da9a: jal     15f848 <gf_deserialize>
+         : 391    gf_copy():
+         : 46     #define X_PRIVATE_BYTES X_PUBLIC_BYTES
+         : 47     #define X_PRIVATE_BITS 448
+         :
+         : 49     static INLINE_UNUSED void gf_copy(gf out, const gf a)
+         : 50     {
+         : 51     *out = *a;
+    0.00 :   15da9e: addi    a5,s0,-512
+    0.00 :   15daa2: sd      a5,-592(s0)
+    0.00 :   15daa6: mv      a3,a5
+    0.00 :   15daa8: auipc   a2,0x1dc
+    0.00 :   15daac: addi    a2,a2,760 # 339da0 <ONE>
+    0.00 :   15dab0: li      a4,64
+    0.00 :   15dab4: vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   15dab8: vle8.v  v1,(a2)
+    0.00 :   15dabc: sub     a4,a4,a5
+    0.00 :   15dabe: add     a2,a2,a5
+    0.00 :   15dac0: vse8.v  v1,(a3)
+    0.00 :   15dac4: add     a3,a3,a5
+    0.00 :   15dac6: bnez    a4,15dab4 <ossl_x448_int+0x78>
+    0.00 :   15dac8: addi    s2,s0,-448
+    0.00 :   15dacc: mv      a3,s2
+    0.00 :   15dace: auipc   a2,0x1dc
+    0.00 :   15dad2: addi    a2,a2,786 # 339de0 <ZERO>
+    0.00 :   15dad6: li      a4,64
+    0.00 :   15dada: vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   15dade: vle8.v  v1,(a2)
+    0.00 :   15dae2: sub     a4,a4,a5
+    0.00 :   15dae4: add     a2,a2,a5
+    0.00 :   15dae6: vse8.v  v1,(a3)
+    0.00 :   15daea: add     a3,a3,a5
+    0.00 :   15daec: bnez    a4,15dada <ossl_x448_int+0x9e>
+    0.00 :   15daee: ld      a2,-696(s0)
+    0.00 :   15daf2: addi    a3,s0,-384
+    0.00 :   15daf6: li      a4,64
+    0.00 :   15dafa: vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   15dafe: vle8.v  v1,(a2)
+    0.00 :   15db02: sub     a4,a4,a5
+    0.00 :   15db04: add     a2,a2,a5
+    0.00 :   15db06: vse8.v  v1,(a3)
+    0.00 :   15db0a: add     a3,a3,a5
+    0.00 :   15db0c: bnez    a4,15dafa <ossl_x448_int+0xbe>
+    0.00 :   15db0e: addi    a3,s0,-320
+    0.00 :   15db12: auipc   a2,0x1dc
+    0.00 :   15db16: addi    a2,a2,654 # 339da0 <ONE>
+    0.00 :   15db1a: li      a4,64
+    0.00 :   15db1e: vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   15db22: vle8.v  v1,(a2)
+    0.00 :   15db26: sub     a4,a4,a5
+    0.00 :   15db28: add     a2,a2,a5
+    0.00 :   15db2a: vse8.v  v1,(a3)
+    0.00 :   15db2e: add     a3,a3,a5
+    0.00 :   15db30: bnez    a4,15db1e <ossl_x448_int+0xe2>
+         : 98     ossl_x448_int():
+         : 400    for (t = X_PRIVATE_BITS - 1; t >= 0; t--) {
+         : 401    uint8_t sb = scalar[t / 8];
+         : 402    mask_t k_t;
+         :
+         : 404    /* Scalar conditioning */
+         : 405    if (t / 8 == 0)
+    0.00 :   15db32: vsetivli        zero,2,e64,m1,ta,ma
+    0.00 :   15db36: li      a5,-1
+    0.00 :   15db38: srli    a5,a5,0x8
+    0.00 :   15db3a: vid.v   v1
+    0.00 :   15db3e: vmv.v.x v2,a5
+         : 411    gf_sub_RAW():
+         : 147    {
+         : 148    uint64_t co1 = ((1ULL << 56) - 1) * 2, co2 = co1 - 2;
+         : 149    unsigned int i;
+         :
+         : 151    for (i = 0; i < NLIMBS; i++)
+         : 152    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15db42: li      a5,-385
+    0.00 :   15db46: srli    a5,a5,0x7
+         : 155    gf_weak_reduce():
+         : 164    uint64_t tmp = a->limb[NLIMBS - 1] >> 56;
+         : 165    unsigned int i;
+         :
+         : 167    a->limb[NLIMBS / 2] += tmp;
+         : 168    for (i = NLIMBS - 1; i > 0; i--)
+         : 169    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15db48: vrsub.vi        v1,v1,1
+         : 171    gf_sub_RAW():
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15db4c: sd      a5,-584(s0)
+    0.00 :   15db50: addi    a4,s0,-192
+         : 148    ossl_x448_int():
+    0.00 :   15db54: li      a5,447
+    0.00 :   15db58: sd      a5,-608(s0)
+    0.00 :   15db5c: sd      a4,-600(s0)
+    0.00 :   15db60: li      a5,255
+         : 151    gf_weak_reduce():
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15db64: li      s11,56
+    0.00 :   15db68: li      a6,0
+    0.00 :   15db6a: addi    s10,s0,-320
+    0.00 :   15db6e: addi    t1,s0,-256
+    0.00 :   15db72: addi    s6,s0,-384
+    0.00 :   15db76: li      a4,-1
+    0.00 :   15db78: mv      s3,s6
+    0.00 :   15db7a: srli    s8,a4,0x8
+         : 173    gf_sub_RAW():
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15db7e: li      s4,4
+    0.00 :   15db80: mv      a0,a6
+    0.00 :   15db82: mv      s5,t1
+    0.00 :   15db84: mv      s6,s2
+    0.00 :   15db86: sd      s1,-736(s0)
+         : 153    ossl_x448_int():
+         : 405    sb &= -(uint8_t)COFACTOR;
+         : 406    else if (t == X_PRIVATE_BITS - 1)
+         : 407    sb = -1;
+         :
+         : 409    k_t = (sb >> (t % 8)) & 1;
+    0.00 :   15db8a: ld      a4,-608(s0)
+    0.00 :   15db8e: sd      s3,-704(s0)
+         : 408    k_t = 0 - k_t; /* set to all 0s or all 1s */
+         :
+         : 410    swap ^= k_t;
+    0.00 :   15db92: mv      a1,s3
+         : 405    k_t = (sb >> (t % 8)) & 1;
+    0.00 :   15db94: andi    a4,a4,7
+    0.00 :   15db96: sraw    a5,a5,a4
+         : 406    k_t = 0 - k_t; /* set to all 0s or all 1s */
+    0.00 :   15db9a: slli    a4,a5,0x3f
+    0.00 :   15db9e: srai    a5,a4,0x3f
+         : 408    swap ^= k_t;
+    0.00 :   15dba2: xor     a0,a0,a5
+         : 406    k_t = 0 - k_t; /* set to all 0s or all 1s */
+    0.00 :   15dba4: sd      a5,-672(s0)
+         : 408    gf_cond_swap():
+         : 255    /* Constant time, if (swap) (x,y) = (y,x); */
+         : 256    static ossl_inline void gf_cond_swap(gf x, gf_s *RESTRICT y, mask_t swap)
+         : 257    {
+         : 258    size_t i;
+         :
+         : 260    for (i = 0; i < NLIMBS; i++) {
+    0.00 :   15dba8: ld      a5,-592(s0)
+         : 262    value_barrier_64():
+         : 304    /* Convenience method for uint64_t. */
+         : 305    static ossl_inline uint64_t value_barrier_64(uint64_t a)
+         : 306    {
+         : 307    #if !defined(OPENSSL_NO_ASM) && defined(__GNUC__)
+         : 308    uint64_t r;
+         : 309    __asm__("" : "=r"(r) : "0"(a));
+    0.00 :   15dbac: mv      a6,a0
+    0.00 :   15dbae: sd      a5,-720(s0)
+         : 312    constant_time_cond_swap_64():
+         : 413    * }
+         : 414    */
+         : 415    static ossl_inline void constant_time_cond_swap_64(uint64_t mask, uint64_t *a,
+         : 416    uint64_t *b)
+         : 417    {
+         : 418    uint64_t xor = *a ^ *b;
+    0.00 :   15dbb2: ld      a3,0(a5)
+    1.41 :   15dbb4: ld      a4,0(a1)
+         : 421    gf_cond_swap():
+    0.00 :   15dbb6: addi    a5,a5,8
+    0.00 :   15dbb8: addi    a1,a1,8
+         : 257    constant_time_cond_swap_64():
+    0.00 :   15dbba: xor     a2,a3,a4
+         :
+         : 416    xor&= value_barrier_64(mask);
+    0.00 :   15dbbe: and     a2,a2,a6
+         : 416    *a ^= xor;
+    0.00 :   15dbc2: xor     a3,a3,a2
+         : 417    *b ^= xor;
+    0.00 :   15dbc4: xor     a4,a4,a2
+         : 416    *a ^= xor;
+    0.00 :   15dbc6: sd      a3,-8(a5)
+         : 417    *b ^= xor;
+    4.23 :   15dbca: sd      a4,-8(a1)
+         : 419    gf_cond_swap():
+    0.00 :   15dbce: bne     s6,a5,15dbb2 <ossl_x448_int+0x176>
+    0.00 :   15dbd2: sd      s10,-712(s0)
+    0.00 :   15dbd6: mv      a1,s10
+         : 258    constant_time_cond_swap_64():
+         : 413    uint64_t xor = *a ^ *b;
+    0.00 :   15dbd8: ld      a3,0(a5)
+    0.00 :   15dbda: ld      a4,0(a1)
+         : 416    gf_cond_swap():
+    0.00 :   15dbdc: addi    a5,a5,8
+    0.00 :   15dbde: addi    a1,a1,8
+         : 257    constant_time_cond_swap_64():
+    0.00 :   15dbe0: xor     a2,a3,a4
+         : 415    xor&= value_barrier_64(mask);
+    0.00 :   15dbe4: and     a2,a2,a0
+         : 416    *a ^= xor;
+    0.00 :   15dbe6: xor     a3,a3,a2
+         : 417    *b ^= xor;
+    0.00 :   15dbe8: xor     a4,a4,a2
+         : 416    *a ^= xor;
+    0.00 :   15dbea: sd      a3,-8(a5)
+         : 417    *b ^= xor;
+    1.41 :   15dbee: sd      a4,-8(a1)
+         : 419    gf_cond_swap():
+    0.00 :   15dbf2: bne     s3,a5,15dbd8 <ossl_x448_int+0x19c>
+    0.00 :   15dbf6: ld      a5,-592(s0)
+    0.00 :   15dbfa: mv      a3,s5
+    0.00 :   15dbfc: mv      a4,s6
+    0.00 :   15dbfe: vsetivli        zero,2,e64,m1,ta,ma
+         : 260    gf_add_RAW():
+         : 136    out->limb[i] = a->limb[i] + b->limb[i];
+    0.00 :   15dc02: vle64.v v3,(a5)
+    0.00 :   15dc06: vle64.v v4,(a4)
+    0.00 :   15dc0a: addi    a5,a5,16
+    0.00 :   15dc0c: addi    a4,a4,16
+    0.00 :   15dc0e: vadd.vv v3,v3,v4
+    0.00 :   15dc12: vse64.v v3,(a3)
+         : 135    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15dc16: addi    a3,a3,16
+    0.00 :   15dc18: bne     s6,a5,15dc02 <ossl_x448_int+0x1c6>
+         : 138    gf_weak_reduce():
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    0.00 :   15dc1c: ld      a5,-224(s0)
+         : 159    uint64_t tmp = a->limb[NLIMBS - 1] >> 56;
+    1.41 :   15dc20: lbu     a3,-193(s0)
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    1.41 :   15dc24: addi    s7,s5,48
+    0.00 :   15dc28: mv      s1,s7
+    0.00 :   15dc2a: add     a5,a5,a3
+    0.00 :   15dc2c: sd      a5,-224(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15dc30: addi    a5,s1,-8
+    0.00 :   15dc34: vle64.v v3,(a5)
+    2.82 :   15dc38: vle64.v v5,(s1)
+    1.41 :   15dc3c: mv      a5,s1
+    0.00 :   15dc3e: vrgather.vv     v4,v3,v1
+    0.00 :   15dc42: vrgather.vv     v3,v5,v1
+    0.00 :   15dc46: vsrl.vx v4,v4,s11
+    0.00 :   15dc4a: vand.vv v3,v3,v2
+    0.00 :   15dc4e: vadd.vv v3,v3,v4
+    0.00 :   15dc52: vrgather.vv     v4,v3,v1
+    0.00 :   15dc56: vse64.v v4,(s1)
+         : 163    for (i = NLIMBS - 1; i > 0; i--)
+    0.00 :   15dc5a: addi    s1,s1,-16
+    0.00 :   15dc5c: bne     s5,s1,15dc30 <ossl_x448_int+0x1f4>
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    1.41 :   15dc60: sd      a5,-624(s0)
+    0.00 :   15dc64: ld      a5,-256(s0)
+    0.00 :   15dc68: ld      a4,-248(s0)
+         : 168    gf_sub_RAW():
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dc6c: li      a0,-129
+         : 149    gf_weak_reduce():
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15dc70: srli    a2,a5,0x38
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15dc74: and     a5,a5,s8
+    0.00 :   15dc78: add     a5,a5,a3
+    0.00 :   15dc7a: sd      a5,-256(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15dc7e: and     a5,a4,s8
+    0.00 :   15dc82: add     a5,a5,a2
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15dc84: ld      a1,-600(s0)
+    1.41 :   15dc88: ld      a3,-592(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15dc8c: sd      a5,-248(s0)
+         : 166    gf_sub_RAW():
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dc90: srli    a0,a0,0x7
+         : 149    gf_weak_reduce():
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15dc92: mv      a2,s6
+         : 167    gf_sub_RAW():
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15dc94: li      a4,0
+    0.00 :   15dc96: li      a6,8
+    0.00 :   15dc98: j       15dcaa <ossl_x448_int+0x26e>
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dc9a: add     a5,a5,a0
+    0.00 :   15dc9c: sd      a5,0(a1)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    1.41 :   15dc9e: addiw   a4,a4,1
+    0.00 :   15dca0: addi    a3,a3,8
+    0.00 :   15dca2: addi    a2,a2,8
+    0.00 :   15dca4: addi    a1,a1,8
+    0.00 :   15dca6: beq     a4,a6,15dce4 <ossl_x448_int+0x2a8>
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dcaa: ld      a5,0(a3)
+    1.41 :   15dcac: ld      a7,0(a2)
+    0.00 :   15dcb0: sub     a5,a5,a7
+    0.00 :   15dcb4: bne     a4,s4,15dc9a <ossl_x448_int+0x25e>
+    0.00 :   15dcb8: ld      a4,-584(s0)
+    0.00 :   15dcbc: ld      a7,8(a3)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15dcc0: addi    a1,a1,8
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dcc2: add     a5,a5,a4
+    0.00 :   15dcc4: sd      a5,-8(a1)
+    0.00 :   15dcc8: ld      a5,8(a2)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15dcca: li      a4,5
+    0.00 :   15dccc: addi    a3,a3,8
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dcce: sub     a5,a7,a5
+    0.00 :   15dcd2: add     a5,a5,a0
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15dcd4: addi    a2,a2,8
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dcd6: sd      a5,0(a1)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15dcd8: addiw   a4,a4,1
+    0.00 :   15dcda: addi    a3,a3,8
+    0.00 :   15dcdc: addi    a2,a2,8
+    0.00 :   15dcde: addi    a1,a1,8
+    0.00 :   15dce0: bne     a4,a6,15dcaa <ossl_x448_int+0x26e>
+         : 150    gf_weak_reduce():
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    0.00 :   15dce4: ld      a5,-160(s0)
+         : 159    uint64_t tmp = a->limb[NLIMBS - 1] >> 56;
+    1.41 :   15dce8: lbu     a3,-129(s0)
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    0.00 :   15dcec: ld      a4,-600(s0)
+    0.00 :   15dcf0: add     a5,a5,a3
+    0.00 :   15dcf2: addi    t3,a4,48
+    0.00 :   15dcf6: mv      s9,t3
+    0.00 :   15dcf8: sd      a5,-160(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15dcfc: addi    a5,s9,-8
+    0.00 :   15dd00: vle64.v v3,(a5)
+    2.82 :   15dd04: vle64.v v5,(s9)
+    0.00 :   15dd08: vrgather.vv     v4,v3,v1
+    0.00 :   15dd0c: vrgather.vv     v3,v5,v1
+    0.00 :   15dd10: vsrl.vx v4,v4,s11
+    0.00 :   15dd14: vand.vv v3,v3,v2
+    0.00 :   15dd18: vadd.vv v3,v3,v4
+    0.00 :   15dd1c: vrgather.vv     v4,v3,v1
+    0.00 :   15dd20: vse64.v v4,(s9)
+         : 163    for (i = NLIMBS - 1; i > 0; i--)
+    0.00 :   15dd24: addi    s9,s9,-16
+    0.00 :   15dd26: bne     a4,s9,15dcfc <ossl_x448_int+0x2c0>
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15dd2a: ld      a5,-192(s0)
+    0.00 :   15dd2e: ld      a4,-184(s0)
+         : 167    gf_sub_RAW():
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dd32: li      a0,-129
+         : 149    gf_weak_reduce():
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15dd36: srli    a2,a5,0x38
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15dd3a: and     a5,a5,s8
+    0.00 :   15dd3e: add     a5,a5,a3
+    0.00 :   15dd40: sd      a5,-192(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15dd44: and     a5,a4,s8
+    0.00 :   15dd48: add     a5,a5,a2
+    0.00 :   15dd4a: sd      a5,-184(s0)
+         : 168    gf_sub_RAW():
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dd4e: srli    a0,a0,0x7
+         : 149    gf_weak_reduce():
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15dd50: mv      a1,s6
+    0.00 :   15dd52: mv      a2,s10
+    0.00 :   15dd54: mv      a3,s3
+         : 169    gf_sub_RAW():
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15dd56: li      a4,0
+    0.00 :   15dd58: li      a7,8
+    0.00 :   15dd5a: j       15dd6c <ossl_x448_int+0x330>
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dd5c: add     a5,a5,a0
+    0.00 :   15dd5e: sd      a5,0(a1)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15dd60: addiw   a4,a4,1
+    0.00 :   15dd62: addi    a3,a3,8
+    0.00 :   15dd64: addi    a2,a2,8
+    0.00 :   15dd66: addi    a1,a1,8
+    0.00 :   15dd68: beq     a4,a7,15dda6 <ossl_x448_int+0x36a>
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dd6c: ld      a5,0(a3)
+    0.00 :   15dd6e: ld      a6,0(a2)
+    0.00 :   15dd72: sub     a5,a5,a6
+    0.00 :   15dd76: bne     a4,s4,15dd5c <ossl_x448_int+0x320>
+    0.00 :   15dd7a: ld      a4,-584(s0)
+    0.00 :   15dd7e: ld      a6,8(a3)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15dd82: addi    a1,a1,8
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dd84: add     a5,a5,a4
+    0.00 :   15dd86: sd      a5,-8(a1)
+    0.00 :   15dd8a: ld      a5,8(a2)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15dd8c: li      a4,5
+    0.00 :   15dd8e: addi    a3,a3,8
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dd90: sub     a5,a6,a5
+    0.00 :   15dd94: add     a5,a5,a0
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15dd96: addi    a2,a2,8
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15dd98: sd      a5,0(a1)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15dd9a: addiw   a4,a4,1
+    0.00 :   15dd9c: addi    a3,a3,8
+    0.00 :   15dd9e: addi    a2,a2,8
+    0.00 :   15dda0: addi    a1,a1,8
+    0.00 :   15dda2: bne     a4,a7,15dd6c <ossl_x448_int+0x330>
+         : 150    gf_weak_reduce():
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    0.00 :   15dda6: ld      a5,-416(s0)
+         : 159    uint64_t tmp = a->limb[NLIMBS - 1] >> 56;
+    0.00 :   15ddaa: lbu     a0,-385(s0)
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    0.00 :   15ddae: addi    a7,s6,48
+    0.00 :   15ddb2: mv      s2,a7
+    0.00 :   15ddb4: add     a5,a5,a0
+    0.00 :   15ddb6: sd      a5,-416(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    1.41 :   15ddba: addi    a5,s2,-8
+    0.00 :   15ddbe: vle64.v v3,(a5)
+    8.45 :   15ddc2: vle64.v v5,(s2)
+    0.00 :   15ddc6: mv      t5,s2
+    0.00 :   15ddc8: vrgather.vv     v4,v3,v1
+    0.00 :   15ddcc: vrgather.vv     v3,v5,v1
+    0.00 :   15ddd0: vsrl.vx v4,v4,s11
+    0.00 :   15ddd4: vand.vv v3,v3,v2
+    0.00 :   15ddd8: vadd.vv v3,v3,v4
+    0.00 :   15dddc: vrgather.vv     v4,v3,v1
+    0.00 :   15dde0: vse64.v v4,(s2)
+         : 163    for (i = NLIMBS - 1; i > 0; i--)
+    0.00 :   15dde4: addi    s2,s2,-16
+    0.00 :   15dde6: bne     s6,s2,15ddba <ossl_x448_int+0x37e>
+    0.00 :   15ddea: addi    a5,s0,-688
+    0.00 :   15ddee: vse64.v v1,(a5)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    7.04 :   15ddf2: ld      a5,-448(s0)
+    0.00 :   15ddf6: ld      a4,-440(s0)
+         : 167    ossl_x448_int():
+         : 421    * times the reduction limit.
+         : 422    */
+         : 423    gf_add_nr(t1, x2, z2); /* A = x2 + z2 */ /* 2+e */
+         : 424    gf_sub_nr(t2, x2, z2); /* B = x2 - z2 */ /* 3+e */
+         : 425    gf_sub_nr(z2, x3, z3); /* D = x3 - z3 */ /* 3+e */
+         : 426    ossl_gf_mul(x2, t1, z2); /* DA */
+    0.00 :   15ddfa: mv      a2,s6
+         : 428    gf_weak_reduce():
+    0.00 :   15ddfc: srli    a1,a5,0x38
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15de00: and     a5,a5,s8
+    0.00 :   15de04: add     a5,a5,a0
+         : 168    ossl_x448_int():
+    0.00 :   15de06: ld      a0,-592(s0)
+         : 422    gf_weak_reduce():
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15de0a: and     a4,a4,s8
+    0.00 :   15de0e: add     a4,a4,a1
+         : 167    ossl_x448_int():
+    0.00 :   15de10: mv      a1,s5
+         : 422    gf_weak_reduce():
+    0.00 :   15de12: sd      a7,-664(s0)
+    0.00 :   15de16: sd      t5,-656(s0)
+    0.00 :   15de1a: sd      t3,-640(s0)
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15de1e: sd      a5,-448(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15de22: sd      a4,-440(s0)
+         : 166    ossl_x448_int():
+    0.00 :   15de26: jal     15b9a4 <ossl_gf_mul>
+    0.00 :   15de2a: li      a3,-1
+    0.00 :   15de2c: srli    a3,a3,0x8
+    0.00 :   15de2e: vsetivli        zero,2,e64,m1,ta,ma
+    0.00 :   15de32: vmv.v.x v2,a3
+    0.00 :   15de36: addi    a3,s0,-688
+    0.00 :   15de3a: vle64.v v1,(a3)
+    0.00 :   15de3e: ld      a7,-664(s0)
+    0.00 :   15de42: ld      t5,-656(s0)
+    1.41 :   15de46: ld      t3,-640(s0)
+    0.00 :   15de4a: addi    a1,s10,64
+    0.00 :   15de4e: mv      a2,s6
+    0.00 :   15de50: mv      a4,s3
+    0.00 :   15de52: mv      a5,s10
+         : 435    gf_add_RAW():
+         : 136    out->limb[i] = a->limb[i] + b->limb[i];
+    0.00 :   15de54: vle64.v v3,(a5)
+    0.00 :   15de58: vle64.v v4,(a4)
+    1.41 :   15de5c: addi    a5,a5,16
+    0.00 :   15de5e: addi    a4,a4,16
+    0.00 :   15de60: vadd.vv v3,v3,v4
+    0.00 :   15de64: vse64.v v3,(a2)
+         : 135    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15de68: addi    a2,a2,16
+    0.00 :   15de6a: bne     a1,a5,15de54 <ossl_x448_int+0x418>
+         : 138    gf_weak_reduce():
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    0.00 :   15de6e: ld      a4,-416(s0)
+         : 159    uint64_t tmp = a->limb[NLIMBS - 1] >> 56;
+    0.00 :   15de72: lbu     a1,-385(s0)
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    1.41 :   15de76: addi    t5,t5,-16
+    0.00 :   15de78: mv      a5,a7
+    0.00 :   15de7a: add     a4,a4,a1
+    0.00 :   15de7c: sd      a4,-416(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15de80: addi    a4,a5,-8
+    0.00 :   15de84: vle64.v v3,(a4)
+    8.45 :   15de88: vle64.v v5,(a5)
+    0.00 :   15de8c: vrgather.vv     v4,v3,v1
+    0.00 :   15de90: vrgather.vv     v3,v5,v1
+    0.00 :   15de94: vsrl.vx v4,v4,s11
+    0.00 :   15de98: vand.vv v3,v3,v2
+    0.00 :   15de9c: vadd.vv v3,v3,v4
+    0.00 :   15dea0: vrgather.vv     v4,v3,v1
+    0.00 :   15dea4: vse64.v v4,(a5)
+         : 163    for (i = NLIMBS - 1; i > 0; i--)
+    0.00 :   15dea8: addi    a5,a5,-16
+    0.00 :   15deaa: bne     t5,a5,15de80 <ossl_x448_int+0x444>
+    0.00 :   15deae: addi    a5,s0,-688
+    0.00 :   15deb2: vse64.v v1,(a5)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15deb6: ld      a5,-448(s0)
+    0.00 :   15deba: ld      a4,-440(s0)
+         : 167    ossl_x448_int():
+         : 423    gf_add_nr(z2, z3, x3); /* C = x3 + z3 */ /* 2+e */
+         : 424    ossl_gf_mul(x3, t2, z2); /* CB */
+    0.00 :   15debe: mv      a2,s6
+         : 426    gf_weak_reduce():
+    0.00 :   15dec0: srli    a0,a5,0x38
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15dec4: and     a5,a5,s8
+    0.00 :   15dec8: add     a5,a5,a1
+         : 168    ossl_x448_int():
+    0.00 :   15deca: ld      a1,-600(s0)
+         : 424    gf_weak_reduce():
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    1.41 :   15dece: and     a4,a4,s8
+    0.00 :   15ded2: add     a4,a4,a0
+         : 167    ossl_x448_int():
+    0.00 :   15ded4: mv      a0,s3
+         : 424    gf_weak_reduce():
+    0.00 :   15ded6: sd      a7,-664(s0)
+    0.00 :   15deda: sd      t3,-656(s0)
+    0.00 :   15dede: sd      t5,-640(s0)
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15dee2: sd      a5,-448(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15dee6: sd      a4,-440(s0)
+         : 166    ossl_x448_int():
+    0.00 :   15deea: jal     15b9a4 <ossl_gf_mul>
+         : 424    gf_sub_RAW():
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15deee: li      a5,-1
+    0.00 :   15def0: srli    a5,a5,0x8
+    0.00 :   15def2: vsetivli        zero,2,e64,m1,ta,ma
+    0.00 :   15def6: vmv.v.x v2,a5
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15defa: li      t0,-129
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15defe: addi    a5,s0,-688
+    0.00 :   15df02: vle64.v v1,(a5)
+         : 149    ossl_x448_int():
+    0.00 :   15df06: ld      a2,-592(s0)
+         : 424    gf_sub_RAW():
+    0.00 :   15df0a: ld      a7,-664(s0)
+    0.00 :   15df0e: ld      t3,-656(s0)
+    0.00 :   15df12: ld      t5,-640(s0)
+         : 149    ossl_x448_int():
+    0.00 :   15df16: mv      a0,s10
+    0.00 :   15df18: mv      a1,s3
+         : 425    gf_sub_RAW():
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15df1a: srli    t0,t0,0x7
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15df1e: li      a4,0
+    0.00 :   15df20: li      t2,8
+    0.00 :   15df22: j       15df34 <ossl_x448_int+0x4f8>
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15df24: add     a5,a5,t0
+    0.00 :   15df26: sd      a5,0(a0)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15df28: addiw   a4,a4,1
+    0.00 :   15df2a: addi    a2,a2,8
+    1.41 :   15df2c: addi    a1,a1,8
+    0.00 :   15df2e: addi    a0,a0,8
+    0.00 :   15df30: beq     a4,t2,15df68 <ossl_x448_int+0x52c>
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15df34: ld      a5,0(a2)
+    1.41 :   15df36: ld      a3,0(a1)
+    0.00 :   15df38: sub     a5,a5,a3
+    0.00 :   15df3a: bne     a4,s4,15df24 <ossl_x448_int+0x4e8>
+    0.00 :   15df3e: ld      a4,-584(s0)
+    0.00 :   15df42: ld      a3,8(a2)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15df44: addi    a0,a0,8
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15df46: add     a5,a5,a4
+    1.41 :   15df48: sd      a5,-8(a0)
+    1.41 :   15df4c: ld      a5,8(a1)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15df4e: li      a4,5
+    0.00 :   15df50: addi    a2,a2,8
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15df52: sub     a5,a3,a5
+    0.00 :   15df56: add     a5,a5,t0
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15df58: addi    a1,a1,8
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15df5a: sd      a5,0(a0)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15df5c: addiw   a4,a4,1
+    0.00 :   15df5e: addi    a2,a2,8
+    0.00 :   15df60: addi    a1,a1,8
+    0.00 :   15df62: addi    a0,a0,8
+    0.00 :   15df64: bne     a4,t2,15df34 <ossl_x448_int+0x4f8>
+         : 150    gf_weak_reduce():
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    0.00 :   15df68: ld      a4,-288(s0)
+         : 159    uint64_t tmp = a->limb[NLIMBS - 1] >> 56;
+    0.00 :   15df6c: lbu     a1,-257(s0)
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    1.41 :   15df70: addi    a5,s10,48
+    0.00 :   15df74: add     a4,a4,a1
+    0.00 :   15df76: sd      a4,-288(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15df7a: addi    a4,a5,-8
+    0.00 :   15df7e: vle64.v v3,(a4)
+    5.63 :   15df82: vle64.v v5,(a5)
+    0.00 :   15df86: vrgather.vv     v4,v3,v1
+    0.00 :   15df8a: vrgather.vv     v3,v5,v1
+    0.00 :   15df8e: vsrl.vx v4,v4,s11
+    0.00 :   15df92: vand.vv v3,v3,v2
+    0.00 :   15df96: vadd.vv v3,v3,v4
+    0.00 :   15df9a: vrgather.vv     v4,v3,v1
+    0.00 :   15df9e: vse64.v v4,(a5)
+         : 163    for (i = NLIMBS - 1; i > 0; i--)
+    0.00 :   15dfa2: addi    a5,a5,-16
+    0.00 :   15dfa4: bne     s10,a5,15df7a <ossl_x448_int+0x53e>
+    0.00 :   15dfa8: addi    a5,s0,-688
+    0.00 :   15dfac: vse64.v v1,(a5)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15dfb0: ld      a4,-312(s0)
+    0.00 :   15dfb4: ld      a5,-320(s0)
+         : 167    ossl_x448_int():
+         : 425    gf_sub_nr(z3, x2, x3); /* DA-CB */ /* 3+e */
+         : 426    ossl_gf_sqr(z2, z3); /* (DA-CB)^2 */
+    0.00 :   15dfb8: mv      a0,s6
+         : 428    gf_weak_reduce():
+    0.00 :   15dfba: and     a4,a4,s8
+    0.00 :   15dfbe: srli    a2,a5,0x38
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15dfc2: and     a5,a5,s8
+    0.00 :   15dfc6: add     a5,a5,a1
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15dfc8: add     a4,a4,a2
+         : 166    ossl_x448_int():
+    0.00 :   15dfca: mv      a1,s10
+         : 426    gf_weak_reduce():
+    0.00 :   15dfcc: sd      a7,-664(s0)
+    1.41 :   15dfd0: sd      t3,-656(s0)
+    0.00 :   15dfd4: sd      t5,-640(s0)
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15dfd8: sd      a5,-320(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15dfdc: sd      a4,-312(s0)
+         : 166    ossl_x448_int():
+    0.00 :   15dfe0: jal     15bd66 <ossl_gf_sqr>
+         : 426    ossl_gf_mul(z3, x1, z2); /* z3 = x1(DA-CB)^2 */
+    0.00 :   15dfe4: ld      a1,-696(s0)
+    0.00 :   15dfe8: mv      a2,s6
+    0.00 :   15dfea: mv      a0,s10
+    0.00 :   15dfec: jal     15b9a4 <ossl_gf_mul>
+    0.00 :   15dff0: li      a3,-1
+    0.00 :   15dff2: srli    a3,a3,0x8
+    0.00 :   15dff4: vsetivli        zero,2,e64,m1,ta,ma
+    0.00 :   15dff8: vmv.v.x v2,a3
+    0.00 :   15dffc: addi    a3,s0,-688
+    0.00 :   15e000: vle64.v v1,(a3)
+    0.00 :   15e004: ld      a5,-592(s0)
+    0.00 :   15e008: ld      a7,-664(s0)
+    1.41 :   15e00c: ld      t3,-656(s0)
+    0.00 :   15e010: ld      t5,-640(s0)
+    0.00 :   15e014: mv      a2,s2
+    0.00 :   15e016: mv      a4,s3
+         : 443    gf_add_RAW():
+         : 136    out->limb[i] = a->limb[i] + b->limb[i];
+    0.00 :   15e018: vle64.v v3,(a5)
+    0.00 :   15e01c: vle64.v v4,(a4)
+    0.00 :   15e020: addi    a5,a5,16
+    0.00 :   15e022: addi    a4,a4,16
+    0.00 :   15e024: vadd.vv v3,v3,v4
+    0.00 :   15e028: vse64.v v3,(a2)
+         : 135    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15e02c: addi    a2,a2,16
+    1.41 :   15e02e: bne     s6,a5,15e018 <ossl_x448_int+0x5dc>
+         : 138    gf_weak_reduce():
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    0.00 :   15e032: ld      a5,-416(s0)
+         : 159    uint64_t tmp = a->limb[NLIMBS - 1] >> 56;
+    2.82 :   15e036: lbu     a2,-385(s0)
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    2.82 :   15e03a: add     a5,a5,a2
+    0.00 :   15e03c: sd      a5,-416(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15e040: addi    a5,a7,-8
+    0.00 :   15e044: vle64.v v3,(a5)
+    5.63 :   15e048: vle64.v v5,(a7)
+    0.00 :   15e04c: vrgather.vv     v4,v3,v1
+    0.00 :   15e050: vrgather.vv     v3,v5,v1
+    0.00 :   15e054: vsrl.vx v4,v4,s11
+    1.41 :   15e058: vand.vv v3,v3,v2
+    0.00 :   15e05c: vadd.vv v3,v3,v4
+    0.00 :   15e060: vrgather.vv     v4,v3,v1
+    0.00 :   15e064: vse64.v v4,(a7)
+         : 163    for (i = NLIMBS - 1; i > 0; i--)
+    0.00 :   15e068: addi    a7,a7,-16
+    0.00 :   15e06a: bne     a7,t5,15e040 <ossl_x448_int+0x604>
+    0.00 :   15e06e: addi    a5,s0,-656
+    0.00 :   15e072: vse64.v v1,(a5)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15e076: ld      a5,-448(s0)
+    0.00 :   15e07a: ld      a4,-440(s0)
+         : 167    ossl_x448_int():
+         : 428    gf_add_nr(z2, x2, x3); /* (DA+CB) */ /* 2+e */
+         : 429    ossl_gf_sqr(x3, z2); /* x3 = (DA+CB)^2 */
+    0.00 :   15e07e: mv      a1,s6
+         : 431    gf_weak_reduce():
+    0.00 :   15e080: srli    a0,a5,0x38
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15e084: and     a5,a5,s8
+    0.00 :   15e088: add     a5,a5,a2
+    1.41 :   15e08a: sd      a5,-448(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15e08e: and     a5,a4,s8
+    0.00 :   15e092: add     a5,a5,a0
+         : 167    ossl_x448_int():
+    0.00 :   15e094: mv      a0,s3
+         : 429    gf_weak_reduce():
+    0.00 :   15e096: sd      t3,-640(s0)
+    0.00 :   15e09a: sd      a5,-440(s0)
+         : 166    ossl_x448_int():
+    0.00 :   15e09e: jal     15bd66 <ossl_gf_sqr>
+         :
+         : 431    ossl_gf_sqr(z2, t1); /* AA = A^2 */
+    0.00 :   15e0a2: mv      a1,s5
+    0.00 :   15e0a4: mv      a0,s6
+    0.00 :   15e0a6: jal     15bd66 <ossl_gf_sqr>
+         : 431    ossl_gf_sqr(t1, t2); /* BB = B^2 */
+    0.00 :   15e0aa: ld      a1,-600(s0)
+    0.00 :   15e0ae: mv      a0,s5
+    0.00 :   15e0b0: jal     15bd66 <ossl_gf_sqr>
+         : 432    ossl_gf_mul(x2, z2, t1); /* x2 = AA*BB */
+    0.00 :   15e0b4: ld      a0,-592(s0)
+    0.00 :   15e0b8: mv      a2,s5
+    0.00 :   15e0ba: mv      a1,s6
+    0.00 :   15e0bc: jal     15b9a4 <ossl_gf_mul>
+         : 437    gf_sub_RAW():
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15e0c0: li      a5,-1
+    0.00 :   15e0c2: srli    a5,a5,0x8
+    0.00 :   15e0c4: vsetivli        zero,2,e64,m1,ta,ma
+    0.00 :   15e0c8: vmv.v.x v2,a5
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15e0cc: li      a7,-129
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15e0d0: addi    a5,s0,-656
+    0.00 :   15e0d4: vle64.v v1,(a5)
+    0.00 :   15e0d8: ld      t3,-640(s0)
+         : 150    ossl_x448_int():
+    0.00 :   15e0dc: mv      a0,s9
+    0.00 :   15e0de: mv      a1,s1
+    0.00 :   15e0e0: mv      a2,s2
+         : 435    gf_sub_RAW():
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15e0e2: srli    a7,a7,0x7
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15e0e6: li      a4,0
+    0.00 :   15e0e8: li      t5,8
+    0.00 :   15e0ea: j       15e0fc <ossl_x448_int+0x6c0>
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15e0ec: add     a5,a5,a7
+    0.00 :   15e0ee: sd      a5,0(a0)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15e0f0: addiw   a4,a4,1
+    0.00 :   15e0f2: addi    a2,a2,8
+    0.00 :   15e0f4: addi    a1,a1,8
+    0.00 :   15e0f6: addi    a0,a0,8
+    0.00 :   15e0f8: beq     a4,t5,15e130 <ossl_x448_int+0x6f4>
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15e0fc: ld      a5,0(a2)
+    1.41 :   15e0fe: ld      a3,0(a1)
+    0.00 :   15e100: sub     a5,a5,a3
+    0.00 :   15e102: bne     a4,s4,15e0ec <ossl_x448_int+0x6b0>
+    0.00 :   15e106: ld      a4,-584(s0)
+    0.00 :   15e10a: ld      a3,8(a2)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15e10c: addi    a0,a0,8
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    1.41 :   15e10e: add     a5,a5,a4
+    0.00 :   15e110: sd      a5,-8(a0)
+    0.00 :   15e114: ld      a5,8(a1)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15e116: li      a4,5
+    0.00 :   15e118: addi    a2,a2,8
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15e11a: sub     a5,a3,a5
+    0.00 :   15e11e: add     a5,a5,a7
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15e120: addi    a1,a1,8
+         : 147    out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+    0.00 :   15e122: sd      a5,0(a0)
+         : 146    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15e124: addiw   a4,a4,1
+    0.00 :   15e126: addi    a2,a2,8
+    0.00 :   15e128: addi    a1,a1,8
+    0.00 :   15e12a: addi    a0,a0,8
+    0.00 :   15e12c: bne     a4,t5,15e0fc <ossl_x448_int+0x6c0>
+         : 150    gf_weak_reduce():
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    0.00 :   15e130: ld      a5,-160(s0)
+         : 159    uint64_t tmp = a->limb[NLIMBS - 1] >> 56;
+    0.00 :   15e134: lbu     a2,-129(s0)
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    1.41 :   15e138: add     a5,a5,a2
+    0.00 :   15e13a: sd      a5,-160(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15e13e: addi    a5,t3,-8
+    0.00 :   15e142: vle64.v v3,(a5)
+    4.23 :   15e146: vle64.v v5,(t3)
+    0.00 :   15e14a: vrgather.vv     v4,v3,v1
+    0.00 :   15e14e: vrgather.vv     v3,v5,v1
+    0.00 :   15e152: vsrl.vx v4,v4,s11
+    0.00 :   15e156: vand.vv v3,v3,v2
+    0.00 :   15e15a: vadd.vv v3,v3,v4
+    0.00 :   15e15e: vrgather.vv     v4,v3,v1
+    0.00 :   15e162: vse64.v v4,(t3)
+         : 163    for (i = NLIMBS - 1; i > 0; i--)
+    0.00 :   15e166: addi    t3,t3,-16
+    1.41 :   15e168: bne     s9,t3,15e13e <ossl_x448_int+0x702>
+    0.00 :   15e16c: addi    a5,s0,-640
+    0.00 :   15e170: vse64.v v1,(a5)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15e174: ld      a4,-184(s0)
+    0.00 :   15e178: ld      a5,-192(s0)
+         : 167    gf_mulw():
+         : 217    ossl_gf_mulw_unsigned(c, a, w);
+    0.00 :   15e17c: mv      a0,s5
+         : 219    gf_weak_reduce():
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15e17e: and     a4,a4,s8
+    0.00 :   15e182: srli    a1,a5,0x38
+    0.00 :   15e186: add     a4,a4,a1
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15e188: and     a5,a5,s8
+         : 167    gf_mulw():
+         : 217    ossl_gf_mulw_unsigned(c, a, w);
+    0.00 :   15e18c: ld      a1,-600(s0)
+         : 219    gf_weak_reduce():
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15e190: add     a5,a5,a2
+         : 167    gf_mulw():
+         : 217    ossl_gf_mulw_unsigned(c, a, w);
+    0.00 :   15e192: lui     a2,0xa
+    0.00 :   15e194: addi    a2,a2,-1879 # 98a9 <OPENSSL_4.0.0+0x98a9>
+         : 220    gf_weak_reduce():
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15e198: sd      a5,-192(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15e19c: sd      a4,-184(s0)
+         : 166    gf_mulw():
+         : 217    ossl_gf_mulw_unsigned(c, a, w);
+    0.00 :   15e1a0: jal     15bc96 <ossl_gf_mulw_unsigned>
+    0.00 :   15e1a4: li      a3,-1
+    0.00 :   15e1a6: srli    a3,a3,0x8
+    0.00 :   15e1a8: vsetivli        zero,2,e64,m1,ta,ma
+    0.00 :   15e1ac: vmv.v.x v2,a3
+    0.00 :   15e1b0: addi    a3,s0,-640
+    0.00 :   15e1b4: vle64.v v1,(a3)
+    0.00 :   15e1b8: ld      a5,-624(s0)
+    0.00 :   15e1bc: addi    a4,a5,48
+    0.00 :   15e1c0: mv      a5,s2
+         : 228    gf_add_RAW():
+         : 136    out->limb[i] = a->limb[i] + b->limb[i];
+    0.00 :   15e1c2: vle64.v v3,(s1)
+    0.00 :   15e1c6: vle64.v v4,(a5)
+    0.00 :   15e1ca: addi    a5,a5,16
+    0.00 :   15e1cc: vadd.vv v3,v3,v4
+    0.00 :   15e1d0: vse64.v v3,(s1)
+         : 135    for (i = 0; i < NLIMBS; i++)
+    0.00 :   15e1d4: addi    s1,s1,16
+    0.00 :   15e1d6: bne     a4,s1,15e1c2 <ossl_x448_int+0x786>
+         : 138    gf_weak_reduce():
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    0.00 :   15e1da: ld      a5,-224(s0)
+         : 159    uint64_t tmp = a->limb[NLIMBS - 1] >> 56;
+    0.00 :   15e1de: lbu     a1,-193(s0)
+         : 162    a->limb[NLIMBS / 2] += tmp;
+    0.00 :   15e1e2: ld      a4,-624(s0)
+    0.00 :   15e1e6: add     a5,a5,a1
+    0.00 :   15e1e8: addi    s9,a4,-16
+    0.00 :   15e1ec: sd      a5,-224(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15e1f0: addi    a5,s7,-8
+    0.00 :   15e1f4: vle64.v v4,(a5)
+    4.23 :   15e1f8: vle64.v v5,(s7)
+    0.00 :   15e1fc: vrgather.vv     v3,v4,v1
+    0.00 :   15e200: vrgather.vv     v4,v5,v1
+    0.00 :   15e204: vsrl.vx v3,v3,s11
+    0.00 :   15e208: vand.vv v4,v4,v2
+    0.00 :   15e20c: vadd.vv v3,v3,v4
+    0.00 :   15e210: vrgather.vv     v4,v3,v1
+    0.00 :   15e214: vse64.v v4,(s7)
+         : 163    for (i = NLIMBS - 1; i > 0; i--)
+    0.00 :   15e218: addi    s7,s7,-16
+    0.00 :   15e21a: bne     s9,s7,15e1f0 <ossl_x448_int+0x7b4>
+    0.00 :   15e21e: addi    a5,s0,-624
+    0.00 :   15e222: vse64.v v1,(a5)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15e226: ld      a5,-256(s0)
+    0.00 :   15e22a: ld      a4,-248(s0)
+         : 167    ossl_x448_int():
+         : 437    gf_sub_nr(t2, z2, t1); /* E = AA-BB */ /* 3+e */
+         :
+         : 439    gf_mulw(t1, t2, -EDWARDS_D); /* E*-d = a24*E */
+         : 440    gf_add_nr(t1, t1, z2); /* AA + a24*E */ /* 2+e */
+         : 441    ossl_gf_mul(z2, t2, t1); /* z2 = E(AA+a24*E) */
+    0.00 :   15e22e: mv      a2,s5
+         : 443    gf_weak_reduce():
+    0.00 :   15e230: srli    a0,a5,0x38
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15e234: and     a5,a5,s8
+    0.00 :   15e238: add     a5,a5,a1
+         : 168    ossl_x448_int():
+    0.00 :   15e23a: ld      a1,-600(s0)
+         : 438    gf_weak_reduce():
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15e23e: and     a4,a4,s8
+    0.00 :   15e242: add     a4,a4,a0
+         : 167    ossl_x448_int():
+    0.00 :   15e244: mv      a0,s6
+         : 438    gf_weak_reduce():
+         : 165    a->limb[0] = (a->limb[0] & mask) + tmp;
+    0.00 :   15e246: sd      a5,-256(s0)
+         : 164    a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    0.00 :   15e24a: sd      a4,-248(s0)
+         : 166    ossl_x448_int():
+    0.00 :   15e24e: jal     15b9a4 <ossl_gf_mul>
+         : 395    for (t = X_PRIVATE_BITS - 1; t >= 0; t--) {
+    0.00 :   15e252: ld      a5,-608(s0)
+    0.00 :   15e256: addi    a3,s0,-624
+    0.00 :   15e25a: vsetivli        zero,2,e64,m1,ta,ma
+    0.00 :   15e25e: addiw   a4,a5,-1
+    0.00 :   15e262: li      a5,-1
+    0.00 :   15e264: vle64.v v1,(a3)
+    0.00 :   15e268: srli    a3,a5,0x8
+    0.00 :   15e26c: vmv.v.x v2,a3
+    0.00 :   15e270: beq     a4,a5,15e29a <ossl_x448_int+0x85e>
+         : 400    if (t / 8 == 0)
+    0.00 :   15e274: ld      a3,-608(s0)
+         : 396    uint8_t sb = scalar[t / 8];
+    0.00 :   15e278: sraiw   a5,a4,0x3
+         : 400    if (t / 8 == 0)
+    0.00 :   15e27c: addiw   a2,a3,6
+         : 396    uint8_t sb = scalar[t / 8];
+    0.00 :   15e280: ld      a3,-728(s0)
+    0.00 :   15e284: add     a5,a5,a3
+         : 400    if (t / 8 == 0)
+    0.00 :   15e286: li      a3,14
+         : 396    uint8_t sb = scalar[t / 8];
+    0.00 :   15e288: lbu     a5,0(a5)
+         : 400    if (t / 8 == 0)
+    0.00 :   15e28c: bgeu    a3,a2,15e3ca <ossl_x448_int+0x98e>
+         : 405    k_t = (sb >> (t % 8)) & 1;
+    0.00 :   15e290: ld      a0,-672(s0)
+    0.00 :   15e294: sd      a4,-608(s0)
+    0.00 :   15e298: j       15db8a <ossl_x448_int+0x14e>
+         : 409    value_barrier_64():
+         : 304    __asm__("" : "=r"(r) : "0"(a));
+    0.00 :   15e29a: ld      t5,-672(s0)
+    0.00 :   15e29e: ld      t1,-704(s0)
+    0.00 :   15e2a2: ld      t4,-712(s0)
+    0.00 :   15e2a6: ld      a0,-720(s0)
+    0.00 :   15e2aa: ld      s1,-736(s0)
+    0.00 :   15e2ae: mv      s9,s3
+    0.00 :   15e2b0: mv      s3,s2
+    0.00 :   15e2b2: mv      s2,s6
+    0.00 :   15e2b4: mv      a2,t5
+         : 314    constant_time_cond_swap_64():
+         : 413    uint64_t xor = *a ^ *b;
+    0.00 :   15e2b6: ld      a4,0(a0)
+    0.00 :   15e2b8: ld      a5,0(t1)
+         : 416    gf_cond_swap():
+         : 255    for (i = 0; i < NLIMBS; i++) {
+    0.00 :   15e2bc: addi    a0,a0,8
+    0.00 :   15e2be: addi    t1,t1,8
+         : 258    constant_time_cond_swap_64():
+    0.00 :   15e2c0: xor     a3,a4,a5
+         : 415    xor&= value_barrier_64(mask);
+    0.00 :   15e2c4: and     a3,a3,a2
+         : 416    *a ^= xor;
+    0.00 :   15e2c6: xor     a4,a4,a3
+         : 417    *b ^= xor;
+    0.00 :   15e2c8: xor     a5,a5,a3
+         : 416    *a ^= xor;
+    0.00 :   15e2ca: sd      a4,-8(a0)
+         : 417    *b ^= xor;
+    0.00 :   15e2ce: sd      a5,-8(t1)
+         : 419    gf_cond_swap():
+    0.00 :   15e2d2: bne     s2,a0,15e2b6 <ossl_x448_int+0x87a>
+         : 256    value_barrier_64():
+         : 304    __asm__("" : "=r"(r) : "0"(a));
+    0.00 :   15e2d6: mv      a5,t5
+         : 306    constant_time_cond_swap_64():
+         : 413    uint64_t xor = *a ^ *b;
+    0.00 :   15e2d8: ld      a3,0(s3)
+    0.00 :   15e2dc: ld      a4,0(t4)
+         : 416    gf_cond_swap():
+    0.00 :   15e2e0: addi    s3,s3,8
+    0.00 :   15e2e2: addi    t4,t4,8
+         : 257    constant_time_cond_swap_64():
+    0.00 :   15e2e4: xor     a2,a3,a4
+         : 415    xor&= value_barrier_64(mask);
+    0.00 :   15e2e8: and     a2,a2,a5
+         : 416    *a ^= xor;
+    0.00 :   15e2ea: xor     a3,a3,a2
+         : 417    *b ^= xor;
+    0.00 :   15e2ec: xor     a4,a4,a2
+         : 416    *a ^= xor;
+    0.00 :   15e2ee: sd      a3,-8(s3)
+         : 417    *b ^= xor;
+    0.00 :   15e2f2: sd      a4,-8(t4)
+         : 419    gf_cond_swap():
+    0.00 :   15e2f6: bne     s9,s3,15e2d8 <ossl_x448_int+0x89c>
+         : 256    ossl_x448_int():
+         : 443    }
+         :
+         : 445    /* Finish */
+         : 446    gf_cond_swap(x2, x3, swap);
+         : 447    gf_cond_swap(z2, z3, swap);
+         : 448    gf_invert(z2, z2, 0);
+    0.00 :   15e2fa: mv      a1,s2
+    0.00 :   15e2fc: mv      a0,s2
+    0.00 :   15e2fe: jal     15c464 <gf_invert.isra.0>
+         : 444    ossl_gf_mul(x1, x2, z2);
+    0.00 :   15e302: ld      s3,-696(s0)
+    0.00 :   15e306: ld      s6,-592(s0)
+    0.00 :   15e30a: mv      a2,s2
+    0.00 :   15e30c: mv      a0,s3
+    0.00 :   15e30e: mv      a1,s6
+    0.00 :   15e310: jal     15b9a4 <ossl_gf_mul>
+         : 445    gf_serialize(out, x1, 1);
+    0.00 :   15e314: li      a2,1
+    0.00 :   15e316: mv      a0,s1
+    0.00 :   15e318: mv      a1,s3
+    0.00 :   15e31a: jal     15f47a <gf_serialize>
+         : 446    nz = ~gf_eq(x1, ZERO);
+    0.00 :   15e31e: auipc   a1,0x1dc
+    0.00 :   15e322: addi    a1,a1,-1342 # 339de0 <ZERO>
+    0.00 :   15e326: mv      a0,s3
+    0.00 :   15e328: jal     15f9de <gf_eq>
+    0.00 :   15e32c: mv      s1,a0
+         :
+         : 449    OPENSSL_cleanse(x1, sizeof(x1));
+    0.00 :   15e32e: li      a1,64
+    0.00 :   15e332: mv      a0,s3
+    0.00 :   15e334: jal     1c7a20 <OPENSSL_cleanse>
+         : 449    OPENSSL_cleanse(x2, sizeof(x2));
+    0.00 :   15e338: mv      a0,s6
+    0.00 :   15e33a: li      a1,64
+    0.00 :   15e33e: jal     1c7a20 <OPENSSL_cleanse>
+         : 450    OPENSSL_cleanse(z2, sizeof(z2));
+    0.00 :   15e342: mv      a0,s2
+    0.00 :   15e344: li      a1,64
+    0.00 :   15e348: jal     1c7a20 <OPENSSL_cleanse>
+         : 451    OPENSSL_cleanse(x3, sizeof(x3));
+    0.00 :   15e34c: mv      a0,s9
+    0.00 :   15e34e: li      a1,64
+    0.00 :   15e352: jal     1c7a20 <OPENSSL_cleanse>
+         : 452    OPENSSL_cleanse(z3, sizeof(z3));
+    0.00 :   15e356: mv      a0,s10
+    0.00 :   15e358: li      a1,64
+    0.00 :   15e35c: jal     1c7a20 <OPENSSL_cleanse>
+         : 453    OPENSSL_cleanse(t1, sizeof(t1));
+    0.00 :   15e360: mv      a0,s5
+    0.00 :   15e362: li      a1,64
+    0.00 :   15e366: jal     1c7a20 <OPENSSL_cleanse>
+         : 454    OPENSSL_cleanse(t2, sizeof(t2));
+    0.00 :   15e36a: ld      a0,-600(s0)
+    0.00 :   15e36e: li      a1,64
+    0.00 :   15e372: jal     1c7a20 <OPENSSL_cleanse>
+         :
+         : 458    return c448_succeed_if(mask_to_bool(nz));
+         : 459    }
+    0.00 :   15e376: auipc   a5,0x3cd
+    0.00 :   15e37a: ld      a5,522(a5) # 52b580 <__stack_chk_guard@GLIBC_2.27>
+         : 446    nz = ~gf_eq(x1, ZERO);
+    0.00 :   15e37e: not     a0,s1
+         : 457    }
+    0.00 :   15e382: ld      a4,-120(s0)
+    0.00 :   15e386: ld      a5,0(a5)
+    0.00 :   15e388: xor     a5,a5,a4
+    0.00 :   15e38a: li      a4,0
+         : 456    return c448_succeed_if(mask_to_bool(nz));
+    0.00 :   15e38c: sext.w  a0,a0
+         : 457    }
+    0.00 :   15e38e: bnez    a5,15e3e4 <ossl_x448_int+0x9a8>
+    0.00 :   15e390: ld      ra,728(sp)
+    0.00 :   15e394: ld      s0,720(sp)
+    0.00 :   15e398: ld      s1,712(sp)
+    0.00 :   15e39c: ld      s2,704(sp)
+    0.00 :   15e3a0: ld      s3,696(sp)
+    0.00 :   15e3a4: ld      s4,688(sp)
+    0.00 :   15e3a8: ld      s5,680(sp)
+    0.00 :   15e3ac: ld      s6,672(sp)
+    0.00 :   15e3b0: ld      s7,664(sp)
+    0.00 :   15e3b4: ld      s8,656(sp)
+    0.00 :   15e3b8: ld      s9,648(sp)
+    0.00 :   15e3bc: ld      s10,640(sp)
+    0.00 :   15e3c0: ld      s11,632(sp)
+    0.00 :   15e3c4: addi    sp,sp,736
+    0.00 :   15e3c8: ret
+         : 401    sb &= -(uint8_t)COFACTOR;
+    0.00 :   15e3ca: mv      s2,s6
+    0.00 :   15e3cc: ld      s1,-736(s0)
+    0.00 :   15e3d0: ld      a6,-672(s0)
+    0.00 :   15e3d4: mv      t1,s5
+    0.00 :   15e3d6: mv      s6,s3
+         : 405    k_t = (sb >> (t % 8)) & 1;
+    0.00 :   15e3d8: andi    a5,a5,252
+    0.00 :   15e3dc: sd      a4,-608(s0)
+    0.00 :   15e3e0: j       15db76 <ossl_x448_int+0x13a>
+         : 457    }
+    0.00 :   15e3e4: jal     df260 <__stack_chk_fail@plt>

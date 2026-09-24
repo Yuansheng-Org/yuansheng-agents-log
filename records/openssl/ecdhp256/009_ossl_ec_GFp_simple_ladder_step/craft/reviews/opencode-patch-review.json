@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-openssl-ecdhp256-009",
+  "patchCandidateId": "pc-bp-openssl-ecdhp256-009",
+  "reviewedAt": "2026-09-10T13:55:00Z",
+  "reviewer": "opencode-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "not-applicable",
+    "notes": "arch-scan 判定 archSpecific=false（纯 Configure 配置变更，无汇编/inline-asm/RVV intrinsic/ISA 特性）；PatchCandidate archReviewWarning 非空，跳过架构专项审核，仅做通用质量审核。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "f-001",
+      "file": "Configure",
+      "evidence": "patch.diff 删除 ec_nistp_64_gcc_128 => \"default\"；ecp_nistp256.c:49-51 的 #error 在非 __uint128_t 平台 fail-fast（非静默破坏）。",
+      "severity": "suggestion",
+      "category": "平台兼容",
+      "suggestion": "建议按 __SIZEOF_INT128__ 检测做条件启用，或文档明确 128-bit 类型依赖。"
+    },
+    {
+      "id": "f-002",
+      "file": "Configure",
+      "evidence": "blueprint alternativeExplanations 指出 RISC-V 上 __uint128_t 乘法扩展为 mulh+mul，nistp256 相对 generic Montgomery 的实际收益需 A/B 实测，且 configdata 未直接核对。",
+      "severity": "suggestion",
+      "category": "收益验证",
+      "suggestion": "在目标硬件上 enable 后 A/B 实测 ecdhp256 吞吐与 annotate 复核。"
+    }
+  ]
+}

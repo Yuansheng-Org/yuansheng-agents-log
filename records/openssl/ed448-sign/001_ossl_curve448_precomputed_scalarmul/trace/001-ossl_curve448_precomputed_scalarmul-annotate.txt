@@ -1,0 +1,337 @@
+ Percent |	Source code & Disassembly of libcrypto.so.4 for cpu-clock (157 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      000000000015d53a <ossl_curve448_precomputed_scalarmul>:
+         : 6      ossl_curve448_precomputed_scalarmul():
+         : 230    }
+         :
+         : 232    void ossl_curve448_precomputed_scalarmul(curve448_point_t out,
+         : 233    const curve448_precomputed_s *table,
+         : 234    const curve448_scalar_t scalar)
+         : 235    {
+    0.00 :   15d53a: addi    sp,sp,-528
+    0.00 :   15d53e: sd      ra,520(sp)
+    0.00 :   15d542: sd      s0,512(sp)
+    0.00 :   15d546: sd      s1,504(sp)
+    0.00 :   15d548: addi    s0,sp,528
+    0.00 :   15d54a: sd      s2,496(sp)
+    0.00 :   15d54c: sd      s3,488(sp)
+    0.00 :   15d54e: sd      s5,472(sp)
+    0.00 :   15d550: sd      s8,448(sp)
+    0.00 :   15d552: sd      s9,440(sp)
+    0.00 :   15d554: sd      s10,432(sp)
+    0.00 :   15d556: sd      s4,480(sp)
+    0.00 :   15d558: sd      s6,464(sp)
+    0.00 :   15d55a: sd      s7,456(sp)
+    0.00 :   15d55c: sd      s11,424(sp)
+         : 236    unsigned int i, j, k;
+         : 237    const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
+         : 238    niels_t ni;
+         : 239    curve448_scalar_t scalar1x;
+         :
+         : 241    ossl_curve448_scalar_add(scalar1x, scalar, precomputed_scalarmul_adjustment);
+    0.00 :   15d55e: addi    s5,s0,-440
+         : 230    {
+    0.00 :   15d562: auipc   a4,0x3ce
+    0.00 :   15d566: ld      a4,30(a4) # 52b580 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   15d56a: sd      a0,-472(s0)
+    0.00 :   15d56e: ld      a5,0(a4)
+    0.00 :   15d570: sd      a5,-120(s0)
+    0.00 :   15d574: li      a5,0
+         : 236    ossl_curve448_scalar_add(scalar1x, scalar, precomputed_scalarmul_adjustment);
+    0.00 :   15d576: mv      a0,s5
+    0.00 :   15d578: addi    s1,a1,2047
+    0.00 :   15d57c: mv      a1,a2
+    0.00 :   15d57e: auipc   a2,0x1dd
+    0.00 :   15d582: addi    a2,a2,-1886 # 339e20 <precomputed_scalarmul_adjustment>
+    0.00 :   15d586: jal     15ff28 <ossl_curve448_scalar_add>
+         : 237    ossl_curve448_scalar_halve(scalar1x, scalar1x);
+    0.00 :   15d58a: mv      a1,s5
+    0.00 :   15d58c: mv      a0,s5
+    0.00 :   15d58e: jal     16020a <ossl_curve448_scalar_halve>
+         :
+         : 241    for (i = s; i > 0; i--) {
+         : 242    if (i != s)
+    0.00 :   15d592: addi    a5,s0,-192
+    0.00 :   15d596: addi    s1,s1,1025
+    0.00 :   15d59a: sd      a5,-496(s0)
+         : 239    for (i = s; i > 0; i--) {
+    0.00 :   15d59e: li      s9,18
+    0.00 :   15d5a0: addi    a5,s0,-384
+    0.00 :   15d5a4: sd      s1,-528(s0)
+    0.00 :   15d5a8: addi    s8,s0,-320
+    0.00 :   15d5ac: addi    s10,s0,-128
+    0.00 :   15d5b0: sd      a5,-488(s0)
+         : 250    mask_t invert;
+         :
+         : 252    for (k = 0; k < t; k++) {
+         : 253    unsigned int bit = (i - 1) + s * (k + j * t);
+         :
+         : 255    if (bit < C448_SCALAR_BITS)
+    0.00 :   15d5b4: li      s3,445
+         : 247    for (k = 0; k < t; k++) {
+    0.00 :   15d5b8: li      s2,5
+    0.00 :   15d5ba: sd      s9,-520(s0)
+    0.00 :   15d5be: sd      s5,-480(s0)
+    0.00 :   15d5c2: addi    s1,s0,-256
+         :
+         : 263    constant_time_lookup_niels(ni, &table->table[j << (t - 1)],
+         : 264    1 << (t - 1), tab);
+         :
+         : 266    cond_neg_niels(ni, invert);
+         : 267    if ((i != s) || j != 0)
+    0.00 :   15d5c6: ld      a5,-520(s0)
+    0.00 :   15d5ca: ld      s9,-528(s0)
+         : 263    add_niels_to_pt(out, ni, j == n - 1 && i != 1);
+    0.00 :   15d5ce: li      s6,0
+         : 262    if ((i != s) || j != 0)
+    0.00 :   15d5d0: addi    a4,a5,-18
+    0.00 :   15d5d4: sd      a4,-504(s0)
+         : 263    add_niels_to_pt(out, ni, j == n - 1 && i != 1);
+    0.00 :   15d5d8: mv      a4,a5
+    0.00 :   15d5da: addi    a5,a5,-1
+    0.00 :   15d5dc: addiw   a4,a4,-1
+    0.00 :   15d5de: snez    a5,a5
+    0.00 :   15d5e2: sd      a4,-520(s0)
+    0.00 :   15d5e6: sd      a5,-512(s0)
+    0.00 :   15d5ea: sd      a4,-456(s0)
+    0.00 :   15d5ee: mv      s11,s8
+    0.00 :   15d5f0: mv      s5,s1
+         : 239    for (i = s; i > 0; i--) {
+    0.00 :   15d5f2: ld      a4,-456(s0)
+    0.00 :   15d5f6: ld      a3,-480(s0)
+         : 244    int tab = 0;
+    0.00 :   15d5fa: li      a1,0
+         : 247    for (k = 0; k < t; k++) {
+    0.00 :   15d5fc: li      a2,0
+         : 250    if (bit < C448_SCALAR_BITS)
+    0.00 :   15d5fe: bltu    s3,a4,15d618 <ossl_curve448_precomputed_scalarmul+0xde>
+         : 251    tab |= (scalar1x->limb[bit / WBITS] >> (bit % WBITS) & 1) << k;
+    0.00 :   15d602: srliw   a5,a4,0x6
+    0.00 :   15d606: slli    a5,a5,0x3
+    0.00 :   15d608: add     a5,a5,a3
+    0.00 :   15d60a: ld      a5,0(a5)
+    0.00 :   15d60c: srl     a5,a5,a4
+    0.00 :   15d610: andi    a5,a5,1
+    0.00 :   15d612: sll     a5,a5,a2
+    0.00 :   15d616: or      a1,a1,a5
+         : 247    for (k = 0; k < t; k++) {
+    0.00 :   15d618: addiw   a2,a2,1
+    0.00 :   15d61a: addiw   a4,a4,18
+    0.00 :   15d61c: bne     a2,s2,15d5fe <ossl_curve448_precomputed_scalarmul+0xc4>
+         : 254    invert = (tab >> (t - 1)) - 1;
+    0.00 :   15d620: sraiw   s4,a1,0x4
+    0.00 :   15d624: addiw   s7,s4,-1
+         : 258    constant_time_lookup_niels(ni, &table->table[j << (t - 1)],
+    0.00 :   15d628: addi    a6,s9,-2048
+    0.00 :   15d62c: addi    a6,a6,-1024
+    0.00 :   15d630: xor     s8,s7,a1
+         : 262    constant_time_lookup():
+         : 464    size_t i, j;
+         : 465    const unsigned char *tablec = (const unsigned char *)table;
+         : 466    unsigned char *outc = (unsigned char *)out;
+         : 467    unsigned char mask;
+         :
+         : 469    memset(out, 0, rowsize);
+    0.00 :   15d634: li      a2,192
+    0.00 :   15d638: li      a1,0
+    0.00 :   15d63a: mv      a0,s11
+         : 473    ossl_curve448_precomputed_scalarmul():
+    0.00 :   15d63c: sd      a6,-464(s0)
+         : 259    constant_time_lookup():
+    0.00 :   15d640: jal     df070 <memset@plt>
+    0.00 :   15d644: ld      a6,-464(s0)
+         : 466    constant_time_lookup_niels():
+         : 224    constant_time_lookup(ni, table, sizeof(niels_s), nelts, idx);
+    0.00 :   15d648: andi    s8,s8,15
+         : 226    constant_time_is_zero_s():
+         : 219    return constant_time_msb_s(~a & (a - 1));
+    0.00 :   15d64c: not     a2,s8
+    0.00 :   15d650: addi    s8,s8,-1
+    0.00 :   15d652: and     a2,s8,a2
+         : 223    constant_time_msb_s():
+         : 119    return 0 - (a >> (sizeof(a) * 8 - 1));
+    0.00 :   15d656: srai    a2,a2,0x3f
+    0.00 :   15d658: mv      s1,s11
+         : 122    constant_time_select_8():
+         : 353    return (unsigned char)constant_time_select(mask, a, b);
+    0.00 :   15d65a: mv      a4,s11
+    0.00 :   15d65c: mv      a3,a6
+    0.00 :   15d65e: zext.b  a2,a2
+   15.29 :   15d662: lbu     a5,0(a3)
+         : 358    constant_time_lookup():
+         :
+         : 471    /* Note idx may underflow - but that is well defined */
+         : 472    for (i = 0; i < numrows; i++, idx--) {
+         : 473    mask = (unsigned char)constant_time_is_zero_s(idx);
+         : 474    for (j = 0; j < rowsize; j++)
+         : 475    *(outc + j) |= constant_time_select_8(mask, *(tablec++), 0);
+   14.65 :   15d666: lbu     a1,0(a4)
+         : 469    for (j = 0; j < rowsize; j++)
+    9.55 :   15d66a: addi    a4,a4,1
+         : 471    constant_time_select():
+         : 339    return (value_barrier(mask) & a) | (value_barrier(~mask) & b);
+    0.00 :   15d66c: and     a5,a5,a2
+         : 341    constant_time_lookup():
+         : 470    *(outc + j) |= constant_time_select_8(mask, *(tablec++), 0);
+   17.83 :   15d66e: or      a5,a5,a1
+   12.10 :   15d670: sb      a5,-1(a4)
+   16.56 :   15d674: addi    a3,a3,1
+         : 469    for (j = 0; j < rowsize; j++)
+   14.01 :   15d676: bne     s10,a4,15d662 <ossl_curve448_precomputed_scalarmul+0x128>
+    0.00 :   15d67a: addi    a6,a6,192
+         : 467    for (i = 0; i < numrows; i++, idx--) {
+    0.00 :   15d67e: bne     a6,s9,15d64c <ossl_curve448_precomputed_scalarmul+0x112>
+    0.00 :   15d682: mv      a3,s11
+         : 470    value_barrier_64():
+         : 304    __asm__("" : "=r"(r) : "0"(a));
+    0.00 :   15d684: mv      a6,s7
+         : 306    constant_time_cond_swap_64():
+         : 413    uint64_t xor = *a ^ *b;
+    0.00 :   15d686: ld      a4,0(a3)
+    0.00 :   15d688: ld      a5,64(a3)
+         : 416    gf_cond_swap():
+         : 255    /* Constant time, if (swap) (x,y) = (y,x); */
+         : 256    static ossl_inline void gf_cond_swap(gf x, gf_s *RESTRICT y, mask_t swap)
+         : 257    {
+         : 258    size_t i;
+         :
+         : 260    for (i = 0; i < NLIMBS; i++) {
+    0.00 :   15d68a: addi    a3,a3,8
+         : 262    constant_time_cond_swap_64():
+    0.00 :   15d68c: xor     a2,a4,a5
+         : 415    xor&= value_barrier_64(mask);
+    0.00 :   15d690: and     a2,a2,a6
+         : 416    *a ^= xor;
+    0.00 :   15d694: xor     a4,a4,a2
+         : 417    *b ^= xor;
+    0.00 :   15d696: xor     a5,a5,a2
+         : 416    *a ^= xor;
+    0.00 :   15d698: sd      a4,-8(a3)
+         : 417    *b ^= xor;
+    0.00 :   15d69c: sd      a5,56(a3)
+         : 419    gf_cond_swap():
+    0.00 :   15d69e: bne     s5,a3,15d686 <ossl_curve448_precomputed_scalarmul+0x14c>
+         : 256    gf_cond_neg():
+         : 246    gf_sub(y, ZERO, x);
+    0.00 :   15d6a2: ld      s8,-488(s0)
+    0.00 :   15d6a6: ld      a2,-496(s0)
+    0.00 :   15d6aa: auipc   a1,0x1dc
+    0.00 :   15d6ae: addi    a1,a1,1846 # 339de0 <ZERO>
+    0.00 :   15d6b2: mv      a0,s8
+    0.00 :   15d6b4: jal     15f5be <gf_sub>
+         : 253    gf_cond_sel():
+         : 229    for (i = 0; i < NLIMBS; i++) {
+    0.00 :   15d6b8: mv      a1,s8
+         : 231    constant_time_select_64():
+         : 377    return (value_barrier_64(mask) & a) | (value_barrier_64(~mask) & b);
+    0.00 :   15d6ba: negw    s4,s4
+         : 379    value_barrier_64():
+         : 304    __asm__("" : "=r"(r) : "0"(a));
+    0.00 :   15d6be: mv      a4,s7
+         : 306    constant_time_select_64():
+         : 377    return (value_barrier_64(mask) & a) | (value_barrier_64(~mask) & b);
+    0.00 :   15d6c0: ld      a3,128(s1)
+    0.00 :   15d6c2: ld      a5,0(a1)
+         : 378    gf_cond_sel():
+    0.00 :   15d6c4: addi    s1,s1,8
+         : 230    constant_time_select_64():
+    0.00 :   15d6c6: and     a3,s4,a3
+    0.00 :   15d6ca: and     a5,a5,a4
+    0.00 :   15d6cc: or      a5,a5,a3
+         : 378    gf_cond_sel():
+         : 235    x[0].limb[i] = constant_time_select_64(is_z, z[0].limb[i],
+    0.00 :   15d6ce: sd      a5,120(s1)
+         : 229    for (i = 0; i < NLIMBS; i++) {
+    0.00 :   15d6d0: addi    a1,a1,8
+    0.00 :   15d6d2: bne     s5,s1,15d6c0 <ossl_curve448_precomputed_scalarmul+0x186>
+         : 232    ossl_curve448_precomputed_scalarmul():
+         : 262    if ((i != s) || j != 0)
+    0.00 :   15d6d6: bnez    s6,15d702 <ossl_curve448_precomputed_scalarmul+0x1c8>
+    0.00 :   15d6da: ld      a5,-504(s0)
+    0.00 :   15d6de: bnez    a5,15d702 <ossl_curve448_precomputed_scalarmul+0x1c8>
+         : 265    else
+         : 266    niels_to_pt(out, ni);
+    0.00 :   15d6e0: ld      a0,-472(s0)
+    0.00 :   15d6e4: mv      a1,s11
+         : 243    for (j = 0; j < n; j++) {
+    0.00 :   15d6e6: addi    s9,s9,2047
+         : 265    niels_to_pt(out, ni);
+    0.00 :   15d6ea: jal     15c208 <niels_to_pt>
+         : 243    for (j = 0; j < n; j++) {
+    0.00 :   15d6ee: ld      a5,-456(s0)
+    0.00 :   15d6f2: addi    s9,s9,1025
+    0.00 :   15d6f6: li      s6,1
+    0.00 :   15d6f8: addiw   a5,a5,90
+    0.00 :   15d6fc: sd      a5,-456(s0)
+    0.00 :   15d700: j       15d5f2 <ossl_curve448_precomputed_scalarmul+0xb8>
+         : 263    add_niels_to_pt(out, ni, j == n - 1 && i != 1);
+    0.00 :   15d702: ld      a5,-512(s0)
+    0.00 :   15d706: addi    a2,s6,-4
+    0.00 :   15d70a: ld      a0,-472(s0)
+    0.00 :   15d70e: seqz    a2,a2
+    0.00 :   15d712: and     a2,a2,a5
+    0.00 :   15d714: mv      a1,s11
+         : 243    for (j = 0; j < n; j++) {
+    0.00 :   15d716: addiw   s6,s6,1
+         : 263    add_niels_to_pt(out, ni, j == n - 1 && i != 1);
+    0.00 :   15d718: jal     15c560 <add_niels_to_pt>
+         : 243    for (j = 0; j < n; j++) {
+    0.00 :   15d71c: beq     s6,s2,15d736 <ossl_curve448_precomputed_scalarmul+0x1fc>
+    0.00 :   15d720: ld      a5,-456(s0)
+    0.00 :   15d724: addi    s9,s9,2047
+    0.00 :   15d728: addi    s9,s9,1025
+    0.00 :   15d72c: addiw   a5,a5,90
+    0.00 :   15d730: sd      a5,-456(s0)
+    0.00 :   15d734: j       15d5f2 <ossl_curve448_precomputed_scalarmul+0xb8>
+         : 239    for (i = s; i > 0; i--) {
+    0.00 :   15d736: ld      a5,-520(s0)
+    0.00 :   15d73a: mv      s8,s11
+    0.00 :   15d73c: mv      s1,s5
+    0.00 :   15d73e: beqz    a5,15d74e <ossl_curve448_precomputed_scalarmul+0x214>
+         : 241    point_double_internal(out, out, 0);
+    0.00 :   15d740: ld      a1,-472(s0)
+    0.00 :   15d744: li      a2,0
+    0.00 :   15d746: mv      a0,a1
+    0.00 :   15d748: jal     15cee2 <point_double_internal>
+    0.00 :   15d74c: j       15d5c6 <ossl_curve448_precomputed_scalarmul+0x8c>
+         : 269    }
+         : 270    }
+         :
+         : 272    OPENSSL_cleanse(ni, sizeof(ni));
+    0.00 :   15d74e: ld      s5,-480(s0)
+    0.00 :   15d752: mv      a0,s11
+    0.00 :   15d754: li      a1,192
+    0.00 :   15d758: jal     1c7a20 <OPENSSL_cleanse>
+         : 270    OPENSSL_cleanse(scalar1x, sizeof(scalar1x));
+    0.00 :   15d75c: mv      a0,s5
+    0.00 :   15d75e: li      a1,56
+    0.00 :   15d762: jal     1c7a20 <OPENSSL_cleanse>
+         : 271    }
+    0.00 :   15d766: auipc   a5,0x3ce
+    0.00 :   15d76a: ld      a5,-486(a5) # 52b580 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   15d76e: ld      a4,-120(s0)
+    0.00 :   15d772: ld      a5,0(a5)
+    0.00 :   15d774: xor     a5,a5,a4
+    0.00 :   15d776: li      a4,0
+    0.00 :   15d778: bnez    a5,15d79e <ossl_curve448_precomputed_scalarmul+0x264>
+    0.00 :   15d77a: ld      ra,520(sp)
+    0.00 :   15d77e: ld      s0,512(sp)
+    0.00 :   15d782: ld      s1,504(sp)
+    0.00 :   15d784: ld      s2,496(sp)
+    0.00 :   15d786: ld      s3,488(sp)
+    0.00 :   15d788: ld      s4,480(sp)
+    0.00 :   15d78a: ld      s5,472(sp)
+    0.00 :   15d78c: ld      s6,464(sp)
+    0.00 :   15d78e: ld      s7,456(sp)
+    0.00 :   15d790: ld      s8,448(sp)
+    0.00 :   15d792: ld      s9,440(sp)
+    0.00 :   15d794: ld      s10,432(sp)
+    0.00 :   15d796: ld      s11,424(sp)
+    0.00 :   15d798: addi    sp,sp,528
+    0.00 :   15d79c: ret
+    0.00 :   15d79e: jal     df260 <__stack_chk_fail@plt>
