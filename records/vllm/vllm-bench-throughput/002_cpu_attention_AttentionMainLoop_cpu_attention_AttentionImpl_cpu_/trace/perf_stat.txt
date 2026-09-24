@@ -1,0 +1,53 @@
+13-VLLM-CPU-VALIDATION vllm-bench-throughput RISC-V perf stat
+=============================================================
+
+Source CSV: /workspace/results/13-vllm-cpu-validation_results.csv
+TestName: vllm-bench-throughput
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 10,738.035162316 |
+| task_clock | 233,930,792.52 |
+| cpu_cycle | 804,298,116,354,043 |
+| instruction | 306,427,857,686,387 |
+| cache_references | 12,477,335,695,729 |
+| cache_misses | 12,477,335,698,085 |
+| branches | 18,481,122,608,522 |
+| branch_misses | 37,715,666,410 |
+| L1_dcache_loads | 44,642,707,808,511 |
+| L1_dcache_load_misses | 9,912,366,043,014 |
+| LLC_load_misses | 4,951,109,577,928 |
+| LLC_loads | 12,477,335,710,807 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 0.000011 |
+| cache_miss_rate | 100.000% |
+| branch_miss_rate | 0.204% |
+| L1_dcache_load_miss_rate | 22.204% |
+| LLC_load_miss_rate | 39.681% |
+
+perf stat style summary
+-----------------------
+           10,738.035162316  duration_time
+             233,930,792.52  task_clock
+        804,298,116,354,043  cpu_cycle
+        306,427,857,686,387  instruction
+         12,477,335,695,729  cache_references
+         12,477,335,698,085  cache_misses
+         18,481,122,608,522  branches
+             37,715,666,410  branch_misses
+         44,642,707,808,511  L1_dcache_loads
+          9,912,366,043,014  L1_dcache_load_misses
+          4,951,109,577,928  LLC_load_misses
+         12,477,335,710,807  LLC_loads
+                   0.000011  duration_s
+                   100.000%  cache_miss_rate
+                     0.204%  branch_miss_rate
+                    22.204%  L1_dcache_load_miss_rate
+                    39.681%  LLC_load_miss_rate

@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-vllm-vllm-bench-throughput-002-r1",
+  "patchCandidateId": "pc-bp-vllm-vllm-bench-throughput-002",
+  "reviewedAt": "2026-09-21T08:20:00.000Z",
+  "reviewer": "opencode/comet-review (independent read-only AI reviewer)",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 判定 archSpecific=true 且 PatchCandidate.archReviewWarning 为空，故执行 RISC-V 架构专项审核。核实物：新增代码只走 RVV 1.0 指令路径（vfmacc_vf / vle32_v / vse32_v / vfmv_v_f，经 RVVI 映射），与 blueprint targetHardware（RVV 1.0, VLEN=128）及 diaglog Build ISA（v1p0, zvl128b, zve32f/zve64f）一致；LMUL_256 在 VLEN=128 下为 m2（cpu_types_riscv_defs.hpp 的 __riscv_v_min_vlen==128 分支），与 vlenb=16 证据自洽；新 kernel 全程仅用 LMUL_256 + vl=8，未跨 LMUL 混用；tail/mask 无需特殊策略（16 列=2×8，B 行固定载入 8 元素）；累加器使用固定宽度向量类型，寄存器组不重叠，M=4 时为 8 累加器(m2,16 寄存器)+2 B 向量(4 寄存器)，在 32 寄存器预算内；TileGemmRVV 仍只由 AttentionImpl<ISA::RVV> 实例化且未改 cpu_attn.cpp 的运行时分发；唯一新增 inline asm 为 RISC-V pause，由 defined(__riscv)||defined(__riscv__) 守卫，其它架构回落 FAST_SPINNING 或空操作，无 x86/ARM 专属指令。pause 编码 0x0100000f 已用 riscv64-linux-gnu 汇编器验证（pause <-> .word 0x0100000f），其 HINT 语义（fence w,0）保证未实现 Zihintpause 的核按 no-op 执行且不 trap；目标机 cpuinfo 含 zihintpause。待检查风险：目标机实测未执行，pause 实际收益与退避阈值需在 SG2044 上复验。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "csrc/cpu/cpu_attn_rvv.hpp",
+      "line": 194,
+      "evidence": "+      if (mb <= 4) { 与 +        for (int32_t n = 0; n < N; n += 16) { 以及 +//   M=8 would need 32 accumulator registers, so it keeps using the Mx8 tile.",
+      "severity": "minor",
+      "category": "coverage",
+      "suggestion": "16 列 tile 仅覆盖 mb<=4 的 M tile，M=8 tile 仍走原 Mx8 kernel（寄存器预算所限，属显式设计取舍）。若目标负载存在 M=8 tile，可另行评估按 N 分块或 m1 累加器的 M8x16 变体；当前不阻断。"
+    },
+    {
+      "id": "F2",
+      "file": "csrc/cpu/cpu_attn_impl.hpp",
+      "line": 1528,
+      "evidence": "+FORCE_INLINE void bounded_spin_wait(Poll&& done) { 与 +      std::this_thread::yield(); 以及 cpu_arch_macros.h 的 +    #define CPU_ATTN_SPIN_PAUSE() FAST_SPINNING",
+      "severity": "minor",
+      "category": "behavior-change",
+      "suggestion": "bounded_spin_wait 对非 RISC-V 路径同样生效：x86 原先为 _mm_pause() 无限自旋（不 yield），新实现退避饱和后会 std::this_thread::yield()。同步协议与退出条件未变，有界让出优于无限自旋，建议保留；若需严格保持 x86 行为，可将 yield 分支限定为 RISC-V。"
+    },
+    {
+      "id": "F3",
+      "file": "csrc/cpu/cpu_arch_macros.h",
+      "line": 172,
+      "evidence": "+    #define CPU_ATTN_SPIN_PAUSE() __asm__ __volatile__(\".word 0x0100000f\")",
+      "severity": "suggestion",
+      "category": "build-flags",
+      "suggestion": "pause 经 inline asm 发射而非构建期 __riscv_zihintpause。可选地在目标平台构建参数中声明 zihintpause，使 FAST_SPINNING 走 __riscv_pause() 并让工具链显式知晓该扩展；不声明时当前实现亦安全（汇编器已验证编码与 HINT 语义）。"
+    },
+    {
+      "id": "F4",
+      "file": "csrc/cpu/cpu_attn_rvv.hpp",
+      "line": 182,
+      "evidence": "blueprint.diagnosis.recommendedVerification：重新运行 Agent1 vllm-bench-throughput 回归并重跑 perf annotate，确认 254340/254b6a 等 flw 行与 254356/254b82 等 vfmacc.vf 行样本份额下降；perf stat 观察 L1_dcache_load_miss_rate（基线 22.204%）与 LLC_load_miss_rate（基线 39.681%）下降",
+      "severity": "minor",
+      "category": "verification",
+      "suggestion": "本环境无 vLLM 构建树，未执行该回归与 perf 复采；需在目标 SG2044 上按 blueprint recommendedVerification 复验，并对比 decode-only 与 prefill 批不退化。"
+    }
+  ]
+}

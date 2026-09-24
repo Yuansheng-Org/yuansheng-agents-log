@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-vllm-vllm-bench-throughput-002",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T07:51:12.089Z",
+    "software": "vllm",
+    "testcaseIds": [
+      "vllm-bench-throughput"
+    ],
+    "diagnosisId": "diag-20260921T075112089Z-a74dffe2",
+    "targetHardware": "SOPHGO SG2044 / T-Head XuanTie C920v2 (RVV 1.0, VLEN=128, OoO)",
+    "repositoryUrl": "https://github.com/vllm-project/vllm.git",
+    "testBranch": "v0.24.0",
+    "commitHash": "ee0da84ab9e04ac7610e28580af62c365e898389",
+    "specBaseline": 3.014851
+  },
+  "problem": {
+    "summary": "vllm-bench-throughput 在 SG2044 (C920v2) 上的 CPU attention 主循环（OpenMP 并行 _omp_fn.0）成为热点：QK^T 与 P·V 两个 FP32 GEMM microkernel（gemm_micro_rvv_fma_Mx8_Ku4）的 A-slice 以逐标量 flw 从 paged KV cache（lda=32 floats, 1KB 行距）gather 载入并广播给 vfmacc.vf，形成 load-use 依赖链并反复命中不同 cache line。perf stat 显示 L1_dcache_load_miss_rate=22.204%、LLC_load_miss_rate=39.681%、IPC≈0.381，属 memory/cache-bound；该 microkernel 计算区间合计约占函数内 60-75% 局部样本份额。次要独立热点为 reduce_splits 的 flag 轮询（sched_yield 无退避）约 0.1-0.3%。",
+    "evidence": [
+      "perf stat: L1_dcache_load_miss_rate=22.204%, LLC_load_miss_rate=39.681%, cache_miss_rate=100.000%, branch_miss_rate=0.204%, IPC≈0.381（306.4e12 instr / 804.3e12 cycles）— 工作负载 memory/cache-bound",
+      "热点函数 cpu_attention::AttentionMainLoop<AttentionImpl<(ISA)5,float,64,float>>::operator() (annotate 74456 samples)：QK^T GEMM 区间 0x2533a8-0x2543d6 最高行 10.74% @ 254340 flw fa2,0(t1)，vfmacc.vf 7.66/8.67/10.30% @ 254356/25437c/2543a2",
+      "P·V GEMM 区间 0x254b3e-0x254c0e 最高行 10.54% @ 254b6a flw fa2,0(t6)，vfmacc.vf 7.28/9.06/10.44% @ 254b82/254baa/254bd2",
+      "reduce_splits 轮询：0.03% @ 253392 jal sched_yield + 0.02% @ 25339a beqz（无退避紧轮询）",
+      "代码知识证据：vLLM WNA16 RVV micro-GEMM FP load/accumulator PR #44324 与 OpenBLAS/oneDNN/llama.cpp RVV FP matmul 提交指向同类 A-slice load/accumulator 瓶颈"
+    ]
+  },
+  "rootCause": {
+    "summary": "FP32 attention GEMM microkernel 的 A-slice 标量 gather 载入（paged KV/prob tile, lda=32）产生 cache 不友好的跨行逐标量访问，flw→vfmacc.vf 紧邻 load-use 依赖在 memory-bound 工作负载下主导周期，是 vllm-bench-throughput 的主要根因；reduce_splits 无退避轮询为次要独立因素。",
+    "candidateFiles": [
+      "csrc/cpu/cpu_attn_rvv.hpp",
+      "csrc/cpu/cpu_attn_impl.hpp"
+    ],
+    "performanceFactors": [
+      "RVV Floating-Point Matmul and GEMV Kernels",
+      "Bounded Spin-Wait Backoff"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "paged KV cache block 布局与 k/v_cache_*_stride 合同（reshape_and_cache 的 strided-store 布局）",
+      "causal/sliding-window/softcap/alibi 掩码语义与 split-reduction 的 flag/fence 协议",
+      "FP32 累加顺序与数值语义（若改为 vfmacc.vv 或软件流水需按 kernel-conventions 验证 FP reassociation 误差）",
+      "公共 attention API 与 OpenMP 并行调度语义"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "vllm-bench-throughput"
+    ],
+    "regressionCommand": "agent1 patch_regression --case vllm-bench-throughput"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.84,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 workload 为 memory/cache-bound（L1_dcache_load_miss_rate=22.204%、LLC_load_miss_rate=39.681%、IPC≈0.381），annotate 将热点定位在 QK^T 与 P·V 两个 FP32 GEMM microkernel 计算区间（A-slice 标量 flw 10.74%/10.54% 与 vfmacc.vf 7.66-10.44% 合计约 60-75% 局部份额）：paged KV cache 的 32-token block 布局使 lda=32（1KB 行距）的逐行标量 gather 反复命中不同 cache line，flw→vfmacc.vf 紧邻 load-use 依赖无法被 OoO 完全隐藏；源码 cpu_attn_rvv.hpp gemm_micro_rvv_fma_Mx8_Ku4 确认 A-slice 用标量 load + vfmacc_vf 广播、B-slice 用 vle32 向量载入，与命中 pattern 'RVV Floating-Point Matmul and GEMV Kernels' 的失效形态一致，vLLM WNA16 RVV micro-GEMM PR #44324 与 OpenBLAS/oneDNN/llama.cpp 同类提交支持该根因方向；次要独立因素 reduce_splits 的 sched_yield 无退避轮询约占 0.1-0.3%。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "load-use stall 可能部分来自 C920v2 对 strided 标量 load 的 latency 而非纯布局问题——两种解释都指向同一 A-slice 载入形态修复，但收益比例需 benchmark 区分",
+      "reduce_splits 的 sched_yield 轮询在 64 线程高争用下放大 coherence 流量，可能使 memory-bound 特征部分夸大（独立地址段，已验证为次要因素）",
+      "若 K-slice 在 decode-only 批下已驻留 L1，则部分 flw 命中 L1 后 stall 可能转为 FMA 吞吐受限（IPC 证据支持 memory-bound 为主，此解释证据较弱）"
+    ],
+    "currentGaps": "采样 metadata 缺函数级 workload 贡献（收益上界仅为局部样本份额，非 Amdahl 上界）；Sampling IP precision（precise_ip/skid）未提供，单指令占比仅锚定 loop interval；ARM 侧 perf stat 未采集，无跨架构指标对比；C920v2 每核 FP32 FMA 吞吐/load-store 端口的实测 latency 数据未提供，load-use stall 与吞吐受限的比例无法精确分账。",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + vllm-bench-throughput",
+    "recommendedFirstAction": "csrc/cpu/cpu_attn_rvv.hpp 的 gemm_micro_rvv_fma_Mx8_Ku4：将 A-slice 的逐标量 load + vfmacc_vf 改为按行 4 元素 vle32 向量载入 + vfmacc_vv（或软件流水预取 A 标量），并评估 k_cache_token_group_stride=BlockSizeAlignment 的 K-slice 驻留/`__builtin_prefetch` 预取；次要：cpu_attn_impl.hpp reduce_splits 的 while(!flags[split_idx]) 轮询加入 Zihintpause 有界递增退避。",
+    "recommendedVerification": "重新运行 Agent1 vllm-bench-throughput 回归并重跑 perf annotate：确认 254340/254b6a 等 flw 行与 254356/254b82 等 vfmacc.vf 行样本份额下降或转为 vfmacc.vv；perf stat 观察 L1_dcache_load_miss_rate（基线 22.204%）与 LLC_load_miss_rate（基线 39.681%）下降；对比 decode-only 与 prefill 批不退化。",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.381,
+        "anomalyNote": "306.4e12 instructions / 804.3e12 cycles，显著低于常见 OoO 浮点负载水平，配合 cache miss 指标指向 memory-bound"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 22.204,
+        "anomalyNote": "近 1/4 的 L1 数据 load 未命中，与 A-slice 跨 cache line 标量 gather 形态吻合"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 39.681,
+        "anomalyNote": "LLC load 命中率仅约 60%，paged KV block 流式访问未充分驻留"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.204,
+        "anomalyNote": "分支预测健康，排除 branch-bound"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "cpu_attention::AttentionMainLoop<cpu_attention::AttentionImpl<(cpu_attention::ISA)5, float, 64l, float>>::operator()(cpu_attention::AttentionInput const*) [clone ._omp_fn.0]",
+        "fileModule": "csrc/cpu/cpu_attn_rvv.hpp",
+        "rvvPattern": "RVV Floating-Point Matmul and GEMV Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.67,
+        "note": "FP32 attention 的 QK^T 与 P·V GEMM microkernel（gemm_micro_rvv_fma_Mx8_Ku4，Mx8 tile、K 轴 4 展开）：A-slice 逐标量 gather（paged K/V cache, lda=32）广播给 vfmacc.vf，load-use 链与 cache 不友好访问主导约 60-75% 局部样本份额；线性代数/内存密集"
+      },
+      {
+        "hotspotFunction": "cpu_attention::AttentionMainLoop<cpu_attention::AttentionImpl<(cpu_attention::ISA)5, float, 64l, float>>::reduce_splits(float*, float*, float*, bool volatile*, int, int, int)",
+        "fileModule": "csrc/cpu/cpu_attn_impl.hpp",
+        "rvvPattern": "Bounded Spin-Wait Backoff",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.002,
+        "note": "split-reduction 的 producer/consumer flag 紧轮询（lbu→beqz→sched_yield 无退避），约 0.1-0.3% 局部份额；并发同步"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "csrc/cpu/cpu_attn_rvv.hpp:84-183 (gemm_micro_rvv_fma_Mx8_Ku4 / load_row8_B_as_f32 / TileGemmRVV) 与 csrc/cpu/cpu_attn_impl.hpp (AttentionMainLoop::reduce_splits)",
+      "relatedKnowledge": "https://github.com/vllm-project/vllm/pull/44324 ; https://github.com/OpenMathLib/OpenBLAS/commit/0a967797a15617239523053633bf14be7895b25a ; https://github.com/OpenMathLib/OpenBLAS/commit/0acb60aab3c0134e879a68292904d8346dcd50ef ; https://github.com/OpenMathLib/OpenBLAS/commit/1cc377ef61d498b75c852aa4b9b042fe9422c347 ; https://github.com/OpenMathLib/OpenBLAS/commit/2d82d144e2791e37d7a314237b638d85b156a2ec ; https://github.com/OpenMathLib/OpenBLAS/commit/809e1cba8f1f3f89972581e8b82f2ec52e51eadb ; https://github.com/OpenMathLib/OpenBLAS/commit/376d3a138faa0a0fe483a8fa8d4fa1ab0d395acf ; https://github.com/OpenMathLib/OpenBLAS/commit/2ae019161a85333a35018b517d4b34474a7694e9 ; https://github.com/uxlfoundation/oneDNN/commit/d6f82a2d0d0db41e6daaf20fbb4fd352843aac64 ; https://github.com/ggml-org/llama.cpp/pull/17318 ; https://github.com/ggml-org/llama.cpp/pull/17448 ; https://github.com/ggml-org/llama.cpp/pull/17314 ; https://github.com/ggml-org/llama.cpp/pull/18199 ; https://github.com/uxlfoundation/oneDNN/commit/3bac96b8bc1fc9c348c986f38f65285693943d2f ; https://github.com/uxlfoundation/oneDNN/commit/8b48a77091062ce78959ccb96e43a8ee4e97022d ; https://github.com/uxlfoundation/oneDNN/commit/d6107ddb8be72041dade165a233c0de69f7a1387 ; https://github.com/uxlfoundation/oneDNN/pull/4410 ; https://github.com/OpenMathLib/OpenBLAS/commit/0b3db03d4b41b86bb26170e4f4e36785ced9d947",
+      "evidenceExplanation": "annotate 最高热行（254340/254b6a 的 flw A-slice load、254356/254b82 的 vfmacc.vf）与源码 gemm_micro_rvv_fma_Mx8_Ku4 的 A 标量广播 + B 向量载入结构一一对应；vLLM PR #44324（WNA16 RVV micro-GEMM FP load/accumulator）及 OpenBLAS/oneDNN/llama.cpp 的 RVV FP matmul 提交均针对同类 A/B-slice load 与 accumulator 结构优化，佐证根因为 A-slice 载入形态与 cache 布局；OpenBLAS spin-loop yielding 提交佐证 reduce_splits 轮询退避方向。"
+    }
+  }
+}
