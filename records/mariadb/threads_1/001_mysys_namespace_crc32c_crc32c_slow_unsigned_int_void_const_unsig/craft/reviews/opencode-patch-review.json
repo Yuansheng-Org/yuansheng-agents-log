@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-mariadb-threads_1-001",
+  "patchCandidateId": "pc-bp-mariadb-threads-1-001",
+  "reviewedAt": "2026-09-10T12:36:19Z",
+  "reviewer": "opencode",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "补丁涉及 RISC-V 架构代码（Zbc clmul/clmulh、Zbb rev8/brev8、-march=rv64gc_zbc_zbb、riscv_hwprobe 运行时探测），已执行架构专项审核。所用指令 Zbc clmul/clmulh 与 Zbb rev8/brev8 均在蓝图 source.targetHardware（XuanTie C920v2 / SOPHGO SG2044）的硬件 ISA 范围内（blueprint 证据：metadata cpuinfo isa 字符串含 zbc/zbb）；无 vsetvl/vtype 向量状态（本补丁不使用 RVV，NA）；运行时 ISA 分发采用 riscv_hwprobe(RISCV_HWPROBE_KEY_IMA_EXT_0) 探测 ZBC/ZBB，探测不可用时回退为可用（该 TU 仅在 -march=rv64gc_zbc_zbb 下编译），分发路径自洽；未混入 x86/ARM 专属指令。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F-001-1",
+      "file": "mysys/crc32/crc32c_riscv.cc",
+      "evidence": "blueprint diagnosis.recommendedVerification 原文：『以含 zbc/zbb 的 -march 重建后重跑 threads_1 并对 crc32c_slow 重新 perf annotate……用 CRC32C KAT/标量参考核对输出逐字节一致』",
+      "severity": "suggestion",
+      "category": "verification",
+      "suggestion": "本补丁的算法与常量已在 Python 仿真中对照标量 slicing-by-4 参考与标准校验值 crc32c(\"123456789\")==0xE3069283 验证通过，但本环境无 RISC-V 工具链，未在目标硬件上编译/测试。落地前应在含 zbc/zbb 的 -march 下重建 mariadbd，用 CRC32C 已知答案测试（KAT）核对逐字节一致，并重跑 sysbench threads_1 做 perf annotate 确认热循环出现 clmul/clmulh/rev8/brev8 且查表 load 行消失。"
+    },
+    {
+      "id": "F-001-2",
+      "file": "mysys/crc32/crc32c_riscv.cc",
+      "evidence": "blueprint rootCause.candidateFiles 原文：『mysys_namespace::crc32c::crc32c_slow（函数名；无 debug symbols，mysys/ 下 crc32c 源文件无法精确到 file:line）』",
+      "severity": "suggestion",
+      "category": "planning",
+      "suggestion": "自动生成的 PatchPlan changes[].filePath 因蓝图缺少 debug symbols 而回退为占位路径（如 \"zbc/v\"、\"001/21\"、\"zbc/zbb/v\"），不代表实际改动。实际补丁以 git diff 为准，正确落在 mysys/CMakeLists.txt、mysys/crc32/crc32c.cc、mysys/crc32/crc32c_riscv.cc 三个文件，范围聚焦且一致。"
+    }
+  ]
+}
