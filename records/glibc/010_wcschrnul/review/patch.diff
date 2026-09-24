@@ -1,0 +1,261 @@
+From 3dfd97522f589907bbe03a99162fe9a2ef5c603e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E7=94=B0=E5=AE=81?= <tianning24@iscas.ac.cn>
+Date: Sun, 20 Sep 2026 16:32:36 +0800
+Subject: [PATCH] riscv: Add RVV wcschrnul with multiarch wiring
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Add an RVV wcschrnul implementation and wire it into the RISC-V
+multiarch IFUNC machinery.  Select it when hwprobe reports the V
+extension, and retain the generic implementation as the fallback.
+
+Probe positions 0 through 4 with straight-line scalar loads before
+entering the e32, LMUL=8 vector loop.  This avoids vector startup and
+loop-control costs for the small inputs which regressed on both tested
+microarchitectures.  The vector loop uses fault-only-first loads and
+returns the first element which either matches the requested wide
+character or is a terminating wide NUL.
+
+Performance was measured from official upstream commit
+d5bd0f22305277fa0d431bb9d733aa9456706573.  bench-wcschrnul was pinned
+to CPU 2, warmed once, and run six times.  The vector and generic
+implementations were measured in the same process.  Each result below
+uses the median timing for each case followed by the geometric mean of
+the vector/generic ratios.  Positive values are time reductions.
+
+Scan position  Cases   K3 X100   32-core RVV target
+0-4               30     14.82%              36.78%
+5-16              76    -20.52%              16.43%
+17-64            149     41.19%              52.32%
+65-256           125     58.80%              57.98%
+>256             100     61.37%              46.72%
+All               480     43.69%              47.48%
+
+The previous vector-only implementation regressed by 98.16% on K3 and
+29.41% on the 32-core target for positions 0 through 4.  The scalar
+prologue removes that regression on both systems.  On K3 it retains a
+20.52% regression for positions 5 through 16; this tradeoff is recorded
+rather than hidden by a platform-specific threshold.
+
+Validation on both systems:
+- make test t=wcsmbs/test-wcschrnul: PASS
+- bench-wcschrnul coverage: 480/480 cases in all six formal runs
+
+Signed-off-by: 田宁 <tianning24@iscas.ac.cn>
+---
+ .../riscv/multiarch/dl-symbol-redir-ifunc.h   |  1 +
+ sysdeps/riscv/multiarch/wcschrnul-generic.c   | 13 +++++
+ sysdeps/riscv/multiarch/wcschrnul-vector.S    | 13 +++++
+ sysdeps/riscv/rvv/wcschrnul.S                 | 54 +++++++++++++++++++
+ .../unix/sysv/linux/riscv/multiarch/Makefile  |  8 +++
+ .../linux/riscv/multiarch/ifunc-impl-list.c   |  6 +++
+ .../sysv/linux/riscv/multiarch/wcschrnul.c    | 44 +++++++++++++++
+ 7 files changed, 139 insertions(+)
+ create mode 100644 sysdeps/riscv/multiarch/wcschrnul-generic.c
+ create mode 100644 sysdeps/riscv/multiarch/wcschrnul-vector.S
+ create mode 100644 sysdeps/riscv/rvv/wcschrnul.S
+ create mode 100644 sysdeps/unix/sysv/linux/riscv/multiarch/wcschrnul.c
+
+diff --git a/sysdeps/riscv/multiarch/dl-symbol-redir-ifunc.h b/sysdeps/riscv/multiarch/dl-symbol-redir-ifunc.h
+index 852d3f1c..0e41ef56 100644
+--- a/sysdeps/riscv/multiarch/dl-symbol-redir-ifunc.h
++++ b/sysdeps/riscv/multiarch/dl-symbol-redir-ifunc.h
+@@ -25,6 +25,7 @@ asm ("memcpy = __memcpy_generic");
+ asm ("memmove = __memmove_generic");
+ asm ("memset = __memset_generic");
+ asm ("strlen = __strlen_generic");
++asm ("wcschrnul = __wcschrnul_generic");
+ #endif
+ 
+ #endif
+diff --git a/sysdeps/riscv/multiarch/wcschrnul-generic.c b/sysdeps/riscv/multiarch/wcschrnul-generic.c
+new file mode 100644
+index 00000000..8cb69be4
+--- /dev/null
++++ b/sysdeps/riscv/multiarch/wcschrnul-generic.c
+@@ -0,0 +1,13 @@
++/* Re-include the default wcschrnul implementation.
++   Copyright (C) 2026 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++   Licensed under the GNU Lesser General Public License v2.1+; see COPYING.LESSER.  */
++
++#include <wchar.h>
++
++#if IS_IN(libc)
++# define WCSCHRNUL __wcschrnul_generic
++# undef libc_hidden_builtin_def
++# define libc_hidden_builtin_def(x)
++# include <wcsmbs/wcschrnul.c>
++#endif
+diff --git a/sysdeps/riscv/multiarch/wcschrnul-vector.S b/sysdeps/riscv/multiarch/wcschrnul-vector.S
+new file mode 100644
+index 00000000..1649147a
+--- /dev/null
++++ b/sysdeps/riscv/multiarch/wcschrnul-vector.S
+@@ -0,0 +1,13 @@
++/* RISC-V RVV based wcschrnul.
++   Copyright (C) 2026 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++   Licensed under the GNU Lesser General Public License v2.1+; see COPYING.LESSER.  */
++
++#if IS_IN(libc)
++# define WCSCHRNUL __wcschrnul_vector
++# undef libc_hidden_builtin_def
++# define libc_hidden_builtin_def(name)
++# undef weak_alias
++# define weak_alias(name, alias)
++# include <sysdeps/riscv/rvv/wcschrnul.S>
++#endif
+diff --git a/sysdeps/riscv/rvv/wcschrnul.S b/sysdeps/riscv/rvv/wcschrnul.S
+new file mode 100644
+index 00000000..e54b950d
+--- /dev/null
++++ b/sysdeps/riscv/rvv/wcschrnul.S
+@@ -0,0 +1,54 @@
++/* RISC-V RVV based wcschrnul.
++   Copyright (C) 2026 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++   Licensed under the GNU Lesser General Public License v2.1+; see COPYING.LESSER.  */
++
++#include <sysdep.h>
++#include <sys/asm.h>
++
++#ifndef WCSCHRNUL
++# define WCSCHRNUL __wcschrnul
++#endif
++
++#define wcs a0
++#define wc a1
++#define first_wchar t0
++#define vl_reg a3
++#define first a5
++#define post_vl a6
++
++#define vchunk v16
++#define vhit v0
++#define vtmp v1
++
++ENTRY (WCSCHRNUL)
++.option push
++.option arch, +v
++	/* Avoid vector startup and loop-control costs for positions 0 through 4.  */
++	.rept	5
++	lw	first_wchar, 0(wcs)
++	beq	first_wchar, wc, L(found_scalar)
++	beqz	first_wchar, L(found_scalar)
++	addi	wcs, wcs, 4
++	.endr
++
++L(loop):
++	vsetvli	vl_reg, zero, e32, m8, ta, ma
++	vle32ff.v	vchunk, (wcs)
++	vmseq.vx	vtmp, vchunk, wc
++	vmseq.vi	vhit, vchunk, 0
++	vmor.mm	vhit, vhit, vtmp
++	vfirst.m	first, vhit
++	bgez	first, L(found)
++	csrr	post_vl, vl
++	slli	post_vl, post_vl, 2
++	add	wcs, wcs, post_vl
++	j	L(loop)
++L(found_scalar):
++	ret
++L(found):
++	slli	first, first, 2
++	add	a0, wcs, first
++	ret
++.option pop
++END (WCSCHRNUL)
+diff --git a/sysdeps/unix/sysv/linux/riscv/multiarch/Makefile b/sysdeps/unix/sysv/linux/riscv/multiarch/Makefile
+index bdbd12a2..5f65a615 100644
+--- a/sysdeps/unix/sysv/linux/riscv/multiarch/Makefile
++++ b/sysdeps/unix/sysv/linux/riscv/multiarch/Makefile
+@@ -59,3 +59,11 @@ CFLAGS-strlen-generic.op = $(no-stack-protector)
+ 
+ CFLAGS-memcpy_noalignment.c += -mno-strict-align
+ endif
++
++ifeq ($(subdir),wcsmbs)
++sysdep_routines += \
++  wcschrnul \
++  wcschrnul-generic \
++  wcschrnul-vector \
++  # sysdep_routines
++endif
+diff --git a/sysdeps/unix/sysv/linux/riscv/multiarch/ifunc-impl-list.c b/sysdeps/unix/sysv/linux/riscv/multiarch/ifunc-impl-list.c
+index ac2b25de..a600c2d2 100644
+--- a/sysdeps/unix/sysv/linux/riscv/multiarch/ifunc-impl-list.c
++++ b/sysdeps/unix/sysv/linux/riscv/multiarch/ifunc-impl-list.c
+@@ -18,6 +18,7 @@
+ 
+ #include <ifunc-impl-list.h>
+ #include <string.h>
++#include <wchar.h>
+ #include <sys/hwprobe.h>
+ 
+ size_t
+@@ -120,5 +121,10 @@ __libc_ifunc_impl_list (const char *name, struct libc_ifunc_impl *array,
+ 			      __strncpy_vector)
+ 	      IFUNC_IMPL_ADD (array, i, strncpy, 1, __strncpy_generic))
+ 
++  IFUNC_IMPL (i, name, wcschrnul,
++	      IFUNC_IMPL_ADD (array, i, wcschrnul, rvv_enabled,
++			      __wcschrnul_vector)
++	      IFUNC_IMPL_ADD (array, i, wcschrnul, 1, __wcschrnul_generic))
++
+   return 0;
+ }
+diff --git a/sysdeps/unix/sysv/linux/riscv/multiarch/wcschrnul.c b/sysdeps/unix/sysv/linux/riscv/multiarch/wcschrnul.c
+new file mode 100644
+index 00000000..ba5b69df
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/riscv/multiarch/wcschrnul.c
+@@ -0,0 +1,44 @@
++/* Multiple versions of wcschrnul.
++   All versions must be listed in ifunc-impl-list.c.
++   Copyright (C) 2026 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++   Licensed under the GNU Lesser General Public License v2.1+; see COPYING.LESSER.  */
++
++#if IS_IN (libc)
++# undef wcschrnul
++# define wcschrnul __redirect_wcschrnul
++# include <stdint.h>
++# include <wchar.h>
++# include <ifunc-init.h>
++# include <riscv-ifunc.h>
++# include <sys/hwprobe.h>
++
++extern __typeof (__redirect_wcschrnul) __libc_wcschrnul;
++
++extern __typeof (__redirect_wcschrnul) __wcschrnul_generic attribute_hidden;
++extern __typeof (__redirect_wcschrnul) __wcschrnul_vector attribute_hidden;
++
++static inline __typeof (__redirect_wcschrnul) *
++select_wcschrnul_ifunc (uint64_t dl_hwcap, __riscv_hwprobe_t hwprobe_func)
++{
++  unsigned long long v;
++
++  if (__riscv_hwprobe_one (hwprobe_func, RISCV_HWPROBE_KEY_IMA_EXT_0, &v) == 0
++      && (v & RISCV_HWPROBE_IMA_V) == RISCV_HWPROBE_IMA_V)
++    return __wcschrnul_vector;
++
++  return __wcschrnul_generic;
++}
++
++riscv_libc_ifunc (__libc_wcschrnul, select_wcschrnul_ifunc);
++
++# undef wcschrnul
++strong_alias (__libc_wcschrnul, wcschrnul);
++strong_alias (wcschrnul, __wcschrnul)
++# ifdef SHARED
++__hidden_ver1 (wcschrnul, __GI_wcschrnul, __redirect_wcschrnul)
++  __attribute__ ((visibility ("hidden"))) __attribute_copy__ (wcschrnul);
++# endif
++#else
++# include <wcsmbs/wcschrnul.c>
++#endif
+-- 
+2.53.0
+
