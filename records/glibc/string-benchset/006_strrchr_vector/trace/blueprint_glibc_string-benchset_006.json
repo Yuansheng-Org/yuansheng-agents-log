@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-glibc-string-benchset-006",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-11T09:33:59.286Z",
+    "software": "glibc",
+    "testcaseIds": [
+      "string-benchset"
+    ],
+    "diagnosisId": "diag-20260911-093359",
+    "targetHardware": "SpacemiT K3 (spacemit-x100)",
+    "repositoryUrl": "https://mirrors.bfsu.edu.cn/git/glibc.git",
+    "testBranch": "master",
+    "commitHash": "bb213471bedc177b8efd3178584137fb81cc976a"
+  },
+  "problem": {
+    "summary": "glibc string-benchset 中 __strrchr_vector（RVV strrchr，rank 006，1435 samples）主扫描 loop 的每迭代开销集中在 fault-first 设计引入的 csrr vl CSR 读（35.26% 单条最热点）与 found 路径的 vtype 切换（e8/m2→e16/m4→e8/m2，3.34%）+ masked vredmaxu 归约链（j 行 17.70% 归因）。",
+    "evidence": [
+      "string-benchset perf stat（RISC-V）: IPC=1.251, branch_miss_rate=1.624%, L1_dcache_load_miss_rate=0.716%, LLC counters=NA",
+      "__strrchr_vector annotate: 35.26% 落在 csrr a6,vl（a5f5c，每迭代执行），16.72% 落在 bltz a5,a5f7a（a5f60），17.70% 落在 j a5f7c（a5f78，found 路径 vredmaxu 链归因），10.31% 落在 bne a5,a6,a5f94（a5f84），3.34% 落在 vsetvli zero,a6,e16,m4（a5f64）",
+      "源码核对：sysdeps/riscv/rvv/strrchr.S 主 loop 每块 vle8ff.v（fault-first）后必须 csrr vl 获取推进量；vsetvli a6,zero,e8,m2 已将 VLMAX 写入 a6，完全映射 buffer 下 csrr 冗余",
+      "found 路径：vsetvli e16/m4 + vid.v + masked vredmaxu.vs 求块内最后命中索引，随后切回 e8/m2"
+    ]
+  },
+  "rootCause": {
+    "summary": "手写 RVV strrchr kernel 的每迭代 csrr vl CSR 读（fault-first 推进量）位于 scan 链末端，完全映射 buffer 下冗余且疑似高成本（35.26%）；found 路径 vtype churn（e8/m2→e16/m4→e8/m2）与 masked vredmaxu 归约链叠加每块开销",
+    "candidateFiles": [
+      "sysdeps/riscv/rvv/strrchr.S"
+    ],
+    "performanceFactors": [
+      "Existing RISC-V Assembly Kernel Bottlenecks"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "strrchr 语义：返回最后一次出现 ch 的指针，未出现返回 NULL",
+      "ch==0 时返回指向 NUL terminator 的指针（L(search_zero) 路径语义）",
+      "扫描不得越过 NUL（vmsbf/vmask_end 语义）",
+      "页边界不越界读（bounded vl 或 fault-first 保留其一）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "string-benchset"
+    ]
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.8,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "string-benchset perf stat 显示 IPC=1.251、LLC NA；__strrchr_vector（rank 006）annotate 中 csrr a6,vl 单行占 35.26%（每迭代执行），位于 vle8ff→vmseq→vmsbf→vmseq.vx→vmand→vfirst→csrr 链末端，而 vsetvli a6,zero,e8,m2 已将 VLMAX 写入 a6，完全映射 buffer 下 csrr 冗余；found 路径 vtype 切换（e16/m4, 3.34%）与 masked vredmaxu 归约链（j 行 17.70% 归因）叠加；源码核对 sysdeps/riscv/rvv/strrchr.S 证实结构；命中 pattern 'Existing RISC-V Assembly Kernel Bottlenecks'（route High），其 §3 序列化配置指令消除方向（如 5bc3b7f51308 案例）支持该修复路径；证据链指向 CSR 读 + vtype churn 的代码实现根因。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "csrr 行 35.26% 可能部分来自前置向量链（vle8ff/vmseq/vmsbf/vmand/vfirst）的采样 skid 归因（precise_ip 未确认），实际 csrr 自身成本可能低于该份额",
+      "若 K3 的 csrr vl 为低延迟实现且页计算 ALU 序列成本更高，bounded vle8 候选可能无净收益（须 A/B 实测）"
+    ],
+    "currentGaps": "precise_ip/Exact-IP 未确认（baseline_gap: sampling IP precision）；libc.so 直接 readelf -A 未采集（baseline_gap: build ISA）；LLC/cache counters NA（baseline_gap: cache counters）；采样 percent type=local period（baseline_gap: sampling metadata）；K3 上 csrr vl latency 与页计算 ALU 成本未知（候选 1 收益的关键前提）",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV / string-benchset",
+    "recommendedFirstAction": "在 sysdeps/riscv/rvv/strrchr.S 的 L(loop)（第 54-91 行）实现两个重构：候选 1 用 ALU 页边界计算（andi/sub/neg 求到页尾字节数）替代 fault-first+每迭代 csrr vl，改 vsetvli a6,t0,e8,m2 写寄存器值并直接用 a6 推进；候选 2 将 found 路径 last-hit 归约的 e16/m4 vtype 切换改为 e8/m2 单 vtype（vid.v+vredmaxu 在 e8/m2 下完成），消除 a5f64/a5f7c 两处 vsetvli",
+    "recommendedVerification": "重跑 glibc bench-strrchr（string-benchset）并重新 perf annotate __strrchr_vector：确认 csrr a6,vl 从主 loop 消失或仅残留页边界慢路径、vsetvli e16/m4 消失；对比 duration_time 与 csrr 行份额；实测 K3 上 csrr vl latency 与 ALU 页计算成本",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 1.251,
+        "anomalyNote": "string-benchset 全用例 IPC；scan 型 workload 中等水平"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 1.624,
+        "anomalyNote": "全用例分支缺失率 1.624%；bltz/bne 为数据相关分支"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.716,
+        "anomalyNote": "load miss 率低；顺序扫描 cache 行为良好"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "__strrchr_vector",
+        "fileModule": "sysdeps/riscv/rvv/strrchr.S（annotate 内嵌 .S 源行 + 工作区源码逐指令核对）",
+        "rvvPattern": "Existing RISC-V Assembly Kernel Bottlenecks",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.386,
+        "note": "glibc 手写 RVV strrchr 内核（字符串扫描/内存密集，rank 006，1435 samples）；benefitUpperbound 取 csrr 行 35.26% + found 路径 vsetvli 3.34% 的局部份额（含 skid 归因不确定性，实际可获收益为其中 csrr 自身 latency 部分）；j 行 17.70% 为 vredmaxu 归约归因"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "sysdeps/riscv/rvv/strrchr.S:54-91（L(loop)，csrr 在第 66 行，vsetvli e16/m4 在第 69 行）",
+      "relatedKnowledge": "https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/79adb692a2720647e9dbe57de33fd50b41db295c\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/afb967b81e4169e9e563f6342f4f9f636627de5b\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/02594c8c011ca2cdc20334e9bb812ec8f6f37cf3\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/39abb1ac9421004dea61dc82ddbc8c187b9d6a65\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/2f77ecc6bc7dbc832cee4f0fe4d219fb172f775f\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/463c573e6b6489c588bee90124d5cf92db8ccaaa\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/5bc3b7f51308b8027e5468ef60d8336a960193e2\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/7ee5c907e533d669dd4e39052a61b88232ca705b\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/9b84b8682f2629a23ccebd68af9f82c701a308e4\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/92bcc6703acf346f0a5257de2410400a2e81a754\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/262168b04e6807fce6a78507c14cfc166ba72845\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/982376660c58f59a384486894a3f1092d6888e4b\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/8030876d1c77f37a3528cc0c541f75ba8d39e9f4\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/9135dffd177d457a8a1781b9e6c6d400648165cb\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/5b8b5ec9c55da6afef85195d12d1ac92647986f5\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/a11122f9c63bdb66e3f7bc7e2cd380cdc9c9a51c\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/b62586e31019a7654c65c1a4758d59c1b0e754ad\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/3a5365683799ded2df974671928b545a153650ca\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/f222eb2b0805c782740f338dead1e375a4562fb7\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/e0eff64ed1e60d14391d55a91732ec612abf3f64",
+      "evidenceExplanation": "上游手写向量 .S 案例展示序列化配置指令（vsetvli/CSR）的消除与外提收益（riscv-assembly-kernel-performance-optimization.md §3）；与本函数每迭代 csrr vl（fault-first 冗余）及 found 路径 vtype 切换的结构一致，工作区 sysdeps/riscv/rvv/strrchr.S 第 66 行证实 csrr 位于主 loop"
+    }
+  }
+}

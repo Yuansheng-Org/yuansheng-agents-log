@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-glibc-string-benchset-006",
+  "blueprintId": "bp-glibc-string-benchset-006",
+  "createdAt": "2026-09-11T13:45:57.288Z",
+  "objective": "手写 RVV strrchr kernel 的每迭代 csrr vl CSR 读（fault-first 推进量）位于 scan 链末端，完全映射 buffer 下冗余且疑似高成本（35.26%）；found 路径 vtype churn（e8/m2→e16/m4→e8/m2）与 masked vredmaxu 归约链叠加每块开销",
+  "changes": [
+    {
+      "filePath": "sysdeps/riscv/rvv/strrchr.S",
+      "action": "modify",
+      "rationale": "手写 RVV strrchr kernel 的每迭代 csrr vl CSR 读（fault-first 推进量）位于 scan 链末端，完全映射 buffer 下冗余且疑似高成本（35.26%）；found 路径 vtype churn（e8/m2→e16/m4→e8/m2）与 masked vredmaxu 归约链叠加每块开销",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 sysdeps/riscv/rvv/strrchr.S 来解决 blueprint bp-glibc-string-benchset-006。"
+}

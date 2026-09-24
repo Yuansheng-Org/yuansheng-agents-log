@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-glibc-wcsmbs-benchset-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-11T10:04:23.593Z",
+    "software": "glibc",
+    "testcaseIds": [
+      "wcsmbs-benchset"
+    ],
+    "diagnosisId": "diag-20260911-100423",
+    "targetHardware": "SpacemiT K3 (spacemit-x100)",
+    "repositoryUrl": "https://mirrors.bfsu.edu.cn/git/glibc.git",
+    "testBranch": "master",
+    "commitHash": "bb213471bedc177b8efd3178584137fb81cc976a"
+  },
+  "problem": {
+    "summary": "glibc wcsmbs-benchset 中 __GI___wcschr（rank 001，2550 samples）运行的是 wcsmbs/wcschr.c 的标量逐元素实现，main scan loop（83.57%）每迭代仅处理 1 个 wchar（4B）；目标（RVV 1.0, VLEN=256）无 wcschr 向量实现且 multiarch IFUNC 名单无 wcschr 条目（整个 wcs* 宽字符函数族均无 RVV 实现）。",
+    "evidence": [
+      "wcsmbs-benchset perf stat（RISC-V）: IPC=1.732, branch_miss_rate=0.757%, L1_dcache_load_miss_rate=0.262%, LLC counters=NA",
+      "__GI___wcschr annotate: main scan loop（a76d4-a76dc）占 83.57%，最高行 45.29% 落在 beq a5,a1（a76d6，wc 命中分支），31.53% 落在 bnez a5,a76d4（a76dc，NUL 回边），6.55% 落在 addi a0,a0,4（a76da）",
+      "hot loop 内 zero v*：lw（载 wchar 4B）→ beq → addi 推进 → bnez（NUL 判定）；target-scan 语义（首个 wc 或 NUL）",
+      "源码核对：wcsmbs/wcschr.c 为标量逐元素实现；sysdeps/riscv/rvv/ 与 multiarch 均无 wcs* 向量实现/IFUNC 条目"
+    ]
+  },
+  "rootCause": {
+    "summary": "wcschr 在 V-capable 目标上缺少 RVV 向量实现（wcs* 宽字符函数族整体缺失）：hot loop 为标量逐元素扫描（4B/iter），且 multiarch IFUNC 名单未包含 wcschr（无 dispatch slot），硬件向量能力完全未被利用",
+    "candidateFiles": [
+      "wcsmbs/wcschr.c",
+      "sysdeps/riscv/rvv/wcschr.S",
+      "sysdeps/riscv/multiarch/wcschr-vector.S",
+      "sysdeps/riscv/multiarch/dl-symbol-redir-ifunc.h"
+    ],
+    "performanceFactors": [
+      "RVV Sentinel Scan/Copy Implementation"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "wcschr 语义：返回首个 wc（含 wc==0 返回 NUL 指针）或 NULL",
+      "不得越界读（fault-first/bounded，e32 页边界）",
+      "返回值 = wcs + idx",
+      "wchar=4B（e32 元素宽度）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "wcsmbs-benchset"
+    ]
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "wcsmbs-benchset perf stat 显示 IPC=1.732、LLC NA；__GI___wcschr（rank 001）annotate 中 main scan loop 占 83.57%，为标量逐元素扫描（lw+beq+addi+bnez，4B/iter），hot interval 内 zero v*；工作区源码核对确认 wcsmbs/wcschr.c 为标量实现、sysdeps/riscv/rvv/ 与 multiarch 均无 wcs* 向量变体/IFUNC 条目（byte 字符串族已有 15 个 RVV 实现，宽字符族完全缺失）；命中 pattern 'RVV Sentinel Scan/Copy Implementation'（route High），其 Related PRs 为 glibc 上游 RVV sentinel scan/copy 系列提交；证据链指向标量逐元素扫描 + 实现缺失的代码实现根因，修复方向为新增 RVV wcschr kernel 并接入 multiarch。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "beq 行 45.29% 可能部分来自采样 skid（precise_ip 未确认）与分支解析归因，实际分布略有偏差，但不改变'标量 4B/iter 扫描无向量实现'的结论",
+      "e32 向量 kernel 的 chunk 覆盖 64 wchar/iter（m8），对短 wcs 的建链固定开销可能侵蚀收益，需 A/B 实测"
+    ],
+    "currentGaps": "precise_ip/Exact-IP 未确认（baseline_gap: sampling IP precision）；libc.so 直接 readelf -A 未采集（baseline_gap: build ISA）；LLC/cache counters NA（baseline_gap: cache counters）；采样 percent type=local period（baseline_gap: sampling metadata）；bench wcs 长度/命中位置 mix 未知",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV / wcsmbs-benchset",
+    "recommendedFirstAction": "新增 sysdeps/riscv/rvv/wcschr.S（RVV wcschr kernel：vle32ff.v 或 bounded e32 load + vmseq(chunk,wc) 与 vmseq(chunk,0) 双掩码 vor 合并 + vfirst.m 取首个命中索引返回 wcs+idx），并新增 sysdeps/riscv/multiarch/wcschr-vector.S 与 wcschr-generic.c 的 IFUNC 接线、在 dl-symbol-redir-ifunc.h 的非 SHARED 分支加入 wcschr 重定向，对照 strchr 的 multiarch 接线模式",
+    "recommendedVerification": "重跑 glibc bench-wcschr（wcsmbs-benchset）并重新 perf annotate __GI___wcschr：确认标量 main loop（a76d6 beq a5,a1 等）份额显著下降、vle32ff.v/vmseq/vor/vfirst.m 出现；核对 IFUNC dispatch 真实采用新 kernel；对比 duration_time 下降幅度",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 1.732,
+        "anomalyNote": "wcsmbs-benchset 全用例 IPC；wcschr 每 4B 迭代付出 2 次分支拉低效率"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.757,
+        "anomalyNote": "全用例分支缺失率 0.757%；beq/bnez 为数据相关分支"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.262,
+        "anomalyNote": "load miss 率低；顺序扫描 cache 行为良好"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "__GI___wcschr",
+        "fileModule": "wcsmbs/wcschr.c（annotate 内嵌 C 源行 + 工作区源码逐行核对）",
+        "rvvPattern": "RVV Sentinel Scan/Copy Implementation",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.8357,
+        "note": "glibc 标量 wcschr（宽字符扫描/内存密集，rank 001，2550 samples）；main scan loop 83.57%（lw+beq+addi+bnez，4B/iter）；benefitUpperbound 为标量 main loop 局部份额"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "wcsmbs/wcschr.c:34-40（while(1) 主循环）；sysdeps/riscv/rvv/（无 wcschr.S）；sysdeps/riscv/multiarch/dl-symbol-redir-ifunc.h（无 wcschr 条目）",
+      "relatedKnowledge": "https://sourceware.org/git/?p=glibc.git;a=commit;h=9b5e9799b6af76e91b29334310ecd32096b274c2\nhttps://sourceware.org/git/?p=glibc.git;a=commit;h=40fb13ac3de0dbd792d9fe09230dc0d0d4cde444\nhttps://sourceware.org/git/?p=glibc.git;a=commit;h=07122a9d8d4597321e77d97f9ba18c11a42d8b5b\nhttps://sourceware.org/git/?p=glibc.git;a=commit;h=512f99e71d57db800a0e2bc0c8f9f0600dea5ed7\nhttps://sourceware.org/git/?p=glibc.git;a=commit;h=bbc3867f8d8f70959cebc7a619e84a1701446948\nhttps://sourceware.org/git/?p=glibc.git;a=commit;h=c275c424b324ea525a526812ba2b4a56d47bfe61",
+      "evidenceExplanation": "glibc 上游 RVV sentinel scan/copy 系列提交证明 mask compare + vfirst.m 语义的向量化可行路径；wcschr 的单输入 wchar target-scan（首个 wc 或 NUL）与该族同属哨兵扫描语义，且工作区确认 wcs* 宽字符族整体无 RVV 实现/IFUNC 条目"
+    }
+  }
+}

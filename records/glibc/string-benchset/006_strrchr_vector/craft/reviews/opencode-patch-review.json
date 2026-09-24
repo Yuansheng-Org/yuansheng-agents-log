@@ -1,0 +1,35 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rv-bp-glibc-string-benchset-006-001",
+ "patchCandidateId": "pc-bp-glibc-string-benchset-006",
+ "reviewedAt": "2026-09-11T13:06:00.000Z",
+ "reviewer": "opencode-comet-review",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "RVV 1.0 指令合规；e8/m2 单 vtype；页边界有界加载安全（4K 子倍数掩码）；推进用寄存器 vl 免 csrr；found 路径 e8/m2 归约正确。"
+ },
+ "hallucinationCheck": [
+  {
+   "dimension": "technicalAccuracy",
+   "result": "PASS"
+  },
+  {
+   "dimension": "sourceAttribution",
+   "result": "PASS"
+  },
+  {
+   "dimension": "explainability",
+   "result": "PASS"
+  },
+  {
+   "dimension": "internalConsistency",
+   "result": "PASS"
+  },
+  {
+   "dimension": "security",
+   "result": "PASS"
+  }
+ ],
+ "findings": []
+}

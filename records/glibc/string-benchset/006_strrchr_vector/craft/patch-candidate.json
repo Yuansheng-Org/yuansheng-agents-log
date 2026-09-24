@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-glibc-string-benchset-006",
+  "patchPlanId": "pp-bp-glibc-string-benchset-006",
+  "createdAt": "2026-09-11T13:45:57.334Z",
+  "changedFiles": [
+    "sysdeps/riscv/rvv/strrchr.S"
+  ],
+  "gitDiff": "diff --git a/sysdeps/riscv/rvv/strrchr.S b/sysdeps/riscv/rvv/strrchr.S\nindex f2da8a4b23..daa58fdc03 100644\n--- a/sysdeps/riscv/rvv/strrchr.S\n+++ b/sysdeps/riscv/rvv/strrchr.S\n@@ -54,8 +54,16 @@ ENTRY (STRRCHR)\n L(loop):\n     mv blk_base, str\n \n-    vsetvli cur_vl, zero, e8, m2, ta, ma\n-    vle8ff.v vstr, (str)\n+    /* Bound the load to the remaining bytes of the current page\n+       (4 KiB is a sub-multiple of every real RISC-V page size, so this\n+       never crosses a real page boundary).  The advance then uses the\n+       register value of vl directly, removing the per-iteration csrr.  */\n+    li t0, -4096\n+    and t0, t0, str\n+    sub t0, t0, str\n+    neg t0, t0\n+    vsetvli cur_vl, t0, e8, m2, ta, ma\n+    vle8.v vstr, (str)\n \n     vmseq.vi vmask_end, vstr, 0\n     vmsbf.m vvalid, vmask_end\n@@ -63,10 +71,10 @@ L(loop):\n     vmand.mm vhit, vmask_ch, vvalid\n \n     vfirst.m first_idx, vhit\n-    csrr cur_vl, vl\n     bltz first_idx, L(no_hit_in_block)\n \n-    vsetvli zero, cur_vl, e16, m4, ta, ma\n+    /* Keep a single e8/m2 vtype: compute the per-block last hit index\n+       with vid.v + masked vredmaxu in the same vtype as the scan.  */\n     vid.v vidx\n     vmv.s.x vacc, x0\n     /* Compute per-block last hit index (or -1 if none). */\n@@ -78,7 +86,6 @@ L(no_hit_in_block):\n     li loc_max, -1\n \n L(loc_max_ready):\n-    vsetvli zero, cur_vl, e8, m2, ta, ma\n     vcpop.m len_valid, vvalid\n \n     bne len_valid, cur_vl, L(tail_block)\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

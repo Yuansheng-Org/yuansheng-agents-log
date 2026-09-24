@@ -1,0 +1,37 @@
+ Percent |	Source code & Disassembly of libc.so for cpu-clock (2550 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     00000000000a76cc <wcschr>:
+         : 6     __GI___wcschr():
+         : 28    #endif
+         :
+         : 30    /* Find the first occurrence of WC in WCS.  */
+         : 31    wchar_t *
+         : 32    WCSCHR (const wchar_t *wcs, const wchar_t wc)
+         : 33    {
+    0.35 :   a76cc:  addi    sp,sp,-16
+    2.16 :   a76ce:  sd      s0,0(sp)
+    4.16 :   a76d0:  sd      ra,8(sp)
+    2.59 :   a76d2:  addi    s0,sp,16
+         : 43    #ifndef UNROLL_NTIMES
+         : 44    # define UNROLL_NTIMES 1
+         : 45    #endif
+         :
+         : 47    while (1)
+         : 48    UNROLL_REPEAT (UNROLL_NTIMES, ITERATION);
+    0.20 :   a76d4:  lw      a5,0(a0)
+   45.29 :   a76d6:  beq     a5,a1,a76e0 <wcschr+0x14>
+    6.55 :   a76da:  addi    a0,a0,4
+   31.53 :   a76dc:  bnez    a5,a76d4 <wcschr+0x8>
+    0.00 :   a76de:  li      a0,0
+         :
+         : 47    return dest;
+         : 48    }
+    2.43 :   a76e0:  ld      ra,8(sp)
+    2.63 :   a76e2:  ld      s0,0(sp)
+    2.08 :   a76e4:  addi    sp,sp,16
+    0.04 :   a76e6:  ret

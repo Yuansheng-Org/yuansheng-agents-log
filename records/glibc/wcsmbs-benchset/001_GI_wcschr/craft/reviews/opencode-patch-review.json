@@ -1,0 +1,35 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rv-001_GI_wcschr-001",
+ "patchCandidateId": "pc-001_GI_wcschr",
+ "reviewedAt": "2026-09-11T13:20:00.000Z",
+ "reviewer": "opencode-comet-review",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "见审核报告"
+ },
+ "hallucinationCheck": [
+  {
+   "dimension": "technicalAccuracy",
+   "result": "PASS"
+  },
+  {
+   "dimension": "sourceAttribution",
+   "result": "PASS"
+  },
+  {
+   "dimension": "explainability",
+   "result": "PASS"
+  },
+  {
+   "dimension": "internalConsistency",
+   "result": "PASS"
+  },
+  {
+   "dimension": "security",
+   "result": "PASS"
+  }
+ ],
+ "findings": []
+}
