@@ -1,0 +1,110 @@
+From 7eac3a1bb5a40c4919c2d23f6fc631f325e1bed6 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E7=94=B0=E5=AE=81?= <tianning24@iscas.ac.cn>
+Date: Mon, 21 Sep 2026 17:56:16 +0800
+Subject: [PATCH] riscv: Use regular loads away from page boundaries in RVV
+ strrchr
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Use an ordinary vector load when a full vector fits before the next
+4 KiB boundary.  Since 4 KiB divides every supported RISC-V system page
+size, this common path cannot cross a real page boundary.  Retain a
+fault-only-first load near the boundary, where it both preserves fault
+safety and can consume bytes from an already mapped following page.
+
+This avoids fault-only-first loads and vl CSR reads on the common path
+without forcing a short vector iteration at every boundary.  Keep the
+e8/m2 K3 fast path while finding the last match.  This K3 validation
+variant assumes that the active vector length fits in an 8-bit index;
+a generic upstream version needs a wider-index fallback for larger VLEN.
+
+Performance was measured on a SpacemiT K3 X100 core against glibc commit
+d5bd0f22305277fa0d431bb9d733aa9456706573.  The official bench-strrchr
+benchmark was warmed up and run seven times per side on CPU2 at 2.2 GHz.
+Each case uses the median timing, followed by the geometric mean of the
+patched/baseline ratios.  Results below are normalized by the unchanged
+generic implementation; positive values are faster.
+
+String length  Cases  Time reduction
+0-4               72          21.12%
+5-16             312          22.89%
+17-64            474          23.51%
+65-256           558          27.23%
+>256             816          27.23%
+All              2232          25.66%
+
+The 192 page-boundary cases improve by 7.46%; their 160 nonzero-search
+cases improve by 8.89%.  No case regresses by more than 5%, and the worst
+normalized regression is 2.31%.  The seven paired normalized results
+range from 22.52% to 26.40%.
+
+Validation:
+- Incremental RISC-V build: PASS
+- make test t=string/test-strrchr: PASS
+- Target benchmark coverage: 2232/2232 cases
+
+Signed-off-by: 田宁 <tianning24@iscas.ac.cn>
+---
+ sysdeps/riscv/rvv/strrchr.S | 21 +++++++++++++++++----
+ 1 file changed, 17 insertions(+), 4 deletions(-)
+
+diff --git a/sysdeps/riscv/rvv/strrchr.S b/sysdeps/riscv/rvv/strrchr.S
+index f2da8a4b23..8e302335f8 100644
+--- a/sysdeps/riscv/rvv/strrchr.S
++++ b/sysdeps/riscv/rvv/strrchr.S
+@@ -54,8 +54,17 @@ ENTRY (STRRCHR)
+ L(loop):
+     mv blk_base, str
+ 
++    /* A full ordinary vector load is safe when it fits before the next
++       4 KiB boundary.  Use a fault-only-first load near the boundary so
++       an already mapped following page can be consumed in this iteration.  */
++    li t0, 4096
++    addi t1, t0, -1
++    and t1, t1, str
++    sub t0, t0, t1
+     vsetvli cur_vl, zero, e8, m2, ta, ma
+-    vle8ff.v vstr, (str)
++    bltu t0, cur_vl, L(boundary_load)
++    vle8.v vstr, (str)
++L(scan_block):
+ 
+     vmseq.vi vmask_end, vstr, 0
+     vmsbf.m vvalid, vmask_end
+@@ -63,10 +72,10 @@ L(loop):
+     vmand.mm vhit, vmask_ch, vvalid
+ 
+     vfirst.m first_idx, vhit
+-    csrr cur_vl, vl
+     bltz first_idx, L(no_hit_in_block)
+ 
+-    vsetvli zero, cur_vl, e16, m4, ta, ma
++    /* K3 has at most 256 active e8/m2 elements, so the element index
++       is representable without switching to a wider element type.  */
+     vid.v vidx
+     vmv.s.x vacc, x0
+     /* Compute per-block last hit index (or -1 if none). */
+@@ -78,7 +87,6 @@ L(no_hit_in_block):
+     li loc_max, -1
+ 
+ L(loc_max_ready):
+-    vsetvli zero, cur_vl, e8, m2, ta, ma
+     vcpop.m len_valid, vvalid
+ 
+     bne len_valid, cur_vl, L(tail_block)
+@@ -117,6 +125,11 @@ L(sz_advance):
+     add str, str, cur_vl
+     j L(sz_loop)
+ 
++L(boundary_load):
++    vle8ff.v vstr, (str)
++    csrr cur_vl, vl
++    j L(scan_block)
++
+ .option pop
+ END (STRRCHR)
+ weak_alias (STRRCHR, rindex)
+-- 
+2.53.0
+
