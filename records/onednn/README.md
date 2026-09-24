@@ -27,4 +27,4 @@
 | `softmax_f16_upstream` | [dnnl_impl_cpu_rv64_jit_rvv_softmax_f16_scatter_dnnl_impl_float16_t_const_dnnl_impl_float16_t](softmax_f16_upstream/dnnl_impl_cpu_rv64_jit_rvv_softmax_f16_scatter_dnnl_impl_float16_t_const_dnnl_impl_float16_t/) | `a670dab844e24e9b9da4d4670841a0fd` | 无 |
 | `softmax_f32_upstream` | [dnnl_impl_cpu_rv64_anonymous_namespace_compute_softmax_f32_rvv_float_const_float_long_bool_7bb41bca](softmax_f32_upstream/dnnl_impl_cpu_rv64_anonymous_namespace_compute_softmax_f32_rvv_float_const_float_long_bool_7bb41bca/) | `a670dab844e24e9b9da4d4670841a0fd` | 无 |
 
-`trace/` 保留来源 `blueprint/` 的全部内容；`craft/` 保留原有 diff，补入来源 `candidate-*.patch` 以及来源存在的 Plan、Candidate 和 AI 审核文件。`a670dab...` 批次的 5 项只有 Blueprint bundle 和候选补丁，没有对应协议文件，本次未补造。原有 `review/` 保持不变。来源候选仅是候选交付物，不能据此推断已通过构建、回归或上游接收；历史统计保持原值。
+`trace/` 保留来源 `blueprint/` 的全部内容；每个函数的 `craft/` 只保留一份 `patch.diff`，以及来源存在的 Plan、Candidate JSON 和 AI 审核文件。原有 `patch.diff` 与来源批次中某一份 `candidate-*.patch` 逐字节一致；来源候选文件不在本仓库重复归档，可在上述 `yuansheng-patches` 对应批次和函数目录查看。`a670dab...` 批次的 5 项只有 Blueprint bundle 和候选补丁，没有对应协议文件，本次未补造。原有 `review/` 保持不变。来源候选仅是候选交付物，不能据此推断已通过构建、回归或上游接收；历史统计保持原值。
