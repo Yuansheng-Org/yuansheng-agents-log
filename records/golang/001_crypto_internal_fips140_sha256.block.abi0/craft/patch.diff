@@ -1,0 +1,36 @@
+diff --git a/src/crypto/internal/fips140/sha256/sha256block_riscv64.s b/src/crypto/internal/fips140/sha256/sha256block_riscv64.s
+index 567d44781c..c48b6b439f 100644
+--- a/src/crypto/internal/fips140/sha256/sha256block_riscv64.s
++++ b/src/crypto/internal/fips140/sha256/sha256block_riscv64.s
+@@ -5,6 +5,7 @@
+ //go:build !purego
+ 
+ #include "textflag.h"
++#include "asm_riscv64.h"
+ 
+ // SHA256 block routine. See sha256block.go for Go equivalent.
+ //
+@@ -47,6 +48,15 @@
+ // H7 = h + H7
+ 
+ // Wt = Mt; for 0 <= t <= 15
++#ifdef hasZbb
++// Load the big-endian message word with a single word load plus a byte
++// reverse (rev8), instead of assembling it byte-by-byte.
++#define MSGSCHEDULE0(index) \
++	MOVWU	((index*4))(X29), X5; \
++	REV8	X5, X5; \
++	SRL	$32, X5; \
++	MOVW	X5, (index*4)(X19)
++#else
+ #define MSGSCHEDULE0(index) \
+ 	MOVBU	((index*4)+0)(X29), X5; \
+ 	MOVBU	((index*4)+1)(X29), X6; \
+@@ -59,6 +69,7 @@
+ 	OR	X5, X7, X5; \
+ 	OR	X5, X8, X5; \
+ 	MOVW	X5, (index*4)(X19)
++#endif
+ 
+ // Wt = SIGMA1(Wt-2) + Wt-7 + SIGMA0(Wt-15) + Wt-16; for 16 <= t <= 63
+ //   SIGMA0(x) = ROTR(7,x) XOR ROTR(18,x) XOR SHR(3,x)
