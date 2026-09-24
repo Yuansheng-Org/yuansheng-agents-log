@@ -1,0 +1,13 @@
+diff --git a/src/include/port/atomics.h b/src/include/port/atomics.h
+index 5266f2ccaa0..89405a2ea30 100644
+--- a/src/include/port/atomics.h
++++ b/src/include/port/atomics.h
+@@ -69,6 +69,8 @@
+ #include "port/atomics/arch-x86.h"
+ #elif defined(__powerpc__) || defined(__powerpc64__)
+ #include "port/atomics/arch-ppc.h"
++#elif defined(__riscv)
++#include "port/atomics/arch-riscv.h"
+ #endif
+ 
+ /*
