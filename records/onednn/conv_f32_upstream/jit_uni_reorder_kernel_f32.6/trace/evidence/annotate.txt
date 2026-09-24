@@ -1,0 +1,62 @@
+ Percent |	Source code & Disassembly of jitted-11579-6.so for cpu-clock:u (118 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3   Disassembly of section .text:
+         :
+         : 5   0000000000000080 <jit_uni_reorder_kernel_f32.6>:
+         : 6   jit_uni_reorder_kernel_f32.6():
+    0.00 :    80:     addi    sp,sp,-96
+    0.00 :    84:     sd      s1,0(sp)
+    1.69 :    88:     sd      s2,8(sp)
+    0.00 :    8c:     sd      s3,16(sp)
+    0.00 :    90:     sd      s4,24(sp)
+    0.00 :    94:     sd      s5,32(sp)
+    0.00 :    98:     sd      s6,40(sp)
+    0.00 :    9c:     sd      s7,48(sp)
+    0.85 :    a0:     sd      s8,56(sp)
+    0.00 :    a4:     sd      s9,64(sp)
+    0.00 :    a8:     sd      s10,72(sp)
+    0.00 :    ac:     sd      s11,80(sp)
+    0.00 :    b0:     mv      s1,a0
+    0.00 :    b4:     ld      s2,0(s1)
+    0.00 :    b8:     ld      s3,8(s1)
+    0.00 :    bc:     li      a4,4
+    0.00 :    c0:     li      a5,4
+    0.00 :    c4:     li      s9,0
+    1.69 :    c8:     mv      t4,s2
+    0.00 :    cc:     mv      t5,s3
+    0.00 :    d0:     li      t0,64
+    0.00 :    d4:     mul     t0,s9,t0
+    0.00 :    d8:     add     t4,t4,t0
+    0.85 :    dc:     li      t0,64
+    0.00 :    e0:     mul     t0,s9,t0
+    0.00 :    e4:     add     t5,t5,t0
+    0.00 :    e8:     li      t2,16
+    0.00 :    ec:     beqz    t2,114 <jit_uni_reorder_kernel_f32.6+0x94>
+    0.00 :    f0:     .insn   4, 0x0d03fe57
+    0.85 :    f4:     .insn   4, 0x020ee407
+    2.54 :    f8:     .insn   4, 0x020f6427
+   88.98 :    fc:     mul     t0,t3,a4
+    0.00 :   100:    add     t4,t4,t0
+    0.00 :   104:    mul     t0,t3,a5
+    0.00 :   108:    add     t5,t5,t0
+    0.85 :   10c:    sub     t2,t2,t3
+    1.69 :   110:    j       ec <jit_uni_reorder_kernel_f32.6+0x6c>
+    0.00 :   114:    addi    s9,s9,1
+    0.00 :   118:    li      t0,4
+    0.00 :   11c:    blt     s9,t0,c8 <jit_uni_reorder_kernel_f32.6+0x48>
+    0.00 :   120:    ld      s1,0(sp)
+    0.00 :   124:    ld      s2,8(sp)
+    0.00 :   128:    ld      s3,16(sp)
+    0.00 :   12c:    ld      s4,24(sp)
+    0.00 :   130:    ld      s5,32(sp)
+    0.00 :   134:    ld      s6,40(sp)
+    0.00 :   138:    ld      s7,48(sp)
+    0.00 :   13c:    ld      s8,56(sp)
+    0.00 :   140:    ld      s9,64(sp)
+    0.00 :   144:    ld      s10,72(sp)
+    0.00 :   148:    ld      s11,80(sp)
+    0.00 :   14c:    addi    sp,sp,96
+    0.00 :   150:    ret

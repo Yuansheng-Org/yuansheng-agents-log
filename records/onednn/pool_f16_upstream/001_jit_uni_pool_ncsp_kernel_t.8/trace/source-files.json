@@ -1,0 +1,13 @@
+{
+  "files": {
+    "blueprint.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/pool_f16_upstream/001_jit_uni_pool_ncsp_kernel_t.8/blueprint_onednn_pool_f16_upstream_001.json",
+    "diagnosis.md": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/pool_f16_upstream/001_jit_uni_pool_ncsp_kernel_t.8/diaglog_onednn_pool_f16_upstream_001.md",
+    "evidence/annotate.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/pool_f16_upstream/001_jit_uni_pool_ncsp_kernel_t.8/001-jit_uni_pool_ncsp_kernel_t.8-annotate.txt",
+    "evidence/metadata.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/pool_f16_upstream/001_jit_uni_pool_ncsp_kernel_t.8/metadata.json",
+    "evidence/perf-stat.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/pool_f16_upstream/001_jit_uni_pool_ncsp_kernel_t.8/perf_stat.txt",
+    "evidence/build-isa.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/pool_f16_upstream/001_jit_uni_pool_ncsp_kernel_t.8/build_isa.txt"
+  },
+  "format_version": 1,
+  "kind": "onednn_round2_source_map",
+  "trace_directory": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/pool_f16_upstream/001_jit_uni_pool_ncsp_kernel_t.8"
+}

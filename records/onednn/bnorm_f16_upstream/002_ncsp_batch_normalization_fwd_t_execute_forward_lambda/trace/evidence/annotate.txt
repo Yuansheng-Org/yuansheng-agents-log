@@ -1,0 +1,1147 @@
+ Percent |	Source code & Disassembly of libdnnl.so.3.14 for cpu-clock:u (10 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000004ffbb0 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const>:
+         : 6      dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 93     const int nthr = pd()->nthr_;
+         : 94     size_t l3_size_ = platform::get_per_core_cache_size(3) * nthr / 2;
+         : 95     size_t data_size = N * C * SP * sizeof(data_t);
+         : 96     bool do_blocking = (data_size >= l3_size_ / 2 && l3_size_ > 0);
+         :
+         : 98     parallel(nthr, [= COMPAT_THIS_CAPTURE](const int ithr, const int nthr) {
+    0.00 :   4ffbb0: addi    sp,sp,-512
+    0.00 :   4ffbb2: sd      s0,496(sp)
+    0.00 :   4ffbb4: sd      s2,480(sp)
+    0.00 :   4ffbb6: addi    s0,sp,512
+    0.00 :   4ffbb8: sd      s9,424(sp)
+    0.00 :   4ffbba: sd      ra,504(sp)
+    0.00 :   4ffbbc: sd      s1,488(sp)
+    0.00 :   4ffbbe: sd      s3,472(sp)
+    0.00 :   4ffbc0: sd      s6,448(sp)
+    0.00 :   4ffbc2: mv      s9,a0
+         : 105    dim_t S_s = 0, S_e = 0;
+         :
+         : 107    dim_t C_blks_per_iter = 1;
+         : 108    int64_t iters = 1;
+         :
+         : 110    if (do_blocking) {
+    0.00 :   4ffbc4: lbu     a0,0(a0)
+         : 102    dim_t C_blks_per_iter = 1;
+    0.00 :   4ffbc8: li      a5,1
+         : 93     parallel(nthr, [= COMPAT_THIS_CAPTURE](const int ithr, const int nthr) {
+    0.00 :   4ffbca: auipc   a3,0xfb2
+    0.00 :   4ffbce: ld      a3,390(a3) # 14b1d50 <__stack_chk_guard@GLIBC_2.27>
+         : 94     int C_ithr = 0, C_nthr = 0;
+    0.00 :   4ffbd2: sw      zero,-240(s0)
+    0.00 :   4ffbd6: sw      zero,-236(s0)
+         : 95     int N_ithr = 0, N_nthr = 0;
+    0.00 :   4ffbda: sw      zero,-232(s0)
+    0.00 :   4ffbde: sw      zero,-228(s0)
+         : 96     int S_ithr = 0, S_nthr = 0;
+    0.00 :   4ffbe2: sw      zero,-224(s0)
+    0.00 :   4ffbe6: sw      zero,-220(s0)
+         : 98     dim_t C_blk_gl_s = 0, C_blk_gl_e = 0, C_blk_s = 0, C_blk_e = 0;
+    0.00 :   4ffbea: sd      zero,-216(s0)
+    0.00 :   4ffbee: sd      zero,-208(s0)
+         : 99     dim_t N_s = 0, N_e = 0;
+    0.00 :   4ffbf2: sd      zero,-200(s0)
+    0.00 :   4ffbf6: sd      zero,-192(s0)
+         : 100    dim_t S_s = 0, S_e = 0;
+    0.00 :   4ffbfa: sd      zero,-184(s0)
+    0.00 :   4ffbfe: sd      zero,-176(s0)
+         : 93     parallel(nthr, [= COMPAT_THIS_CAPTURE](const int ithr, const int nthr) {
+    0.00 :   4ffc02: ld      a4,0(a3)
+    0.00 :   4ffc04: sd      a4,-152(s0)
+    0.00 :   4ffc08: li      a4,0
+         : 102    dim_t C_blks_per_iter = 1;
+    0.00 :   4ffc0a: sd      a5,-168(s0)
+         : 103    int64_t iters = 1;
+    0.00 :   4ffc0e: sd      a5,-160(s0)
+         : 93     parallel(nthr, [= COMPAT_THIS_CAPTURE](const int ithr, const int nthr) {
+    0.00 :   4ffc12: sd      a2,-256(s0)
+    0.00 :   4ffc16: mv      s2,a1
+         : 107    size_t working_set_size = N * SP * sizeof(data_t);
+         : 108    bnorm_utils::cache_balance(
+    0.00 :   4ffc18: ld      a1,24(s9)
+         : 105    if (do_blocking) {
+    0.00 :   4ffc1c: bnez    a0,5003d8 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x828>
+         : 110    working_set_size, C, N, nthr, C_blks_per_iter, iters);
+         : 111    } else
+         : 112    C_blks_per_iter = C;
+    0.00 :   4ffc20: sd      a1,-168(s0)
+    0.00 :   4ffc24: sd      a1,-264(s0)
+         : 112    int64_t last_iter_blks = C - (iters - 1) * C_blks_per_iter;
+         : 113    bool spatial_thr_allowed = bnorm_utils::thread_balance(do_blocking,
+    0.00 :   4ffc28: addi    s1,s0,-224
+    0.00 :   4ffc2c: ld      a7,16(s9)
+    0.00 :   4ffc30: ld      a5,8(s9)
+    0.00 :   4ffc34: sd      s1,-336(s0)
+    0.00 :   4ffc38: sd      s1,64(sp)
+    0.00 :   4ffc3a: ld      s1,-256(s0)
+    0.00 :   4ffc3e: addi    a4,s0,-176
+    0.00 :   4ffc42: addi    a3,s0,-184
+    0.00 :   4ffc46: addi    a2,s0,-220
+    0.00 :   4ffc4a: addi    t5,s0,-232
+    0.00 :   4ffc4e: addi    t6,s0,-208
+    0.00 :   4ffc52: addi    t0,s0,-216
+    0.00 :   4ffc56: addi    t2,s0,-236
+    0.00 :   4ffc5a: addi    s3,s0,-240
+    0.00 :   4ffc5e: addi    t1,s0,-192
+    0.00 :   4ffc62: addi    t3,s0,-200
+    0.00 :   4ffc66: addi    t4,s0,-228
+    0.00 :   4ffc6a: sd      a4,-392(s0)
+    0.00 :   4ffc6e: sd      a3,-384(s0)
+    0.00 :   4ffc72: sd      a2,-344(s0)
+    0.00 :   4ffc76: mv      a6,a1
+    0.00 :   4ffc78: sd      a4,88(sp)
+    0.00 :   4ffc7a: sd      a3,80(sp)
+    0.00 :   4ffc7c: sd      a2,72(sp)
+    0.00 :   4ffc7e: sd      s3,0(sp)
+    0.00 :   4ffc80: mv      a3,s2
+    0.00 :   4ffc82: sd      t5,32(sp)
+    0.00 :   4ffc84: sd      t6,24(sp)
+    0.00 :   4ffc86: sd      t0,16(sp)
+    0.00 :   4ffc88: sd      t2,8(sp)
+    0.00 :   4ffc8a: mv      a4,s1
+    0.00 :   4ffc8c: li      a2,0
+    0.00 :   4ffc8e: li      a1,1
+    0.00 :   4ffc90: sd      s3,-304(s0)
+    0.00 :   4ffc94: sd      t1,-376(s0)
+    0.00 :   4ffc98: sd      t3,-368(s0)
+    0.00 :   4ffc9c: sd      t4,-328(s0)
+    0.00 :   4ffca0: sd      t5,-320(s0)
+    0.00 :   4ffca4: sd      t6,-360(s0)
+    0.00 :   4ffca8: sd      t0,-352(s0)
+    0.00 :   4ffcac: sd      t2,-312(s0)
+    0.00 :   4ffcb0: sd      t1,56(sp)
+    0.00 :   4ffcb2: sd      t3,48(sp)
+    0.00 :   4ffcb4: sd      t4,40(sp)
+    0.00 :   4ffcb6: auipc   ra,0xffec4
+    0.00 :   4ffcba: jalr    -1202(ra) # 3c3804 <dnnl::impl::cpu::bnorm_utils::thread_balance(bool, bool, bool, int, int, long, long, long, int&, int&, long&, long&, int&, int&, long&, long&, int&, int&, long&, long&)>
+         : 116    true, false, ithr, nthr, N, C_blks_per_iter, SP, C_ithr, C_nthr,
+         : 117    C_blk_s, C_blk_e, N_ithr, N_nthr, N_s, N_e, S_ithr, S_nthr, S_s,
+         : 118    S_e);
+         : 119    balance211(C_blks_per_iter, nthr, ithr, C_blk_gl_s, C_blk_gl_e);
+    0.00 :   4ffcbe: ld      s3,-168(s0)
+         : 112    bool spatial_thr_allowed = bnorm_utils::thread_balance(do_blocking,
+    0.00 :   4ffcc2: sd      a0,-280(s0)
+         : 114    void dnnl::impl::balance211<long, int>(long, int, int, long&, long&):
+         :
+         : 202    template <typename T, typename U>
+         : 203    inline void balance211(T n, U team, U tid, T &n_start, T &n_end) {
+         : 204    T n_min = 1;
+         : 205    T &n_my = n_end;
+         : 206    if (team <= 1 || n == 0) {
+    0.00 :   4ffcc6: slti    a3,s1,2
+    0.00 :   4ffcca: beqz    s3,4ffd08 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x158>
+    0.00 :   4ffcce: bnez    a3,4ffd08 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x158>
+         : 210    dnnl::impl::utils::enable_if<std::is_integral<long>::value&&(std::is_integral<long>::value||std::is_enum<long>::value), dnnl::impl::utils::remove_reference<long>::type>::type dnnl::impl::utils::div_up<long, long>(long, long):
+         : 369    && (std::is_integral<U>::value || std::is_enum<U>::value),
+         : 370    typename remove_reference<T>::type>
+         : 371    div_up(const T a, const U b) {
+         : 372    assert(b > 0);
+         : 373    assert(a >= 0);
+         : 374    if (a <= 0) return 0;
+    0.00 :   4ffcd0: blez    s3,50045c <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x8ac>
+         : 370    return static_cast<typename remove_reference<T>::type>(1 + (a - 1) / b);
+    0.00 :   4ffcd4: addi    s6,s3,-1
+    0.00 :   4ffcd8: div     s6,s6,s1
+    0.00 :   4ffcdc: addi    a4,s6,1
+         : 374    void dnnl::impl::balance211<long, int>(long, int, int, long&, long&):
+         : 209    } else if (n_min == 1) {
+         : 210    // team = T1 + T2
+         : 211    // n = T1*n1 + T2*n2  (n1 - n2 = 1)
+         : 212    T n1 = utils::div_up(n, (T)team);
+         : 213    T n2 = n1 - 1;
+         : 214    T T1 = n - n2 * (T)team;
+    0.00 :   4ffce0: ld      a5,-256(s0)
+    0.00 :   4ffce4: mul     a5,a5,s6
+    0.00 :   4ffce8: sub     a5,s3,a5
+         : 210    n_my = (T)tid < T1 ? n1 : n2;
+    0.00 :   4ffcec: blt     s2,a5,50041a <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x86a>
+         : 211    n_start = (T)tid <= T1 ? (T)tid * n1 : T1 * n1 + ((T)tid - T1) * n2;
+    0.00 :   4ffcf0: beq     a5,s2,50041c <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x86c>
+    0.00 :   4ffcf4: sub     t3,s2,a5
+    0.00 :   4ffcf8: mul     t3,t3,s6
+    0.00 :   4ffcfc: mul     a4,a4,a5
+    0.00 :   4ffd00: add     t1,t3,a4
+         : 214    }
+         :
+         : 216    n_end += n_start;
+    0.00 :   4ffd04: add     s6,s6,t1
+    0.00 :   4ffd06: j       4ffd0c <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x15c>
+    0.00 :   4ffd08: mv      s6,s3
+         : 202    n_start = 0;
+    0.00 :   4ffd0a: li      t1,0
+         : 204    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 119    int SP_N_ithr = N_ithr * S_nthr + S_ithr;
+         : 120    int SP_N_nthr = N_nthr * S_nthr;
+         : 121    for (int64_t it = 0; it < iters; ++it) {
+    0.00 :   4ffd0c: ld      a5,-160(s0)
+    0.00 :   4ffd10: blez    a5,500376 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x7c6>
+         : 117    int SP_N_ithr = N_ithr * S_nthr + S_ithr;
+    0.00 :   4ffd14: lw      a2,-220(s0)
+    0.00 :   4ffd18: lw      a4,-232(s0)
+         : 118    int SP_N_nthr = N_nthr * S_nthr;
+    0.00 :   4ffd1c: lw      a7,-228(s0)
+    0.00 :   4ffd20: sd      s5,456(sp)
+         : 117    int SP_N_ithr = N_ithr * S_nthr + S_ithr;
+    0.00 :   4ffd22: mulw    a4,a4,a2
+    0.00 :   4ffd26: fsd     fs3,368(sp)
+         :
+         : 236    for (dim_t c = C_blk_s; c < C_blk_e; c++) {
+         : 237    size_t off = c + C_off;
+         : 238    acc_data_t sqrt_variance
+         : 239    = static_cast<acc_data_t>(sqrtf(variance[off] + eps));
+         : 240    acc_data_t sm = (use_scale ? (acc_data_t)scale[off]
+    0.00 :   4ffd28: auipc   a1,0xb08
+    0.00 :   4ffd2c: flw     fs3,1768(a1) # 1008410 <typeinfo name for dnnl::impl::batch_normalization_desc_t+0x188>
+         : 243    void dnnl::impl::balance211<long, int>(long, int, int, long&, long&):
+         : 201    if (team <= 1 || n == 0) {
+    0.00 :   4ffd30: ld      a1,-264(s0)
+    0.00 :   4ffd34: sd      s8,432(sp)
+         : 204    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 117    int SP_N_ithr = N_ithr * S_nthr + S_ithr;
+    0.00 :   4ffd36: lw      s8,-224(s0)
+    0.00 :   4ffd3a: fsd     fs2,376(sp)
+         : 120    void dnnl::impl::balance211<long, int>(long, int, int, long&, long&):
+    0.00 :   4ffd3c: seqz    a1,a1
+    0.00 :   4ffd40: fmv.w.x fs2,zero
+    0.00 :   4ffd44: or      a3,a3,a1
+         : 204    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 125    if (SP_N_nthr == 1 && dnnl_thr_syncable()) dnnl_thr_barrier();
+    0.00 :   4ffd46: mulw    s5,a7,a2
+    0.00 :   4ffd4a: sd      s4,464(sp)
+    0.00 :   4ffd4c: sd      s7,440(sp)
+    0.00 :   4ffd4e: sd      s10,416(sp)
+    0.00 :   4ffd50: sd      s11,408(sp)
+    0.00 :   4ffd52: fsd     fs0,392(sp)
+    0.00 :   4ffd54: fsd     fs1,384(sp)
+         : 133    void dnnl::impl::balance211<long, int>(long, int, int, long&, long&):
+    0.00 :   4ffd56: sd      a3,-296(s0)
+         : 202    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 117    int SP_N_ithr = N_ithr * S_nthr + S_ithr;
+    0.00 :   4ffd5a: addw    s8,s8,a4
+         : 125    if (SP_N_nthr == 1 && dnnl_thr_syncable()) dnnl_thr_barrier();
+    0.00 :   4ffd5e: li      s4,1
+    0.00 :   4ffd60: sd      zero,-272(s0)
+    0.00 :   4ffd64: mv      s7,t1
+    0.00 :   4ffd66: mv      s10,s9
+         : 120    size_t C_off = it * C_blks_per_iter;
+    0.00 :   4ffd68: ld      a4,-272(s0)
+         : 121    if (it == iters - 1 && iters > 1) {
+    0.00 :   4ffd6c: addi    a5,a5,-1
+         : 120    size_t C_off = it * C_blks_per_iter;
+    0.00 :   4ffd6e: mul     s3,a4,s3
+         : 121    if (it == iters - 1 && iters > 1) {
+    0.00 :   4ffd72: bne     a5,a4,4ffd7a <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x1ca>
+    0.00 :   4ffd76: bnez    a5,50029a <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x6ea>
+         : 137    const auto S_chunk = nstl::max(dim_t(0), S_e - S_s);
+    0.00 :   4ffd7a: ld      s1,-176(s0)
+    0.00 :   4ffd7e: ld      a2,-184(s0)
+         : 144    if (calculate_stats) {
+    0.00 :   4ffd82: lbu     a4,32(s10)
+         : 137    const auto S_chunk = nstl::max(dim_t(0), S_e - S_s);
+    0.00 :   4ffd86: sub     s1,s1,a2
+         : 139    long const& dnnl::impl::nstl::max<long>(long const&, long const&):
+         : 78     return result > 0 ? divisor - result : 0;
+         : 79     }
+         :
+         : 81     template <typename T>
+         : 82     constexpr const T &max(const T &a, const T &b) {
+         : 83     return a > b ? a : b;
+    0.00 :   4ffd88: not     a5,s1
+    0.00 :   4ffd8c: srai    a5,a5,0x3f
+    0.00 :   4ffd8e: and     s1,s1,a5
+         : 87     dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 144    if (calculate_stats) {
+    0.00 :   4ffd90: bnez    a4,4fff5e <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x3ae>
+         : 231    for (dim_t c = C_blk_s; c < C_blk_e; c++) {
+    0.00 :   4ffd94: ld      s9,-216(s0)
+    0.00 :   4ffd98: ld      a5,-208(s0)
+    0.00 :   4ffd9c: bge     s9,a5,4fff46 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x396>
+    0.00 :   4ffda0: sd      s7,-408(s0)
+    0.00 :   4ffda4: sd      s5,-288(s0)
+    0.00 :   4ffda8: sd      s8,-400(s0)
+    0.00 :   4ffdac: sd      s6,-416(s0)
+    0.00 :   4ffdb0: add     s7,s9,s3
+    0.00 :   4ffdb4: mv      s11,s9
+         : 234    = static_cast<acc_data_t>(sqrtf(variance[off] + eps));
+    0.00 :   4ffdb6: ld      a5,48(s10)
+    0.00 :   4ffdba: slli    s9,s7,0x2
+    0.00 :   4ffdbe: flw     fa5,88(s10)
+    0.00 :   4ffdc2: add     a5,a5,s9
+    0.00 :   4ffdc4: flw     fa0,0(a5)
+    0.00 :   4ffdc8: fadd.s  fa0,fa0,fa5
+    0.00 :   4ffdcc: frflags a4
+    0.00 :   4ffdd0: flt.s   a5,fa0,fs2
+    0.00 :   4ffdd4: fsflags a4
+    0.00 :   4ffdd8: bnez    a5,500462 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x8b2>
+    0.00 :   4ffddc: fsqrt.s fa0,fa0
+         : 235    acc_data_t sm = (use_scale ? (acc_data_t)scale[off]
+    0.00 :   4ffde0: lbu     a5,92(s10)
+    0.00 :   4ffde4: fmv.s   fs0,fs3
+    0.00 :   4ffde8: beqz    a5,4ffdf4 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x244>
+    0.00 :   4ffdea: ld      a5,96(s10)
+    0.00 :   4ffdee: add     a5,a5,s9
+    0.00 :   4ffdf0: flw     fs0,0(a5)
+         : 239    : (acc_data_t)1.0f)
+         : 240    / sqrt_variance;
+         : 241    acc_data_t sv
+         : 242    = use_shift ? (acc_data_t)shift[off] : (acc_data_t)0;
+    0.00 :   4ffdf4: lbu     a5,104(s10)
+         : 238    acc_data_t sv
+    0.00 :   4ffdf8: fmv.w.x fs1,zero
+         : 239    = use_shift ? (acc_data_t)shift[off] : (acc_data_t)0;
+    0.00 :   4ffdfc: beqz    a5,4ffe08 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x258>
+         : 238    acc_data_t sv
+    0.00 :   4ffdfe: ld      a5,112(s10)
+    0.00 :   4ffe02: add     a5,a5,s9
+    0.00 :   4ffe04: flw     fs1,0(a5)
+         : 240    for (dim_t n = N_s; n < N_e; ++n) {
+    0.00 :   4ffe08: ld      s8,-200(s0)
+    0.00 :   4ffe0c: ld      a5,-192(s0)
+    0.00 :   4ffe10: bge     s8,a5,4fff2a <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x37a>
+         : 249    if (utils::one_of(d_type, bf16, f16)) {
+         : 250    // store dst to f32 buffer
+         : 251    _dst = src_cvt_wsp + ithr * SP_cl_align;
+         : 252    // convert src from bf16 to f32
+         : 253    acc_data_t *tmp_src
+         : 254    = src_cvt_wsp + (nthr + ithr) * SP_cl_align;
+    0.00 :   4ffe14: ld      a5,-256(s0)
+         : 235    acc_data_t sm = (use_scale ? (acc_data_t)scale[off]
+    0.00 :   4ffe18: fdiv.s  fs0,fs0,fa0
+         : 249    = src_cvt_wsp + (nthr + ithr) * SP_cl_align;
+    0.00 :   4ffe1c: sd      s11,-248(s0)
+    0.00 :   4ffe20: addw    s3,a5,s2
+    0.00 :   4ffe24: mv      s5,s8
+         : 243    size_t s_off = off * SP + n * C * SP;
+    0.00 :   4ffe26: ld      s8,24(s10)
+    0.00 :   4ffe2a: ld      a7,16(s10)
+         : 255    /*TODO: remove this conversion if performance
+         : 256    doesn't degrade, since xfloat16_t supports +=
+         : 257    operator with implicit conversions from xf16 to
+         : 258    float */
+         : 259    types::cvt_to_float(
+         : 260    tmp_src + S_s, src + s_off + S_s, S_chunk);
+    0.00 :   4ffe2e: ld      a5,-184(s0)
+         : 243    size_t s_off = off * SP + n * C * SP;
+    0.00 :   4ffe32: mul     s8,s5,s8
+         : 246    _dst = src_cvt_wsp + ithr * SP_cl_align;
+    0.00 :   4ffe36: ld      a3,64(s10)
+         : 254    types::cvt_to_float(
+    0.00 :   4ffe3a: ld      a1,72(s10)
+         : 255    tmp_src + S_s, src + s_off + S_s, S_chunk);
+    0.00 :   4ffe3e: slli    a0,a5,0x2
+         : 246    _dst = src_cvt_wsp + ithr * SP_cl_align;
+    0.00 :   4ffe42: ld      a4,56(s10)
+         : 248    void dnnl::impl::types::cvt_to_float<dnnl::impl::float16_t>(float*, dnnl::impl::float16_t const*, unsigned long):
+         : 599    }
+         :
+         : 601    template <>
+         : 602    inline void cvt_to_float<float16_t>(
+         : 603    float *out, const float16_t *inp, size_t nelems) {
+         : 604    cvt_float16_to_float(out, inp, nelems);
+    0.00 :   4ffe46: mv      a2,s1
+         : 606    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 243    size_t s_off = off * SP + n * C * SP;
+    0.00 :   4ffe48: add     s8,s8,s7
+    0.00 :   4ffe4a: mul     s8,s8,a7
+         : 255    tmp_src + S_s, src + s_off + S_s, S_chunk);
+    0.00 :   4ffe4e: add     a5,a5,s8
+    0.00 :   4ffe50: slli    a5,a5,0x1
+         : 258    void dnnl::impl::types::cvt_to_float<dnnl::impl::float16_t>(float*, dnnl::impl::float16_t const*, unsigned long):
+    0.00 :   4ffe52: add     a1,a1,a5
+         : 600    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 249    = src_cvt_wsp + (nthr + ithr) * SP_cl_align;
+    0.00 :   4ffe54: mul     a5,a3,s3
+         : 246    _dst = src_cvt_wsp + ithr * SP_cl_align;
+    0.00 :   4ffe58: mul     a3,a3,s2
+         : 249    = src_cvt_wsp + (nthr + ithr) * SP_cl_align;
+    0.00 :   4ffe5c: slli    a5,a5,0x2
+         : 248    acc_data_t *tmp_src
+    0.00 :   4ffe5e: add     s11,a4,a5
+         : 250    void dnnl::impl::types::cvt_to_float<dnnl::impl::float16_t>(float*, dnnl::impl::float16_t const*, unsigned long):
+    0.00 :   4ffe62: add     a0,a0,s11
+         : 600    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 246    _dst = src_cvt_wsp + ithr * SP_cl_align;
+    0.00 :   4ffe64: slli    a3,a3,0x2
+    0.00 :   4ffe66: add     s6,a4,a3
+         : 249    void dnnl::impl::types::cvt_to_float<dnnl::impl::float16_t>(float*, dnnl::impl::float16_t const*, unsigned long):
+    0.00 :   4ffe6a: jal     4c452e <dnnl::impl::cvt_float16_to_float(float*, dnnl::impl::float16_t const*, unsigned long)>
+         : 600    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 263    _dst = reinterpret_cast<acc_data_t *>(dst + s_off);
+         : 264    _src = reinterpret_cast<const acc_data_t *>(
+         : 265    src + s_off);
+         : 266    }
+         : 267    #if CLANG_WA_02_SAFE_TO_USE_OMP_SIMD
+         : 268    PRAGMA_OMP_SIMD()
+    0.00 :   4ffe6e: ld      a1,-184(s0)
+    0.00 :   4ffe72: ld      a0,-176(s0)
+    0.00 :   4ffe76: bge     a1,a0,4fff08 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x358>
+    0.00 :   4ffe7a: slli    a3,a1,0x2
+    0.00 :   4ffe7e: slli    a0,a0,0x2
+    0.00 :   4ffe80: add     a5,a3,s11
+    0.00 :   4ffe84: add     a0,a0,s11
+    0.00 :   4ffe86: add     a3,a3,s6
+    0.00 :   4ffe88: add     a1,a1,s8
+    0.00 :   4ffe8a: j       4ffecc <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x31c>
+         : 273    if (fuse_norm_relu) {
+         : 274    if (bn_res <= 0) {
+         : 275    bn_res = 0;
+         : 276    if (is_training) ws[d_off] = 0;
+         : 277    } else {
+         : 278    if (is_training) ws[d_off] = 1;
+    0.00 :   4ffe8c: beqz    a4,4ffe98 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x2e8>
+    0.00 :   4ffe8e: ld      a4,136(s10)
+    0.00 :   4ffe92: add     a4,a4,a1
+    0.00 :   4ffe94: sb      s4,0(a4)
+         : 277    }
+         : 278    }
+         : 279    _dst[sp] = with_relu
+         : 280    ? math::relu_fwd(bn_res, pd()->alpha())
+    0.00 :   4ffe98: lbu     a4,144(s10)
+    0.00 :   4ffe9c: beqz    a4,4ffebe <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x30e>
+         : 283    std::__shared_ptr<dnnl::impl::primitive_desc_t, (__gnu_cxx::_Lock_policy)1>::get() const:
+         : 1673   { __shared_ptr(__p, std::move(__d), std::move(__a)).swap(*this); }
+         :
+         : 1675   /// Return the stored pointer.
+         : 1676   element_type*
+         : 1677   get() const noexcept
+         : 1678   { return _M_ptr; }
+    0.00 :   4ffe9e: ld      a4,152(s10)
+         : 1680   dnnl::impl::batch_normalization_pd_t::alpha() const:
+         : 107    float alpha() const {
+         : 108    const auto &p = attr()->post_ops_;
+         : 109    const bool entry_size_ok = !p.entry_.empty();
+         : 110    assert(entry_size_ok || fuse_norm_relu() || fuse_norm_add_relu());
+         : 111    if (entry_size_ok) return p.entry_[0].eltwise.alpha;
+         : 112    return 0.f;
+    0.00 :   4ffea2: fmv.w.x fa4,zero
+         : 114    std::__shared_ptr<dnnl::impl::primitive_desc_t, (__gnu_cxx::_Lock_policy)1>::get() const:
+    0.00 :   4ffea6: ld      a4,8(a4)
+         : 1674   __gnu_cxx::__normal_iterator<dnnl_post_ops::entry_t const*, std::vector<dnnl_post_ops::entry_t, std::allocator<dnnl_post_ops::entry_t> > >::__normal_iterator(dnnl_post_ops::entry_t const* const&):
+         : 1059   : _M_current() { }
+         :
+         : 1061   __attribute__((__always_inline__))
+         : 1062   explicit _GLIBCXX_CONSTEXPR
+         : 1063   __normal_iterator(const _Iterator& __i) _GLIBCXX_NOEXCEPT
+         : 1064   : _M_current(__i) { }
+    0.00 :   4ffea8: ld      a2,232(a4)
+         : 1066   dnnl::impl::batch_normalization_pd_t::alpha() const:
+         : 106    if (entry_size_ok) return p.entry_[0].eltwise.alpha;
+    0.00 :   4ffeaa: ld      a4,240(a4)
+    0.00 :   4ffeac: beq     a4,a2,4ffeb4 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x304>
+    0.00 :   4ffeb0: flw     fa4,16(a2)
+         : 107    dnnl::impl::utils::enable_if<!dnnl::impl::nstl::is_integral<float>::value, float>::type dnnl::impl::math::relu_fwd<float, float, float>(float, float):
+         :
+         : 150    template <typename T, typename A,
+         : 151    typename U = typename utils::remove_reference<T>::type>
+         : 152    inline typename utils::enable_if<!nstl::is_integral<U>::value, U>::type
+         : 153    relu_fwd(T s, A alpha) ATTR_NO_MSAN {
+         : 154    return s > 0 ? s : (U)(s * alpha);
+    0.00 :   4ffeb4: flt.s   a4,fs2,fa5
+    0.00 :   4ffeb8: bnez    a4,4ffebe <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x30e>
+    0.00 :   4ffeba: fmul.s  fa5,fa5,fa4
+         : 150    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 276    _dst[sp] = with_relu
+    0.00 :   4ffebe: fsw     fa5,0(a3)
+    0.00 :   4ffec2: addi    a5,a5,4
+    0.00 :   4ffec4: addi    a3,a3,4
+    0.00 :   4ffec6: addi    a1,a1,1
+    0.00 :   4ffec8: beq     a5,a0,4fff04 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x354>
+         : 267    acc_data_t bn_res = sm * (_src[sp] - mean[off]) + sv;
+   20.00 :   4ffecc: ld      a4,40(s10)
+    0.00 :   4ffed0: flw     fa5,0(a5)
+         : 268    if (fuse_norm_relu) {
+    0.00 :   4ffed4: lbu     a2,128(s10)
+         : 267    acc_data_t bn_res = sm * (_src[sp] - mean[off]) + sv;
+   10.00 :   4ffed8: add     a4,a4,s9
+    0.00 :   4ffeda: flw     fa4,0(a4)
+    0.00 :   4ffede: fsub.s  fa5,fa5,fa4
+    0.00 :   4ffee2: fmadd.s fa5,fs0,fa5,fs1
+         : 268    if (fuse_norm_relu) {
+    0.00 :   4ffee6: beqz    a2,4ffe98 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x2e8>
+         : 269    if (bn_res <= 0) {
+    0.00 :   4ffee8: fle.s   a2,fa5,fs2
+         : 271    if (is_training) ws[d_off] = 0;
+    0.00 :   4ffeec: lbu     a4,129(s10)
+         : 269    if (bn_res <= 0) {
+    0.00 :   4ffef0: beqz    a2,4ffe8c <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x2dc>
+         : 271    if (is_training) ws[d_off] = 0;
+    0.00 :   4ffef2: beqz    a4,4ffefe <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x34e>
+    0.00 :   4ffef4: ld      a4,136(s10)
+    0.00 :   4ffef8: add     a4,a4,a1
+    0.00 :   4ffefa: sb      zero,0(a4)
+         : 270    bn_res = 0;
+    0.00 :   4ffefe: fmv.w.x fa5,zero
+    0.00 :   4fff02: j       4ffe98 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x2e8>
+         : 283    : bn_res;
+         : 284    }
+         : 285    if (utils::one_of(d_type, bf16, f16)) {
+         : 286    // convert dst from f32 to xf16
+         : 287    types::cvt_from_float(
+         : 288    dst + s_off + S_s, _dst + S_s, S_chunk);
+    0.00 :   4fff04: ld      a1,-184(s0)
+         : 282    types::cvt_from_float(
+    0.00 :   4fff08: ld      a0,120(s10)
+         : 283    dst + s_off + S_s, _dst + S_s, S_chunk);
+    0.00 :   4fff0c: add     s8,s8,a1
+    0.00 :   4fff0e: slli    s8,s8,0x1
+    0.00 :   4fff10: slli    a1,a1,0x2
+         : 287    void dnnl::impl::types::cvt_from_float<dnnl::impl::float16_t>(dnnl::impl::float16_t*, float const*, unsigned long):
+         : 593    cvt_float_to_float16(out, inp, nelems);
+    0.00 :   4fff12: add     a1,a1,s6
+    0.00 :   4fff14: mv      a2,s1
+    0.00 :   4fff16: add     a0,a0,s8
+    0.00 :   4fff18: jal     4c445a <dnnl::impl::cvt_float_to_float16(dnnl::impl::float16_t*, float const*, unsigned long)>
+         : 598    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 240    for (dim_t n = N_s; n < N_e; ++n) {
+    0.00 :   4fff1c: ld      a5,-192(s0)
+    0.00 :   4fff20: addi    s5,s5,1
+    0.00 :   4fff22: blt     s5,a5,4ffe26 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x276>
+    0.00 :   4fff26: ld      s11,-248(s0)
+         : 231    for (dim_t c = C_blk_s; c < C_blk_e; c++) {
+    0.00 :   4fff2a: ld      a5,-208(s0)
+    0.00 :   4fff2e: addi    s11,s11,1
+    0.00 :   4fff30: addi    s7,s7,1
+    0.00 :   4fff32: blt     s11,a5,4ffdb6 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x206>
+    0.00 :   4fff36: ld      s5,-288(s0)
+    0.00 :   4fff3a: ld      s8,-400(s0)
+    0.00 :   4fff3e: ld      s7,-408(s0)
+    0.00 :   4fff42: ld      s6,-416(s0)
+         : 119    for (int64_t it = 0; it < iters; ++it) {
+    0.00 :   4fff46: ld      a4,-272(s0)
+    0.00 :   4fff4a: ld      a5,-160(s0)
+    0.00 :   4fff4e: addi    a4,a4,1
+    0.00 :   4fff50: sd      a4,-272(s0)
+    0.00 :   4fff54: bge     a4,a5,500362 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x7b2>
+         : 120    size_t C_off = it * C_blks_per_iter;
+    0.00 :   4fff58: ld      s3,-168(s0)
+    0.00 :   4fff5c: j       4ffd68 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x1b8>
+         : 146    acc_data_t *variance_blk = variance + C_off;
+    0.00 :   4fff5e: ld      a5,48(s10)
+         : 147    for (dim_t c = C_blk_s; c < C_blk_e; c++) {
+    0.00 :   4fff62: ld      s9,-216(s0)
+    0.00 :   4fff66: ld      a1,-208(s0)
+         : 146    acc_data_t *variance_blk = variance + C_off;
+    0.00 :   4fff6a: sd      a5,-288(s0)
+         : 145    acc_data_t *mean_blk = mean + C_off;
+    0.00 :   4fff6e: ld      s11,40(s10)
+         : 147    for (dim_t c = C_blk_s; c < C_blk_e; c++) {
+    0.00 :   4fff72: bge     s9,a1,50005a <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x4aa>
+    0.00 :   4fff76: ld      a5,-192(s0)
+    0.00 :   4fff7a: mv      a4,s6
+    0.00 :   4fff7c: sd      s3,-248(s0)
+    0.00 :   4fff80: sd      s7,-408(s0)
+    0.00 :   4fff84: mv      s6,s8
+    0.00 :   4fff86: mv      s3,s2
+    0.00 :   4fff88: sd      s5,-400(s0)
+    0.00 :   4fff8c: mv      s7,s9
+    0.00 :   4fff8e: mv      s2,s1
+    0.00 :   4fff90: mv      s8,a4
+         : 150    for (dim_t n = N_s; n < N_e; ++n) {
+    0.00 :   4fff92: ld      s9,-200(s0)
+    0.00 :   4fff96: bge     s9,a5,5000cc <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x51c>
+         : 148    size_t off = (c + C_off) * SP;
+    0.00 :   4fff9a: ld      a4,-248(s0)
+    0.00 :   4fff9e: ld      a5,16(s10)
+         : 149    acc_data_t sum = 0;
+    0.00 :   4fffa2: fmv.w.x fs0,zero
+         : 148    size_t off = (c + C_off) * SP;
+    0.00 :   4fffa6: add     s1,a4,s7
+    0.00 :   4fffaa: mul     s1,s1,a5
+    0.00 :   4fffae: mv      a1,a5
+         : 152    size_t soff = off + n * C * SP;
+    0.00 :   4fffb0: ld      a5,24(s10)
+         : 155    = src_cvt_wsp + ithr * SP_cl_align;
+    0.00 :   4fffb4: ld      a4,64(s10)
+         : 154    acc_data_t *tmp_src
+    0.00 :   4fffb8: ld      a3,56(s10)
+         : 161    tmp_src + S_s, src + soff + S_s, S_chunk);
+    0.00 :   4fffbc: slli    a0,a2,0x2
+         : 152    size_t soff = off + n * C * SP;
+    0.00 :   4fffc0: mul     a5,s9,a5
+    0.00 :   4fffc4: mul     a5,a5,a1
+         : 161    tmp_src + S_s, src + soff + S_s, S_chunk);
+    0.00 :   4fffc8: add     a1,a2,s1
+         : 163    void dnnl::impl::types::cvt_to_float<dnnl::impl::float16_t>(float*, dnnl::impl::float16_t const*, unsigned long):
+         : 599    cvt_float16_to_float(out, inp, nelems);
+    0.00 :   4fffcc: mv      a2,s2
+         : 601    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 155    = src_cvt_wsp + ithr * SP_cl_align;
+    0.00 :   4fffce: mul     a4,s3,a4
+         : 161    tmp_src + S_s, src + soff + S_s, S_chunk);
+    0.00 :   4fffd2: add     a5,a5,a1
+         : 160    types::cvt_to_float(
+    0.00 :   4fffd4: ld      a1,72(s10)
+         : 161    tmp_src + S_s, src + soff + S_s, S_chunk);
+    0.00 :   4fffd8: slli    a5,a5,0x1
+         : 163    void dnnl::impl::types::cvt_to_float<dnnl::impl::float16_t>(float*, dnnl::impl::float16_t const*, unsigned long):
+    0.00 :   4fffda: add     a1,a1,a5
+         : 600    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 155    = src_cvt_wsp + ithr * SP_cl_align;
+    0.00 :   4fffdc: slli    a4,a4,0x2
+         : 154    acc_data_t *tmp_src
+    0.00 :   4fffde: add     s5,a3,a4
+         : 156    void dnnl::impl::types::cvt_to_float<dnnl::impl::float16_t>(float*, dnnl::impl::float16_t const*, unsigned long):
+    0.00 :   4fffe2: add     a0,a0,s5
+    0.00 :   4fffe4: jal     4c452e <dnnl::impl::cvt_float16_to_float(float*, dnnl::impl::float16_t const*, unsigned long)>
+         : 601    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 167    PRAGMA_OMP_SIMD(reduction(+ : sum))
+    0.00 :   4fffe8: ld      a2,-184(s0)
+    0.00 :   4fffec: ld      a4,-176(s0)
+    0.00 :   4ffff0: fmv.w.x fa5,zero
+    0.00 :   4ffff4: bge     a2,a4,500010 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x460>
+    0.00 :   4ffff8: slli    a4,a4,0x2
+    0.00 :   4ffffa: slli    a5,a2,0x2
+    0.00 :   4ffffe: add     a4,a4,s5
+    0.00 :   500000: add     a5,a5,s5
+         : 169    sum += scr_fp32[sp];
+    0.00 :   500002: flw     fa4,0(a5)
+    0.00 :   500006: addi    a5,a5,4
+    0.00 :   500008: fadd.s  fa5,fa5,fa4
+   30.00 :   50000c: bne     a4,a5,500002 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x452>
+         : 150    for (dim_t n = N_s; n < N_e; ++n) {
+    0.00 :   500010: ld      a5,-192(s0)
+    0.00 :   500014: addi    s9,s9,1
+         : 167    PRAGMA_OMP_SIMD(reduction(+ : sum))
+    0.00 :   500016: fadd.s  fs0,fs0,fa5
+         : 150    for (dim_t n = N_s; n < N_e; ++n) {
+    0.00 :   50001a: bge     s9,a5,500024 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x474>
+         : 152    size_t soff = off + n * C * SP;
+    0.00 :   50001e: ld      a1,16(s10)
+    0.00 :   500022: j       4fffb0 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x400>
+    0.00 :   500024: ld      a1,-208(s0)
+         : 172    ws_reduce[ws_iter_off + SP_N_ithr * C_blks_per_iter + c]
+    0.00 :   500028: ld      a0,-168(s0)
+         : 173    = sum;
+    0.00 :   50002c: ld      a6,80(s10)
+         : 172    ws_reduce[ws_iter_off + SP_N_ithr * C_blks_per_iter + c]
+    0.00 :   500030: mul     a0,s6,a0
+    0.00 :   500034: add     a0,a0,s7
+         : 173    = sum;
+    0.00 :   500036: slli    a0,a0,0x2
+    0.00 :   500038: add     a0,a0,a6
+         : 147    for (dim_t c = C_blk_s; c < C_blk_e; c++) {
+    0.00 :   50003a: addi    s7,s7,1
+         : 173    = sum;
+    0.00 :   50003c: fsw     fs0,0(a0)
+         : 147    for (dim_t c = C_blk_s; c < C_blk_e; c++) {
+    0.00 :   500040: blt     s7,a1,4fff92 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x3e2>
+    0.00 :   500044: mv      s1,s2
+    0.00 :   500046: ld      s5,-400(s0)
+    0.00 :   50004a: mv      s2,s3
+    0.00 :   50004c: ld      s7,-408(s0)
+    0.00 :   500050: ld      s3,-248(s0)
+    0.00 :   500054: mv      a5,s8
+    0.00 :   500056: mv      s8,s6
+    0.00 :   500058: mv      s6,a5
+         : 151    dnnl_thr_barrier():
+         : 69     #pragma omp barrier
+    0.00 :   50005a: auipc   ra,0xffd17
+    0.00 :   50005e: jalr    -1450(ra) # 216ab0 <GOMP_barrier@plt>
+         : 72     dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 178    for (dim_t c = C_blk_gl_s; c < C_blk_gl_e; c++) {
+    0.00 :   500062: bge     s7,s6,50043e <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x88e>
+         : 183    mean_blk[c] /= (N * SP);
+    0.00 :   500066: ld      a5,8(s10)
+    0.00 :   50006a: ld      a4,16(s10)
+    0.00 :   50006e: add     s9,s7,s3
+    0.00 :   500072: slli    a2,s9,0x2
+    0.00 :   500076: mul     a5,a5,a4
+    0.00 :   50007a: add     a2,a2,s11
+         : 182    + n * C_blks_per_iter + c];
+    0.00 :   50007c: ld      a0,-168(s0)
+         : 179    mean_blk[c] = 0.;
+    0.00 :   500080: sw      zero,0(a2)
+         : 183    mean_blk[c] /= (N * SP);
+    0.00 :   500084: fcvt.s.l        fa3,a5
+         : 180    for (dim_t n = 0; n < SP_N_nthr; n++)
+    0.00 :   500088: blez    s5,5000d2 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x522>
+    0.00 :   50008c: ld      a1,80(s10)
+    0.00 :   500090: slli    a0,a0,0x2
+    0.00 :   500092: mv      a5,s7
+         : 222    for (dim_t n = 0; n < SP_N_nthr; n++)
+    0.00 :   500094: mv      a6,s7
+         : 181    mean_blk[c] += ws_reduce[ws_iter_off
+    0.00 :   500096: fmv.w.x fa5,zero
+    0.00 :   50009a: slli    a5,a5,0x2
+    0.00 :   50009c: add     a5,a5,a1
+         : 180    for (dim_t n = 0; n < SP_N_nthr; n++)
+    0.00 :   50009e: li      a4,0
+         : 181    mean_blk[c] += ws_reduce[ws_iter_off
+    0.00 :   5000a0: flw     fa4,0(a5)
+         : 180    for (dim_t n = 0; n < SP_N_nthr; n++)
+    0.00 :   5000a4: addi    a4,a4,1
+    0.00 :   5000a6: add     a5,a5,a0
+         : 181    mean_blk[c] += ws_reduce[ws_iter_off
+    0.00 :   5000a8: fadd.s  fa5,fa5,fa4
+    0.00 :   5000ac: fsw     fa5,0(a2)
+         : 180    for (dim_t n = 0; n < SP_N_nthr; n++)
+   10.00 :   5000b0: bne     a4,s5,5000a0 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x4f0>
+         : 183    mean_blk[c] /= (N * SP);
+    0.00 :   5000b4: fdiv.s  fa5,fa5,fa3
+         : 178    for (dim_t c = C_blk_gl_s; c < C_blk_gl_e; c++) {
+    0.00 :   5000b8: addi    a6,a6,1
+         : 183    mean_blk[c] /= (N * SP);
+    0.00 :   5000ba: fsw     fa5,0(a2)
+         : 178    for (dim_t c = C_blk_gl_s; c < C_blk_gl_e; c++) {
+    0.00 :   5000be: beq     s6,a6,5000ee <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x53e>
+    0.00 :   5000c2: addi    a2,a2,4
+    0.00 :   5000c4: mv      a5,a6
+         : 179    mean_blk[c] = 0.;
+    0.00 :   5000c6: sw      zero,0(a2)
+         : 180    for (dim_t n = 0; n < SP_N_nthr; n++)
+    0.00 :   5000ca: j       500096 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x4e6>
+         : 149    acc_data_t sum = 0;
+    0.00 :   5000cc: fmv.w.x fs0,zero
+    0.00 :   5000d0: j       500028 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x478>
+         : 183    mean_blk[c] /= (N * SP);
+    0.00 :   5000d2: fmv.w.x fa5,zero
+         : 180    for (dim_t n = 0; n < SP_N_nthr; n++)
+    0.00 :   5000d6: mv      a5,s7
+         : 183    mean_blk[c] /= (N * SP);
+    0.00 :   5000d8: fdiv.s  fa5,fa5,fa3
+    0.00 :   5000dc: j       5000e4 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x534>
+         : 178    for (dim_t c = C_blk_gl_s; c < C_blk_gl_e; c++) {
+    0.00 :   5000de: addi    a2,a2,4
+         : 179    mean_blk[c] = 0.;
+    0.00 :   5000e0: sw      zero,0(a2)
+         : 183    mean_blk[c] /= (N * SP);
+    0.00 :   5000e4: fsw     fa5,0(a2)
+         : 178    for (dim_t c = C_blk_gl_s; c < C_blk_gl_e; c++) {
+    0.00 :   5000e8: addi    a5,a5,1
+    0.00 :   5000ea: bne     a5,s6,5000de <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x52e>
+         : 179    dnnl_thr_barrier():
+    0.00 :   5000ee: auipc   ra,0xffd17
+    0.00 :   5000f2: jalr    -1598(ra) # 216ab0 <GOMP_barrier@plt>
+         : 71     dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 188    for (dim_t c = C_blk_s; c < C_blk_e; c++) {
+    0.00 :   5000f6: ld      a4,-216(s0)
+    0.00 :   5000fa: ld      a1,-208(s0)
+    0.00 :   5000fe: bge     a4,a1,500434 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x884>
+    0.00 :   500102: ld      a5,-192(s0)
+    0.00 :   500106: add     s11,a4,s3
+    0.00 :   50010a: sd      s5,-400(s0)
+    0.00 :   50010e: sd      s8,-248(s0)
+    0.00 :   500112: sd      s3,-408(s0)
+         : 191    for (dim_t n = N_s; n < N_e; ++n) {
+    0.00 :   500116: ld      s8,-200(s0)
+    0.00 :   50011a: bge     s8,a5,500294 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x6e4>
+         : 202    tmp_src + S_s, src + soff + S_s, S_chunk);
+    0.00 :   50011e: ld      a2,-184(s0)
+         : 190    acc_data_t sum = 0.;
+    0.00 :   500122: fmv.w.x fs0,zero
+    0.00 :   500126: mv      s3,s8
+    0.00 :   500128: slli    s9,s11,0x2
+    0.00 :   50012c: mv      s8,a4
+         : 193    size_t soff = off * SP + n * C * SP;
+    0.00 :   50012e: ld      a5,24(s10)
+    0.00 :   500132: ld      a4,16(s10)
+         : 196    = src_cvt_wsp + ithr * SP_cl_align;
+    0.00 :   500136: ld      a6,64(s10)
+         : 193    size_t soff = off * SP + n * C * SP;
+    0.00 :   50013a: mul     a5,s3,a5
+         : 195    acc_data_t *tmp_src
+    0.00 :   50013e: ld      a7,56(s10)
+         : 201    types::cvt_to_float(
+    0.00 :   500142: ld      a1,72(s10)
+         : 202    tmp_src + S_s, src + soff + S_s, S_chunk);
+    0.00 :   500146: slli    a0,a2,0x2
+         : 193    size_t soff = off * SP + n * C * SP;
+    0.00 :   50014a: mul     a5,a5,a4
+    0.00 :   50014e: mul     a4,a4,s11
+         : 196    = src_cvt_wsp + ithr * SP_cl_align;
+    0.00 :   500152: mul     a6,s2,a6
+         : 202    tmp_src + S_s, src + soff + S_s, S_chunk);
+    0.00 :   500156: add     a4,a4,a2
+    0.00 :   500158: add     a5,a5,a4
+    0.00 :   50015a: slli    a5,a5,0x1
+         : 206    void dnnl::impl::types::cvt_to_float<dnnl::impl::float16_t>(float*, dnnl::impl::float16_t const*, unsigned long):
+    0.00 :   50015c: mv      a2,s1
+    0.00 :   50015e: add     a1,a1,a5
+         : 601    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 196    = src_cvt_wsp + ithr * SP_cl_align;
+    0.00 :   500160: slli    a6,a6,0x2
+         : 195    acc_data_t *tmp_src
+    0.00 :   500162: add     s5,a7,a6
+         : 197    void dnnl::impl::types::cvt_to_float<dnnl::impl::float16_t>(float*, dnnl::impl::float16_t const*, unsigned long):
+    0.00 :   500166: add     a0,a0,s5
+    0.00 :   500168: jal     4c452e <dnnl::impl::cvt_float16_to_float(float*, dnnl::impl::float16_t const*, unsigned long)>
+         : 601    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 208    PRAGMA_OMP_SIMD(reduction(+ : sum))
+    0.00 :   50016c: ld      a2,-184(s0)
+    0.00 :   500170: ld      a4,-176(s0)
+    0.00 :   500174: bge     a2,a4,50025a <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x6aa>
+         : 210    acc_data_t m = _src[sp] - mean[off];
+    0.00 :   500178: ld      a5,40(s10)
+         : 208    PRAGMA_OMP_SIMD(reduction(+ : sum))
+    0.00 :   50017c: fmv.w.x fa4,zero
+    0.00 :   500180: slli    a4,a4,0x2
+         : 210    acc_data_t m = _src[sp] - mean[off];
+    0.00 :   500182: add     a5,a5,s9
+    0.00 :   500184: flw     fa3,0(a5)
+    0.00 :   500188: slli    a5,a2,0x2
+    0.00 :   50018c: add     a4,a4,s5
+    0.00 :   50018e: add     a5,a5,s5
+    0.00 :   500190: flw     fa5,0(a5)
+    0.00 :   500194: addi    a5,a5,4
+    0.00 :   500196: fsub.s  fa5,fa5,fa3
+         : 211    sum += m * m;
+    0.00 :   50019a: fmadd.s fa4,fa5,fa5,fa4
+   30.00 :   50019e: bne     a4,a5,500190 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x5e0>
+         : 191    for (dim_t n = N_s; n < N_e; ++n) {
+    0.00 :   5001a2: ld      a5,-192(s0)
+    0.00 :   5001a6: addi    s3,s3,1
+         : 208    PRAGMA_OMP_SIMD(reduction(+ : sum))
+    0.00 :   5001a8: fadd.s  fs0,fs0,fa4
+         : 191    for (dim_t n = N_s; n < N_e; ++n) {
+    0.00 :   5001ac: blt     s3,a5,50012e <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x57e>
+    0.00 :   5001b0: ld      a1,-208(s0)
+    0.00 :   5001b4: mv      a4,s8
+         : 214    ws_reduce[ws_iter_off + SP_N_ithr * C_blks_per_iter + c]
+    0.00 :   5001b6: ld      a3,-168(s0)
+    0.00 :   5001ba: ld      a0,-248(s0)
+         : 215    = sum;
+    0.00 :   5001be: ld      a2,80(s10)
+         : 188    for (dim_t c = C_blk_s; c < C_blk_e; c++) {
+    0.00 :   5001c2: addi    s11,s11,1
+         : 214    ws_reduce[ws_iter_off + SP_N_ithr * C_blks_per_iter + c]
+    0.00 :   5001c4: mul     a3,a0,a3
+    0.00 :   5001c8: add     a3,a3,a4
+         : 215    = sum;
+    0.00 :   5001ca: slli    a3,a3,0x2
+    0.00 :   5001cc: add     a3,a3,a2
+         : 188    for (dim_t c = C_blk_s; c < C_blk_e; c++) {
+    0.00 :   5001ce: addi    a4,a4,1
+         : 215    = sum;
+    0.00 :   5001d0: fsw     fs0,0(a3)
+         : 188    for (dim_t c = C_blk_s; c < C_blk_e; c++) {
+    0.00 :   5001d4: blt     a4,a1,500116 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x566>
+    0.00 :   5001d8: ld      s3,-408(s0)
+    0.00 :   5001dc: ld      s5,-400(s0)
+    0.00 :   5001e0: ld      s8,-248(s0)
+    0.00 :   5001e4: add     s9,s7,s3
+         : 72     dnnl_thr_barrier():
+    0.00 :   5001e8: auipc   ra,0xffd17
+    0.00 :   5001ec: jalr    -1848(ra) # 216ab0 <GOMP_barrier@plt>
+         : 71     dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 220    for (dim_t c = C_blk_gl_s; c < C_blk_gl_e; c++) {
+    0.00 :   5001f0: bge     s7,s6,50028a <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x6da>
+    0.00 :   5001f4: ld      a4,-288(s0)
+    0.00 :   5001f8: slli    a3,s9,0x2
+         : 225    variance_blk[c] /= (N * SP);
+    0.00 :   5001fc: ld      a5,8(s10)
+    0.00 :   500200: add     a3,a3,a4
+    0.00 :   500202: ld      a4,16(s10)
+         : 224    + n * C_blks_per_iter + c];
+    0.00 :   500206: ld      a2,-168(s0)
+         : 221    variance_blk[c] = 0.;
+    0.00 :   50020a: sw      zero,0(a3)
+         : 225    variance_blk[c] /= (N * SP);
+    0.00 :   50020e: mul     a5,a5,a4
+    0.00 :   500212: fcvt.s.l        fa3,a5
+         : 222    for (dim_t n = 0; n < SP_N_nthr; n++)
+    0.00 :   500216: blez    s5,50026e <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x6be>
+    0.00 :   50021a: ld      a1,80(s10)
+    0.00 :   50021e: slli    a2,a2,0x2
+    0.00 :   500220: mv      a5,s7
+    0.00 :   500222: mv      a0,s7
+         : 223    variance_blk[c] += ws_reduce[ws_iter_off
+    0.00 :   500224: fmv.w.x fa5,zero
+    0.00 :   500228: slli    a5,a5,0x2
+    0.00 :   50022a: add     a5,a5,a1
+         : 222    for (dim_t n = 0; n < SP_N_nthr; n++)
+    0.00 :   50022c: li      a4,0
+         : 223    variance_blk[c] += ws_reduce[ws_iter_off
+    0.00 :   50022e: flw     fa4,0(a5)
+         : 222    for (dim_t n = 0; n < SP_N_nthr; n++)
+    0.00 :   500232: addi    a4,a4,1
+    0.00 :   500234: add     a5,a5,a2
+         : 223    variance_blk[c] += ws_reduce[ws_iter_off
+    0.00 :   500236: fadd.s  fa5,fa5,fa4
+    0.00 :   50023a: fsw     fa5,0(a3)
+         : 222    for (dim_t n = 0; n < SP_N_nthr; n++)
+    0.00 :   50023e: bne     a4,s5,50022e <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x67e>
+         : 225    variance_blk[c] /= (N * SP);
+    0.00 :   500242: fdiv.s  fa5,fa5,fa3
+         : 220    for (dim_t c = C_blk_gl_s; c < C_blk_gl_e; c++) {
+    0.00 :   500246: addi    a0,a0,1
+         : 225    variance_blk[c] /= (N * SP);
+    0.00 :   500248: fsw     fa5,0(a3)
+         : 220    for (dim_t c = C_blk_gl_s; c < C_blk_gl_e; c++) {
+    0.00 :   50024c: beq     a0,s6,50028a <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x6da>
+    0.00 :   500250: addi    a3,a3,4
+    0.00 :   500252: mv      a5,a0
+         : 221    variance_blk[c] = 0.;
+    0.00 :   500254: sw      zero,0(a3)
+         : 222    for (dim_t n = 0; n < SP_N_nthr; n++)
+    0.00 :   500258: j       500224 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x674>
+         : 208    PRAGMA_OMP_SIMD(reduction(+ : sum))
+    0.00 :   50025a: fmv.w.x fa4,zero
+         : 191    for (dim_t n = N_s; n < N_e; ++n) {
+    0.00 :   50025e: ld      a5,-192(s0)
+    0.00 :   500262: addi    s3,s3,1
+         : 208    PRAGMA_OMP_SIMD(reduction(+ : sum))
+    0.00 :   500264: fadd.s  fs0,fs0,fa4
+         : 191    for (dim_t n = N_s; n < N_e; ++n) {
+    0.00 :   500268: blt     s3,a5,50012e <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x57e>
+    0.00 :   50026c: j       5001b0 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x600>
+         : 225    variance_blk[c] /= (N * SP);
+    0.00 :   50026e: fmv.w.x fa5,zero
+         : 222    for (dim_t n = 0; n < SP_N_nthr; n++)
+    0.00 :   500272: mv      a5,s7
+         : 225    variance_blk[c] /= (N * SP);
+    0.00 :   500274: fdiv.s  fa5,fa5,fa3
+    0.00 :   500278: j       500280 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x6d0>
+         : 220    for (dim_t c = C_blk_gl_s; c < C_blk_gl_e; c++) {
+    0.00 :   50027a: addi    a3,a3,4
+         : 221    variance_blk[c] = 0.;
+    0.00 :   50027c: sw      zero,0(a3)
+         : 225    variance_blk[c] /= (N * SP);
+    0.00 :   500280: fsw     fa5,0(a3)
+         : 220    for (dim_t c = C_blk_gl_s; c < C_blk_gl_e; c++) {
+    0.00 :   500284: addi    a5,a5,1
+    0.00 :   500286: bne     a5,s6,50027a <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x6ca>
+         : 221    dnnl_thr_barrier():
+    0.00 :   50028a: auipc   ra,0xffd17
+    0.00 :   50028e: jalr    -2010(ra) # 216ab0 <GOMP_barrier@plt>
+         : 70     }
+    0.00 :   500292: j       4ffd94 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x1e4>
+         : 72     dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 190    acc_data_t sum = 0.;
+    0.00 :   500294: fmv.w.x fs0,zero
+    0.00 :   500298: j       5001b6 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x606>
+         : 125    if (SP_N_nthr == 1 && dnnl_thr_syncable()) dnnl_thr_barrier();
+    0.00 :   50029a: beq     s5,s4,500424 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x874>
+         : 128    spatial_thr_allowed = bnorm_utils::thread_balance(do_blocking,
+    0.00 :   50029e: ld      a4,-384(s0)
+    0.00 :   5002a2: ld      a7,16(s10)
+    0.00 :   5002a6: ld      a5,8(s10)
+    0.00 :   5002aa: lbu     a0,0(s10)
+    0.00 :   5002ae: sd      a4,80(sp)
+    0.00 :   5002b0: ld      a4,-344(s0)
+         : 127    S_s = S_e = C_blk_s = C_blk_e = N_s = N_e = 0;
+    0.00 :   5002b4: sd      zero,-192(s0)
+    0.00 :   5002b8: sd      zero,-200(s0)
+         : 128    spatial_thr_allowed = bnorm_utils::thread_balance(do_blocking,
+    0.00 :   5002bc: sd      a4,72(sp)
+    0.00 :   5002be: ld      a4,-336(s0)
+         : 127    S_s = S_e = C_blk_s = C_blk_e = N_s = N_e = 0;
+    0.00 :   5002c2: sd      zero,-208(s0)
+    0.00 :   5002c6: sd      zero,-216(s0)
+         : 128    spatial_thr_allowed = bnorm_utils::thread_balance(do_blocking,
+    0.00 :   5002ca: sd      a4,64(sp)
+    0.00 :   5002cc: ld      a4,-376(s0)
+    0.00 :   5002d0: ld      s1,-264(s0)
+    0.00 :   5002d4: ld      a1,-280(s0)
+    0.00 :   5002d8: sd      a4,56(sp)
+    0.00 :   5002da: ld      a4,-368(s0)
+    0.00 :   5002de: ld      s5,-256(s0)
+    0.00 :   5002e2: mv      a6,s1
+    0.00 :   5002e4: sd      a4,48(sp)
+    0.00 :   5002e6: ld      a4,-328(s0)
+    0.00 :   5002ea: mv      a3,s2
+    0.00 :   5002ec: li      a2,0
+    0.00 :   5002ee: sd      a4,40(sp)
+    0.00 :   5002f0: ld      a4,-320(s0)
+    0.00 :   5002f4: sd      a4,32(sp)
+    0.00 :   5002f6: ld      a4,-360(s0)
+    0.00 :   5002fa: sd      a4,24(sp)
+    0.00 :   5002fc: ld      a4,-352(s0)
+    0.00 :   500300: sd      a4,16(sp)
+    0.00 :   500302: ld      a4,-312(s0)
+    0.00 :   500306: sd      a4,8(sp)
+    0.00 :   500308: ld      a4,-304(s0)
+    0.00 :   50030c: sd      a4,0(sp)
+         : 127    S_s = S_e = C_blk_s = C_blk_e = N_s = N_e = 0;
+    0.00 :   50030e: sd      zero,-176(s0)
+         : 128    spatial_thr_allowed = bnorm_utils::thread_balance(do_blocking,
+    0.00 :   500312: ld      t1,-392(s0)
+    0.00 :   500316: mv      a4,s5
+         : 127    S_s = S_e = C_blk_s = C_blk_e = N_s = N_e = 0;
+    0.00 :   500318: sd      zero,-184(s0)
+         : 128    spatial_thr_allowed = bnorm_utils::thread_balance(do_blocking,
+    0.00 :   50031c: sd      t1,88(sp)
+    0.00 :   50031e: auipc   ra,0xffec3
+    0.00 :   500322: jalr    1254(ra) # 3c3804 <dnnl::impl::cpu::bnorm_utils::thread_balance(bool, bool, bool, int, int, long, long, long, int&, int&, long&, long&, int&, int&, long&, long&, int&, int&, long&, long&)>
+         : 132    void dnnl::impl::balance211<long, int>(long, int, int, long&, long&):
+         : 201    if (team <= 1 || n == 0) {
+    0.00 :   500326: ld      a4,-296(s0)
+         : 203    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 132    C_blks_per_iter = last_iter_blks;
+    0.00 :   50032a: sd      s1,-168(s0)
+         : 128    spatial_thr_allowed = bnorm_utils::thread_balance(do_blocking,
+    0.00 :   50032e: sd      a0,-280(s0)
+         : 130    void dnnl::impl::balance211<long, int>(long, int, int, long&, long&):
+    0.00 :   500332: bnez    a4,50039e <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x7ee>
+         : 202    dnnl::impl::utils::enable_if<std::is_integral<long>::value&&(std::is_integral<long>::value||std::is_enum<long>::value), dnnl::impl::utils::remove_reference<long>::type>::type dnnl::impl::utils::div_up<long, long>(long, long):
+         : 369    if (a <= 0) return 0;
+    0.00 :   500334: blez    s1,50042e <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x87e>
+         : 370    return static_cast<typename remove_reference<T>::type>(1 + (a - 1) / b);
+    0.00 :   500338: addi    s6,s1,-1
+    0.00 :   50033c: div     s6,s6,s5
+    0.00 :   500340: addi    a4,s6,1
+         : 374    void dnnl::impl::balance211<long, int>(long, int, int, long&, long&):
+         : 209    T T1 = n - n2 * (T)team;
+    0.00 :   500344: ld      a5,-256(s0)
+    0.00 :   500348: ld      a3,-264(s0)
+    0.00 :   50034c: mul     a5,a5,s6
+    0.00 :   500350: sub     a5,a3,a5
+         : 210    n_my = (T)tid < T1 ? n1 : n2;
+    0.00 :   500354: bge     s2,a5,5003c2 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x812>
+    0.00 :   500358: mv      s6,a4
+         : 211    n_start = (T)tid <= T1 ? (T)tid * n1 : T1 * n1 + ((T)tid - T1) * n2;
+    0.00 :   50035a: mul     s7,a4,s2
+         : 214    n_end += n_start;
+    0.00 :   50035e: add     s6,s6,s7
+    0.00 :   500360: j       5003a4 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x7f4>
+         : 217    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+    0.00 :   500362: ld      s4,464(sp)
+    0.00 :   500364: ld      s5,456(sp)
+    0.00 :   500366: ld      s7,440(sp)
+    0.00 :   500368: ld      s8,432(sp)
+    0.00 :   50036a: ld      s10,416(sp)
+    0.00 :   50036c: ld      s11,408(sp)
+    0.00 :   50036e: fld     fs0,392(sp)
+    0.00 :   500370: fld     fs1,384(sp)
+    0.00 :   500372: fld     fs2,376(sp)
+    0.00 :   500374: fld     fs3,368(sp)
+         : 93     parallel(nthr, [= COMPAT_THIS_CAPTURE](const int ithr, const int nthr) {
+    0.00 :   500376: auipc   a5,0xfb2
+    0.00 :   50037a: ld      a5,-1574(a5) # 14b1d50 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   50037e: ld      a4,-152(s0)
+    0.00 :   500382: ld      a5,0(a5)
+    0.00 :   500384: xor     a5,a5,a4
+    0.00 :   500386: li      a4,0
+    0.00 :   500388: bnez    a5,50046c <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x8bc>
+    0.00 :   50038a: ld      ra,504(sp)
+    0.00 :   50038c: ld      s0,496(sp)
+    0.00 :   50038e: ld      s1,488(sp)
+    0.00 :   500390: ld      s2,480(sp)
+    0.00 :   500392: ld      s3,472(sp)
+    0.00 :   500394: ld      s6,448(sp)
+    0.00 :   500396: ld      s9,424(sp)
+    0.00 :   500398: addi    sp,sp,512
+    0.00 :   50039c: ret
+         : 110    void dnnl::impl::balance211<long, int>(long, int, int, long&, long&):
+    0.00 :   50039e: ld      s6,-264(s0)
+         : 202    n_start = 0;
+    0.00 :   5003a2: li      s7,0
+         : 204    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 134    SP_N_ithr = N_ithr * S_nthr + S_ithr;
+    0.00 :   5003a4: lw      a4,-220(s0)
+    0.00 :   5003a8: lw      a5,-232(s0)
+    0.00 :   5003ac: lw      s8,-224(s0)
+         : 135    SP_N_nthr = N_nthr * S_nthr;
+    0.00 :   5003b0: lw      s5,-228(s0)
+         : 134    SP_N_ithr = N_ithr * S_nthr + S_ithr;
+    0.00 :   5003b4: mulw    a5,a5,a4
+         : 135    SP_N_nthr = N_nthr * S_nthr;
+    0.00 :   5003b8: mulw    s5,s5,a4
+         : 134    SP_N_ithr = N_ithr * S_nthr + S_ithr;
+    0.00 :   5003bc: addw    s8,s8,a5
+    0.00 :   5003c0: j       4ffd7a <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x1ca>
+         : 137    void dnnl::impl::balance211<long, int>(long, int, int, long&, long&):
+         : 211    n_start = (T)tid <= T1 ? (T)tid * n1 : T1 * n1 + ((T)tid - T1) * n2;
+    0.00 :   5003c2: beq     a5,s2,50035a <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x7aa>
+    0.00 :   5003c6: sub     s7,s2,a5
+    0.00 :   5003ca: mul     s7,s7,s6
+    0.00 :   5003ce: mul     a4,a4,a5
+    0.00 :   5003d2: add     s7,s7,a4
+         : 214    n_end += n_start;
+    0.00 :   5003d4: add     s6,s6,s7
+    0.00 :   5003d6: j       5003a4 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x7f4>
+         : 217    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 106    size_t working_set_size = N * SP * sizeof(data_t);
+    0.00 :   5003d8: ld      a5,16(s9)
+    0.00 :   5003dc: ld      a2,8(s9)
+         : 107    bnorm_utils::cache_balance(
+    0.00 :   5003e0: ld      a3,-256(s0)
+    0.00 :   5003e4: addi    a4,s0,-168
+         : 106    size_t working_set_size = N * SP * sizeof(data_t);
+    0.00 :   5003e8: mul     a0,a2,a5
+         : 107    bnorm_utils::cache_balance(
+    0.00 :   5003ec: addi    a5,s0,-160
+    0.00 :   5003f0: slli    a0,a0,0x1
+    0.00 :   5003f2: auipc   ra,0xffec3
+    0.00 :   5003f6: jalr    858(ra) # 3c374c <dnnl::impl::cpu::bnorm_utils::cache_balance(unsigned long, long, long, int, long&, long&)>
+         : 111    int64_t last_iter_blks = C - (iters - 1) * C_blks_per_iter;
+    0.00 :   5003fa: ld      a5,-160(s0)
+    0.00 :   5003fe: ld      a1,-168(s0)
+    0.00 :   500402: ld      a4,24(s9)
+    0.00 :   500406: addi    a5,a5,-1
+    0.00 :   500408: mul     a5,a5,a1
+         : 112    bool spatial_thr_allowed = bnorm_utils::thread_balance(do_blocking,
+    0.00 :   50040c: lbu     a0,0(s9)
+         : 111    int64_t last_iter_blks = C - (iters - 1) * C_blks_per_iter;
+    0.00 :   500410: sub     a5,a4,a5
+    0.00 :   500414: sd      a5,-264(s0)
+    0.00 :   500418: j       4ffc28 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x78>
+         : 115    void dnnl::impl::balance211<long, int>(long, int, int, long&, long&):
+         : 210    n_my = (T)tid < T1 ? n1 : n2;
+    0.00 :   50041a: mv      s6,a4
+         : 211    n_start = (T)tid <= T1 ? (T)tid * n1 : T1 * n1 + ((T)tid - T1) * n2;
+    0.00 :   50041c: mul     t1,a4,s2
+         : 214    n_end += n_start;
+    0.00 :   500420: add     s6,s6,t1
+    0.00 :   500422: j       4ffd0c <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x15c>
+         : 217    dnnl_thr_barrier():
+         : 69     #pragma omp barrier
+    0.00 :   500424: auipc   ra,0xffd16
+    0.00 :   500428: jalr    1676(ra) # 216ab0 <GOMP_barrier@plt>
+         : 70     }
+    0.00 :   50042c: j       50029e <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x6ee>
+         : 72     dnnl::impl::utils::enable_if<std::is_integral<long>::value&&(std::is_integral<long>::value||std::is_enum<long>::value), dnnl::impl::utils::remove_reference<long>::type>::type dnnl::impl::utils::div_up<long, long>(long, long):
+    0.00 :   50042e: li      s6,-1
+         : 369    if (a <= 0) return 0;
+    0.00 :   500430: li      a4,0
+    0.00 :   500432: j       500344 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x794>
+         : 372    dnnl_thr_barrier():
+         : 69     #pragma omp barrier
+    0.00 :   500434: auipc   ra,0xffd16
+    0.00 :   500438: jalr    1660(ra) # 216ab0 <GOMP_barrier@plt>
+         : 72     dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 220    for (dim_t c = C_blk_gl_s; c < C_blk_gl_e; c++) {
+    0.00 :   50043c: j       5001f4 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x644>
+         : 222    dnnl_thr_barrier():
+    0.00 :   50043e: auipc   ra,0xffd16
+    0.00 :   500442: jalr    1650(ra) # 216ab0 <GOMP_barrier@plt>
+         : 71     dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 188    for (dim_t c = C_blk_s; c < C_blk_e; c++) {
+    0.00 :   500446: ld      a4,-216(s0)
+    0.00 :   50044a: ld      a1,-208(s0)
+    0.00 :   50044e: blt     a4,a1,500102 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x552>
+         : 190    dnnl_thr_barrier():
+    0.00 :   500452: auipc   ra,0xffd16
+    0.00 :   500456: jalr    1630(ra) # 216ab0 <GOMP_barrier@plt>
+         : 71     dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 220    for (dim_t c = C_blk_gl_s; c < C_blk_gl_e; c++) {
+    0.00 :   50045a: j       50028a <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x6da>
+         : 222    dnnl::impl::utils::enable_if<std::is_integral<long>::value&&(std::is_integral<long>::value||std::is_enum<long>::value), dnnl::impl::utils::remove_reference<long>::type>::type dnnl::impl::utils::div_up<long, long>(long, long):
+    0.00 :   50045c: li      s6,-1
+    0.00 :   50045e: li      a4,0
+    0.00 :   500460: j       4ffce0 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x130>
+         : 371    dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const:
+         : 234    = static_cast<acc_data_t>(sqrtf(variance[off] + eps));
+    0.00 :   500462: auipc   ra,0xffd16
+    0.00 :   500466: jalr    1102(ra) # 2168b0 <sqrtf@plt>
+    0.00 :   50046a: j       4ffde0 <dnnl::impl::cpu::ncsp_batch_normalization_fwd_t<(dnnl_data_type_t)1>::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(int, int)#1}::operator()(int, int) const+0x230>
+    0.00 :   50046c: sd      s4,464(sp)
+    0.00 :   50046e: sd      s5,456(sp)
+    0.00 :   500470: sd      s7,440(sp)
+    0.00 :   500472: sd      s8,432(sp)
+    0.00 :   500474: sd      s10,416(sp)
+    0.00 :   500476: sd      s11,408(sp)
+    0.00 :   500478: fsd     fs0,392(sp)
+    0.00 :   50047a: fsd     fs1,384(sp)
+    0.00 :   50047c: fsd     fs2,376(sp)
+    0.00 :   50047e: fsd     fs3,368(sp)
+         : 93     parallel(nthr, [= COMPAT_THIS_CAPTURE](const int ithr, const int nthr) {
+    0.00 :   500480: auipc   ra,0xffd16
+    0.00 :   500484: jalr    2016(ra) # 216c60 <__stack_chk_fail@plt>

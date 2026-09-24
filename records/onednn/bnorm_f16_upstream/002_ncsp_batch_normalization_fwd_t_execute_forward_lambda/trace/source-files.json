@@ -1,0 +1,12 @@
+{
+  "files": {
+    "blueprint.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/bnorm_f16_upstream/002_ncsp_batch_normalization_fwd_t_execute_forward_lambda/blueprint_onednn_bnorm_f16_upstream_002.json",
+    "diagnosis.md": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/bnorm_f16_upstream/002_ncsp_batch_normalization_fwd_t_execute_forward_lambda/diaglog_onednn_bnorm_f16_upstream_002.md",
+    "evidence/annotate.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/bnorm_f16_upstream/002_ncsp_batch_normalization_fwd_t_execute_forward_lambda/002-dnnl：：impl：：cpu：：ncsp_batch_normalization_fwd_t＜(dnnl_data_type_t)1＞：：execute_forward(dnnl：：impl：：exec_ctx_t const&) const：：{lambda(int, i-6a3302f65ba6-annotate.txt",
+    "evidence/metadata.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/bnorm_f16_upstream/002_ncsp_batch_normalization_fwd_t_execute_forward_lambda/metadata.json",
+    "evidence/perf-stat.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/bnorm_f16_upstream/002_ncsp_batch_normalization_fwd_t_execute_forward_lambda/perf_stat.txt"
+  },
+  "format_version": 1,
+  "kind": "onednn_round2_source_map",
+  "trace_directory": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/bnorm_f16_upstream/002_ncsp_batch_normalization_fwd_t_execute_forward_lambda"
+}

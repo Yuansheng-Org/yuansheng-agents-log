@@ -1,0 +1,64 @@
+commit 58d38e15199f7b193d08b95b0a11ede07f693d3e
+Author: root <root@LAPTOP-FVNNQNU9.localdomain>
+Date:   Wed Sep 9 18:55:54 2026 +0800
+
+    cpu: rv64: widen pool f16 channel vector to LMUL m2/m4
+    
+    Raise the f16 pooling channel vector LMUL (max e16/m1->m2, avg f32/m2->m4)
+    and align the max-training argmax narrow/widen epilogue, doubling channels
+    per chunk and halving the per-chunk epilogue overhead.
+
+diff --git a/src/cpu/rv64/jit_uni_pool_kernel.cpp b/src/cpu/rv64/jit_uni_pool_kernel.cpp
+index 5f78cc0490..7d9f240a31 100644
+--- a/src/cpu/rv64/jit_uni_pool_kernel.cpp
++++ b/src/cpu/rv64/jit_uni_pool_kernel.cpp
+@@ -1560,7 +1560,7 @@ void jit_uni_pool_ncsp_kernel_t<isa, d_type>::generate_f16() {
+     // Initialize accumulator. Use vmv.v.x with the raw bit pattern to avoid
+     // f16 scalar NaN-boxing concerns.
+     if (is_max_pool_) {
+-        vsetvli(t0, s2, SEW::e16, LMUL::m1, VTA::ta, VMA::ma);
++        vsetvli(t0, s2, SEW::e16, LMUL::m2, VTA::ta, VMA::ma);
+         li(t1, 0xFBFF); // f16 lowest (-65504.0)
+         vmv_v_x(v_acc, t1);
+         if (max_train) {
+@@ -1574,10 +1574,10 @@ void jit_uni_pool_ncsp_kernel_t<isa, d_type>::generate_f16() {
+                 mv(t3, s11); // running window index = pos_base (reset per chunk)
+         }
+     } else {
+-        // avg: f32m2 accumulator zeroed; window runs under e16/m1 (same vl).
+-        vsetvli(t0, s2, SEW::e32, LMUL::m2, VTA::ta, VMA::ma);
++        // avg: f32m4 accumulator zeroed; window runs under e16/m2 (same vl).
++        vsetvli(t0, s2, SEW::e32, LMUL::m4, VTA::ta, VMA::ma);
+         vmv_v_x(v_acc, x0);
+-        vsetvli(t0, s2, SEW::e16, LMUL::m1, VTA::ta, VMA::ma);
++        vsetvli(t0, s2, SEW::e16, LMUL::m2, VTA::ta, VMA::ma);
+     }
+ 
+     mv(a3, s6);
+@@ -1691,7 +1691,7 @@ void jit_uni_pool_ncsp_kernel_t<isa, d_type>::generate_f16() {
+         ld(t2, reg_param, GET_OFF_P(ws_vec_byte_stride));
+         li(t1, static_cast<int>(ind_sz));
+         if (ind_u8) {
+-            vsetvli(t3, s2, SEW::e8, LMUL::mf2, VTA::ta, VMA::ma);
++            vsetvli(t3, s2, SEW::e8, LMUL::m1, VTA::ta, VMA::ma);
+             vnsrl_wi(v_tmp, v_ind, 0);
+             Label u8_unit, u8_done;
+             beq(t2, t1, u8_unit);
+@@ -1701,7 +1701,7 @@ void jit_uni_pool_ncsp_kernel_t<isa, d_type>::generate_f16() {
+             vse8_v(v_tmp, s10);
+             L(u8_done);
+         } else {
+-            vsetvli(t3, s2, SEW::e32, LMUL::m2, VTA::ta, VMA::ma);
++            vsetvli(t3, s2, SEW::e32, LMUL::m4, VTA::ta, VMA::ma);
+             vzext_vf2(v28, v_ind);
+             Label s32_unit, s32_done;
+             beq(t2, t1, s32_unit);
+@@ -1711,7 +1711,7 @@ void jit_uni_pool_ncsp_kernel_t<isa, d_type>::generate_f16() {
+             vse32_v(v28, s10);
+             L(s32_done);
+         }
+-        vsetvli(t0, s2, SEW::e16, LMUL::m1, VTA::ta,
++        vsetvli(t0, s2, SEW::e16, LMUL::m2, VTA::ta,
+                 VMA::ma); // restore e16 vtype (t0 = channel vl)
+     }
+ 

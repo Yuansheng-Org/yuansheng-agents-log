@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-onednn-softmax_f16_upstream-008",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-09T04:17:31.632Z",
+    "software": "onednn",
+    "testcaseIds": [
+      "softmax_f16_upstream"
+    ],
+    "diagnosisId": "diag-20260909T041731632Z-b0e98472",
+    "targetHardware": "SOPHGO SG2044 / T-Head XuanTie C920v2 (OoO, RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/uxlfoundation/oneDNN.git",
+    "testBranch": "main",
+    "commitHash": "d22de940f301e97591e04a2cc6f0010c52109ac7"
+  },
+  "problem": {
+    "summary": "softmax_f16_upstream 中 jit_rvv_softmax_f16_exp_sub_sum 的 C++ wrapper（libdnnl.so 符号）样本全部落在 per-call 调用设置区（栈帧/canary 建立、参数 struct spill、magic-static guard 快速路径含 fence r,rw、间接调用），JIT kernel 本体在独立 DSO。对 axis_size≈VLMAX（16 元素）的短 axis 行，wrapper 固定开销约 31 条指令/调用，与 JIT kernel 单轮计算同量级；f16 路径缺少 f32 路径已有的短 axis JIT 长度 gate。无 quick-match row 命中，为零命中 + 第一性原理 micro-analysis 假设。",
+    "evidence": [
+      "perf annotate（cpu-clock:u，5 samples，local period）：100% 样本落在 wrapper 调用设置区——40% 于 c71f82 `sd s0,64(sp)`、20% 于 c71fb6 `sd a3,-48(s0)`、20% 于 c71fba `lb a5,0(a5)`（magic-static guard）、20% 于 c71fc2 `zext.b a5,a5`；JIT 调用点 c71fd0 `jalr a5` 0 样本",
+      "perf stat：IPC=0.800229；L1_dcache_load_miss_rate=0.418%（本符号为 per-call dispatch 开销，无计算主体）",
+      "benchdnn softmax_f16_upstream：benchdnn_min_ms=0.416992，benchdnn_avg_ms=0.473820（仅 RV 侧）",
+      "源码证据：src/cpu/rv64/jit_rvv_softmax_kernel.cpp:174-179 wrapper 每次调用构造 call_params_t 并经 dispatch_f16_exp_sub_sum 的 function-local static kernel（magic-static guard + fence + 间接调用）调用 JIT kernel；f16 路径对 exp_sub_sum 无最小长度 gate（对比 f32 路径 exp_jit_min_len=16）"
+    ]
+  },
+  "rootCause": {
+    "summary": "exp_sub_sum JIT kernel 的每调用固定 dispatch 开销（magic-static guard 快速路径含 fence r,rw + stack canary 帧 + params struct spill + 间接调用 ≈31 条指令）在短 axis softmax 行上与 JIT kernel 单轮计算同量级，成为该符号样本的主导载体；f16 路径缺少短 axis 的 JIT/scalar 长度 gate。此为零命中后的 micro-analysis 假设，非 quick-match row 命中。",
+    "candidateFiles": [
+      "src/cpu/rv64/jit_rvv_softmax_kernel.cpp"
+    ],
+    "performanceFactors": []
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "JIT kernel 行为不变（exp 多项式与 vfredosum 归约语义）",
+      "magic-static 的线程安全 acquire 语义：未消除并发首次初始化风险前不得移除 guard/fence",
+      "call_params_t 布局（src/tmp/len/sub/sum）与 JIT 调用 ABI（单指针参数）不变",
+      "逐元素 softmax 数值语义与 f16 rounding 不变"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "softmax_f16_upstream",
+      "test_softmax_float16"
+    ],
+    "regressionCommand": "agent1 patch_regression --case softmax_f16_upstream"
+  },
+  "diagnosis": {
+    "overallStatus": "insufficient_evidence",
+    "finalStatus": "insufficient_evidence",
+    "overallConfidence": 0.35,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "零命中 + hypothesis-only：样本仅 5、无 quick-match row 支撑、未实测 wrapper 开销与 JIT 计算的 crossover；需人工确认后再决定是否转发 Craft",
+    "reasoning": "perf annotate 显示本符号 100% 局部样本（5/5）落在 wrapper 调用设置区间（frame/canary 建立、struct spill、magic-static guard 快速路径），而 JIT 计算体在独立 DSO；静态统计 wrapper 每调用约 31 条固定指令，对 VLMAX=16 的 axis（e16/m2）与 JIT kernel 单轮计算同量级，且 f16 路径无短 axis JIT gate（对比 f32 路径 exp_jit_min_len=16）。该机制解释样本为何全在 wrapper 而非计算体，但无 quick-match row 通过 gate（magic-static fence 在 benchdnn 多线程下不可证明无并发、不可作为 redundant-sync 命中），故按 arbitration 零命中路径输出 micro-analysis 假设并标 route≤Medium/impact=Low。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "样本噪声/采样偏移：仅 5 样本，全部落在 wrapper 可能是小样本随机性，需 global-period 重采样确认",
+      "JIT kernel 本体样本在其它 DSO（jitted-*.so）中以独立符号计，本符号份额不代表 workload 总贡献",
+      "短 axis shape 在 benchdnn 输入中占比决定该开销的实际重要性；若以长 axis 为主，wrapper 开销可忽略"
+    ],
+    "currentGaps": "样本量仅 5；无 global-period / workload 级贡献；无 precise_ip；未实测 axis=16/32/128/384 的 JIT vs scalar crossover；build ISA（readelf -A）缺失；无 ARM 对照与 duration ratio",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认该 wrapper 每调用固定开销是否值得优化：需先以 global-period 重采样确认其 workload 级贡献，并实测短 axis 下 JIT 与 scalar path 的 crossover，再决定是否实施函数指针缓存/构造期初始化或短 axis gate",
+    "affectedTarget": "RV + softmax_f16_upstream",
+    "recommendedFirstAction": "在 src/cpu/rv64/jit_rvv_softmax_kernel.cpp 的 dispatch_f16_exp_sub_sum 处评估将 static kernel 函数指针在 execute_forward 级缓存（消除每调用 magic-static guard+fence 路径）或把 function-local static 改为构造期初始化单例；同时参照 f32 路径的 exp_jit_min_len=16 为 f16 exp_sub_sum 增加短 axis gate（候选文件 src/cpu/rv64/rvv_softmax.cpp）",
+    "recommendedVerification": "对 axis_size=16/32/128/384 的 shape 分别运行 benchdnn softmax_f16_upstream，测量 JIT 与 scalar path 的 crossover；re-annotate（global-period）确认 wrapper 区（c71f80–c71fc6）样本显著下降、jalr 保留、短 axis 行不再产生 wrapper 样本",
+    "metricEvidence": [
+      {
+        "metric": "benchdnn_min_ms",
+        "rv": 0.416992,
+        "anomalyNote": "benchdnn softmax_f16_upstream 每轮最小耗时（ms）；无 ARM 对照（仅 RV 侧）"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.800229,
+        "anomalyNote": "全 run IPC 0.80；本符号为 per-call dispatch 开销，非计算主体"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate",
+        "rv": 0.418,
+        "anomalyNote": "L1 miss 率低，本符号开销与 cache 无关"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum",
+        "fileModule": "libdnnl.so.3.14（src/cpu/rv64/jit_rvv_softmax_kernel.cpp wrapper）",
+        "rvvPattern": "no local pattern matched（zero-match；micro-analysis hypothesis：per-call JIT dispatch overhead）",
+        "patternConfidence": "LOW",
+        "benefitUpperbound": 1,
+        "note": "JIT kernel 调用 wrapper（内存密集度低、per-call 固定开销为主）；exp_sub_sum 是 softmax 的 exp+sum 阶段入口，短 axis 行每行支付一次完整 dispatch 成本"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/cpu/rv64/jit_rvv_softmax_kernel.cpp:174-179（jit_rvv_softmax_f16_exp_sub_sum wrapper + dispatch_f16_exp_sub_sum 的 function-local static）",
+      "relatedKnowledge": "无关联提交（零命中，无 pattern Related PRs 表可引）",
+      "evidenceExplanation": "wrapper 源码直接证言每次调用经 magic-static 单例 + 间接调用进入 JIT kernel；反汇编显示每调用约 31 条固定指令（canary 帧、struct spill、guard+fence）；f16 路径无 f32 路径已有的 exp_jit_min_len=16 长度 gate（src/cpu/rv64/rvv_softmax.cpp 行 217-221），短 axis 行支付完整固定开销——三者共同支撑 per-call dispatch 开销假设；因无 row gate 与 crossover 数据，仅按 micro-analysis 假设表述"
+    }
+  }
+}

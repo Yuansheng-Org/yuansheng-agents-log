@@ -1,0 +1,13 @@
+{
+  "files": {
+    "blueprint.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/lnorm_f16_upstream/006_jit_rvv_layernorm_f16_fused_kernel_t.3/blueprint_onednn_lnorm_f16_upstream_006.json",
+    "diagnosis.md": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/lnorm_f16_upstream/006_jit_rvv_layernorm_f16_fused_kernel_t.3/diaglog_onednn_lnorm_f16_upstream_006.md",
+    "evidence/annotate.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/lnorm_f16_upstream/006_jit_rvv_layernorm_f16_fused_kernel_t.3/006-jit_rvv_layernorm_f16_fused_kernel_t.3-annotate.txt",
+    "evidence/build-isa.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/lnorm_f16_upstream/006_jit_rvv_layernorm_f16_fused_kernel_t.3/build_isa.txt",
+    "evidence/metadata.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/lnorm_f16_upstream/006_jit_rvv_layernorm_f16_fused_kernel_t.3/metadata.json",
+    "evidence/perf-stat.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/lnorm_f16_upstream/006_jit_rvv_layernorm_f16_fused_kernel_t.3/perf_stat.txt"
+  },
+  "format_version": 1,
+  "kind": "onednn_round2_source_map",
+  "trace_directory": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/lnorm_f16_upstream/006_jit_rvv_layernorm_f16_fused_kernel_t.3"
+}

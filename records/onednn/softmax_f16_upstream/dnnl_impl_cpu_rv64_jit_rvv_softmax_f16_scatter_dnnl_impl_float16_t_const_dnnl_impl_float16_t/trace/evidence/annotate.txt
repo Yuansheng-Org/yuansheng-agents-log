@@ -1,0 +1,123 @@
+ Percent |	Source code & Disassembly of libdnnl.so.3.14 for cpu-clock:u (143 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000c739fe <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_scatter(dnnl::impl::float16_t const*, dnnl::impl::float16_t*, long, long)>:
+         : 6      dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_scatter(dnnl::impl::float16_t const*, dnnl::impl::float16_t*, long, long):
+         : 168    src, dst, len, stride_bytes};
+         : 169    dispatch_f16_strided<true>(&p);
+         : 170    }
+         :
+         : 172    void jit_rvv_softmax_f16_scatter(const dnnl::impl::float16_t *src,
+         : 173    dnnl::impl::float16_t *dst, dim_t len, dim_t stride_bytes) {
+    0.00 :   c739fe: addi    sp,sp,-80
+    0.70 :   c73a00: sd      s0,64(sp)
+    0.00 :   c73a02: sd      s1,56(sp)
+    0.00 :   c73a04: addi    s0,sp,80
+    0.00 :   c73a06: sd      ra,72(sp)
+    0.00 :   c73a08: auipc   s1,0x83e
+    0.00 :   c73a0c: ld      s1,840(s1) # 14b1d50 <__stack_chk_guard@GLIBC_2.27>
+         : 57     static const jit_rvv_softmax_f16_strided_kernel_t kernel(gather);
+    0.00 :   c73a10: auipc   a4,0x848
+         : 59     dispatch_f16_strided<false>():
+    0.00 :   c73a14: addi    a4,a4,1440 # 14bbfb0 <Xbyak_riscv::x0>
+         : 58     dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_scatter(dnnl::impl::float16_t const*, dnnl::impl::float16_t*, long, long):
+         : 168    dnnl::impl::float16_t *dst, dim_t len, dim_t stride_bytes) {
+    0.00 :   c73a18: ld      a5,0(s1)
+    0.00 :   c73a1a: sd      a5,-40(s0)
+    0.00 :   c73a1e: li      a5,0
+         : 172    dispatch_f16_strided<false>():
+         : 57     static const jit_rvv_softmax_f16_strided_kernel_t kernel(gather);
+    0.00 :   c73a20: addi    a5,a4,952
+         : 59     dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_scatter(dnnl::impl::float16_t const*, dnnl::impl::float16_t*, long, long):
+         : 170    const jit_rvv_softmax_f16_strided_kernel_t::call_params_t p {
+         : 171    src, dst, len, stride_bytes};
+    0.00 :   c73a24: sd      a0,-72(s0)
+    0.00 :   c73a28: sd      a1,-64(s0)
+    0.00 :   c73a2c: sd      a2,-56(s0)
+    0.70 :   c73a30: sd      a3,-48(s0)
+         : 176    dispatch_f16_strided<false>():
+         : 57     static const jit_rvv_softmax_f16_strided_kernel_t kernel(gather);
+    0.00 :   c73a34: lb      a5,0(a5)
+    0.00 :   c73a38: fence   r,rw
+   97.90 :   c73a3c: zext.b  a5,a5
+    0.00 :   c73a40: beqz    a5,c73a62 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_scatter(dnnl::impl::float16_t const*, dnnl::impl::float16_t*, long, long)+0x64>
+         : 58     void dnnl::impl::cpu::rv64::jit_generator_t::operator()<dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_strided_kernel_t::call_params_t const*>(dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_strided_kernel_t::call_params_t const*) const:
+         : 88     using jit_kernel_func_t = void (*)(const kernel_args_t...);
+         : 89     // This const_cast is required for Clang.
+         : 90     // Clang rejects reinterpret_cast from const uint8_t* to function pointer.
+         : 91     auto *fptr = reinterpret_cast<jit_kernel_func_t>(
+         : 92     const_cast<uint8_t *>(jit_ker_));
+         : 93     (*fptr)(std::forward<kernel_args_t>(args)...);
+    0.00 :   c73a42: ld      a5,1304(a4)
+    0.70 :   c73a46: addi    a0,s0,-72
+    0.00 :   c73a4a: jalr    a5
+         : 97     dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_scatter(dnnl::impl::float16_t const*, dnnl::impl::float16_t*, long, long):
+         : 172    dispatch_f16_strided<false>(&p);
+         : 173    }
+    0.00 :   c73a4c: ld      a4,-40(s0)
+    0.00 :   c73a50: ld      a5,0(s1)
+    0.00 :   c73a52: xor     a5,a5,a4
+    0.00 :   c73a54: li      a4,0
+    0.00 :   c73a56: bnez    a5,c73ac4 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_scatter(dnnl::impl::float16_t const*, dnnl::impl::float16_t*, long, long)+0xc6>
+    0.00 :   c73a58: ld      ra,72(sp)
+    0.00 :   c73a5a: ld      s0,64(sp)
+    0.00 :   c73a5c: ld      s1,56(sp)
+    0.00 :   c73a5e: addi    sp,sp,80
+    0.00 :   c73a60: ret
+         : 184    dispatch_f16_strided<false>():
+         : 57     static const jit_rvv_softmax_f16_strided_kernel_t kernel(gather);
+    0.00 :   c73a62: auipc   a0,0x849
+    0.00 :   c73a66: addi    a0,a0,-1786 # 14bc368 <guard variable for dnnl::impl::cpu::rv64::(anonymous namespace)::dispatch_f16_strided<false>(dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_strided_kernel_t::call_params_t const*)::kernel>
+    0.00 :   c73a6a: auipc   ra,0xff5a3
+    0.00 :   c73a6e: jalr    454(ra) # 216c30 <__cxa_guard_acquire@plt>
+    0.00 :   c73a72: auipc   a4,0x848
+    0.00 :   c73a76: addi    a4,a4,1342 # 14bbfb0 <Xbyak_riscv::x0>
+    0.00 :   c73a7a: beqz    a0,c73a42 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_scatter(dnnl::impl::float16_t const*, dnnl::impl::float16_t*, long, long)+0x44>
+    0.00 :   c73a7c: li      a1,0
+    0.00 :   c73a7e: auipc   a0,0x849
+    0.00 :   c73a82: addi    a0,a0,-1806 # 14bc370 <dnnl::impl::cpu::rv64::(anonymous namespace)::dispatch_f16_strided<false>(dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_strided_kernel_t::call_params_t const*)::kernel>
+    0.00 :   c73a86: jal     c73748 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_strided_kernel_t::jit_rvv_softmax_f16_strided_kernel_t(bool)>
+         : 63     static const jit_rvv_softmax_f16_exp_sub_sum_kernel_t kernel;
+    0.00 :   c73a8a: auipc   a2,0x83e
+    0.00 :   c73a8e: addi    a2,a2,1398 # 14b2000 <__dso_handle>
+    0.00 :   c73a92: auipc   a1,0x849
+    0.00 :   c73a96: addi    a1,a1,-1826 # 14bc370 <dnnl::impl::cpu::rv64::(anonymous namespace)::dispatch_f16_strided<false>(dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_strided_kernel_t::call_params_t const*)::kernel>
+    0.00 :   c73a9a: auipc   a0,0x4
+    0.00 :   c73a9e: addi    a0,a0,1890 # c781fc <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_strided_kernel_t::~jit_rvv_softmax_f16_strided_kernel_t()>
+    0.00 :   c73aa2: auipc   ra,0xff5a3
+    0.00 :   c73aa6: jalr    702(ra) # 216d60 <__cxa_atexit@plt>
+         : 57     static const jit_rvv_softmax_f16_strided_kernel_t kernel(gather);
+    0.00 :   c73aaa: auipc   a0,0x849
+    0.00 :   c73aae: addi    a0,a0,-1858 # 14bc368 <guard variable for dnnl::impl::cpu::rv64::(anonymous namespace)::dispatch_f16_strided<false>(dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_strided_kernel_t::call_params_t const*)::kernel>
+    0.00 :   c73ab2: auipc   ra,0xff5a3
+    0.00 :   c73ab6: jalr    1310(ra) # 216fd0 <__cxa_guard_release@plt>
+    0.00 :   c73aba: auipc   a4,0x848
+    0.00 :   c73abe: addi    a4,a4,1270 # 14bbfb0 <Xbyak_riscv::x0>
+    0.00 :   c73ac2: j       c73a42 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_scatter(dnnl::impl::float16_t const*, dnnl::impl::float16_t*, long, long)+0x44>
+    0.00 :   c73ac4: sd      s2,48(sp)
+         : 58     dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_scatter(dnnl::impl::float16_t const*, dnnl::impl::float16_t*, long, long):
+         : 172    }
+    0.00 :   c73ac6: auipc   ra,0xff5a3
+    0.00 :   c73aca: jalr    410(ra) # 216c60 <__stack_chk_fail@plt>
+    0.00 :   c73ace: sd      s2,48(sp)
+         : 176    dispatch_f16_strided<false>():
+         : 57     static const jit_rvv_softmax_f16_strided_kernel_t kernel(gather);
+    0.00 :   c73ad0: mv      s2,a0
+    0.00 :   c73ad2: auipc   a0,0x849
+    0.00 :   c73ad6: addi    a0,a0,-1898 # 14bc368 <guard variable for dnnl::impl::cpu::rv64::(anonymous namespace)::dispatch_f16_strided<false>(dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_strided_kernel_t::call_params_t const*)::kernel>
+    0.00 :   c73ada: auipc   ra,0xff5a3
+    0.00 :   c73ade: jalr    662(ra) # 216d70 <__cxa_guard_abort@plt>
+    0.00 :   c73ae2: ld      a4,-40(s0)
+    0.00 :   c73ae6: ld      a5,0(s1)
+    0.00 :   c73ae8: xor     a5,a5,a4
+    0.00 :   c73aea: li      a4,0
+    0.00 :   c73aec: bnez    a5,c73af8 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_scatter(dnnl::impl::float16_t const*, dnnl::impl::float16_t*, long, long)+0xfa>
+    0.00 :   c73aee: mv      a0,s2
+    0.00 :   c73af0: auipc   ra,0xff5a3
+    0.00 :   c73af4: jalr    1712(ra) # 2171a0 <_Unwind_Resume@plt>
+    0.00 :   c73af8: auipc   ra,0xff5a3
+    0.00 :   c73afc: jalr    360(ra) # 216c60 <__stack_chk_fail@plt>

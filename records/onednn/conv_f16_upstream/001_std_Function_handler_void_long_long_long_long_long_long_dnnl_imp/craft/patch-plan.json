@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-onednn-conv-f16-upstream-001",
+  "blueprintId": "bp-onednn-conv_f16_upstream-001",
+  "createdAt": "2026-09-10T01:27:17.760Z",
+  "objective": "f16 dst 的 conv 在 rv64 无向量化实现可达：jit_rvv_1x1 与 rvv_brgemm 的 dtype gate 硬性要求 f32 输出，唯一接受 f16:dst 合同的 ref_convolution_fwd_t 被选中，其全标量 ic 循环（零 v*、软件 f16→f32 位操作、每轮偏移 mul 链）成为 91.71% 热点。",
+  "changes": [
+    {
+      "filePath": "src/cpu/rv64/jit_rvv_1x1_convolution.hpp",
+      "action": "modify",
+      "rationale": "f16 dst 的 conv 在 rv64 无向量化实现可达：jit_rvv_1x1 与 rvv_brgemm 的 dtype gate 硬性要求 f32 输出，唯一接受 f16:dst 合同的 ref_convolution_fwd_t 被选中，其全标量 ic 循环（零 v*、软件 f16→f32 位操作、每轮偏移 mul 链）成为 91.71% 热点。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/cpu/rv64/rvv_brgemm_conv_utils.cpp",
+      "action": "modify",
+      "rationale": "f16 dst 的 conv 在 rv64 无向量化实现可达：jit_rvv_1x1 与 rvv_brgemm 的 dtype gate 硬性要求 f32 输出，唯一接受 f16:dst 合同的 ref_convolution_fwd_t 被选中，其全标量 ic 循环（零 v*、软件 f16→f32 位操作、每轮偏移 mul 链）成为 91.71% 热点。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/cpu/rv64/rvv_brgemm_conv.cpp",
+      "action": "modify",
+      "rationale": "f16 dst 的 conv 在 rv64 无向量化实现可达：jit_rvv_1x1 与 rvv_brgemm 的 dtype gate 硬性要求 f32 输出，唯一接受 f16:dst 合同的 ref_convolution_fwd_t 被选中，其全标量 ic 循环（零 v*、软件 f16→f32 位操作、每轮偏移 mul 链）成为 91.71% 热点。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/cpu/ref_convolution.cpp",
+      "action": "modify",
+      "rationale": "f16 dst 的 conv 在 rv64 无向量化实现可达：jit_rvv_1x1 与 rvv_brgemm 的 dtype gate 硬性要求 f32 输出，唯一接受 f16:dst 合同的 ref_convolution_fwd_t 被选中，其全标量 ic 循环（零 v*、软件 f16→f32 位操作、每轮偏移 mul 链）成为 91.71% 热点。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 src/cpu/rv64/jit_rvv_1x1_convolution.hpp, src/cpu/rv64/rvv_brgemm_conv_utils.cpp, src/cpu/rv64/rvv_brgemm_conv.cpp, src/cpu/ref_convolution.cpp 来解决 blueprint bp-onednn-conv_f16_upstream-001。"
+}

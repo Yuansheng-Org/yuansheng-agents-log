@@ -1,0 +1,115 @@
+diff --git a/src/cpu/rv64/jit_rvv_layernorm_kernel.cpp b/src/cpu/rv64/jit_rvv_layernorm_kernel.cpp
+index 5f50833b9c8cd84e3886ec6690efce77f3304206..12a6c588c2878310c4f590a3553d7b500c46fb36 100644
+--- a/src/cpu/rv64/jit_rvv_layernorm_kernel.cpp
++++ b/src/cpu/rv64/jit_rvv_layernorm_kernel.cpp
+@@ -564,15 +564,18 @@ void jit_rvv_layernorm_data_kernel_t::generate() {
+             jit_rvv_layernorm_f16_fused_kernel_t::call_params_t, field))
+ 
+ jit_rvv_layernorm_f16_fused_kernel_t::jit_rvv_layernorm_f16_fused_kernel_t(
+-        bool with_scale, bool with_shift, bool weights_f16)
++        bool with_scale, bool with_shift, bool weights_f16,
++        bool use_widening_sum)
+     : jit_generator_t("jit_rvv_layernorm_f16_fused_kernel")
+     , with_scale_(with_scale)
+     , with_shift_(with_shift)
+-    , weights_f16_(weights_f16) {
++    , weights_f16_(weights_f16)
++    , use_widening_sum_(use_widening_sum) {
+     create_kernel();
+ }
+ 
+ void jit_rvv_layernorm_f16_fused_kernel_t::generate() {
++    const bool use_widening_sum = use_widening_sum_;
+     const Reg reg_param = a0;
+     const Reg reg_src = a1;
+     const Reg reg_dst = a2;
+@@ -615,19 +618,29 @@ void jit_rvv_layernorm_f16_fused_kernel_t::generate() {
+     ld(reg_t1, reg_param, GET_F16_OFF(len));
+     vsetvli(reg_tmp, x0, SEW::e32, LMUL::m8, VTA::ta, VMA::ma);
+     vmv_v_x(v_sum, x0);
+-    vmv_v_x(v_work, x0);
++    if (!use_widening_sum) vmv_v_x(v_work, x0);
+ 
+     L(sum_loop);
+     beqz(reg_t1, sum_done);
+-    vsetvli(reg_vl, reg_t1, SEW::e16, LMUL::m4, VTA::ta, VMA::ma);
++    if (use_widening_sum) {
++        // Preserve inactive accumulator lanes for the final full-width
++        // reduction; they may contain sums from preceding full chunks.
++        vsetvli(reg_vl, reg_t1, SEW::e16, LMUL::m4, VTA::tu, VMA::ma);
++    } else {
++        vsetvli(reg_vl, reg_t1, SEW::e16, LMUL::m4, VTA::ta, VMA::ma);
++    }
+     sub(reg_t1, reg_t1, reg_vl);
+     vle16_v(v_ld, reg_src);
+     slli(reg_tmp, reg_vl, 1);
+     add(reg_src, reg_src, reg_tmp);
+-    vfwcvt_f_f_v(v_work, v_ld); // f16 -> f32, first reg_vl elems
+-    vsetvli(reg_tmp, reg_vl, SEW::e32, LMUL::m8, VTA::tu, VMA::ma);
+-    vfadd_vv(v_sum, v_sum, v_work);
+-    vmv_v_x(v_work, x0); // keep tail zero for next widen
++    if (use_widening_sum) {
++        vfwadd_wv(v_sum, v_sum, v_ld);
++    } else {
++        vfwcvt_f_f_v(v_work, v_ld);
++        vsetvli(reg_tmp, reg_vl, SEW::e32, LMUL::m8, VTA::tu, VMA::ma);
++        vfadd_vv(v_sum, v_sum, v_work);
++        vmv_v_x(v_work, x0);
++    }
+     j_(sum_loop);
+     L(sum_done);
+ 
+diff --git a/src/cpu/rv64/jit_rvv_layernorm_kernel.hpp b/src/cpu/rv64/jit_rvv_layernorm_kernel.hpp
+index 9096ad578872b1c44172a03715d893c610e0156d..46ea145310bf8cefe3d723db493fa4cc443de3cb 100644
+--- a/src/cpu/rv64/jit_rvv_layernorm_kernel.hpp
++++ b/src/cpu/rv64/jit_rvv_layernorm_kernel.hpp
+@@ -95,8 +95,8 @@ struct jit_rvv_layernorm_f16_fused_kernel_t : public jit_generator_t {
+ 
+     DECLARE_CPU_JIT_AUX_FUNCTIONS(jit_rvv_layernorm_f16_fused_kernel_t)
+ 
+-    jit_rvv_layernorm_f16_fused_kernel_t(
+-            bool with_scale, bool with_shift, bool weights_f16);
++    jit_rvv_layernorm_f16_fused_kernel_t(bool with_scale, bool with_shift,
++            bool weights_f16, bool use_widening_sum);
+ 
+     void operator()(const call_params_t *p) const {
+         jit_generator_t::operator()(p);
+@@ -109,6 +109,7 @@ private:
+     const bool with_scale_;
+     const bool with_shift_;
+     const bool weights_f16_;
++    const bool use_widening_sum_;
+ };
+ 
+ } // namespace rv64
+diff --git a/src/cpu/rv64/rvv_layer_normalization.cpp b/src/cpu/rv64/rvv_layer_normalization.cpp
+index cc2982b8f8cd8f84bcb7920e90adbdb892fd538b..434927ae10086e3823eee47df7ea56826e674faa 100644
+--- a/src/cpu/rv64/rvv_layer_normalization.cpp
++++ b/src/cpu/rv64/rvv_layer_normalization.cpp
+@@ -20,6 +20,7 @@
+ #include "common/dnnl_thread.hpp"
+ #include "common/memory_desc_wrapper.hpp"
+ 
++#include "cpu/rv64/cpu_isa_traits.hpp"
+ #include "cpu/rv64/rvv_layer_normalization.hpp"
+ 
+ namespace dnnl {
+@@ -30,10 +31,16 @@ namespace rv64 {
+ rvv_layer_normalization_fwd_t::rvv_layer_normalization_fwd_t(const pd_t *apd)
+     : primitive_t(apd) {
+     if (pd()->src_md()->data_type == data_type::f16) {
++        // The widening sum is profitable on the tested VLEN <= 256 systems
++        // only when the normalized axis contains at least 129 elements.
++        constexpr dim_t widening_sum_min_len = 129;
++        const bool use_widening_sum = get_platform_vlen() <= 256
++                && pd()->norm_axis() >= widening_sum_min_len;
+         const bool weights_f16
+                 = pd()->weights_md()->data_type == data_type::f16;
+-        f16_fused_kernel_.reset(new jit_rvv_layernorm_f16_fused_kernel_t(
+-                pd()->use_scale(), pd()->use_shift(), weights_f16));
++        f16_fused_kernel_.reset(
++                new jit_rvv_layernorm_f16_fused_kernel_t(pd()->use_scale(),
++                        pd()->use_shift(), weights_f16, use_widening_sum));
+     } else {
+         fused_kernel_.reset(new jit_rvv_layernorm_fused_kernel_t(
+                 pd()->use_scale(), pd()->use_shift()));

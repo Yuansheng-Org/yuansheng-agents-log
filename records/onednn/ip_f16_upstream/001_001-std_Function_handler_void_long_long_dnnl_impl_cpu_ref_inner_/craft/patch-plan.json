@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-onednn-ip-f16-upstream-001",
+  "blueprintId": "bp-onednn-ip_f16_upstream-001",
+  "createdAt": "2026-09-09T13:38:41.758Z",
+  "objective": "ref_inner_product_fwd_t 的 compiler-generated 标量 reference 内核被真实执行：内层循环每次迭代经通用 memory_desc_wrapper::off_v() 从零重算 src_off/wei_off 物理偏移（含 ndims 循环、inner_nblks rem/div/mul、stride 累加），并逐元素以软件 bit-twiddle + scalbnf 做 fp16→fp32 转换，最后单条 fmadd.s 累加；主循环零向量化，硬件 V/Zvfh 未被利用。",
+  "changes": [
+    {
+      "filePath": "src/cpu/ref_inner_product.cpp",
+      "action": "modify",
+      "rationale": "ref_inner_product_fwd_t 的 compiler-generated 标量 reference 内核被真实执行：内层循环每次迭代经通用 memory_desc_wrapper::off_v() 从零重算 src_off/wei_off 物理偏移（含 ndims 循环、inner_nblks rem/div/mul、stride 累加），并逐元素以软件 bit-twiddle + scalbnf 做 fp16→fp32 转换，最后单条 fmadd.s 累加；主循环零向量化，硬件 V/Zvfh 未被利用。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 src/cpu/ref_inner_product.cpp 来解决 blueprint bp-onednn-ip_f16_upstream-001。"
+}

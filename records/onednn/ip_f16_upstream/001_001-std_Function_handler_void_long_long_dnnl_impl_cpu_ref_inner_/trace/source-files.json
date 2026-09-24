@@ -1,0 +1,12 @@
+{
+  "files": {
+    "blueprint.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/ip_f16_upstream/001_001-std_Function_handler_void_long_long_dnnl_impl_cpu_ref_inner_/blueprint_onednn_ip_f16_upstream_001.json",
+    "diagnosis.md": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/ip_f16_upstream/001_001-std_Function_handler_void_long_long_dnnl_impl_cpu_ref_inner_/diaglog_onednn_ip_f16_upstream_001.md",
+    "evidence/annotate.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/ip_f16_upstream/001_001-std_Function_handler_void_long_long_dnnl_impl_cpu_ref_inner_/001-std：：_Function_handler＜void (long, long), dnnl：：impl：：cpu：：ref_inner_product_fwd_t：：execute_forward(dnnl：：impl：：exec_ctx_t const&) const：-905f74d4690a-annotate.txt",
+    "evidence/metadata.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/ip_f16_upstream/001_001-std_Function_handler_void_long_long_dnnl_impl_cpu_ref_inner_/metadata.json",
+    "evidence/perf-stat.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/ip_f16_upstream/001_001-std_Function_handler_void_long_long_dnnl_impl_cpu_ref_inner_/perf_stat.txt"
+  },
+  "format_version": 1,
+  "kind": "onednn_round2_source_map",
+  "trace_directory": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/ip_f16_upstream/001_001-std_Function_handler_void_long_long_dnnl_impl_cpu_ref_inner_"
+}

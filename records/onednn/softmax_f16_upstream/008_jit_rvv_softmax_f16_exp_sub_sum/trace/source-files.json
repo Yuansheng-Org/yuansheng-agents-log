@@ -1,0 +1,12 @@
+{
+  "files": {
+    "blueprint.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/softmax_f16_upstream/008_jit_rvv_softmax_f16_exp_sub_sum/blueprint_onednn_softmax_f16_upstream_008.json",
+    "diagnosis.md": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/softmax_f16_upstream/008_jit_rvv_softmax_f16_exp_sub_sum/diaglog_onednn_softmax_f16_upstream_008.md",
+    "evidence/annotate.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/softmax_f16_upstream/008_jit_rvv_softmax_f16_exp_sub_sum/008-dnnl：：impl：：cpu：：rv64：：jit_rvv_softmax_f16_exp_sub_sum(dnnl：：impl：：float16_t const＊, float＊, long, float, float＊)-annotate.txt",
+    "evidence/metadata.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/softmax_f16_upstream/008_jit_rvv_softmax_f16_exp_sub_sum/metadata.json",
+    "evidence/perf-stat.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/softmax_f16_upstream/008_jit_rvv_softmax_f16_exp_sub_sum/perf_stat.txt"
+  },
+  "format_version": 1,
+  "kind": "onednn_round2_source_map",
+  "trace_directory": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/softmax_f16_upstream/008_jit_rvv_softmax_f16_exp_sub_sum"
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-onednn-softmax-f16-upstream-008",
+  "blueprintId": "bp-onednn-softmax_f16_upstream-008",
+  "createdAt": "2026-09-10T12:50:12.494Z",
+  "objective": "exp_sub_sum JIT kernel 的每调用固定 dispatch 开销（magic-static guard 快速路径含 fence r,rw + stack canary 帧 + params struct spill + 间接调用 ≈31 条指令）在短 axis softmax 行上与 JIT kernel 单轮计算同量级，成为该符号样本的主导载体；f16 路径缺少短 axis 的 JIT/scalar 长度 gate。此为零命中后的 micro-analysis 假设，非 quick-match row 命中。",
+  "changes": [
+    {
+      "filePath": "src/cpu/rv64/jit_rvv_softmax_kernel.cpp",
+      "action": "modify",
+      "rationale": "exp_sub_sum JIT kernel 的每调用固定 dispatch 开销（magic-static guard 快速路径含 fence r,rw + stack canary 帧 + params struct spill + 间接调用 ≈31 条指令）在短 axis softmax 行上与 JIT kernel 单轮计算同量级，成为该符号样本的主导载体；f16 路径缺少短 axis 的 JIT/scalar 长度 gate。此为零命中后的 micro-analysis 假设，非 quick-match row 命中。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 src/cpu/rv64/jit_rvv_softmax_kernel.cpp 来解决 blueprint bp-onednn-softmax_f16_upstream-008。"
+}

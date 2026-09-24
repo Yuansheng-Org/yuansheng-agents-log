@@ -1,0 +1,96 @@
+ Percent |	Source code & Disassembly of jitted-12109-0.so for cpu-clock:u (31 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3   Disassembly of section .text:
+         :
+         : 5   0000000000000080 <jit_uni_kernel.0>:
+         : 6   jit_uni_kernel.0():
+    0.00 :    80:     ld      a1,0(a0)
+    0.00 :    84:     ld      a2,8(a0)
+    0.00 :    88:     ld      a4,24(a0)
+    3.23 :    8c:     beqz    a4,1d8 <jit_uni_kernel.0+0x158>
+    0.00 :    90:     .insn   4, 0x0c8772d7
+    0.00 :    94:     .insn   4, 0x0205d107
+    0.00 :    98:     .insn   4, 0x4a261257
+    0.00 :    9c:     .insn   4, 0x0d12f057
+    6.45 :    a0:     lui     t2,0xc2aeb
+    0.00 :    a4:     addiw   t2,t2,-944 # ffffffffc2aeac50 <jit_uni_kernel.0+0xffffffffc2aeabd0>
+    0.00 :    a8:     fmv.w.x fa0,t2
+    0.00 :    ac:     .insn   4, 0x6e455057
+    3.23 :    b0:     .insn   4, 0x5c455257
+    3.23 :    b4:     lui     t2,0x42b17
+    0.00 :    b8:     addiw   t2,t2,536 # 42b17218 <jit_uni_kernel.0+0x42b17198>
+    0.00 :    bc:     fmv.w.x fa1,t2
+    0.00 :    c0:     .insn   4, 0x7645d057
+    6.45 :    c4:     .insn   4, 0x5c45d257
+    3.23 :    c8:     lui     t2,0x3fb8b
+    0.00 :    cc:     addiw   t2,t2,-1477 # 3fb8aa3b <jit_uni_kernel.0+0x3fb8a9bb>
+    0.00 :    d0:     fmv.w.x fa0,t2
+    0.00 :    d4:     .insn   4, 0x92455457
+    0.00 :    d8:     lui     t2,0x3f000
+    3.23 :    dc:     fmv.w.x fa0,t2
+    0.00 :    e0:     .insn   4, 0x5e055857
+    0.00 :    e4:     .insn   4, 0x23041857
+    0.00 :    e8:     .insn   4, 0x02881457
+    3.23 :    ec:     .insn   4, 0x4a839857
+    3.23 :    f0:     .insn   4, 0x4b019457
+    0.00 :    f4:     lui     t2,0x3f318
+    0.00 :    f8:     fmv.w.x fa0,t2
+    0.00 :    fc:     .insn   4, 0xbe855257
+    3.23 :   100:    lui     t2,0xb95e8
+    0.00 :   104:    addiw   t2,t2,131 # ffffffffb95e8083 <jit_uni_kernel.0+0xffffffffb95e8003>
+    3.23 :   108:    fmv.w.x fa0,t2
+    0.00 :   10c:    .insn   4, 0xbe855257
+    0.00 :   110:    lui     t2,0x39507
+    0.00 :   114:    addiw   t2,t2,-1689 # 39506967 <jit_uni_kernel.0+0x395068e7>
+    0.00 :   118:    fmv.w.x fa0,t2
+    0.00 :   11c:    .insn   4, 0x5e055457
+    0.00 :   120:    .insn   4, 0x92821457
+    3.23 :   124:    lui     t2,0x3ab74
+    0.00 :   128:    addiw   t2,t2,974 # 3ab743ce <jit_uni_kernel.0+0x3ab7434e>
+    0.00 :   12c:    fmv.w.x fa0,t2
+    0.00 :   130:    .insn   4, 0x02855457
+    0.00 :   134:    .insn   4, 0x92821457
+    6.45 :   138:    lui     t2,0x3c089
+    0.00 :   13c:    addiw   t2,t2,-1784 # 3c088908 <jit_uni_kernel.0+0x3c088888>
+    0.00 :   140:    fmv.w.x fa0,t2
+    0.00 :   144:    .insn   4, 0x02855457
+    3.23 :   148:    .insn   4, 0x92821457
+    0.00 :   14c:    lui     t2,0x3d2ab
+    0.00 :   150:    addiw   t2,t2,-1599 # 3d2aa9c1 <jit_uni_kernel.0+0x3d2aa941>
+    0.00 :   154:    fmv.w.x fa0,t2
+    0.00 :   158:    .insn   4, 0x02855457
+    0.00 :   15c:    .insn   4, 0x92821457
+    6.45 :   160:    lui     t2,0x3e2ab
+    0.00 :   164:    addiw   t2,t2,-1366 # 3e2aaaaa <jit_uni_kernel.0+0x3e2aaa2a>
+    0.00 :   168:    fmv.w.x fa0,t2
+    0.00 :   16c:    .insn   4, 0x02855457
+    0.00 :   170:    .insn   4, 0x92821457
+    6.45 :   174:    lui     t2,0x3f000
+    0.00 :   178:    fmv.w.x fa0,t2
+    0.00 :   17c:    .insn   4, 0x02855457
+    0.00 :   180:    .insn   4, 0x92821457
+    3.23 :   184:    .insn   4, 0x92821457
+    0.00 :   188:    .insn   4, 0x02821457
+    9.68 :   18c:    lui     t2,0x3f800
+    0.00 :   190:    fmv.w.x fa0,t2
+    0.00 :   194:    .insn   4, 0x02855457
+    3.23 :   198:    li      t2,126
+    0.00 :   19c:    .insn   4, 0x0303c857
+    0.00 :   1a0:    li      t2,23
+    0.00 :   1a4:    .insn   4, 0x9703c857
+    0.00 :   1a8:    .insn   4, 0x92881257
+    6.45 :   1ac:    lui     t2,0x40000
+    0.00 :   1b0:    fmv.w.x fa0,t2
+    0.00 :   1b4:    .insn   4, 0x92455257
+    9.68 :   1b8:    .insn   4, 0x0c82f057
+    0.00 :   1bc:    .insn   4, 0x4a4a1157
+    0.00 :   1c0:    .insn   4, 0x02065127
+    0.00 :   1c4:    slli    t1,t0,0x1
+    0.00 :   1c8:    add     a1,a1,t1
+    0.00 :   1cc:    add     a2,a2,t1
+    0.00 :   1d0:    sub     a4,a4,t0
+    0.00 :   1d4:    j       8c <jit_uni_kernel.0+0xc>
+    0.00 :   1d8:    ret

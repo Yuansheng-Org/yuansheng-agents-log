@@ -1,0 +1,67 @@
+8-ONEDNN-BENCHDNN-BENCHMARK conv_f32_upstream RISC-V perf stat
+==============================================================
+
+Source CSV: /workspace/results/8-onednn-benchdnn-benchmark_results.csv
+TestName: conv_f32_upstream
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 3,885,789,360 |
+| task_clock | 82,790.7100000000 |
+| cpu_cycle | 61,821,760,485,181 |
+| instruction | 41,333,755,493,996 |
+| cache_references | 14,729,677,365 |
+| cache_misses | 14,729,678,118 |
+| branches | 18,137,950,675 |
+| branch_misses | 160,268,315 |
+| L1_dcache_loads | 73,424,454,512 |
+| L1_dcache_load_misses | 1,392,527,649 |
+| LLC_load_misses | 426,033,417 |
+| LLC_loads | 14,729,682,355 |
+| IPC | 0.6685950000 |
+| benchdnn_min_ms | 18.9233000000 |
+| benchdnn_avg_ms | 19.1916000000 |
+| benchdnn_min_gflops | 271.5180000000 |
+| benchdnn_avg_gflops | 267.7230000000 |
+| benchdnn_gops | 5.1380200000 |
+| benchdnn_max_create_ms | 0.7316890000 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 3.885789 |
+| cache_miss_rate | 100.000% |
+| branch_miss_rate | 0.884% |
+| L1_dcache_load_miss_rate | 1.897% |
+| LLC_load_miss_rate | 2.892% |
+
+perf stat style summary
+-----------------------
+             3,885,789,360  duration_time
+         82,790.7100000000  task_clock
+        61,821,760,485,181  cpu_cycle
+        41,333,755,493,996  instruction
+            14,729,677,365  cache_references
+            14,729,678,118  cache_misses
+            18,137,950,675  branches
+               160,268,315  branch_misses
+            73,424,454,512  L1_dcache_loads
+             1,392,527,649  L1_dcache_load_misses
+               426,033,417  LLC_load_misses
+            14,729,682,355  LLC_loads
+              0.6685950000  IPC
+             18.9233000000  benchdnn_min_ms
+             19.1916000000  benchdnn_avg_ms
+            271.5180000000  benchdnn_min_gflops
+            267.7230000000  benchdnn_avg_gflops
+              5.1380200000  benchdnn_gops
+              0.7316890000  benchdnn_max_create_ms
+                  3.885789  duration_s
+                  100.000%  cache_miss_rate
+                    0.884%  branch_miss_rate
+                    1.897%  L1_dcache_load_miss_rate
+                    2.892%  LLC_load_miss_rate

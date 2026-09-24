@@ -1,0 +1,133 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-onednn-rnn_f16_upstream-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-09T00:30:01.375Z",
+    "software": "onednn",
+    "testcaseIds": [
+      "rnn_f16_upstream"
+    ],
+    "diagnosisId": "diag-20260909T003001375Z-b74454f2",
+    "targetHardware": "SOPHGO SG2044 / XuanTie C920v2",
+    "repositoryUrl": "https://github.com/uxlfoundation/oneDNN.git",
+    "testBranch": "main",
+    "commitHash": "d22de940f301e97591e04a2cc6f0010c52109ac7"
+  },
+  "problem": {
+    "summary": "RNN f16 的 matmul 请求在 SG2044（C920v2, RVV 1.0, Zfh）上完全执行于 oneDNN 的标量参考实现 ref_matmul_t：k-loop 对每个 (m,n,k) 元素用 memory_desc_wrapper::off_v 重新计算 blocked-layout 偏移（多周期 div/rem 链）并对 f16 做软件位操作解码，全程零 v* 指令、单标量 FMA 累加。同一源码树中已注册更高优先级的 RVV matmul 内核（rvv_matmul_t/rvv_brgemm_matmul_t）却未被该请求命中，属于 kernel-selection / runtime-specialization 缺口。",
+    "evidence": [
+      "Latency(ms): benchdnn_avg_ms=0.183203（rnn_f16_upstream 每次迭代），duration_time=65,938,131µs；无 ARM 对照（单侧采集）",
+      "perf stat：IPC=1.271356、L1_dcache_load_miss_rate=0.200%、branch_miss_rate=0.155%、LLC_load_miss_rate=17.148% → compute/latency-bound，非 memory-bound",
+      "rank-1 热点 ref_matmul_t::execute_ref 的 ker lambda 全部 40 samples 落在标量 k-loop（5f2e2a–5f3438），零 v*/th.v* 指令",
+      "k-loop 样本分布：off_v 偏移重算约 37.5%（含 7.50% 5f2f40 bne、5.00% 5f2fcc blez、remw/divw 链）、软件 f16→f32 解码约 35%（7.50% 5f3852/5f3868、5.00% 5f43ca）、标量 FMA 约 10%（7.50% 5f3420）",
+      "源码证据：cpu_matmul_list.cpp:96-97 注册 rvv_brgemm_matmul_t/rvv_matmul_t（CPU_INSTANCE_RV64），优先级高于 :102 ref_matmul_t"
+    ]
+  },
+  "rootCause": {
+    "summary": "RNN f16 matmul 落入标量参考实现 ref_matmul_t，而树内更高优先级的 RVV matmul 内核（rvv_matmul_t/rvv_brgemm_matmul_t）因合同 gate（row/col-major layout 限定、hp path 要求 zero-bias/default-attr）未命中该请求；被选中的 ref 核在 k-loop 内逐元素重算 blocked-layout 偏移（off_v div/rem）并软件解码 f16，零向量化。",
+    "candidateFiles": [
+      "src/cpu/rv64/rvv_matmul.hpp",
+      "src/cpu/matmul/cpu_matmul_list.cpp",
+      "src/cpu/matmul/ref_matmul.cpp"
+    ],
+    "performanceFactors": [
+      "Kernel Selection and Runtime Specialization",
+      "No vectorization (autovec gap / RVV kernel not built)",
+      "RVV Floating-Point Matmul and GEMV Kernels"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "FP16 累加精度与 FMA contraction 语义（与 reference 对照）",
+      "公共 oneDNN matmul/RNN API 与输出数值语义（NaN/Inf/±0/subnormal）",
+      "RNN per-group scales、zero-point 与 bias 广播合同",
+      "不支持组合的请求必须保留 ref fallback 且结果正确"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "rnn_f16_upstream",
+      "matmul_f16_upstream"
+    ],
+    "regressionCommand": "agent1 patch_regression --case rnn_f16_upstream"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.68,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "RNN f16 matmul 的确切 dtype/layout/attr 合同与 rvv_matmul_t::pd_t::init 被拒的 VDISPATCH gate 尚未实证（推断自 annotate 的 blocked-layout off_v 路径），需 DNNL_VERBOSE/dispatch 日志确认后再自动转发",
+    "reasoning": "perf stat 显示 IPC=1.271、L1_dcache_load_miss_rate=0.200%（compute/latency-bound，排除 memory-bound）；rank-1 热点 ref_matmul_t::execute_ref 的 ker lambda 全部 40 samples 落在标量 k-loop，零 v* 指令，其中约 37.5% 在 off_v 的 div/rem 偏移重算、约 35% 在软件 f16→f32 解码（5f3852/5f3868/5f43ca）；同一源码树中 rvv_matmul_t/rvv_brgemm_matmul_t 以更高优先级注册（cpu_matmul_list.cpp:96-97）且 rvv_matmul.hpp 的 is_hp_path_ 明确覆盖 f16:f16:f16+Zvfh，但该请求落入 ref_matmul_t fallback，表明 RVV 内核的 layout/bias/attr gate 未覆盖该 RNN 合同——证据链共同指向'已适配实现未被选择/合同未覆盖'的 kernel-selection 根因，而非单条指令低效。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "build ISA 不含 v/zvfh（-march 未开启 RVV），即使 rvv_matmul 命中也无法编译/运行——build ISA 为 baseline_gap，需 readelf -A 确认",
+      "RNN matmul 的 shape 极小，RVV JIT 内核启动/预计算开销超过计算收益，ref 路径在该 shape 上已近最优——需小/中/大 shape crossover 验证",
+      "ref 核本身可单独优化（off_v 循环强度削减为指针递增 + Zfh fcvt.s.h 替代软件解码），不依赖内核选择修复"
+    ],
+    "currentGaps": "build ISA（Tag_RISCV_arch）未确认（metadata 无 ELF）；sampling IP precision 未知，指令级归因仅到 loop interval；RNN f16 matmul 的确切 descriptor 合同与 rvv_matmul_t::pd_t::init 被拒的具体 VDISPATCH gate 未实证；函数级 workload 贡献未知，收益上界仅为函数内局部样本份额 0.90",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确证 rvv_matmul_t::pd_t::init 拒绝该 RNN f16 matmul 的具体 gate（layout/bias/attr），以及 build 是否以含 v/zvfh 的 -march 编译",
+    "affectedTarget": "RV + rnn_f16_upstream",
+    "recommendedFirstAction": "在 src/cpu/rv64/rvv_matmul.hpp:44-163 的 pd_t::init 中核对并扩展 check_layouts（:198-204）与 hp path 的 bias/attr gate，使 RNN f16 matmul 的 blocked 权重 layout/bias 合同命中 rvv_matmul_t；先用 DNNL_VERBOSE 确认真实拒绝 gate 再改",
+    "recommendedVerification": "重新运行 benchdnn rnn_f16_upstream（agent1 patch_regression --case rnn_f16_upstream），观察 annotate 中 ref_matmul_t 热区样本是否转移至 rvv_matmul（jit:rvv）的 vfmacc/vle16/fcvt.s.h，IPC 与 benchdnn_avg_gflops 是否提升，并对照 reference 校验 FP16 数值",
+    "metricEvidence": [
+      {
+        "metric": "duration_time(µs)",
+        "rv": 65938131,
+        "anomalyNote": "rnn_f16_upstream 总运行 65.9ms；rank-1 热点是标量 ref matmul"
+      },
+      {
+        "metric": "IPC",
+        "rv": 1.271356,
+        "anomalyNote": "标量循环（含多周期 div/rem 链）在 OoO C920v2 上 IPC 仅 1.27，未饱和"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.2,
+        "anomalyNote": "L1 miss 仅 0.2%，排除 memory-bound，确认为 compute/latency-bound"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.155,
+        "anomalyNote": "分支预测健康，非 branch-bound"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 17.148,
+        "anomalyNote": "LLC miss 17%，不构成主导瓶颈"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "dnnl::impl::cpu::matmul::ref_matmul_t::execute_ref(dnnl::impl::exec_ctx_t const&) const::{lambda(long const*, long, long)#1}::operator()(long const*, long, long) const",
+        "fileModule": "src/cpu/matmul/ref_matmul.cpp",
+        "rvvPattern": "Kernel Selection and Runtime Specialization",
+        "patternConfidence": "MEDIUM",
+        "benefitUpperbound": 0.9,
+        "note": "RNN f16 matmul 的标量参考实现 k-loop：每元素 off_v 偏移重算（div/rem）+ 软件 f16→f32 解码 + 标量 FMA；40 samples 全部落在该函数（函数内局部份额 0.90 在 k-loop/off_v/转换区间）"
+      },
+      {
+        "hotspotFunction": "dnnl::impl::cpu::matmul::ref_matmul_t::execute_ref(dnnl::impl::exec_ctx_t const&) const::{lambda(long const*, long, long)#1}::operator()(long const*, long, long) const",
+        "fileModule": "src/cpu/matmul/ref_matmul.cpp",
+        "rvvPattern": "No vectorization (autovec gap / RVV kernel not built)",
+        "patternConfidence": "HIGH",
+        "note": "supporting：被选中的 ref 路径 main loop 全 scalar、zero v*、hardware 暴露 v"
+      },
+      {
+        "hotspotFunction": "dnnl::impl::cpu::matmul::ref_matmul_t::execute_ref(dnnl::impl::exec_ctx_t const&) const::{lambda(long const*, long, long)#1}::operator()(long const*, long, long) const",
+        "fileModule": "src/cpu/matmul/ref_matmul.cpp",
+        "rvvPattern": "RVV Floating-Point Matmul and GEMV Kernels",
+        "patternConfidence": "HIGH",
+        "note": "supporting：k-loop 为 FP16 dot-product 微内核（无 int8 合同），标量 FMA 累加 + FP packing 开销"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/cpu/matmul/cpu_matmul_list.cpp:96-102; src/cpu/rv64/rvv_matmul.hpp:44-163 (pd_t::init) / :198-204 (check_layouts); src/cpu/matmul/ref_matmul.cpp:169-237 (ker)",
+      "relatedKnowledge": "https://github.com/uxlfoundation/oneDNN/pull/4463; https://github.com/uxlfoundation/oneDNN/commit/e19dc70ec1fb50dc23203386ce09e6e537a4b0b7; https://github.com/uxlfoundation/oneDNN/pull/4363; https://github.com/uxlfoundation/oneDNN/commit/276cb7cd00e868e4a7e1e34c5848efbd09be4efd; https://github.com/uxlfoundation/oneDNN/pull/5453; https://github.com/uxlfoundation/oneDNN/pull/5403; https://github.com/uxlfoundation/oneDNN/pull/4410; https://github.com/uxlfoundation/oneDNN/commit/3bac96b8bc1fc9c348c986f38f65285693943d2f; https://github.com/uxlfoundation/oneDNN/commit/8b48a77091062ce78959ccb96e43a8ee4e97022d",
+      "evidenceExplanation": "pattern 表的 oneDNN 相关 PR/commit 表明 RVV matmul 内核（含 f16 hp path）已在 oneDNN 主线上落地并有注册/选择优先级调整历史（#4463、#5453、#5403、e19dc70 等）；本 profile 直接显示 ref_matmul_t fallback 被选中而树内 RVV 内核未命中，与'已适配实现未被正确选择/合同 gate 未覆盖'的机制一致，支撑 kernel-selection 根因。"
+    }
+  }
+}

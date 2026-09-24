@@ -1,0 +1,67 @@
+8-ONEDNN-BENCHDNN-BENCHMARK softmax_f16_upstream RISC-V perf stat
+=================================================================
+
+Source CSV: /workspace/results/8-onednn-benchdnn-benchmark_results.csv
+TestName: softmax_f16_upstream
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 88,334,249 |
+| task_clock | 781.4500000000 |
+| cpu_cycle | 11,858,403,603 |
+| instruction | 9,489,442,014 |
+| cache_references | 5,314,350 |
+| cache_misses | 5,316,202 |
+| branches | 484,398,920 |
+| branch_misses | 892,571 |
+| L1_dcache_loads | 274,420,640 |
+| L1_dcache_load_misses | 1,146,231 |
+| LLC_load_misses | 1,130,921 |
+| LLC_loads | 5,326,576 |
+| IPC | 0.8002290000 |
+| benchdnn_min_ms | 0.4169920000 |
+| benchdnn_avg_ms | 0.4738200000 |
+| benchdnn_min_gflops | 0 |
+| benchdnn_avg_gflops | 0 |
+| benchdnn_gops | 0 |
+| benchdnn_max_create_ms | 0.1101070000 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 0.088334 |
+| cache_miss_rate | 100.035% |
+| branch_miss_rate | 0.184% |
+| L1_dcache_load_miss_rate | 0.418% |
+| LLC_load_miss_rate | 21.232% |
+
+perf stat style summary
+-----------------------
+            88,334,249  duration_time
+        781.4500000000  task_clock
+        11,858,403,603  cpu_cycle
+         9,489,442,014  instruction
+             5,314,350  cache_references
+             5,316,202  cache_misses
+           484,398,920  branches
+               892,571  branch_misses
+           274,420,640  L1_dcache_loads
+             1,146,231  L1_dcache_load_misses
+             1,130,921  LLC_load_misses
+             5,326,576  LLC_loads
+          0.8002290000  IPC
+          0.4169920000  benchdnn_min_ms
+          0.4738200000  benchdnn_avg_ms
+                     0  benchdnn_min_gflops
+                     0  benchdnn_avg_gflops
+                     0  benchdnn_gops
+          0.1101070000  benchdnn_max_create_ms
+              0.088334  duration_s
+              100.035%  cache_miss_rate
+                0.184%  branch_miss_rate
+                0.418%  L1_dcache_load_miss_rate
+               21.232%  LLC_load_miss_rate

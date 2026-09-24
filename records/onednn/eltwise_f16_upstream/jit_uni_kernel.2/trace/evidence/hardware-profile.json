@@ -1,0 +1,48 @@
+{
+  "contract_version": 1,
+  "kind": "hardware_profile",
+  "id": "spacemit-x100",
+  "facts": {
+    "vendor": "SpacemiT",
+    "soc": "K3",
+    "core_vendor": "SpacemiT",
+    "core": "X100",
+    "instruction scheduling method": "out-of-order",
+    "vector": {
+      "flavor": "RVV 1.0",
+      "vlen_bits": 256,
+      "vlenb": 32
+    },
+    "cpuinfo": {
+      "model_name": "Spacemit(R) X100",
+      "isa": "rv64imafdcvh_zicbom_zicbop_zicboz_zicntr_zicond_zicsr_zifencei_zihintntl_zihintpause_zihpm_zimop_zaamo_zalrsc_zawrs_zfa_zfh_zfhmin_zca_zcb_zcd_zcmop_zba_zbb_zbc_zbs_zkt_zvbb_zvbc_zve32f_zve32x_zve64d_zve64f_zve64x_zvfh_zvfhmin_zvkb_zvkg_zvkned_zvknha_zvknhb_zvksed_zvksh_zvkt_smaia_smstateen_ssaia_sscofpmf_sstc_svinval_svnapot_svpbmt_sdtrig"
+    }
+  },
+  "provenance": {
+    "description": "SpacemiT K3 X100 profile derived from a captured CPU identity and corroborated by vendor sources.",
+    "sources": [
+      {
+        "kind": "url",
+        "url": "https://www.spacemit.com/products/ai-compute-core/x100"
+      },
+      {
+        "kind": "url",
+        "url": "https://cdn-resource.spacemit.com/file/chip/K3/K3_brief_en.pdf"
+      },
+      {
+        "kind": "capture",
+        "description": "Captured /proc/cpuinfo for CPUs 0-7.",
+        "identity": {
+          "cpu_range": "0-7",
+          "model_name": "Spacemit(R) X100",
+          "mvendorid": "0x710",
+          "marchid": "0x8000000058000002",
+          "mimpid": "0x33d8a600"
+        }
+      }
+    ],
+    "source_profile_sha256": "23a43f9da8a0d2ee28db0ab47266da7881e24d46af9b9f9836df9d3115146b11",
+    "import_method": "Manually normalized into the strict Trace hardware-profile shape.",
+    "license": "Factual metadata; the derived repository asset is governed by the repository LICENSE."
+  }
+}

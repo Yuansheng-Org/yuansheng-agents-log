@@ -1,0 +1,90 @@
+ Percent |	Source code & Disassembly of jitted-12961-3.so for cpu-clock:u (3 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3   Disassembly of section .text:
+         :
+         : 5   0000000000000080 <jit_rvv_layernorm_f16_fused_kernel_t.3>:
+         : 6   jit_rvv_layernorm_f16_fused_kernel_t.3():
+    0.00 :    80:     fmv.w.x ft0,zero
+    0.00 :    84:     ld      a1,0(a0)
+    0.00 :    88:     ld      a6,32(a0)
+    0.00 :    8c:     .insn   4, 0x0d307357
+    0.00 :    90:     .insn   4, 0x5e004057
+    0.00 :    94:     .insn   4, 0x5e004857
+    0.00 :    98:     beqz    a6,c4 <jit_rvv_layernorm_f16_fused_kernel_t.3+0x44>
+    0.00 :    9c:     .insn   4, 0x0ca872d7
+    0.00 :    a0:     sub     a6,a6,t0
+    0.00 :    a4:     .insn   4, 0x0205dc07
+    0.00 :    a8:     slli    t1,t0,0x1
+    0.00 :    ac:     add     a1,a1,t1
+    0.00 :    b0:     .insn   4, 0x4b861857
+    0.00 :    b4:     .insn   4, 0x0932f357
+    0.00 :    b8:     .insn   4, 0x02081057
+    0.00 :    bc:     .insn   4, 0x5e004857
+   33.33 :    c0:     j       98 <jit_rvv_layernorm_f16_fused_kernel_t.3+0x18>
+    0.00 :    c4:     .insn   4, 0x0d307357
+    0.00 :    c8:     .insn   4, 0x5e000857
+    0.00 :    cc:     .insn   4, 0x5e004057
+    0.00 :    d0:     .insn   4, 0x0f001857
+   33.33 :    d4:     .insn   4, 0x430010d7
+    0.00 :    d8:     ld      a5,32(a0)
+    0.00 :    dc:     fcvt.s.l        ft3,a5
+    0.00 :    e0:     fdiv.s  ft1,ft1,ft3
+    0.00 :    e4:     ld      a7,48(a0)
+    0.00 :    e8:     beqz    a7,f0 <jit_rvv_layernorm_f16_fused_kernel_t.3+0x70>
+    0.00 :    ec:     fsw     ft1,0(a7)
+    0.00 :    f0:     ld      a1,0(a0)
+    0.00 :    f4:     ld      a6,32(a0)
+    0.00 :    f8:     .insn   4, 0x0d307357
+    0.00 :    fc:     .insn   4, 0x5e004457
+    0.00 :   100:    .insn   4, 0x5e004857
+    0.00 :   104:    beqz    a6,134 <jit_rvv_layernorm_f16_fused_kernel_t.3+0xb4>
+    0.00 :   108:    .insn   4, 0x0ca872d7
+    0.00 :   10c:    sub     a6,a6,t0
+    0.00 :   110:    .insn   4, 0x0205dc07
+    0.00 :   114:    slli    t1,t0,0x1
+    0.00 :   118:    add     a1,a1,t1
+    0.00 :   11c:    .insn   4, 0x4b861857
+    0.00 :   120:    .insn   4, 0x0932f357
+    0.00 :   124:    .insn   4, 0x0b00d857
+    0.00 :   128:    .insn   4, 0xb3081457
+    0.00 :   12c:    .insn   4, 0x5e004857
+    0.00 :   130:    j       104 <jit_rvv_layernorm_f16_fused_kernel_t.3+0x84>
+    0.00 :   134:    .insn   4, 0x0d307357
+    0.00 :   138:    .insn   4, 0x5e004057
+    0.00 :   13c:    .insn   4, 0x0e801457
+    0.00 :   140:    .insn   4, 0x42801157
+    0.00 :   144:    fdiv.s  ft5,ft2,ft3
+    0.00 :   148:    ld      a7,56(a0)
+    0.00 :   14c:    beqz    a7,154 <jit_rvv_layernorm_f16_fused_kernel_t.3+0xd4>
+    0.00 :   150:    fsw     ft5,0(a7)
+    0.00 :   154:    flw     ft6,40(a0)
+    0.00 :   158:    .insn   4, 0x4202fe53
+    0.00 :   15c:    .insn   4, 0x42037ed3
+    0.00 :   160:    fadd.d  ft8,ft8,ft9
+    0.00 :   164:    fsqrt.d ft8,ft8
+    0.00 :   168:    li      t1,1
+    0.00 :   16c:    .insn   4, 0xd2037f53
+    0.00 :   170:    fdiv.d  ft8,ft10,ft8
+    0.00 :   174:    fcvt.s.d        ft4,ft8
+    0.00 :   178:    ld      a1,0(a0)
+    0.00 :   17c:    ld      a2,8(a0)
+    0.00 :   180:    ld      a6,32(a0)
+    0.00 :   184:    beqz    a6,1c0 <jit_rvv_layernorm_f16_fused_kernel_t.3+0x140>
+    0.00 :   188:    .insn   4, 0x0ca872d7
+    0.00 :   18c:    sub     a6,a6,t0
+    0.00 :   190:    .insn   4, 0x0205dc07
+    0.00 :   194:    .insn   4, 0x4b861857
+    0.00 :   198:    .insn   4, 0x0d307357
+    0.00 :   19c:    .insn   4, 0x0b00d857
+    0.00 :   1a0:    .insn   4, 0x93025857
+    0.00 :   1a4:    .insn   4, 0x0ca2f357
+    0.00 :   1a8:    .insn   4, 0x4b0a1c57
+    0.00 :   1ac:    .insn   4, 0x02065c27
+   33.33 :   1b0:    slli    t1,t0,0x1
+    0.00 :   1b4:    add     a1,a1,t1
+    0.00 :   1b8:    add     a2,a2,t1
+    0.00 :   1bc:    j       184 <jit_rvv_layernorm_f16_fused_kernel_t.3+0x104>
+    0.00 :   1c0:    ret

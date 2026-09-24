@@ -1,0 +1,428 @@
+diff --git a/src/cpu/rv64/gemm/jit_rvv_gemm_f16_kernel.cpp b/src/cpu/rv64/gemm/jit_rvv_gemm_f16_kernel.cpp
+index 677ca4bf1dce4e356f4a20be6c5da78be2063285..da6f2fde0de14496c32d9fe0069f00cb22c0867f 100644
+--- a/src/cpu/rv64/gemm/jit_rvv_gemm_f16_kernel.cpp
++++ b/src/cpu/rv64/gemm/jit_rvv_gemm_f16_kernel.cpp
+@@ -29,11 +29,12 @@ using namespace Xbyak_riscv;
+ using namespace dnnl::impl::utils;
+ 
+ jit_rvv_gemm_f16_kernel_t::jit_rvv_gemm_f16_kernel_t(
+-        dim_t n_cols, bool isTransA, data_type_t in_dt)
++        dim_t n_cols, bool isTransA, data_type_t in_dt, bool has_bias)
+     : jit_generator_t("rv64_gemm_kernel_f16_jit")
+     , n_cols_(n_cols)
+     , isTransA_(isTransA)
+-    , is_bf16_(in_dt == data_type::bf16) {
++    , is_bf16_(in_dt == data_type::bf16)
++    , has_bias_(has_bias) {
+     assert(utils::one_of(in_dt, data_type::f16, data_type::bf16));
+     create_kernel();
+ }
+@@ -54,6 +55,7 @@ void jit_rvv_gemm_f16_kernel_t::generate() {
+     const Reg reg_k = a4; // current k counter
+     const Reg reg_B0_ptr = a6; // running pointer into B
+     const Reg reg_tmp0 = a7;
++    const Reg reg_bias = t4; // bias pointer (f32 per accumulator lane)
+     const FReg freg_b[6] = {fa2, fa3, fa4, fa5, fa6, fa7};
+ 
+     const VReg v_c[6]
+@@ -70,6 +72,7 @@ void jit_rvv_gemm_f16_kernel_t::generate() {
+     //   40 : dim_t ldc
+     //   48 : dim_t K
+     //   56 : dim_t m
++    //   64 : const float *bias (only when has_bias_)
+     ld(reg_A_ptr, reg_param, 0);
+     ld(reg_B0_ptr, reg_param, 8);
+     ld(reg_C_base, reg_param, 16);
+@@ -78,6 +81,7 @@ void jit_rvv_gemm_f16_kernel_t::generate() {
+     ld(reg_ldc_bytes, reg_param, 40);
+     ld(reg_K, reg_param, 48);
+     ld(reg_m, reg_param, 56);
++    if (has_bias_) ld(reg_bias, reg_param, 64);
+ 
+     // A, B and C elements are 2 bytes.
+     slli(reg_lda_bytes, reg_lda_bytes, 1);
+@@ -179,16 +183,22 @@ void jit_rvv_gemm_f16_kernel_t::generate() {
+ 
+     L(label_k_done);
+ 
+-    // C store: narrow the f32 accumulators in place to the input data type and
+-    // store (overwrite-only; the driver rejects beta != 0). Stays at e16/m2,
+-    // the configuration of the narrowing destination.
++    // The output-N dimension is held in the accumulator lanes. Load its f32
++    // bias vector once and broadcast it over all output-M columns.
++    if (has_bias_) {
++        vsetvli(x0, reg_m, SEW::e32, LMUL::m4, VTA::ta, VMA::ma);
++        vle32_v(v_a0, reg_bias);
++        for (dim_t c = 0; c < n_cols_; c++)
++            vfadd_vv(v_c[c], v_c[c], v_a0);
++        vsetvli(x0, reg_m, SEW::e16, LMUL::m2, VTA::ta, VMA::ma);
++    }
++
++    // Narrow the f32 accumulators in place and store (overwrite-only).
+     for (dim_t c = 0; c < n_cols_; c++) {
+         if (c == 0) {
+             mv(reg_tmp3, reg_C_base);
+         } else {
+-            li(reg_tmp0, c);
+-            mul(reg_tmp3, reg_ldc_bytes, reg_tmp0);
+-            add(reg_tmp3, reg_C_base, reg_tmp3);
++            add(reg_tmp3, reg_tmp3, reg_ldc_bytes);
+         }
+         if (is_bf16_) {
+             vfncvtbf16_f_f_w(v_c[c], v_c[c]);
+@@ -206,23 +216,24 @@ void jit_rvv_gemm_f16_kernel_t::generate() {
+ 
+ namespace {
+ 
+-template <bool isTransA, bool isBf16>
++template <bool isTransA, bool isBf16, bool hasBias>
+ struct jit_rvv_gemm_f16_kernel_storage_t {
+-    std::array<std::unique_ptr<jit_rvv_gemm_f16_kernel_t>, 8> nb;
++    std::array<std::unique_ptr<jit_rvv_gemm_f16_kernel_t>, 8> kernels;
+     jit_rvv_gemm_f16_kernel_table_t table;
+ };
+ 
+-template <bool isTransA, bool isBf16>
+-jit_rvv_gemm_f16_kernel_storage_t<isTransA, isBf16> &
++template <bool isTransA, bool isBf16, bool hasBias>
++jit_rvv_gemm_f16_kernel_storage_t<isTransA, isBf16, hasBias> &
+ get_jit_rvv_gemm_f16_kernel_storage() {
+-    static jit_rvv_gemm_f16_kernel_storage_t<isTransA, isBf16> storage;
++    static jit_rvv_gemm_f16_kernel_storage_t<isTransA, isBf16, hasBias> storage;
+     static std::once_flag initialized;
+ 
+     std::call_once(initialized, [] {
+         for (dim_t n_cols = 1; n_cols <= 6; n_cols++) {
+-            storage.nb[n_cols].reset(new jit_rvv_gemm_f16_kernel_t(n_cols,
+-                    isTransA, isBf16 ? data_type::bf16 : data_type::f16));
+-            storage.table.nb[n_cols] = storage.nb[n_cols].get();
++            storage.kernels[n_cols].reset(new jit_rvv_gemm_f16_kernel_t(n_cols,
++                    isTransA, isBf16 ? data_type::bf16 : data_type::f16,
++                    hasBias));
++            storage.table.kernels[n_cols] = storage.kernels[n_cols].get();
+         }
+     });
+ 
+@@ -232,15 +243,27 @@ get_jit_rvv_gemm_f16_kernel_storage() {
+ } // namespace
+ 
+ const jit_rvv_gemm_f16_kernel_table_t &get_jit_rvv_gemm_f16_kernel_table(
+-        bool isTransA, data_type_t in_dt) {
++        bool isTransA, data_type_t in_dt, bool has_bias) {
+     if (isTransA) {
+-        return in_dt == data_type::bf16
+-                ? get_jit_rvv_gemm_f16_kernel_storage<true, true>().table
+-                : get_jit_rvv_gemm_f16_kernel_storage<true, false>().table;
++        if (in_dt == data_type::bf16)
++            return has_bias
++                    ? get_jit_rvv_gemm_f16_kernel_storage<true, true, true>()
++                              .table
++                    : get_jit_rvv_gemm_f16_kernel_storage<true, true, false>()
++                              .table;
++        return has_bias
++                ? get_jit_rvv_gemm_f16_kernel_storage<true, false, true>().table
++                : get_jit_rvv_gemm_f16_kernel_storage<true, false, false>()
++                          .table;
+     }
+-    return in_dt == data_type::bf16
+-            ? get_jit_rvv_gemm_f16_kernel_storage<false, true>().table
+-            : get_jit_rvv_gemm_f16_kernel_storage<false, false>().table;
++    if (in_dt == data_type::bf16)
++        return has_bias
++                ? get_jit_rvv_gemm_f16_kernel_storage<false, true, true>().table
++                : get_jit_rvv_gemm_f16_kernel_storage<false, true, false>()
++                          .table;
++    return has_bias
++            ? get_jit_rvv_gemm_f16_kernel_storage<false, false, true>().table
++            : get_jit_rvv_gemm_f16_kernel_storage<false, false, false>().table;
+ }
+ 
+ } // namespace gemm_utils
+diff --git a/src/cpu/rv64/gemm/jit_rvv_gemm_f16_kernel.hpp b/src/cpu/rv64/gemm/jit_rvv_gemm_f16_kernel.hpp
+index 2e8ff1982c51fc8913c4637d2d1c2fe44689d3c4..7643e5d822594349b81272adb0dfa3895ac90db4 100644
+--- a/src/cpu/rv64/gemm/jit_rvv_gemm_f16_kernel.hpp
++++ b/src/cpu/rv64/gemm/jit_rvv_gemm_f16_kernel.hpp
+@@ -57,13 +57,15 @@ struct jit_rvv_gemm_f16_kernel_t : public jit_generator_t {
+         dim_t ldc;
+         dim_t K;
+         dim_t m;
++        const float *bias; // f32 bias for the accumulator lanes
+     };
+ 
+     DECLARE_CPU_JIT_AUX_FUNCTIONS(jit_rvv_gemm_f16_kernel_t)
+ 
+     // Construct a JIT kernel for a specific n_cols (1..6) and A access pattern.
+     // in_dt selects f16 (Zvfh) vs bf16 (Zvfbfwma); the caller gates the ISA.
+-    jit_rvv_gemm_f16_kernel_t(dim_t n_cols, bool isTransA, data_type_t in_dt);
++    jit_rvv_gemm_f16_kernel_t(
++            dim_t n_cols, bool isTransA, data_type_t in_dt, bool has_bias);
+ 
+     void operator()(const call_params_t *p) const {
+         jit_generator_t::operator()(p);
+@@ -76,14 +78,15 @@ private:
+     dim_t n_cols_;
+     bool isTransA_;
+     bool is_bf16_;
++    bool has_bias_;
+ };
+ 
+ struct jit_rvv_gemm_f16_kernel_table_t {
+-    std::array<const jit_rvv_gemm_f16_kernel_t *, 8> nb {};
++    std::array<const jit_rvv_gemm_f16_kernel_t *, 8> kernels {};
+ };
+ 
+ const jit_rvv_gemm_f16_kernel_table_t &get_jit_rvv_gemm_f16_kernel_table(
+-        bool isTransA, data_type_t in_dt);
++        bool isTransA, data_type_t in_dt, bool has_bias);
+ 
+ } // namespace gemm_utils
+ } // namespace rv64
+diff --git a/src/cpu/rv64/gemm/rvv_gemm_f16.cpp b/src/cpu/rv64/gemm/rvv_gemm_f16.cpp
+index 5b54b2f50f9f5f9350a170898a797e446b2acf12..7af5dfbc51433311835b49c62f9ea7cfd759be50 100644
+--- a/src/cpu/rv64/gemm/rvv_gemm_f16.cpp
++++ b/src/cpu/rv64/gemm/rvv_gemm_f16.cpp
+@@ -61,7 +61,8 @@ void block_ker_f16(const dim_t M, const dim_t N, const dim_t K, const char *A,
+         const dim_t lda, const char *B, const dim_t ldb, char *C,
+         const dim_t ldc, char *ws, bool do_copy, const dim_t m_unroll,
+         const jit_rvv_gemm_f16_kernel_table_t &trans_a_table,
+-        const jit_rvv_gemm_f16_kernel_table_t &nontrans_a_table) {
++        const jit_rvv_gemm_f16_kernel_table_t &nontrans_a_table,
++        const float *bias) {
+ 
+     const dim_t n_unroll = gemm_f16_traits::get_n_unroll_factor();
+ 
+@@ -70,9 +71,10 @@ void block_ker_f16(const dim_t M, const dim_t N, const dim_t K, const char *A,
+     const dim_t n_tail = N - Nu;
+     const dim_t m_tail = M - Mu;
+ 
+-    auto call_kernel = [&](const jit_rvv_gemm_f16_kernel_table_t &kernel_table,
+-                               const void *a, const void *b, void *c,
+-                               dim_t lda_eff, dim_t tile_m, dim_t tile_n) {
++    auto call_kernel
++            = [&](const jit_rvv_gemm_f16_kernel_table_t &kernel_table,
++                      const void *a, const void *b, void *c, dim_t lda_eff,
++                      dim_t tile_m, dim_t tile_n, const float *bias_col) {
+         jit_rvv_gemm_f16_kernel_t::call_params_t p;
+         p.A = a;
+         p.B = b;
+@@ -82,12 +84,14 @@ void block_ker_f16(const dim_t M, const dim_t N, const dim_t K, const char *A,
+         p.ldc = ldc;
+         p.K = K;
+         p.m = tile_m;
++        p.bias = bias_col;
+ 
+-        (*kernel_table.nb[tile_n])(&p);
++        (*kernel_table.kernels[tile_n])(&p);
+     };
+ 
+-    auto invoke_kernel = [&](const char *a_orig, const void *b, void *c,
+-                                 dim_t tile_m, dim_t tile_n, dim_t j_col) {
++    auto invoke_kernel
++            = [&](const char *a_orig, const void *b, void *c, dim_t tile_m,
++                      dim_t tile_n, dim_t j_col, const float *bias_col) {
+         const void *a_eff;
+         dim_t lda_eff;
+         bool trans_a_eff;
+@@ -107,19 +111,22 @@ void block_ker_f16(const dim_t M, const dim_t N, const dim_t K, const char *A,
+ 
+         const auto &kernel_table
+                 = trans_a_eff ? trans_a_table : nontrans_a_table;
+-        call_kernel(kernel_table, a_eff, b, c, lda_eff, tile_m, tile_n);
++        call_kernel(
++                kernel_table, a_eff, b, c, lda_eff, tile_m, tile_n, bias_col);
+     };
+ 
+     for (dim_t i = 0; i < Mu; i += m_unroll) {
+         const char *a = isTransA ? &A[i * lda * 2] : &A[i * 2];
+         for (dim_t j = 0; j < Nu; j += n_unroll) {
+             const char *b = &B[j * ldb * 2];
+-            invoke_kernel(a, b, &C[(i + j * ldc) * 2], m_unroll, n_unroll, j);
++            invoke_kernel(a, b, &C[(i + j * ldc) * 2], m_unroll, n_unroll, j,
++                    bias ? bias + i : nullptr);
+         }
+ 
+         if (n_tail > 0) {
+             const char *b = &B[Nu * ldb * 2];
+-            invoke_kernel(a, b, &C[(i + Nu * ldc) * 2], m_unroll, n_tail, Nu);
++            invoke_kernel(a, b, &C[(i + Nu * ldc) * 2], m_unroll, n_tail, Nu,
++                    bias ? bias + i : nullptr);
+         }
+     }
+ 
+@@ -131,7 +138,7 @@ void block_ker_f16(const dim_t M, const dim_t N, const dim_t K, const char *A,
+             const auto &kernel_table
+                     = isTransA ? trans_a_table : nontrans_a_table;
+             call_kernel(kernel_table, a_tail, b, &C[(Mu + j * ldc) * 2], lda,
+-                    m_tail, n_unroll);
++                    m_tail, n_unroll, bias ? bias + Mu : nullptr);
+         }
+ 
+         if (n_tail > 0) {
+@@ -139,7 +146,7 @@ void block_ker_f16(const dim_t M, const dim_t N, const dim_t K, const char *A,
+             const auto &kernel_table
+                     = isTransA ? trans_a_table : nontrans_a_table;
+             call_kernel(kernel_table, a_tail, b, &C[(Mu + Nu * ldc) * 2], lda,
+-                    m_tail, n_tail);
++                    m_tail, n_tail, bias ? bias + Mu : nullptr);
+         }
+     }
+ }
+@@ -149,7 +156,8 @@ void gemm_ithr_f16(const dim_t M, const dim_t N, const dim_t K, const char *A,
+         const dim_t lda, const char *B, const dim_t ldb, char *C,
+         const dim_t ldc, bool do_copy, char *ws, const dim_t m_unroll,
+         const jit_rvv_gemm_f16_kernel_table_t &trans_a_table,
+-        const jit_rvv_gemm_f16_kernel_table_t &nontrans_a_table) {
++        const jit_rvv_gemm_f16_kernel_table_t &nontrans_a_table,
++        const float *bias) {
+ 
+     constexpr dim_t BM = gemm_traits_t<float, isTransA, false>::BM;
+     constexpr dim_t BN = gemm_traits_t<float, isTransA, false>::BN;
+@@ -166,7 +174,8 @@ void gemm_ithr_f16(const dim_t M, const dim_t N, const dim_t K, const char *A,
+             const char *curB = B + Bn * ldb * 2;
+             char *curC = C + (Bm + Bn * ldc) * 2;
+             block_ker_f16<isTransA>(mb, nb, K, curA, lda, curB, ldb, curC, ldc,
+-                    ws, do_copy, m_unroll, trans_a_table, nontrans_a_table);
++                    ws, do_copy, m_unroll, trans_a_table, nontrans_a_table,
++                    bias ? bias + Bm : nullptr);
+         }
+     }
+ }
+@@ -176,7 +185,7 @@ status_t rvv_gemm_f16(const char *transa_, const char *transb_, const dim_t *M_,
+         const dim_t *N_, const dim_t *K_, const float *alpha_, const void *A,
+         const dim_t *lda_, const void *B, const dim_t *ldb_, const float *beta_,
+         void *C, const dim_t *ldc_, data_type_t dt, char *ws_buffers_in,
+-        const gemm_partition_t *part) {
++        const gemm_partition_t *part, const float *bias) {
+ 
+     if (!(utils::one_of(*transa_, 'n', 'N', 't', 'T')
+                 && utils::one_of(*transb_, 'n', 'N')))
+@@ -228,8 +237,11 @@ status_t rvv_gemm_f16(const char *transa_, const char *transb_, const dim_t *M_,
+     char *ws_buffers = ws_buffers_in;
+     if (do_copy && !ws_buffers) return status::unimplemented;
+ 
+-    const auto &trans_a_table = get_jit_rvv_gemm_f16_kernel_table(true, dt);
+-    const auto &nontrans_a_table = get_jit_rvv_gemm_f16_kernel_table(false, dt);
++    const bool has_bias = bias != nullptr;
++    const auto &trans_a_table
++            = get_jit_rvv_gemm_f16_kernel_table(true, dt, has_bias);
++    const auto &nontrans_a_table
++            = get_jit_rvv_gemm_f16_kernel_table(false, dt, has_bias);
+ 
+     auto get_thr_block = [&](dim_t &from, dim_t &to, dim_t &myN, dim_t NB_,
+                                  dim_t N_, int ithr) {
+@@ -264,10 +276,12 @@ status_t rvv_gemm_f16(const char *transa_, const char *transb_, const dim_t *M_,
+ 
+             if (!isTransA) {
+                 gemm_ithr_f16<false>(myM, myN, K, myA, lda, myB, ldb, myC, ldc,
+-                        do_copy, ws, m_unroll, trans_a_table, nontrans_a_table);
++                        do_copy, ws, m_unroll, trans_a_table, nontrans_a_table,
++                        bias ? bias + m_from : nullptr);
+             } else {
+                 gemm_ithr_f16<true>(myM, myN, K, myA, lda, myB, ldb, myC, ldc,
+-                        do_copy, ws, m_unroll, trans_a_table, nontrans_a_table);
++                        do_copy, ws, m_unroll, trans_a_table, nontrans_a_table,
++                        bias ? bias + m_from : nullptr);
+             }
+         }
+     });
+diff --git a/src/cpu/rv64/gemm/rvv_gemm_f16.hpp b/src/cpu/rv64/gemm/rvv_gemm_f16.hpp
+index fd89a9528ff6246ee33fce07c8bada9c5bc61bac..d7c82222939377121169a63017fe75ab6180163c 100644
+--- a/src/cpu/rv64/gemm/rvv_gemm_f16.hpp
++++ b/src/cpu/rv64/gemm/rvv_gemm_f16.hpp
+@@ -45,7 +45,8 @@ status_t rvv_gemm_f16(const char *transa, const char *transb, const dim_t *M,
+         const dim_t *N, const dim_t *K, const float *alpha, const void *A,
+         const dim_t *lda, const void *B, const dim_t *ldb, const float *beta,
+         void *C, const dim_t *ldc, data_type_t dt, char *ws_buffers = nullptr,
+-        const gemm_utils::gemm_partition_t *part = nullptr);
++        const gemm_utils::gemm_partition_t *part = nullptr,
++        const float *bias = nullptr);
+ 
+ } // namespace rv64
+ } // namespace cpu
+diff --git a/src/cpu/rv64/rvv_matmul.cpp b/src/cpu/rv64/rvv_matmul.cpp
+index 5118223079458f41d61b9afd7d22827b6745766a..68acf13599423558bbac763c41e5c4396e0a65ab 100644
+--- a/src/cpu/rv64/rvv_matmul.cpp
++++ b/src/cpu/rv64/rvv_matmul.cpp
+@@ -306,9 +306,12 @@ status_t rvv_matmul_t::execute(const exec_ctx_t &ctx) const {
+ 
+     if (pd()->is_hp_path_) {
+         // Half-precision dispatch: (f16|bf16) weights * (f16|bf16) src ->
+-        // same-dtype dst with f32 accumulation inside the GEMM kernel. No
+-        // bias / post-ops on this path (rejected in pd_t::init).
++        // same-dtype dst with f32 accumulation inside the GEMM kernel. An
++        // optional f32 1xN bias is fused in the GEMM epilogue.
+         const data_type_t hp_dt = src_d.data_type();
++        const float *bias = bias_d.is_zero()
++                ? nullptr
++                : CTX_IN_MEM(const float *, DNNL_ARG_BIAS);
+ 
+         if (pd()->weights_are_broadcast_) {
+             //   C(N x (batch * M)) = A(N x K) * B(K x (batch * M))
+@@ -318,7 +321,7 @@ status_t rvv_matmul_t::execute(const exec_ctx_t &ctx) const {
+             status_t st = rvv_gemm_f16(&g.transa, &g.transb, &M_gemm_all,
+                     &N_gemm_all, &g.K_gemm, &alpha, wei_bytes, &g.lda,
+                     src_bytes, &g.ldb, &beta, dst_bytes, &g.ldc, hp_dt,
+-                    ws_bytes, &part);
++                    ws_bytes, &part, bias);
+             assert(st == status::success || st == status::unimplemented);
+             MAYBE_UNUSED(st);
+         } else {
+@@ -330,7 +333,7 @@ status_t rvv_matmul_t::execute(const exec_ctx_t &ctx) const {
+                         &g.N_gemm, &g.K_gemm, &alpha, wei_base(b), &g.lda,
+                         src_bytes + b * src_batch_stride_bytes, &g.ldb, &beta,
+                         dst_bytes + b * dst_batch_stride_bytes, &g.ldc, hp_dt,
+-                        ws, p);
++                        ws, p, bias);
+                 assert(st == status::success || st == status::unimplemented);
+                 MAYBE_UNUSED(st);
+             });
+diff --git a/src/cpu/rv64/rvv_matmul.hpp b/src/cpu/rv64/rvv_matmul.hpp
+index 42a16d63447469073d5e47e39456d7739bfc5ab7..c0ee91f02ea36a3c801159f009c5946c952be3dc 100644
+--- a/src/cpu/rv64/rvv_matmul.hpp
++++ b/src/cpu/rv64/rvv_matmul.hpp
+@@ -35,7 +35,8 @@ struct rvv_matmul_t : public primitive_t {
+     struct pd_t : public ::dnnl::impl::cpu::matmul::cpu_matmul_pd_t {
+         using ::dnnl::impl::cpu::matmul::cpu_matmul_pd_t::cpu_matmul_pd_t;
+ 
+-        DECLARE_COMMON_PD_T("jit:rvv", rvv_matmul_t)
++        DECLARE_COMMON_PD_T(
++                JIT_IMPL_NAME_HELPER("jit:", isa_, ""), rvv_matmul_t)
+ 
+         // Bias is always f32: the f32 path uses it directly, the int8 path
+         // converts it inside the JIT kernel before adding to the s32 acc.
+@@ -96,10 +97,12 @@ struct rvv_matmul_t : public primitive_t {
+             if (is_hp_path_) {
+                 VDISPATCH_MATMUL(mayiuse(src_dt == f16 ? zvfh : zvfbfwma),
+                         VERBOSE_UNSUPPORTED_ISA);
+-                // The half-precision GEMM kernel has no fused bias / post-ops
+-                // yet.
+-                VDISPATCH_MATMUL(
+-                        bias_mdw.is_zero(), VERBOSE_UNSUPPORTED_BIAS_CFG);
++                // The JIT currently implements the common f32 1xN bias. More
++                // general matmul bias broadcasts fall back to another path.
++                VDISPATCH_MATMUL(bias_mdw.is_zero()
++                                || (bias_mdw.data_type() == data_type::f32
++                                        && is_bias_1xN()),
++                        VERBOSE_UNSUPPORTED_BIAS_CFG);
+             }
+             // The int8 path rejects per-oc / per-tensor scales, zero-points,
+             // and post-ops in this MVP; only optional f32 bias is supported.
+@@ -159,6 +162,10 @@ struct rvv_matmul_t : public primitive_t {
+             init_gemm_conf(src_mdw, weights_mdw);
+             init_scratchpad();
+ 
++            // Include half-precision output conversion on the int8 path.
++            // This field describes the implementation; ISA checks stay above.
++            isa_ = dst_dt == f16 ? zvfh : (dst_dt == bf16 ? zvfbfwma : v);
++
+             return status::success;
+         }
+ 
+@@ -269,6 +276,7 @@ struct rvv_matmul_t : public primitive_t {
+         bool is_f32_path_ = false;
+         bool is_int8_path_ = false;
+         bool is_hp_path_ = false;
++        cpu_isa_t isa_ = isa_undef;
+ 
+         int nthr_m_ = 1;
+         int nthr_n_ = 1;

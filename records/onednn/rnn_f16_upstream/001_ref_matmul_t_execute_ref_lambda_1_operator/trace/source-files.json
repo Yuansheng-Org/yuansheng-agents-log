@@ -1,0 +1,12 @@
+{
+  "files": {
+    "blueprint.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/rnn_f16_upstream/001_ref_matmul_t_execute_ref_lambda_1_operator/blueprint_onednn_rnn_f16_upstream_001.json",
+    "diagnosis.md": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/rnn_f16_upstream/001_ref_matmul_t_execute_ref_lambda_1_operator/diaglog_onednn_rnn_f16_upstream_001.md",
+    "evidence/annotate.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/rnn_f16_upstream/001_ref_matmul_t_execute_ref_lambda_1_operator/001-dnnl：：impl：：cpu：：matmul：：ref_matmul_t：：execute_ref(dnnl：：impl：：exec_ctx_t const&) const：：{lambda(long const＊, long, long)#1}：：operat-9bf56a90cc78-annotate.txt",
+    "evidence/metadata.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/rnn_f16_upstream/001_ref_matmul_t_execute_ref_lambda_1_operator/metadata.json",
+    "evidence/perf-stat.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/rnn_f16_upstream/001_ref_matmul_t_execute_ref_lambda_1_operator/perf_stat.txt"
+  },
+  "format_version": 1,
+  "kind": "onednn_round2_source_map",
+  "trace_directory": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/rnn_f16_upstream/001_ref_matmul_t_execute_ref_lambda_1_operator"
+}
