@@ -1,0 +1,12 @@
+{
+  "files": {
+    "blueprint.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/conv_f16_upstream/001_std_Function_handler_void_long_long_long_long_long_long_dnnl_imp/blueprint_onednn_conv_f16_upstream_001.json",
+    "diagnosis.md": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/conv_f16_upstream/001_std_Function_handler_void_long_long_long_long_long_long_dnnl_imp/diaglog_onednn_conv_f16_upstream_001.md",
+    "evidence/annotate.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/conv_f16_upstream/001_std_Function_handler_void_long_long_long_long_long_long_dnnl_imp/001-std：：_Function_handler＜void (long, long, long, long, long, long), dnnl：：impl：：cpu：：ref_convolution_fwd_t：：execute_forward(dnnl：：impl：：exec_c-a657e3f4faea-annotate.txt",
+    "evidence/metadata.json": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/conv_f16_upstream/001_std_Function_handler_void_long_long_long_long_long_long_dnnl_imp/metadata.json",
+    "evidence/perf-stat.txt": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/conv_f16_upstream/001_std_Function_handler_void_long_long_long_long_long_long_dnnl_imp/perf_stat.txt"
+  },
+  "format_version": 1,
+  "kind": "onednn_round2_source_map",
+  "trace_directory": "/root/workspace/test/onednn/oneDNN/.yuansheng/trace/onednn/conv_f16_upstream/001_std_Function_handler_void_long_long_long_long_long_long_dnnl_imp"
+}

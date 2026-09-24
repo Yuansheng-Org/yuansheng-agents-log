@@ -1,0 +1,121 @@
+ Percent |	Source code & Disassembly of libdnnl.so.3.14 for cpu-clock:u (5 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000c71f80 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum(dnnl::impl::float16_t const*, float*, long, float, float*)>:
+         : 6      dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum(dnnl::impl::float16_t const*, float*, long, float, float*):
+         : 175    src, dst, len, stride_bytes};
+         : 176    dispatch_f16_strided<false>(&p);
+         : 177    }
+         :
+         : 179    void jit_rvv_softmax_f16_exp_sub_sum(const dnnl::impl::float16_t *src,
+         : 180    float *tmp, dim_t len, float sub, float *sum) {
+    0.00 :   c71f80: addi    sp,sp,-80
+   40.00 :   c71f82: sd      s0,64(sp)
+    0.00 :   c71f84: sd      s1,56(sp)
+    0.00 :   c71f86: addi    s0,sp,80
+    0.00 :   c71f88: sd      ra,72(sp)
+    0.00 :   c71f8a: auipc   s1,0x840
+    0.00 :   c71f8e: ld      s1,-570(s1) # 14b1d50 <__stack_chk_guard@GLIBC_2.27>
+         : 63     static const jit_rvv_softmax_f16_exp_sub_sum_kernel_t kernel;
+    0.00 :   c71f92: auipc   a4,0x84a
+         : 65     dispatch_f16_exp_sub_sum():
+    0.00 :   c71f96: addi    a4,a4,30 # 14bbfb0 <Xbyak_riscv::x0>
+         : 64     dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum(dnnl::impl::float16_t const*, float*, long, float, float*):
+         : 175    float *tmp, dim_t len, float sub, float *sum) {
+    0.00 :   c71f9a: ld      a5,0(s1)
+    0.00 :   c71f9c: sd      a5,-40(s0)
+    0.00 :   c71fa0: li      a5,0
+         : 179    dispatch_f16_exp_sub_sum():
+         : 63     static const jit_rvv_softmax_f16_exp_sub_sum_kernel_t kernel;
+    0.00 :   c71fa2: addi    a5,a4,216
+         : 65     dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum(dnnl::impl::float16_t const*, float*, long, float, float*):
+         : 177    const jit_rvv_softmax_f16_exp_sub_sum_kernel_t::call_params_t p {
+         : 178    src, tmp, len, sub, sum};
+    0.00 :   c71fa6: fsw     fa0,-56(s0)
+    0.00 :   c71faa: sd      a0,-80(s0)
+    0.00 :   c71fae: sd      a1,-72(s0)
+    0.00 :   c71fb2: sd      a2,-64(s0)
+   20.00 :   c71fb6: sd      a3,-48(s0)
+         : 184    dispatch_f16_exp_sub_sum():
+         : 63     static const jit_rvv_softmax_f16_exp_sub_sum_kernel_t kernel;
+   20.00 :   c71fba: lb      a5,0(a5)
+    0.00 :   c71fbe: fence   r,rw
+   20.00 :   c71fc2: zext.b  a5,a5
+    0.00 :   c71fc6: beqz    a5,c71fe8 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum(dnnl::impl::float16_t const*, float*, long, float, float*)+0x68>
+         : 64     void dnnl::impl::cpu::rv64::jit_generator_t::operator()<dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum_kernel_t::call_params_t const*>(dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum_kernel_t::call_params_t const*) const:
+         : 88     using jit_kernel_func_t = void (*)(const kernel_args_t...);
+         : 89     // This const_cast is required for Clang.
+         : 90     // Clang rejects reinterpret_cast from const uint8_t* to function pointer.
+         : 91     auto *fptr = reinterpret_cast<jit_kernel_func_t>(
+         : 92     const_cast<uint8_t *>(jit_ker_));
+         : 93     (*fptr)(std::forward<kernel_args_t>(args)...);
+    0.00 :   c71fc8: ld      a5,568(a4)
+    0.00 :   c71fcc: addi    a0,s0,-80
+    0.00 :   c71fd0: jalr    a5
+         : 97     dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum(dnnl::impl::float16_t const*, float*, long, float, float*):
+         : 179    dispatch_f16_exp_sub_sum(&p);
+         : 180    }
+    0.00 :   c71fd2: ld      a4,-40(s0)
+    0.00 :   c71fd6: ld      a5,0(s1)
+    0.00 :   c71fd8: xor     a5,a5,a4
+    0.00 :   c71fda: li      a4,0
+    0.00 :   c71fdc: bnez    a5,c72048 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum(dnnl::impl::float16_t const*, float*, long, float, float*)+0xc8>
+    0.00 :   c71fde: ld      ra,72(sp)
+    0.00 :   c71fe0: ld      s0,64(sp)
+    0.00 :   c71fe2: ld      s1,56(sp)
+    0.00 :   c71fe4: addi    sp,sp,80
+    0.00 :   c71fe6: ret
+         : 191    dispatch_f16_exp_sub_sum():
+         : 63     static const jit_rvv_softmax_f16_exp_sub_sum_kernel_t kernel;
+    0.00 :   c71fe8: auipc   a0,0x84a
+    0.00 :   c71fec: addi    a0,a0,160 # 14bc088 <guard variable for dnnl::impl::cpu::rv64::(anonymous namespace)::dispatch_f16_exp_sub_sum(dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum_kernel_t::call_params_t const*)::kernel>
+    0.00 :   c71ff0: auipc   ra,0xff5a5
+    0.00 :   c71ff4: jalr    -960(ra) # 216c30 <__cxa_guard_acquire@plt>
+    0.00 :   c71ff8: auipc   a4,0x84a
+    0.00 :   c71ffc: addi    a4,a4,-72 # 14bbfb0 <Xbyak_riscv::x0>
+    0.00 :   c72000: beqz    a0,c71fc8 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum(dnnl::impl::float16_t const*, float*, long, float, float*)+0x48>
+    0.00 :   c72002: auipc   a0,0x84a
+    0.00 :   c72006: addi    a0,a0,142 # 14bc090 <dnnl::impl::cpu::rv64::(anonymous namespace)::dispatch_f16_exp_sub_sum(dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum_kernel_t::call_params_t const*)::kernel>
+    0.00 :   c7200a: jal     c71dd6 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum_kernel_t::jit_rvv_softmax_f16_exp_sub_sum_kernel_t()>
+    0.00 :   c7200e: auipc   a2,0x840
+    0.00 :   c72012: addi    a2,a2,-14 # 14b2000 <__dso_handle>
+    0.00 :   c72016: auipc   a1,0x84a
+    0.00 :   c7201a: addi    a1,a1,122 # 14bc090 <dnnl::impl::cpu::rv64::(anonymous namespace)::dispatch_f16_exp_sub_sum(dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum_kernel_t::call_params_t const*)::kernel>
+    0.00 :   c7201e: auipc   a0,0x6
+    0.00 :   c72022: addi    a0,a0,858 # c78378 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum_kernel_t::~jit_rvv_softmax_f16_exp_sub_sum_kernel_t()>
+    0.00 :   c72026: auipc   ra,0xff5a5
+    0.00 :   c7202a: jalr    -710(ra) # 216d60 <__cxa_atexit@plt>
+    0.00 :   c7202e: auipc   a0,0x84a
+    0.00 :   c72032: addi    a0,a0,90 # 14bc088 <guard variable for dnnl::impl::cpu::rv64::(anonymous namespace)::dispatch_f16_exp_sub_sum(dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum_kernel_t::call_params_t const*)::kernel>
+    0.00 :   c72036: auipc   ra,0xff5a5
+    0.00 :   c7203a: jalr    -102(ra) # 216fd0 <__cxa_guard_release@plt>
+    0.00 :   c7203e: auipc   a4,0x84a
+    0.00 :   c72042: addi    a4,a4,-142 # 14bbfb0 <Xbyak_riscv::x0>
+    0.00 :   c72046: j       c71fc8 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum(dnnl::impl::float16_t const*, float*, long, float, float*)+0x48>
+    0.00 :   c72048: sd      s2,48(sp)
+         : 64     dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum(dnnl::impl::float16_t const*, float*, long, float, float*):
+         : 179    }
+    0.00 :   c7204a: auipc   ra,0xff5a5
+    0.00 :   c7204e: jalr    -1002(ra) # 216c60 <__stack_chk_fail@plt>
+    0.00 :   c72052: sd      s2,48(sp)
+         : 183    dispatch_f16_exp_sub_sum():
+         : 63     static const jit_rvv_softmax_f16_exp_sub_sum_kernel_t kernel;
+    0.00 :   c72054: mv      s2,a0
+    0.00 :   c72056: auipc   a0,0x84a
+    0.00 :   c7205a: addi    a0,a0,50 # 14bc088 <guard variable for dnnl::impl::cpu::rv64::(anonymous namespace)::dispatch_f16_exp_sub_sum(dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum_kernel_t::call_params_t const*)::kernel>
+    0.00 :   c7205e: auipc   ra,0xff5a5
+    0.00 :   c72062: jalr    -750(ra) # 216d70 <__cxa_guard_abort@plt>
+    0.00 :   c72066: ld      a4,-40(s0)
+    0.00 :   c7206a: ld      a5,0(s1)
+    0.00 :   c7206c: xor     a5,a5,a4
+    0.00 :   c7206e: li      a4,0
+    0.00 :   c72070: bnez    a5,c7207c <dnnl::impl::cpu::rv64::jit_rvv_softmax_f16_exp_sub_sum(dnnl::impl::float16_t const*, float*, long, float, float*)+0xfc>
+    0.00 :   c72072: mv      a0,s2
+    0.00 :   c72074: auipc   ra,0xff5a5
+    0.00 :   c72078: jalr    300(ra) # 2171a0 <_Unwind_Resume@plt>
+    0.00 :   c7207c: auipc   ra,0xff5a5
+    0.00 :   c72080: jalr    -1052(ra) # 216c60 <__stack_chk_fail@plt>

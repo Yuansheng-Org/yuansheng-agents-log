@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-onednn-pool-f16-upstream-001",
+  "blueprintId": "bp-onednn-pool_f16_upstream-001",
+  "createdAt": "2026-09-09T13:33:10.767Z",
+  "objective": "f16 max-pooling forward-training NCSP kernel（generate_f16）的窗口扫描使用单一 v_acc/v_ind accumulator 的 loop-carried 串行 recurrence（每窗口元素关键路径 = vmflt.vv → vmerge.vvm → 下一轮 vmflt.vv，链深 K），argmax 索引链（vmerge.vxm）复用同一 compare mask；同时 channel 向量固定 e16/m1（VLEN=128→8 lanes/chunk），per-chunk epilogue 的 2×vsetvli+窄化+strided store 按 C/8 次重复，造成函数内两个热区间。",
+  "changes": [
+    {
+      "filePath": "src/cpu/rv64/jit_uni_pool_kernel.cpp",
+      "action": "modify",
+      "rationale": "f16 max-pooling forward-training NCSP kernel（generate_f16）的窗口扫描使用单一 v_acc/v_ind accumulator 的 loop-carried 串行 recurrence（每窗口元素关键路径 = vmflt.vv → vmerge.vvm → 下一轮 vmflt.vv，链深 K），argmax 索引链（vmerge.vxm）复用同一 compare mask；同时 channel 向量固定 e16/m1（VLEN=128→8 lanes/chunk），per-chunk epilogue 的 2×vsetvli+窄化+strided store 按 C/8 次重复，造成函数内两个热区间。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 src/cpu/rv64/jit_uni_pool_kernel.cpp 来解决 blueprint bp-onednn-pool_f16_upstream-001。"
+}

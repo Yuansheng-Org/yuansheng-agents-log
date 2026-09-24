@@ -1,0 +1,36 @@
+{
+  "files": [
+    {
+      "bytes": "8263",
+      "path": "blueprint.json",
+      "sha256": "0fe9ed1887f37611b2d9d4073fc66cede292f240a41d99735f2b8b3a67436893"
+    },
+    {
+      "bytes": "24545",
+      "path": "diagnosis.md",
+      "sha256": "2c81970b1168154dffef2e5f2d44e95110ab7a7c259b941f5ed8f0d5ee98dee0"
+    },
+    {
+      "bytes": "210297",
+      "path": "evidence/annotate.txt",
+      "sha256": "25dc94e875e385aca8ff42649799bc8f252c49e252f53b97f35c045a181d03c5"
+    },
+    {
+      "bytes": "892",
+      "path": "evidence/metadata.json",
+      "sha256": "94bf5897e042af395ffc5e56762eb59e48e8ee56bfeb0ae61f784f31801b2bad"
+    },
+    {
+      "bytes": "2277",
+      "path": "evidence/perf-stat.txt",
+      "sha256": "552fb42e6f0ad6f7d751b9dfd5fde258b5cca069931fd5a8fe4892707ccd96ef"
+    },
+    {
+      "bytes": "1423",
+      "path": "source-files.json",
+      "sha256": "b817d2fcdb229a0eb7d31cec7b83f1a205056abeb5953b60ed60709b6ec06fa5"
+    }
+  ],
+  "format_version": 1,
+  "kind": "artifact_checksums"
+}

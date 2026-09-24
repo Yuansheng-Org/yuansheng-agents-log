@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-onednn-lnorm-f16-upstream-006",
+  "blueprintId": "bp-onednn-lnorm_f16_upstream-006",
+  "createdAt": "2026-09-10T12:50:01.857Z",
+  "objective": "f16 fused LayerNorm JIT kernel 以 3-pass 结构重复扫描同一输入（第 2 个 pass Σ(x−mean)² 可与第 1 个 pass 合并为 Σx/Σx² 单统计 pass），且各 pass 每 chunk 的 vsetvli 切换、tail 清零与循环控制未被固定-VL 主循环/展开摊薄；对 compute-bound workload 构成结构性多余遍历与每元素配置/控制开销。",
+  "changes": [
+    {
+      "filePath": "src/cpu/rv64/jit_rvv_layernorm_kernel.cpp",
+      "action": "modify",
+      "rationale": "f16 fused LayerNorm JIT kernel 以 3-pass 结构重复扫描同一输入（第 2 个 pass Σ(x−mean)² 可与第 1 个 pass 合并为 Σx/Σx² 单统计 pass），且各 pass 每 chunk 的 vsetvli 切换、tail 清零与循环控制未被固定-VL 主循环/展开摊薄；对 compute-bound workload 构成结构性多余遍历与每元素配置/控制开销。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 src/cpu/rv64/jit_rvv_layernorm_kernel.cpp 来解决 blueprint bp-onednn-lnorm_f16_upstream-006。"
+}

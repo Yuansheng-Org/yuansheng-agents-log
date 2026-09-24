@@ -1,0 +1,67 @@
+8-ONEDNN-BENCHDNN-BENCHMARK lnorm_f16_upstream RISC-V perf stat
+===============================================================
+
+Source CSV: /workspace/results/8-onednn-benchdnn-benchmark_results.csv
+TestName: lnorm_f16_upstream
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 69,299,803 |
+| task_clock | 335.1100000000 |
+| cpu_cycle | 55,198,375,979,535 |
+| instruction | 37,305,659,590,488 |
+| cache_references | 3,957,483 |
+| cache_misses | 3,958,264 |
+| branches | 429,284,489 |
+| branch_misses | 938,070 |
+| L1_dcache_loads | 241,288,444 |
+| L1_dcache_load_misses | 563,869 |
+| LLC_load_misses | 629,912 |
+| LLC_loads | 3,962,633 |
+| IPC | 0.6758470000 |
+| benchdnn_min_ms | 0.0212402000 |
+| benchdnn_avg_ms | 0.0269287000 |
+| benchdnn_min_gflops | 0 |
+| benchdnn_avg_gflops | 0 |
+| benchdnn_gops | 0 |
+| benchdnn_max_create_ms | 0.3308110000 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 0.069300 |
+| cache_miss_rate | 100.020% |
+| branch_miss_rate | 0.219% |
+| L1_dcache_load_miss_rate | 0.234% |
+| LLC_load_miss_rate | 15.896% |
+
+perf stat style summary
+-----------------------
+                69,299,803  duration_time
+            335.1100000000  task_clock
+        55,198,375,979,535  cpu_cycle
+        37,305,659,590,488  instruction
+                 3,957,483  cache_references
+                 3,958,264  cache_misses
+               429,284,489  branches
+                   938,070  branch_misses
+               241,288,444  L1_dcache_loads
+                   563,869  L1_dcache_load_misses
+                   629,912  LLC_load_misses
+                 3,962,633  LLC_loads
+              0.6758470000  IPC
+              0.0212402000  benchdnn_min_ms
+              0.0269287000  benchdnn_avg_ms
+                         0  benchdnn_min_gflops
+                         0  benchdnn_avg_gflops
+                         0  benchdnn_gops
+              0.3308110000  benchdnn_max_create_ms
+                  0.069300  duration_s
+                  100.020%  cache_miss_rate
+                    0.219%  branch_miss_rate
+                    0.234%  L1_dcache_load_miss_rate
+                   15.896%  LLC_load_miss_rate

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-class12-softmax_f16_upstream-008",
+  "patchCandidateId": "pc-bp-onednn-softmax-f16-upstream-008",
+  "reviewedAt": "2026-09-10T12:50:12Z",
+  "reviewer": "opencode AI reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "src/cpu/rv64 架构内修改或通用 ref 优化。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": []
+}

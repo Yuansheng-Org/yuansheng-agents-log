@@ -1,0 +1,125 @@
+ Percent |	Source code & Disassembly of jitted-14255-8.so for cpu-clock:u (67 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3   Disassembly of section .text:
+         :
+         : 5   0000000000000080 <jit_uni_pool_ncsp_kernel_t.8>:
+         : 6   jit_uni_pool_ncsp_kernel_t.8():
+    0.00 :    80:     addi    sp,sp,-112
+    2.99 :    84:     sd      s0,0(sp)
+    0.00 :    88:     sd      s1,8(sp)
+    0.00 :    8c:     sd      s2,16(sp)
+    0.00 :    90:     sd      s3,24(sp)
+    0.00 :    94:     sd      s4,32(sp)
+    1.49 :    98:     sd      s5,40(sp)
+    0.00 :    9c:     sd      s6,48(sp)
+    0.00 :    a0:     sd      s7,56(sp)
+    0.00 :    a4:     sd      s8,64(sp)
+    0.00 :    a8:     sd      s9,72(sp)
+    0.00 :    ac:     sd      s10,80(sp)
+    0.00 :    b0:     sd      s11,88(sp)
+    0.00 :    b4:     ld      s0,0(a0)
+    0.00 :    b8:     ld      s1,8(a0)
+    0.00 :    bc:     ld      s2,16(a0)
+    0.00 :    c0:     ld      s6,24(a0)
+    0.00 :    c4:     ld      s7,32(a0)
+    0.00 :    c8:     ld      a1,40(a0)
+    0.00 :    cc:     ld      t5,48(a0)
+    0.00 :    d0:     ld      t6,56(a0)
+    0.00 :    d4:     ld      a2,64(a0)
+    0.00 :    d8:     ld      t2,72(a0)
+    0.00 :    dc:     ld      t3,80(a0)
+    0.00 :    e0:     ld      s3,88(a0)
+    0.00 :    e4:     flw     ft1,100(a0)
+    0.00 :    e8:     slli    s4,t2,0x1
+    0.00 :    ec:     slli    s5,t3,0x1
+    0.00 :    f0:     ld      s8,112(a0)
+    0.00 :    f4:     ld      s9,120(a0)
+    0.00 :    f8:     li      t4,2
+    0.00 :    fc:     ld      s10,168(a0)
+    0.00 :   100:    ld      s11,176(a0)
+    0.00 :   104:    ld      s2,16(a0)
+    0.00 :   108:    beqz    s2,218 <jit_uni_pool_ncsp_kernel_t.8+0x198>
+    0.00 :   10c:    .insn   4, 0x0c8972d7
+    0.00 :   110:    lui     t1,0x10
+    0.00 :   114:    addiw   t1,t1,-1025 # fbff <jit_uni_pool_ncsp_kernel_t.8+0xfb7f>
+    0.00 :   118:    .insn   4, 0x5e034257
+    0.00 :   11c:    .insn   4, 0x5e004557
+    0.00 :   120:    mv      t3,s11
+    0.00 :   124:    mv      a3,s6
+    0.00 :   128:    mul     t1,a3,s5
+    0.00 :   12c:    add     t1,s0,t1
+    0.00 :   130:    bge     a3,t5,1a8 <jit_uni_pool_ncsp_kernel_t.8+0x128>
+    0.00 :   134:    mv      a4,s7
+    0.00 :   138:    mul     t2,a4,s4
+    0.00 :   13c:    add     a6,t1,t2
+    0.00 :   140:    bge     a4,t6,194 <jit_uni_pool_ncsp_kernel_t.8+0x114>
+    1.49 :   144:    mv      a5,a1
+    0.00 :   148:    mul     t2,a5,s3
+    0.00 :   14c:    add     a7,a6,t2
+    0.00 :   150:    bge     a5,a2,180 <jit_uni_pool_ncsp_kernel_t.8+0x100>
+    0.00 :   154:    bne     s8,t4,160 <jit_uni_pool_ncsp_kernel_t.8+0xe0>
+    0.00 :   158:    .insn   4, 0x0208d407
+    0.00 :   15c:    j       164 <jit_uni_pool_ncsp_kernel_t.8+0xe4>
+    1.49 :   160:    .insn   4, 0x0b88d407
+   34.33 :   164:    .insn   4, 0x6e441057
+    4.48 :   168:    .insn   4, 0x5c440257
+    8.96 :   16c:    .insn   4, 0x5cae4557
+    8.96 :   170:    addi    t3,t3,1
+    0.00 :   174:    addi    a5,a5,1
+    1.49 :   178:    add     a7,a7,s3
+    0.00 :   17c:    j       150 <jit_uni_pool_ncsp_kernel_t.8+0xd0>
+    0.00 :   180:    ld      t2,184(a0)
+    0.00 :   184:    add     t3,t3,t2
+    0.00 :   188:    addi    a4,a4,1
+    0.00 :   18c:    add     a6,a6,s4
+    1.49 :   190:    j       140 <jit_uni_pool_ncsp_kernel_t.8+0xc0>
+    0.00 :   194:    ld      t2,192(a0)
+    0.00 :   198:    add     t3,t3,t2
+    0.00 :   19c:    addi    a3,a3,1
+    0.00 :   1a0:    add     t1,t1,s5
+    0.00 :   1a4:    j       130 <jit_uni_pool_ncsp_kernel_t.8+0xb0>
+    0.00 :   1a8:    bne     s9,t4,1b4 <jit_uni_pool_ncsp_kernel_t.8+0x134>
+    0.00 :   1ac:    .insn   4, 0x0204d227
+    0.00 :   1b0:    j       1b8 <jit_uni_pool_ncsp_kernel_t.8+0x138>
+    0.00 :   1b4:    .insn   4, 0x0b94d227
+   22.39 :   1b8:    ld      t2,200(a0)
+    0.00 :   1bc:    li      t1,1
+    0.00 :   1c0:    .insn   4, 0x0c797e57
+    0.00 :   1c4:    .insn   4, 0xb2a03457
+    0.00 :   1c8:    beq     t2,t1,1d4 <jit_uni_pool_ncsp_kernel_t.8+0x154>
+    0.00 :   1cc:    .insn   4, 0x0a7d0427
+    8.96 :   1d0:    j       1d8 <jit_uni_pool_ncsp_kernel_t.8+0x158>
+    0.00 :   1d4:    .insn   4, 0x020d0427
+    0.00 :   1d8:    .insn   4, 0x0c8972d7
+    0.00 :   1dc:    bne     s8,t4,1e8 <jit_uni_pool_ncsp_kernel_t.8+0x168>
+    0.00 :   1e0:    slli    t1,t0,0x1
+    0.00 :   1e4:    j       1ec <jit_uni_pool_ncsp_kernel_t.8+0x16c>
+    0.00 :   1e8:    mul     t1,t0,s8
+    0.00 :   1ec:    add     s0,s0,t1
+    0.00 :   1f0:    bne     s9,t4,1fc <jit_uni_pool_ncsp_kernel_t.8+0x17c>
+    0.00 :   1f4:    slli    t1,t0,0x1
+    0.00 :   1f8:    j       200 <jit_uni_pool_ncsp_kernel_t.8+0x180>
+    0.00 :   1fc:    mul     t1,t0,s9
+    0.00 :   200:    add     s1,s1,t1
+    0.00 :   204:    ld      t2,200(a0)
+    0.00 :   208:    mul     t1,t0,t2
+    0.00 :   20c:    add     s10,s10,t1
+    1.49 :   210:    sub     s2,s2,t0
+    0.00 :   214:    j       108 <jit_uni_pool_ncsp_kernel_t.8+0x88>
+    0.00 :   218:    ld      s0,0(sp)
+    0.00 :   21c:    ld      s1,8(sp)
+    0.00 :   220:    ld      s2,16(sp)
+    0.00 :   224:    ld      s3,24(sp)
+    0.00 :   228:    ld      s4,32(sp)
+    0.00 :   22c:    ld      s5,40(sp)
+    0.00 :   230:    ld      s6,48(sp)
+    0.00 :   234:    ld      s7,56(sp)
+    0.00 :   238:    ld      s8,64(sp)
+    0.00 :   23c:    ld      s9,72(sp)
+    0.00 :   240:    ld      s10,80(sp)
+    0.00 :   244:    ld      s11,88(sp)
+    0.00 :   248:    addi    sp,sp,112
+    0.00 :   24c:    ret

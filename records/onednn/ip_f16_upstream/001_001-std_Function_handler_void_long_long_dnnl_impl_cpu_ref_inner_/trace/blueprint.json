@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-onednn-ip_f16_upstream-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T16:19:13.536Z",
+    "software": "onednn",
+    "testcaseIds": [
+      "ip_f16_upstream"
+    ],
+    "diagnosisId": "diag-20260908T161913536Z-44f25b3e",
+    "targetHardware": "SOPHGO SG2044 / XuanTie C920v2 (RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/uxlfoundation/oneDNN.git",
+    "testBranch": "main",
+    "commitHash": "d22de940f301e97591e04a2cc6f0010c52109ac7"
+  },
+  "problem": {
+    "summary": "onednn 的 fp16 inner-product forward（ip_f16_upstream）在 RISC-V SG2044 上以 compiler-generated 标量 reference 内核（ref_inner_product_fwd_t）执行：kw 内层循环每迭代从零重算 src/wei 物理偏移（≈72% 样本）并逐元素软件 fp16→fp32 转换（≈14% 样本），全函数零 RVV 指令，导致指令开销主导、性能远低于硬件 RVV 1.0 + Zvfh 能力应有水平。",
+    "evidence": [
+      "perf annotate（cpu-clock:u, local period, 64 samples）：kw 循环内 offset 重算 ≈72%（src_off off_v 区 55ffa8–56005x ≈39% + wei_off off_v 区 5600d2–56023a ≈28% + get_data_off 分发 ≈5%）",
+      "perf annotate：fp16→fp32 软件转换 ≈14%（55fdd0/55fe9e/55feaa/56026e/56027c/560310/560316），调用 scalbnf@plt",
+      "perf stat：IPC=0.668；cache_references≈5.53M（对 32.7T 指令可忽略）、L1_dcache_load_miss_rate=0.160%、branch_miss_rate=0.077% → compute/latency-bound，非 memory/branch bound",
+      "annotate 全函数 0 条 v*/th.v* 指令；硬件 metadata 暴露 RVV 1.0 v + zfh/zfhmin/zvfh/zvfhmin，VLEN=128"
+    ]
+  },
+  "rootCause": {
+    "summary": "ref_inner_product_fwd_t 的 compiler-generated 标量 reference 内核被真实执行：内层循环每次迭代经通用 memory_desc_wrapper::off_v() 从零重算 src_off/wei_off 物理偏移（含 ndims 循环、inner_nblks rem/div/mul、stride 累加），并逐元素以软件 bit-twiddle + scalbnf 做 fp16→fp32 转换，最后单条 fmadd.s 累加；主循环零向量化，硬件 V/Zvfh 未被利用。",
+    "candidateFiles": [
+      "src/cpu/ref_inner_product.cpp"
+    ],
+    "performanceFactors": [
+      "RVV Floating-Point Matmul and GEMV Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "FP16→FP32 转换的特殊值语义（NaN payload/quiet-bit、±Inf、±0、denormal、rounding mode）与 scalar reference float16_t::operator float() 逐位一致",
+      "inner-product 数值输出与 bias/post-ops 顺序、alias 语义不变",
+      "内存布局/物理偏移语义（memory_desc_wrapper blocking desc：padded offsets、inner blocks、strides）不变"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "ip_f16_upstream"
+    ],
+    "regressionCommand": "agent1 patch_regression --case ip_f16_upstream"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=0.668、cache 事件可忽略（L1 miss 0.16%、cache_references 仅 5.53M），确认 workload 为 compute/latency-bound 而非 memory-bound；perf annotate 的 64 个样本中约 72% 落在 kw 内层循环两次完整 off_v 偏移重算区（55ffa8–56005x 与 5600d2–56023a）、约 14% 落在 fp16→fp32 软件转换区（含 scalbnf@plt 调用）、约 6% 落在 fmadd.s/循环控制，而硬件 metadata 明确暴露 RVV 1.0 v + zfh/zvfh + VLEN=128；这构成 rows-operator-rvv.md 的 RVV Floating-Point Matmul and GEMV Kernels 命中（route High：compiler-generated scalar 点积、无 Int8/量化/矩阵引擎合同），no-vectorization 为 supporting 机制；oneDNN/OpenBLAS 上游已有 RVV FP matmul/GEMV kernel 实现先例证明该路径可向量化。根因确定为代码实现层：reference 内核无微内核结构、无向量化、无 convert-once。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "config_mismatch：libdnnl.so.3.14 若以不含 v 的 -march 构建，即使源码含向量 kernel 也不会被编译进二进制（无 ELF 产物无法 readelf -A 核实，已列入 currentGaps）",
+      "benchdnn 短 shape（gops≈32K MAC）下 primitive 创建/选择开销主导（但样本集中在 kw 循环计算区间，与该解释矛盾）",
+      "存在专用 RVV inner-product kernel 但 dispatch 未命中（无仓库源码证据支持 kernel-selection row，已排除）"
+    ],
+    "currentGaps": "build ISA（metadata binaries 为空、无 ELF 产物，无法 readelf -A 核对 Tag_RISCV_arch，无法排除整体未启用 V 的构建配置）；采样语义（local period、非 global-period、无 workload 级收益上界）；Sampling IP precision 未知（结论收敛到 interval 级）；无 DWARF/source mapping，candidateFiles 依 oneDNN 常规源码路径推断",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + ip_f16_upstream",
+    "recommendedFirstAction": "在 src/cpu/ref_inner_product.cpp 的 execute_forward 内 ker lambda 上实现沿 OC 轴的 RVV 向量化微内核：外层一次性做 memory_desc_wrapper 布局解算（消除内层每迭代 off_v 重算），内层用 vle16 + vfmacc.vf 做 IC 归约、vfwcvt.f.f.v（或 scalar fcvt.s.h）替换 float16_t::operator float() 软件转换，并确保构建 -march 含 v/zvfh",
+    "recommendedVerification": "以含 v/zvfh 的精确 -march 重建并重跑 ip_f16_upstream：perf annotate 中 55ffa8–560236 偏移重算区与 55fe9e/56026e 转换区样本应骤降、出现 vsetvli/vle16/vfmacc/vfwcvt 指令；benchdnn avg_ms 下降且数值与 scalar reference 逐位一致",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.668,
+        "anomalyNote": "32.68T instructions / 48.90T cycles；标量指令开销主导，compute/latency-bound"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.16,
+        "anomalyNote": "极低 miss rate，排除 memory-bound"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.077,
+        "anomalyNote": "极低 branch miss，排除 branch-bound"
+      },
+      {
+        "metric": "cache_references",
+        "rv": 5529709,
+        "anomalyNote": "相对 32.7T 条指令可忽略，cache 非瓶颈"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "std::_Function_handler<void (long, long), dnnl::impl::cpu::ref_inner_product_fwd_t::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(long, long)#2}>::_M_invoke",
+        "fileModule": "unknown（无 debug symbols；ref_inner_product_fwd_t 通常位于 src/cpu/ref_inner_product.cpp）",
+        "rvvPattern": "RVV Floating-Point Matmul and GEMV Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.95,
+        "note": "线性代数（inner product / GEMV）：MB×OC 输出、K=IC*KD*KH*KW 标量点积累加；kw 内层循环每迭代重算 src/wei 物理偏移并软件转换 fp16→fp32，实际乘加仅 1 条 fmadd.s"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/cpu/ref_inner_product.cpp（推断路径，无 DWARF）",
+      "relatedKnowledge": "https://github.com/uxlfoundation/oneDNN/commit/d6f82a2d0d0db41e6daaf20fbb4fd352843aac64; https://github.com/uxlfoundation/oneDNN/commit/3bac96b8bc1fc9c348c986f38f65285693943d2f; https://github.com/uxlfoundation/oneDNN/pull/4410; https://github.com/uxlfoundation/oneDNN/pull/5405; https://github.com/OpenMathLib/OpenBLAS/commit/809e1cba8f1f3f89972581e8b82f2ec52e51eadb",
+      "evidenceExplanation": "oneDNN 上游已有 RVV floating-point matmul 实现（3bac96b、d6f82a2d 及 PR 4410/5405 等），OpenBLAS 有 FP16 RVV GEMV 先例（809e1cba），证明 fp16 inner-product 在 RVV 1.0 + Zvfh 目标上存在成熟向量化路径；而本热点执行的是无任何向量指令的 compiler-generated 标量 reference 内核，与上述可到达的实现形态形成缺口，支撑 code_path 根因结论"
+    }
+  }
+}

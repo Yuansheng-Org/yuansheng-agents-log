@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-onednn-conv_f16_upstream-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T11:12:31.637Z",
+    "software": "onednn",
+    "testcaseIds": [
+      "conv_f16_upstream"
+    ],
+    "diagnosisId": "diag-20260908T111231637Z-9684e56e",
+    "targetHardware": "SOPHGO SG2044 / XuanTie C920v2 (RVV 1.0, VLEN=128, OoO)",
+    "repositoryUrl": "https://github.com/uxlfoundation/oneDNN.git",
+    "testBranch": "main",
+    "commitHash": "d22de940f301e97591e04a2cc6f0010c52109ac7"
+  },
+  "problem": {
+    "summary": "benchdnn conv_f16_upstream 的 resnet_50:res2a_branch2a（1x1 conv, f16:f16:f16, direct）实测实现为 ref:any（100%）。rv64 向量化 conv kernel（jit_rvv_1x1、rvv_brgemm）均在 pd gate 中要求 dst_dt==f32，f16 dst 无向量实现可达，落入标量 ref_convolution_fwd_t，其热点函数承担 91.71% workload 样本，性能仅 4.05 GFLOPs、IPC 0.688。",
+    "evidence": [
+      "benchdnn 实现统计：test_output.txt 行3 `perf,cpu,ref:any,\"resnet_50:res2a_branch2a\",FWD_D,f16:f16:f16,...` 与行7 `| ref:any : 1 (100%) |`",
+      "热点份额：std::_Function_handler<...ref_convolution_fwd_t::execute_forward...lambda#3>::_M_invoke 占 cpu-clock:u 全局 Overhead 91.71%（288527/314624 samples）",
+      "perf stat：IPC=0.688、L1_dcache_load_miss_rate=0.021%（compute-bound）、branch_miss_rate=0.29%、benchdnn_min_gflops=4.051",
+      "源码 gate：rvv_brgemm_conv_utils.cpp:107 `if (!in_dt_ok || jcp.dst_dt != f32) return status::unimplemented;`；jit_rvv_1x1_convolution.hpp:83-85 要求 `dst_dt == data_type::f32`"
+    ]
+  },
+  "rootCause": {
+    "summary": "f16 dst 的 conv 在 rv64 无向量化实现可达：jit_rvv_1x1 与 rvv_brgemm 的 dtype gate 硬性要求 f32 输出，唯一接受 f16:dst 合同的 ref_convolution_fwd_t 被选中，其全标量 ic 循环（零 v*、软件 f16→f32 位操作、每轮偏移 mul 链）成为 91.71% 热点。",
+    "candidateFiles": [
+      "src/cpu/rv64/jit_rvv_1x1_convolution.hpp",
+      "src/cpu/rv64/rvv_brgemm_conv_utils.cpp",
+      "src/cpu/rv64/rvv_brgemm_conv.cpp",
+      "src/cpu/ref_convolution.cpp"
+    ],
+    "performanceFactors": [
+      "Kernel Selection and Runtime Specialization",
+      "No vectorization",
+      "RISC-V ISA Extension-Specific Instruction Substitution",
+      "Loop Induction Variable Strength Reduction"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "卷积数值语义：f16 输入 → f32 累积 → f16 输出（含 bias/post-ops/rounding mode RNE）",
+      "f16 输出的格式 tag 合同（nwc/nhwc + oihw 分块权重）与 set_default_formats 行为",
+      "不支持组合（无 zvfh / 其它 dst dtype / 超支持域 post-ops）必须保留 ref fallback 可达",
+      "kernel 内 vtype 切换（e32↔e16）保持 VL/VLMAX 一致性与 call-clobbered vector state 合同"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "conv_f16_upstream"
+    ],
+    "regressionCommand": "agent1 patch_regression --case conv_f16_upstream"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 compute-bound（IPC 0.688、L1 miss 0.021%）而 benchdnn 实现统计确认请求进入 ref:any（100%），结合源码树中 f16 impl list（cpu_convolution_list.cpp:201-203）注册了 rv64 向量 kernel 但其 pd gate 在 dst_dt!=f32 时拒绝（rvv_brgemm_conv_utils.cpp:107、jit_rvv_1x1_convolution.hpp:83-85），可判定根因是 kernel-selection 可达性缺口：f16 dst 使向量 kernel 不可达、唯一可用的标量 ref kernel 承担 91.71% 热点，其 ic 循环内每 64 次迭代约 40+ 条指令只贡献 1 次 fmadd.s（样本 0.02%），并叠加软件 f16→f32 转换与每轮偏移重建。knowledge 侧 oneDNN 既有 kernel-selection/dtype-specialization 提交佐证该 gate 形态可修。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "构建产物可能未编译 rv64 JIT conv 路径（build ISA/binaries 未采集），则问题为 build 配置而非 pd gate",
+      "benchdnn 'any' tag 可能选了 ref 友好的格式，向量 kernel 因格式/blocking init_conf 拒绝（而非仅 dst dtype）",
+      "该测试名为 upstream 基准对比，ref:any 可能是有意的基线行为而非回归"
+    ],
+    "currentGaps": "build ISA 未采集（readelf -A libdnnl.so.3.14 待补）；sampling IP precision 未知（单行占比仅锚定 interval）；rv64 向量 conv kernel 是否实际编译进该 libdnnl 未直接确认；非 1x1 f16 conv 的 brgemm f16-dst 改动未实测",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + 测试用例 conv_f16_upstream",
+    "recommendedFirstAction": "src/cpu/rv64/jit_rvv_1x1_convolution.hpp:83-85 将 dst_dt 硬性 f32 要求放开为 `(all_f32 || sym_lowp || wei_decomp) && (dst_dt == data_type::f32 || (dst_dt == data_type::f16 && mayiuse(zvfh)))`，并在 src/cpu/rv64/jit_rvv_1x1_conv_kernel.cpp store 路径为 f16 dst 增加 vfncvt.f.f.w（e32→e16）窄化写出；同步核对 src/cpu/rv64/rvv_brgemm_conv_utils.cpp:107 的 f32-dst 硬拒绝",
+    "recommendedVerification": "重跑 benchdnn conv_f16_upstream：实现统计不再为 ref:any 100%，热点从 ref lambda 切换为 jit_1x1:zvfh/brgemm 向量 kernel，annotate 出现 vle16/vfwcvt/vfwmacc/vfncvt，benchdnn_min_gflops 与 IPC 按 Phase 5 预测提升；数值正确性对照 ref（f16 subnormal/NaN/±0/RNE）",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.688,
+        "anomalyNote": "标量 ref kernel 每 64 次迭代约 40+ 条指令只贡献 1 次 fmadd.s，IPC 远低于向量化峰值"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.021,
+        "anomalyNote": "数据驻留 L1，确认 compute/latency-bound 而非 memory-bound，计算侧优化杠杆有效"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.29,
+        "anomalyNote": "分支预测健康，热点成本不在分支误预测"
+      },
+      {
+        "metric": "benchdnn_min_gflops",
+        "rv": 4.051,
+        "anomalyNote": "1x1 f16 conv 仅 4.05 GFLOPs，标量 ref 实现远低于硬件向量能力"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "std::_Function_handler<void (long, long, long, long, long, long), dnnl::impl::cpu::ref_convolution_fwd_t::execute_forward(dnnl::impl::exec_ctx_t const&) const::{lambda(long, long, long, long, long, long)#3}>::_M_invoke",
+        "fileModule": "src/cpu/ref_convolution.cpp",
+        "rvvPattern": "Kernel Selection and Runtime Specialization",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.9171,
+        "note": "1x1 卷积（GEMM-like IC-reduction，IC=64）的标量 ref kernel；ref:any 因 rv64 向量 kernel 的 f32-dst gate 被选中，热点 ic loop 全标量且零 v*"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/cpu/rv64/rvv_brgemm_conv_utils.cpp:107; src/cpu/rv64/jit_rvv_1x1_convolution.hpp:83-85; src/cpu/cpu_convolution_list.cpp:201-203; src/cpu/ref_convolution.cpp:125-160",
+      "relatedKnowledge": "https://github.com/uxlfoundation/oneDNN/commit/cc92e4b292403096ddd78046914eec0d61147727, https://github.com/uxlfoundation/oneDNN/commit/9233aa44f24630b959e72417b8ecccabbec4c6a5, https://github.com/uxlfoundation/oneDNN/pull/4463, https://github.com/uxlfoundation/oneDNN/commit/e19dc70ec1fb50dc23203386ce09e6e537a4b0b7, https://github.com/uxlfoundation/oneDNN/pull/4363, https://github.com/uxlfoundation/oneDNN/commit/276cb7cd00e868e4a7e1e34c5848efbd09be4efd, https://github.com/uxlfoundation/oneDNN/pull/5453, https://github.com/uxlfoundation/oneDNN/commit/b2f18637a7da6e2bd2739b84f1db6cd529396de4, https://github.com/uxlfoundation/oneDNN/commit/ec2bfa1254336d52fc95af71ea6dcbe7e8231766, https://github.com/uxlfoundation/oneDNN/pull/5403",
+      "evidenceExplanation": "源码头文件/工具文件的 dtype gate 逐行核实为 f32-dst 硬拒绝，与 benchdnn 实测 ref:any 100% 的分派记录一致；oneDNN 上游 kernel-selection/低精度 dtype 专门化提交（#5403 等）证明此类 gate 形态的既有修复路径，支撑『扩展既有向量 kernel 的 f16-dst 合同』为根因对应的 The fix 方向"
+    }
+  }
+}

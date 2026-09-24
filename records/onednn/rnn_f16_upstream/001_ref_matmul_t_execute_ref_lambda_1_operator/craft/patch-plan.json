@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-onednn-rnn-f16-upstream-001",
+  "blueprintId": "bp-onednn-rnn_f16_upstream-001",
+  "createdAt": "2026-09-09T13:33:14.301Z",
+  "objective": "RNN f16 matmul 落入标量参考实现 ref_matmul_t，而树内更高优先级的 RVV matmul 内核（rvv_matmul_t/rvv_brgemm_matmul_t）因合同 gate（row/col-major layout 限定、hp path 要求 zero-bias/default-attr）未命中该请求；被选中的 ref 核在 k-loop 内逐元素重算 blocked-layout 偏移（off_v div/rem）并软件解码 f16，零向量化。",
+  "changes": [
+    {
+      "filePath": "src/cpu/rv64/rvv_matmul.hpp",
+      "action": "modify",
+      "rationale": "RNN f16 matmul 落入标量参考实现 ref_matmul_t，而树内更高优先级的 RVV matmul 内核（rvv_matmul_t/rvv_brgemm_matmul_t）因合同 gate（row/col-major layout 限定、hp path 要求 zero-bias/default-attr）未命中该请求；被选中的 ref 核在 k-loop 内逐元素重算 blocked-layout 偏移（off_v div/rem）并软件解码 f16，零向量化。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/cpu/matmul/cpu_matmul_list.cpp",
+      "action": "modify",
+      "rationale": "RNN f16 matmul 落入标量参考实现 ref_matmul_t，而树内更高优先级的 RVV matmul 内核（rvv_matmul_t/rvv_brgemm_matmul_t）因合同 gate（row/col-major layout 限定、hp path 要求 zero-bias/default-attr）未命中该请求；被选中的 ref 核在 k-loop 内逐元素重算 blocked-layout 偏移（off_v div/rem）并软件解码 f16，零向量化。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/cpu/matmul/ref_matmul.cpp",
+      "action": "modify",
+      "rationale": "RNN f16 matmul 落入标量参考实现 ref_matmul_t，而树内更高优先级的 RVV matmul 内核（rvv_matmul_t/rvv_brgemm_matmul_t）因合同 gate（row/col-major layout 限定、hp path 要求 zero-bias/default-attr）未命中该请求；被选中的 ref 核在 k-loop 内逐元素重算 blocked-layout 偏移（off_v div/rem）并软件解码 f16，零向量化。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 src/cpu/rv64/rvv_matmul.hpp, src/cpu/matmul/cpu_matmul_list.cpp, src/cpu/matmul/ref_matmul.cpp 来解决 blueprint bp-onednn-rnn_f16_upstream-001。"
+}

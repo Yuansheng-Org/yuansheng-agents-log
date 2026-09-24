@@ -1,0 +1,174 @@
+diff --git a/src/cpu/rv64/jit_uni_eltwise.cpp b/src/cpu/rv64/jit_uni_eltwise.cpp
+index c1d5f02b181ca66225ef80c8a38b20e4b4bdde51..da102231524a026f6171df9966eb5678d906219b 100644
+--- a/src/cpu/rv64/jit_uni_eltwise.cpp
++++ b/src/cpu/rv64/jit_uni_eltwise.cpp
+@@ -69,10 +69,16 @@ protected:
+ // jit kernels
+ namespace {
+ 
+-// Vector-length-agnostic eltwise kernel. A single vsetvli loop covers the main
+-// body and the tail alike, so there is no unrolled/remainder loop split as on
+-// x64/aarch64, and no isa template: RVV has one scalable vector ISA and the
+-// generated code adapts to the hardware VLEN at run time.
++// Vector-length-agnostic eltwise kernel with a fixed-VL main loop and a
++// runtime-VL tail. The granting vsetvli is issued once before the main loop:
++// while at least a full vector remains, vl and vtype are loop-invariant, so
++// the backedge reuses the granted vector state instead of re-issuing the setup
++// on every iteration (rvv_vector_state_management: no call/asm/exception edge
++// intervenes, and load_data()/store_vector() only switch vtype with the
++// x0-rd form that preserves vl and restores the load vtype). The tail, which
++// legitimately needs a shrunk vl, re-runs vsetvli. Unlike x64/aarch64 there is
++// no unrolled/remainder loop split and no isa template: RVV has one scalable
++// vector ISA and the generated code adapts to the hardware VLEN at run time.
+ //
+ // The injector always computes in f32: f16 (zvfh instance) is converted at the
+ // load/store edge, and the integer dtypes (s32/s8/u8, forward only, v
+@@ -107,19 +113,40 @@ struct jit_uni_kernel_t : public jit_uni_eltwise_kernel_t {
+                 this, desc.alg_kind, desc.alpha, desc.beta, 1.f, sp));
+     }
+ 
+-    // Load `vl` src (and, for backward, diff_dst) elements and widen them to
+-    // f32 in vmm_src (and vmm_diff_dst). Issues the vsetvli that sets reg_vl
+-    // and leaves the vtype at e32 / the dtype's compute LMUL for the injector.
+-    void load_vector() {
++    // Issue the vsetvli that grants reg_vl = min(reg_work_amount, VLMAX) at
++    // the load vtype (the vtype the loads below execute at). This is the only
++    // place the vector length is derived from the remaining work amount: the
++    // fixed-VL main loop calls it once before the loop, and the runtime-VL
++    // tail re-calls it when fewer than a full vector remain.
++    void grant_vl() {
+         const data_type_t dt = data_type();
+         if (dt == data_type::f32) {
+             vsetvli(reg_vl, reg_work_amount, SEW::e32, LMUL::m1, VTA::ta,
+                     VMA::ma);
+-            vle32_v(vmm_src, reg_src);
+-            if (!is_fwd_) vle32_v(vmm_diff_dst, reg_diff_dst);
+         } else if (dt == data_type::f16 || dt == data_type::bf16) {
+             vsetvli(reg_vl, reg_work_amount, SEW::e16, LMUL::m1, VTA::ta,
+                     VMA::ma);
++        } else if (dt == data_type::s32) {
++            vsetvli(reg_vl, reg_work_amount, SEW::e32, LMUL::m4, VTA::ta,
++                    VMA::ma);
++        } else { // s8 / u8
++            vsetvli(reg_vl, reg_work_amount, SEW::e8, LMUL::m1, VTA::ta,
++                    VMA::ma);
++        }
++    }
++
++    // Load `vl` src (and, for backward, diff_dst) elements and widen them to
++    // f32 in vmm_src (and vmm_diff_dst). On entry reg_vl and the load vtype
++    // are already established (by grant_vl(), or by the main loop's backedge
++    // state); the internal vsetvli calls use the x0-rd form, which preserves
++    // vl, and the function leaves the vtype at e32 / the dtype's compute LMUL
++    // for the injector.
++    void load_data() {
++        const data_type_t dt = data_type();
++        if (dt == data_type::f32) {
++            vle32_v(vmm_src, reg_src);
++            if (!is_fwd_) vle32_v(vmm_diff_dst, reg_diff_dst);
++        } else if (dt == data_type::f16 || dt == data_type::bf16) {
+             vle16_v(vmm_tmp, reg_src);
+             if (dt == data_type::bf16)
+                 vfwcvtbf16_f_f_v(vmm_src, vmm_tmp); // Zvfbfmin: e16m1 -> e32m2
+@@ -134,13 +161,9 @@ struct jit_uni_kernel_t : public jit_uni_eltwise_kernel_t {
+             }
+             vsetvli(x0, reg_vl, SEW::e32, LMUL::m2, VTA::ta, VMA::ma);
+         } else if (dt == data_type::s32) {
+-            vsetvli(reg_vl, reg_work_amount, SEW::e32, LMUL::m4, VTA::ta,
+-                    VMA::ma);
+             vle32_v(vmm_src, reg_src);
+             vfcvt_f_x_v(vmm_src, vmm_src);
+         } else { // s8 / u8
+-            vsetvli(reg_vl, reg_work_amount, SEW::e8, LMUL::m1, VTA::ta,
+-                    VMA::ma);
+             vle8_v(vmm_tmp, reg_src);
+             // vsext/vzext.vf4 operate at the destination vtype (e32/m4) and
+             // read the source group as 8-bit, so switch vtype before extending.
+@@ -155,6 +178,17 @@ struct jit_uni_kernel_t : public jit_uni_eltwise_kernel_t {
+         }
+     }
+ 
++    // Load `vl` src (and, for backward, diff_dst) elements and widen them to
++    // f32 in vmm_src (and vmm_diff_dst). Grants the vector length from the
++    // remaining work amount and leaves the vtype at e32 / the dtype's compute
++    // LMUL for the injector. Used by the runtime-VL tail path; the fixed-VL
++    // main loop uses grant_vl() once before the loop and load_data() per
++    // iteration instead.
++    void load_vector() {
++        grant_vl();
++        load_data();
++    }
++
+     // Convert the f32 result back to the dst dtype and store it. On entry the
+     // vtype is e32 at the compute LMUL; the integer paths clamp to the dst
+     // range first because vfcvt.x.f saturates only at the type bounds.
+@@ -200,7 +234,8 @@ struct jit_uni_kernel_t : public jit_uni_eltwise_kernel_t {
+ 
+     // One vector-length-agnostic pass over the `vl` elements the vsetvli in
+     // load_vector() grants (the analog of x64's compute_dst(tail): vsetvli
+-    // subsumes the tail case).
++    // subsumes the tail case). Used by the runtime-VL tail, where vl must be
++    // re-derived from the remaining work amount on entry.
+     void compute_dst() {
+         load_vector();
+         eltwise_injector_->compute_vector(vmm_src.getIdx());
+@@ -208,14 +243,35 @@ struct jit_uni_kernel_t : public jit_uni_eltwise_kernel_t {
+         store_vector();
+     }
+ 
++    // One full-vector pass over the `vl` elements granted before the fixed-VL
++    // main loop. Unlike compute_dst(), this does not re-issue the granting
++    // vsetvli: in the main loop vl and vtype are loop-invariant (load_data()
++    // switches vtype only with the x0-rd form, which preserves vl, and
++    // store_vector() restores the load vtype), so the vector state survives
++    // the backedge and the per-iteration setup is redundant.
++    void compute_dst_fixed_vl() {
++        load_data();
++        eltwise_injector_->compute_vector(vmm_src.getIdx());
++        if (!is_fwd_) vfmul_vv(vmm_src, vmm_src, vmm_diff_dst);
++        store_vector();
++    }
++
+     void compute() {
+-        Label loop_start, loop_end;
++        Label main_loop, tail, loop_end;
++
++        // Fixed-VL main loop. The granting vsetvli is emitted once, before the
++        // loop: while at least a full vector remains, vl and vtype are
++        // loop-invariant across the backedge, so the per-iteration setup
++        // (previously re-issued by load_vector() on every iteration) is
++        // skipped. The runtime-VL tail below legitimately re-runs vsetvli
++        // because its vl must shrink to the remaining element count.
++        grant_vl();
+ 
+-        L(loop_start);
++        L(main_loop);
+         {
+             beqz(reg_work_amount, loop_end);
+ 
+-            compute_dst();
++            compute_dst_fixed_vl();
+ 
+             // Advance pointers by vl * sizeof(dtype) using the vl granted by
+             // vsetvli, not the requested work amount.
+@@ -229,7 +285,19 @@ struct jit_uni_kernel_t : public jit_uni_eltwise_kernel_t {
+             if (!is_fwd_) add(reg_diff_dst, reg_diff_dst, reg_bytes);
+ 
+             sub(reg_work_amount, reg_work_amount, reg_vl);
+-            j_(loop_start);
++
++            // Loop back while at least a full vector remains; the granted
++            // vl/vtype state is still valid, so no vsetvli is re-issued.
++            bgeu(reg_work_amount, reg_vl, main_loop);
++        }
++
++        // Runtime-VL tail: fewer than a full vector remain. Re-derive vl from
++        // the remaining work amount; one pass covers it because the re-grant
++        // yields vl == work_amount (< VLMAX).
++        L(tail);
++        {
++            beqz(reg_work_amount, loop_end);
++            compute_dst();
+         }
+         L(loop_end);
+     }

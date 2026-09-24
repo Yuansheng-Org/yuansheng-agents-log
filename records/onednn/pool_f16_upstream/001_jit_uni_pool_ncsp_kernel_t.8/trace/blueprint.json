@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-onednn-pool_f16_upstream-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T20:17:43.118Z",
+    "software": "onednn",
+    "testcaseIds": [
+      "pool_f16_upstream"
+    ],
+    "diagnosisId": "diag-20260908T201743118Z-1485fbdf",
+    "targetHardware": "SOPHGO SG2044 / XuanTie C920v2 (RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/uxlfoundation/oneDNN.git",
+    "testBranch": "main",
+    "commitHash": "d22de940f301e97591e04a2cc6f0010c52109ac7"
+  },
+  "problem": {
+    "summary": "在 SG2044 (C920v2) 上 pool_f16_upstream 基准中，rank-001 热点 jit_uni_pool_ncsp_kernel_t.8（f16 max forward-training NCSP 池化 JIT kernel，67 cpu-clock samples）的函数内 61.2% 样本集中在窗口扫描的单一 (value,index) accumulator 串行 max+argmax recurrence（vmflt.vv 0x164 占 34.33%），31.3% 集中在 per-channel epilogue（argmax u8 窄化/存储与 2×vsetvli 切换，m1=8 f16 lanes/chunk 按 C/8 重复）。perf stat 显示 IPC=0.845、L1 miss=0.698%、branch miss=0.177%，为 compute/latency-bound。",
+    "evidence": [
+      "IPC=0.845338 (4,586,052,897 inst / 5,425,107,788 cycles)；L1_dcache_load_miss_rate=0.698%；LLC_load_miss_rate=13.444%；branch_miss_rate=0.177% → compute/latency-bound（cache_miss_rate=100.015% 为 counter 口径异常，不作依据）",
+      "hotspot jit_uni_pool_ncsp_kernel_t.8：0x164 vmflt.vv v0,v4,v8 34.33% (23/67) + 0x168 vmerge.vvm v4,v4,v8 4.48% + 0x16c vmerge.vxm v10,v10,t3 8.96% —— 窗口扫描单 accumulator 串行 max+argmax 链（sweep interval 0x150–0x17c 聚合 61.2%）",
+      "hotspot jit_uni_pool_ncsp_kernel_t.8：0x1b8 ld t2,200(a0) 22.39% + 0x1d0 j 1d8 8.96% —— per-channel epilogue（ws_vec_byte_stride 加载 / argmax u8 存储路径，interval 0x1a8–0x1d0 聚合 31.3%）"
+    ]
+  },
+  "rootCause": {
+    "summary": "f16 max-pooling forward-training NCSP kernel（generate_f16）的窗口扫描使用单一 v_acc/v_ind accumulator 的 loop-carried 串行 recurrence（每窗口元素关键路径 = vmflt.vv → vmerge.vvm → 下一轮 vmflt.vv，链深 K），argmax 索引链（vmerge.vxm）复用同一 compare mask；同时 channel 向量固定 e16/m1（VLEN=128→8 lanes/chunk），per-chunk epilogue 的 2×vsetvli+窄化+strided store 按 C/8 次重复，造成函数内两个热区间。",
+    "candidateFiles": [
+      "src/cpu/rv64/jit_uni_pool_kernel.cpp"
+    ],
+    "performanceFactors": [
+      "RVV Register-Budgeted Loop Unrolling",
+      "RVV Register-Group Utilization and LMUL Sizing"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "池化输出与 argmax u8 workspace 逐元素数值一致",
+      "first-wins tie rule（vmflt strict < 比较语义，相等时保留低窗口索引）",
+      "ncsp 布局的 strided 访问语义（vlse16/vsse16/vsse8 每 lane 独立 stride）",
+      "动态窗口边界（iw_start/iw_end 等）与 padding/clamp 位置跳过（pos_ih_step/pos_id_step）",
+      "f16 累积/存储位型与 zvfh 路径正确性"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "pool_f16_upstream"
+    ],
+    "regressionCommand": "agent1 patch_regression --case pool_f16_upstream"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.8,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=0.845、L1 miss=0.698%、branch miss=0.177% → workload 为 compute/latency-bound，排除 memory/branch 主导（指标层）。perf annotate（67 cpu-clock samples）中 window sweep interval 0x150–0x17c 聚合 61.2%，其顶部 0x164 vmflt.vv v0,v4,v8 (34.33%) 与 0x168/0x16c 的 vmerge.vvm/vmerge.vxm 构成单 (value,index) accumulator 的 loop-carried 串行 recurrence——指令编码已用 xbyak_riscv 头文件核对、与 generate_f16 源码 1610–1615 行逐条对应；per-channel epilogue interval 0x1a8–0x1d0 聚合 31.3%（0x1b8 22.39% + 0x1d0 8.96%），其 2×vsetvli+窄化+strided store 按 m1=8 lanes/chunk 重复 C/8 次（热点层）。命中 pattern 的 Related PR（XNNPACK RVV unrolling、OpenCV/OpenBLAS LMUL sizing）佐证同方向修复在其它项目有实证（知识层）。因 percent type=local period 且 precise_ip 未知，收益上界只能表述为函数内局部样本份额。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "cpu-clock 采样 IP 不精确（precise_ip 未知）：0x1b8/0x1d0 的 31.3% 可能部分是 strided store（vsse16/vsse8）的 skid 聚集而非 ws 加载自身，但仍归属同一 per-channel epilogue interval，不影响 finding 2 的机制结论",
+      "benchdnn 聚合了多个 shape，窗口尺寸 K 与通道数 C 的具体分布未知：小窗口 shape 下 epilogue 占比更高、大窗口 shape 下 sweep 占比更高，修复收益按 shape 分布可能不均",
+      "若 C920v2 的 f16 向量 FP 吞吐本身受限，串行链 latency 之外还存在 vector FP 吞吐瓶颈，finding 1 的收益上界会低于纯链深估计"
+    ],
+    "currentGaps": "缺 build ISA（JIT 生成 DSO 无静态 ELF，readelf 不适用）；缺 Sampling IP precision（precise_ip/Exact-IP 未知）；percent type=local period 且函数级 workload 份额未知 → 无法给 workload 级 Amdahl 上界；benchdnn 多 shape 聚合，K 与 C 分布未知；ARM 侧 perf stat 未采集（无对比数据）",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + 测试用例 pool_f16_upstream（无 ARM 对比数据）",
+    "recommendedFirstAction": "在 src/cpu/rv64/jit_uni_pool_kernel.cpp generate_f16() 中：① 将 iw_loop（行 1597–1624）重构为 2 路独立 (value,index) accumulator 链（v_accA/v_accB、v_indA/v_indB、t3A/t3B），窗口结束用 vmflt.vv + vmerge.vvm 按 first-wins 合并；② 将 channel 向量 vsetvli 从 e16/m1 提升为 e16/m2（行 1560/1575/1577），并同步调整 epilogue（行 1688–1713）的 argmax 窄化/存储为 fractional-LMUL（e8/m1 dest = e16/m2 src）",
+    "recommendedVerification": "重跑 benchdnn pool_f16_upstream（--dir=FWD_D，--tag=abx,axb，--dt=f16），对命中 shape 比较 cycles/element 与 m1 基线；perf annotate --percent-type=global-period 复核 0x164 占比下降与 vsetvli 频率减少；对 first-wins tie、K 奇偶、C tail、u8 argmax 窄化做逐元素一致性回归",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.845338,
+        "anomalyNote": "IPC<1 且 cache/branch miss 均低 → compute/latency-bound，与窗口串行 recurrence 机制一致"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.698,
+        "anomalyNote": "极低（0.698%），排除 memory-bound"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 13.444,
+        "anomalyNote": "中等偏低，数据基本驻留 cache"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.177,
+        "anomalyNote": "极低（0.177%），排除 branch-bound"
+      },
+      {
+        "metric": "benchdnn_avg_ms",
+        "rv": 0.115031,
+        "anomalyNote": "pool_f16_upstream 单次迭代平均耗时；无 ARM 侧对比数据"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "jit_uni_pool_ncsp_kernel_t.8",
+        "fileModule": "src/cpu/rv64/jit_uni_pool_kernel.cpp",
+        "rvvPattern": "RVV Register-Budgeted Loop Unrolling",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.612,
+        "note": "f16 max forward-training NCSP 池化 JIT kernel（JIT 生成代码，指令以 .insn hex 呈现并已解码）；窗口扫描串行 max+argmax recurrence，0x164 vmflt.vv v0,v4,v8 34.33%"
+      },
+      {
+        "hotspotFunction": "jit_uni_pool_ncsp_kernel_t.8",
+        "fileModule": "src/cpu/rv64/jit_uni_pool_kernel.cpp",
+        "rvvPattern": "RVV Register-Group Utilization and LMUL Sizing",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.313,
+        "note": "同一 kernel 的 per-channel epilogue：channel 向量固定 m1（8 f16 lanes/chunk），per-chunk 2×vsetvli+窄化+strided store 按 C/8 重复"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/cpu/rv64/jit_uni_pool_kernel.cpp:1597-1624 (iw_loop window sweep) / :1688-1713 (per-channel argmax epilogue)；args 偏移见 src/cpu/rv64/jit_primitive_conf.hpp:140-185",
+      "relatedKnowledge": "https://github.com/google/XNNPACK/commit/0c7b565c2fc1debcb12a4dc8941a56c9f0ced6fe ; https://github.com/google/XNNPACK/pull/10403 ; https://github.com/opencv/opencv/pull/26318 ; https://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5 ; https://github.com/opencv/opencv/pull/25586 ; https://github.com/torvalds/linux/commit/a4348546332c9fae12b29acb514535e0a52b9b3c ; https://github.com/torvalds/linux/commit/a894e8ed09c6c7fa239711819db83b8c050eb7b0 ; https://github.com/torvalds/linux/commit/c2a658d419246108c9bf065ec347355de5ba8a05 ; https://github.com/openjdk/jdk/commit/bdd37b0e5eaa984e2ad2e9010af37dcd612cc05e ; https://github.com/OpenMathLib/OpenBLAS/commit/cc1b5794a0409493ed470f4cced313ea0b560870 ; https://github.com/OpenMathLib/OpenBLAS/commit/d69be17b6ff7eea5371b03a199db9c112aa6dc4b ; https://github.com/OpenMathLib/OpenBLAS/commit/4a12cf53ec116c06e5d74073b54a3bca6046cb17 ; https://github.com/OpenMathLib/OpenBLAS/commit/240695862984d4de845f1c42821a883946932df7 ; https://github.com/v8/v8/commit/3844339936068c529170dcb4f2aa160654d25943 ; https://github.com/vllm-project/vllm/pull/47538",
+      "evidenceExplanation": "generate_f16 的窗口扫描与 per-channel epilogue 指令序列经 xbyak_riscv 编码逐条解码后与 annotate 完全对应（vmflt.vv 0x6e441057 / vmerge.vvm 0x5c440257 / vmerge.vxm 0x5cae4557 / vlse16.v 0x0b88d407），证明单一 (value,index) accumulator 串行链与 m1 chunk 结构；命中 pattern 的 Related PR 展示同方向修复（RVV 归约循环多 accumulator unrolling、LMUL 提升减少循环/vsetvl 开销）在 XNNPACK/OpenCV/OpenBLAS/Linux 的实证，支撑该根因可实施性"
+    }
+  }
+}

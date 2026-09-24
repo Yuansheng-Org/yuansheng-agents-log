@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-onednn-bnorm-f16-upstream-002",
+  "blueprintId": "bp-onednn-bnorm_f16_upstream-002",
+  "createdAt": "2026-09-09T13:33:12.244Z",
+  "objective": "generic ncsp batch-normalization f16 forward 的 statistics（sum/sqsum reduction）与 normalize 循环在 RISC-V 上全部标量执行：rv64gc baseline build 使 GCC 无法自动向量化，而 rv64 JIT bnorm kernel 仅支持 use_global_stats（inference），training 统计路径无专用向量实现，退回 PRAGMA_OMP_SIMD 标量循环。",
+  "changes": [
+    {
+      "filePath": "src/cpu/ncsp_batch_normalization.cpp",
+      "action": "modify",
+      "rationale": "generic ncsp batch-normalization f16 forward 的 statistics（sum/sqsum reduction）与 normalize 循环在 RISC-V 上全部标量执行：rv64gc baseline build 使 GCC 无法自动向量化，而 rv64 JIT bnorm kernel 仅支持 use_global_stats（inference），training 统计路径无专用向量实现，退回 PRAGMA_OMP_SIMD 标量循环。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/cpu/rv64/jit_uni_batch_normalization.cpp",
+      "action": "modify",
+      "rationale": "generic ncsp batch-normalization f16 forward 的 statistics（sum/sqsum reduction）与 normalize 循环在 RISC-V 上全部标量执行：rv64gc baseline build 使 GCC 无法自动向量化，而 rv64 JIT bnorm kernel 仅支持 use_global_stats（inference），training 统计路径无专用向量实现，退回 PRAGMA_OMP_SIMD 标量循环。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 src/cpu/ncsp_batch_normalization.cpp, src/cpu/rv64/jit_uni_batch_normalization.cpp 来解决 blueprint bp-onednn-bnorm_f16_upstream-002。"
+}

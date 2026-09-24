@@ -1,0 +1,186 @@
+diff --git a/src/cpu/rv64/reorder/jit_uni_reorder_kernel.cpp b/src/cpu/rv64/reorder/jit_uni_reorder_kernel.cpp
+index 49a32c5b5f712d8b8041ac0e4d93f49efd5e9f26..6060ce23242960777bbb1322a5f6915fe3f7740e 100644
+--- a/src/cpu/rv64/reorder/jit_uni_reorder_kernel.cpp
++++ b/src/cpu/rv64/reorder/jit_uni_reorder_kernel.cpp
+@@ -547,48 +547,127 @@ void jit_uni_reorder_kernel_f32_t::emit_pure_copy_core() {
+     const SEW sew = itype_sz_ == 4 ? SEW::e32
+             : itype_sz_ == 2       ? SEW::e16
+                                    : SEW::e8;
+-
+-    Label vloop, vend;
+-    L(vloop);
+-    beqz(reg_rem_, vend);
+-    vsetvli(reg_vl_, reg_rem_, sew, LMUL::m1, VTA::ta, VMA::ma);
+-
+-    if (sew == SEW::e32) {
+-        if (in_unit)
++    // Identical innermost byte strides make one pointer advance serve both src
++    // and dst (shared-offset reuse instead of two identical mul/add pairs).
++    const bool shared_stride = is0 * itype_sz_ == os0 * otype_sz_;
++
++    // Fixed-step strength reduction of the vl-loop advance. For a unit-stride
++    // 4-byte copy the full-VL advance is a constant VLMAX*4 bytes (16 bytes on
++    // VLEN=128 e32/m1), so the per-iteration index scaling
++    // (mul reg_tmp0_,reg_vl_,reg_istride_ / reg_ostride_ + two adds) collapses
++    // to one addi per pointer, with the loop terminated by comparing the running
++    // pointers against end pointers precomputed once before the loop. VLMAX is a
++    // runtime property (depends on VLEN), so it is derived from
++    // get_platform_vlen() at codegen time; unknown or unusual VLENs keep the
++    // generic mul-based shape below.
++    const uint32_t vlen = get_platform_vlen();
++    const bool vlen_known = vlen >= 128 && (vlen & (vlen - 1)) == 0
++            && vlen <= 8192; // step = vlen/8 must fit addi's 12-bit imm
++    const int vmax = vlen_known ? (int)(vlen / 32) : 0; // e32/m1 elems per group
++    const bool fixed_step = vlen_known && sew == SEW::e32 && in_unit && out_unit;
++
++    if (fixed_step) {
++        const int step = vmax * 4; // full-VL byte advance
++
++        // Precompute the end pointers once: end = base + rem * stride. The byte
++        // offset is shared on this path (istride == ostride == 4).
++        slli(reg_tmp0_, reg_rem_, 2);
++        add(reg_src_end_, reg_addr_, reg_tmp0_);
++        add(reg_dst_end_, reg_addr2_, reg_tmp0_);
++
++        // When the (compile-time) element count is an exact multiple of VLMAX,
++        // every iteration is a full-VL step, so the loop needs no per-iteration
++        // full/tail branch. This is the common 16-element / VLMAX=4 shape.
++        const auto &n0 = prb_.nodes[0];
++        const bool rem_compile_time = !n0_tail || n0.is_parent_empty();
++        const size_t rem_count = n0_tail ? n0.tail_size : n0.n;
++        const bool exact = rem_compile_time && rem_count % (size_t)vmax == 0;
++
++        if (exact) {
++            Label vloop, vend;
++            L(vloop);
++            bgeu(reg_addr_, reg_src_end_, vend);
++            vsetvli(reg_vl_, reg_rem_, SEW::e32, LMUL::m1, VTA::ta, VMA::ma);
+             vle32_v(vreg_data_, reg_addr_);
+-        else
+-            vlse32_v(vreg_data_, reg_addr_, reg_istride_);
+-        if (out_unit)
+             vse32_v(vreg_data_, reg_addr2_);
+-        else
+-            vsse32_v(vreg_data_, reg_addr2_, reg_ostride_);
+-    } else if (sew == SEW::e16) {
+-        if (in_unit)
+-            vle16_v(vreg_data_, reg_addr_);
+-        else
+-            vlse16_v(vreg_data_, reg_addr_, reg_istride_);
+-        if (out_unit)
+-            vse16_v(vreg_data_, reg_addr2_);
+-        else
+-            vsse16_v(vreg_data_, reg_addr2_, reg_ostride_);
++            addi(reg_addr_, reg_addr_, step);
++            addi(reg_addr2_, reg_addr2_, step);
++            sub(reg_rem_, reg_rem_, reg_vl_);
++            j_(vloop);
++            L(vend);
++        } else {
++            // The last iteration may be partial (vl < VLMAX): keep an exact
++            // vl*4 advance for it and use the constant step only on full-VL
++            // iterations so the pointers never overshoot the precomputed ends.
++            Label vloop, vend, vtail;
++            L(vloop);
++            bgeu(reg_addr_, reg_src_end_, vend);
++            vsetvli(reg_vl_, reg_rem_, SEW::e32, LMUL::m1, VTA::ta, VMA::ma);
++            vle32_v(vreg_data_, reg_addr_);
++            vse32_v(vreg_data_, reg_addr2_);
++            beq(reg_vl_, reg_rem_, vtail); // vl == rem -> last (partial) iter
++            addi(reg_addr_, reg_addr_, step);
++            addi(reg_addr2_, reg_addr2_, step);
++            sub(reg_rem_, reg_rem_, reg_vl_);
++            j_(vloop);
++            L(vtail);
++            slli(reg_tmp0_, reg_vl_, 2); // exact vl*4 (shared offset)
++            add(reg_addr_, reg_addr_, reg_tmp0_);
++            add(reg_addr2_, reg_addr2_, reg_tmp0_);
++            sub(reg_rem_, reg_rem_, reg_vl_);
++            j_(vloop);
++            L(vend);
++        }
+     } else {
+-        if (in_unit)
+-            vle8_v(vreg_data_, reg_addr_);
+-        else
+-            vlse8_v(vreg_data_, reg_addr_, reg_istride_);
+-        if (out_unit)
+-            vse8_v(vreg_data_, reg_addr2_);
+-        else
+-            vsse8_v(vreg_data_, reg_addr2_, reg_ostride_);
+-    }
++        Label vloop, vend;
++        L(vloop);
++        beqz(reg_rem_, vend);
++        vsetvli(reg_vl_, reg_rem_, sew, LMUL::m1, VTA::ta, VMA::ma);
++
++        if (sew == SEW::e32) {
++            if (in_unit)
++                vle32_v(vreg_data_, reg_addr_);
++            else
++                vlse32_v(vreg_data_, reg_addr_, reg_istride_);
++            if (out_unit)
++                vse32_v(vreg_data_, reg_addr2_);
++            else
++                vsse32_v(vreg_data_, reg_addr2_, reg_ostride_);
++        } else if (sew == SEW::e16) {
++            if (in_unit)
++                vle16_v(vreg_data_, reg_addr_);
++            else
++                vlse16_v(vreg_data_, reg_addr_, reg_istride_);
++            if (out_unit)
++                vse16_v(vreg_data_, reg_addr2_);
++            else
++                vsse16_v(vreg_data_, reg_addr2_, reg_ostride_);
++        } else {
++            if (in_unit)
++                vle8_v(vreg_data_, reg_addr_);
++            else
++                vlse8_v(vreg_data_, reg_addr_, reg_istride_);
++            if (out_unit)
++                vse8_v(vreg_data_, reg_addr2_);
++            else
++                vsse8_v(vreg_data_, reg_addr2_, reg_ostride_);
++        }
+ 
+-    mul(reg_tmp0_, reg_vl_, reg_istride_);
+-    add(reg_addr_, reg_addr_, reg_tmp0_);
+-    mul(reg_tmp0_, reg_vl_, reg_ostride_);
+-    add(reg_addr2_, reg_addr2_, reg_tmp0_);
+-    sub(reg_rem_, reg_rem_, reg_vl_);
+-    j_(vloop);
+-    L(vend);
++        if (shared_stride) {
++            // One advance (vl * stride) shared by both running pointers.
++            mul(reg_tmp0_, reg_vl_, reg_istride_);
++            add(reg_addr_, reg_addr_, reg_tmp0_);
++            add(reg_addr2_, reg_addr2_, reg_tmp0_);
++        } else {
++            mul(reg_tmp0_, reg_vl_, reg_istride_);
++            add(reg_addr_, reg_addr_, reg_tmp0_);
++            mul(reg_tmp0_, reg_vl_, reg_ostride_);
++            add(reg_addr2_, reg_addr2_, reg_tmp0_);
++        }
++        sub(reg_rem_, reg_rem_, reg_vl_);
++        j_(vloop);
++        L(vend);
++    }
+ 
+     if (n0_tail && prb_.nodes[0].is_zero_pad_needed) emit_zero_pad();
+ }
+diff --git a/src/cpu/rv64/reorder/jit_uni_reorder_kernel.hpp b/src/cpu/rv64/reorder/jit_uni_reorder_kernel.hpp
+index 74d5e569b10acd0f5c1ac6531b557b9dc24de91a..c19df255013a3f2b2b3e0ed3e2e9159fce55e7dc 100644
+--- a/src/cpu/rv64/reorder/jit_uni_reorder_kernel.hpp
++++ b/src/cpu/rv64/reorder/jit_uni_reorder_kernel.hpp
+@@ -172,6 +172,11 @@ private:
+     const Reg reg_vl_ = Xbyak_riscv::t3;
+     const Reg reg_addr_ = Xbyak_riscv::t4; // running input address
+     const Reg reg_addr2_ = Xbyak_riscv::t5; // running output address
++    // Fixed-step pure-copy end pointers (induction-variable strength
++    // reduction). Only live in the unit-stride 4-byte copy path, which never
++    // touches the MANY-scale/compensation registers a1/a2.
++    const Reg reg_src_end_ = Xbyak_riscv::a1;
++    const Reg reg_dst_end_ = Xbyak_riscv::a2;
+     // MANY (per-dimension) scale running addresses + innermost byte stride.
+     const Reg reg_saddr_src_ = Xbyak_riscv::a1;
+     const Reg reg_saddr_dst_ = Xbyak_riscv::a2;

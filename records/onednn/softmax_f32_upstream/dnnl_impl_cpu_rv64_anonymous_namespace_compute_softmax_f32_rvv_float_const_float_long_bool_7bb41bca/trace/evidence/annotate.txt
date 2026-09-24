@@ -1,0 +1,350 @@
+ Percent |	Source code & Disassembly of libdnnl.so.3.14 for cpu-clock:u (100 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000d257e6 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)>:
+         : 6      dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool):
+         : 44     // f32 compute kernel. jit_exp selects the vectorized exp/sub/sum kernel for the
+         : 45     // reduction; the caller gates it on axis length and stride so that very short
+         : 46     // or memory-bound (large-stride) reductions keep the scalar exp path.
+         : 47     void compute_softmax_f32_rvv(const float *src, float *dst, dim_t len,
+         : 48     bool is_logsoftmax, bool is_softmax_inf_as_zero,
+         : 49     const jit_rvv_softmax_affine_kernel_t *affine_kernel, bool jit_exp) {
+    0.00 :   d257e6: addi    sp,sp,-160
+    0.00 :   d257e8: sd      s0,144(sp)
+    0.00 :   d257ea: sd      s3,120(sp)
+    0.00 :   d257ec: sd      s4,112(sp)
+    1.00 :   d257ee: sd      s6,96(sp)
+    0.00 :   d257f0: sd      s7,88(sp)
+    1.00 :   d257f2: sd      s8,80(sp)
+    0.00 :   d257f4: addi    s0,sp,160
+    0.00 :   d257f6: sd      ra,152(sp)
+    0.00 :   d257f8: sd      s5,104(sp)
+    0.00 :   d257fa: fsd     fs0,72(sp)
+    4.00 :   d257fc: auipc   s4,0x78c
+    0.00 :   d25800: ld      s4,1364(s4) # 14b1d50 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   d25804: mv      s6,a2
+    0.00 :   d25806: ld      a2,0(s4)
+    0.00 :   d2580a: sd      a2,-120(s0)
+    1.00 :   d2580e: li      a2,0
+    0.00 :   d25810: mv      s8,a0
+    0.00 :   d25812: mv      s3,a1
+    0.00 :   d25814: mv      s7,a5
+         : 46     float max_val = -INFINITY;
+         : 47     for (dim_t i = 0; i < len; ++i)
+    0.00 :   d25816: blez    s6,d25a1a <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x234>
+         : 45     float max_val = -INFINITY;
+    0.00 :   d2581a: auipc   a5,0x2e3
+    0.00 :   d2581e: flw     fa4,-814(a5) # 10084ec <typeinfo name for dnnl::impl::batch_normalization_desc_t+0x264>
+    0.00 :   d25822: slli    s5,s6,0x2
+    0.00 :   d25826: sd      s1,136(sp)
+    4.00 :   d25828: fmv.s   fs0,fa4
+    0.00 :   d2582c: sd      s2,128(sp)
+    0.00 :   d2582e: fsd     fs1,64(sp)
+    0.00 :   d25830: add     s2,a0,s5
+    0.00 :   d25834: mv      s1,a0
+         : 46     for (dim_t i = 0; i < len; ++i)
+    0.00 :   d25836: mv      a5,a0
+         : 47     max_val = src[i] > max_val ? src[i] : max_val;
+    0.00 :   d25838: flw     fa5,0(a5)
+    1.00 :   d2583c: fmv.s   fs1,fs0
+    0.00 :   d25840: flt.s   a2,fs0,fa5
+   15.00 :   d25844: beqz    a2,d2584a <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x64>
+    0.00 :   d25846: fmv.s   fs1,fa5
+         : 46     for (dim_t i = 0; i < len; ++i)
+    0.00 :   d2584a: addi    a5,a5,4
+    0.00 :   d2584c: fmv.s   fs0,fs1
+    0.00 :   d25850: bne     a5,s2,d25838 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x52>
+         :
+         : 50     if (is_logsoftmax) {
+    0.00 :   d25854: beqz    a3,d258ea <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x104>
+    0.00 :   d25856: fsd     fs2,56(sp)
+         : 50     float sum_exp = 0.f;
+    0.00 :   d25858: sw      zero,-156(s0)
+         : 51     if (jit_exp) {
+    0.00 :   d2585c: fmv.w.x fs2,zero
+    0.00 :   d25860: bnez    a6,d2598e <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x1a8>
+         : 56     jit_rvv_softmax_f32_exp_sub_sum(
+         : 57     src, dst, len, max_val, &sum_exp, false);
+         : 58     } else {
+         : 59     for (dim_t i = 0; i < len; ++i) {
+         : 60     sum_exp += expf(src[i] - max_val);
+    0.00 :   d25864: flw     fa0,0(s1)
+         : 55     for (dim_t i = 0; i < len; ++i) {
+    0.00 :   d25868: addi    s1,s1,4
+         : 56     sum_exp += expf(src[i] - max_val);
+    0.00 :   d2586a: fsub.s  fa0,fa0,fs1
+    0.00 :   d2586e: auipc   ra,0xff4f1
+    0.00 :   d25872: jalr    1346(ra) # 216db0 <expf@plt>
+    0.00 :   d25876: fadd.s  fs2,fs2,fa0
+    0.00 :   d2587a: fsw     fs2,-156(s0)
+         : 55     for (dim_t i = 0; i < len; ++i) {
+    0.00 :   d2587e: bne     s1,s2,d25864 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x7e>
+         : 59     }
+         : 60     }
+         : 61     const float log_sum = logf(sum_exp);
+    0.00 :   d25882: fmv.s   fa0,fs2
+    0.00 :   d25886: auipc   ra,0xff4f2
+    0.00 :   d2588a: jalr    -582(ra) # 217640 <logf@plt>
+         :
+         : 62     if (affine_kernel) {
+    0.00 :   d2588e: ld      s1,136(sp)
+    0.00 :   d25890: ld      s2,128(sp)
+    0.00 :   d25892: fld     fs1,64(sp)
+    0.00 :   d25894: fld     fs2,56(sp)
+    0.00 :   d25896: beqz    s7,d259c2 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x1dc>
+         : 66     jit_rvv_softmax_affine_kernel_t::call_params_t p;
+         : 67     p.src = src;
+         : 68     p.dst = dst;
+         : 69     p.len = len;
+         : 70     p.sub = max_val + log_sum;
+    0.00 :   d2589a: fadd.s  fs0,fs0,fa0
+         : 67     p.mul = 1.f;
+    0.00 :   d2589e: auipc   a5,0x2e3
+    0.00 :   d258a2: flw     fa5,-1166(a5) # 1008410 <typeinfo name for dnnl::impl::batch_normalization_desc_t+0x188>
+         : 70     void dnnl::impl::cpu::rv64::jit_generator_t::operator()<dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t::call_params_t const*>(dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t::call_params_t const*) const:
+         : 88     using jit_kernel_func_t = void (*)(const kernel_args_t...);
+         : 89     // This const_cast is required for Clang.
+         : 90     // Clang rejects reinterpret_cast from const uint8_t* to function pointer.
+         : 91     auto *fptr = reinterpret_cast<jit_kernel_func_t>(
+         : 92     const_cast<uint8_t *>(jit_ker_));
+         : 93     (*fptr)(std::forward<kernel_args_t>(args)...);
+    0.00 :   d258a6: ld      a5,344(s7)
+         : 95     dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool):
+         : 63     p.src = src;
+    0.00 :   d258aa: sd      s8,-152(s0)
+         : 64     p.dst = dst;
+    0.00 :   d258ae: sd      s3,-144(s0)
+         : 66     p.sub = max_val + log_sum;
+    0.00 :   d258b2: fsw     fs0,-128(s0)
+         : 65     p.len = len;
+    0.00 :   d258b6: sd      s6,-136(s0)
+         : 67     p.mul = 1.f;
+    0.00 :   d258ba: fsw     fa5,-124(s0)
+         : 69     void dnnl::impl::cpu::rv64::jit_generator_t::operator()<dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t::call_params_t const*>(dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t::call_params_t const*) const:
+    0.00 :   d258be: addi    a0,s0,-152
+    0.00 :   d258c2: jalr    a5
+         : 90     dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool):
+         : 107    } else {
+         : 108    for (dim_t i = 0; i < len; ++i)
+         : 109    dst[i] *= inv_sum;
+         : 110    }
+         : 111    }
+         : 112    }
+    0.00 :   d258c4: ld      a4,-120(s0)
+    0.00 :   d258c8: ld      a5,0(s4)
+    0.00 :   d258cc: xor     a5,a5,a4
+    0.00 :   d258ce: li      a4,0
+    0.00 :   d258d0: bnez    a5,d25a8e <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x2a8>
+    0.00 :   d258d4: ld      ra,152(sp)
+    0.00 :   d258d6: ld      s0,144(sp)
+    0.00 :   d258d8: ld      s3,120(sp)
+    0.00 :   d258da: ld      s4,112(sp)
+    0.00 :   d258dc: ld      s5,104(sp)
+    0.00 :   d258de: ld      s6,96(sp)
+    0.00 :   d258e0: ld      s7,88(sp)
+    0.00 :   d258e2: ld      s8,80(sp)
+    0.00 :   d258e4: fld     fs0,72(sp)
+    0.00 :   d258e6: addi    sp,sp,160
+    0.00 :   d258e8: ret
+         : 76     = is_softmax_inf_as_zero && (max_val == -INFINITY);
+    0.00 :   d258ea: feq.s   a5,fs1,fa4
+         : 74     float sum_exp = 0.f;
+    0.00 :   d258ee: sw      zero,-156(s0)
+         : 76     = is_softmax_inf_as_zero && (max_val == -INFINITY);
+    0.00 :   d258f2: and     a4,a4,a5
+    0.00 :   d258f4: bnez    a4,d2593c <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x156>
+         : 77     if (jit_exp) {
+    0.00 :   d258f6: beqz    a6,d25942 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x15c>
+    0.00 :   d258fa: ld      s1,136(sp)
+    0.00 :   d258fc: ld      s2,128(sp)
+    0.00 :   d258fe: fld     fs1,64(sp)
+         : 82     jit_rvv_softmax_f32_exp_sub_sum(
+    0.00 :   d25900: fmv.s   fa0,fs0
+    0.00 :   d25904: mv      a0,s8
+    0.00 :   d25906: li      a4,1
+    0.00 :   d25908: addi    a3,s0,-156
+    0.00 :   d2590c: mv      a2,s6
+    0.00 :   d2590e: mv      a1,s3
+    0.00 :   d25910: jal     c77dc6 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f32_exp_sub_sum(float const*, float*, long, float, float*, bool)>
+         : 93     const float inv_sum = sum_exp ? (1.0f / sum_exp) : 1.0f;
+    0.00 :   d25914: flw     fs0,-156(s0)
+    0.00 :   d25918: fmv.w.x fa5,zero
+    0.00 :   d2591c: auipc   a5,0x2e3
+    0.00 :   d25920: flw     fa4,-1292(a5) # 1008410 <typeinfo name for dnnl::impl::batch_normalization_desc_t+0x188>
+    0.00 :   d25924: feq.s   a5,fs0,fa5
+    0.00 :   d25928: bnez    a5,d2592e <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x148>
+    0.00 :   d2592a: fdiv.s  fa4,fa4,fs0
+         : 94     if (affine_kernel) {
+    0.00 :   d2592e: bnez    s7,d2596e <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x188>
+         : 103    for (dim_t i = 0; i < len; ++i)
+    0.00 :   d25932: slli    s5,s6,0x2
+    0.00 :   d25936: bgtz    s6,d25a02 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x21c>
+    0.00 :   d2593a: j       d258c4 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0xde>
+         : 77     if (jit_exp) {
+    0.00 :   d2593c: bnez    a6,d259e2 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x1fc>
+         : 76     = is_softmax_inf_as_zero && (max_val == -INFINITY);
+    0.00 :   d25940: mv      a6,a4
+         : 86     for (dim_t i = 0; i < len; ++i) {
+    0.00 :   d25942: mv      s2,s3
+    0.00 :   d25944: add     s8,s3,s5
+         : 87     float e = all_minus_inf ? 0.f : expf(src[i] - max_val);
+    0.00 :   d25948: beqz    a6,d25a30 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x24a>
+         : 88     dst[i] = e;
+    0.00 :   d2594c: sw      zero,0(s2)
+         : 89     sum_exp += e;
+    0.00 :   d25950: sw      zero,-156(s0)
+         : 86     for (dim_t i = 0; i < len; ++i) {
+    0.00 :   d25954: addi    s2,s2,4
+    0.00 :   d25956: addi    s1,s1,4
+    0.00 :   d25958: bne     s2,s8,d25948 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x162>
+         : 94     if (affine_kernel) {
+    0.00 :   d2595c: beqz    s7,d259f4 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x20e>
+    0.00 :   d25960: ld      s1,136(sp)
+    0.00 :   d25962: ld      s2,128(sp)
+    0.00 :   d25964: fld     fs1,64(sp)
+         : 93     const float inv_sum = sum_exp ? (1.0f / sum_exp) : 1.0f;
+    0.00 :   d25966: auipc   a5,0x2e3
+    0.00 :   d2596a: flw     fa4,-1366(a5) # 1008410 <typeinfo name for dnnl::impl::batch_normalization_desc_t+0x188>
+         : 96     void dnnl::impl::cpu::rv64::jit_generator_t::operator()<dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t::call_params_t const*>(dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t::call_params_t const*) const:
+    0.00 :   d2596e: ld      a5,344(s7)
+         : 89     dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool):
+         : 96     p.src = dst;
+    1.00 :   d25972: sd      s3,-152(s0)
+         : 97     p.dst = dst;
+    1.00 :   d25976: sd      s3,-144(s0)
+         : 98     p.len = len;
+    0.00 :   d2597a: sd      s6,-136(s0)
+         : 99     p.sub = 0.f;
+    0.00 :   d2597e: sw      zero,-128(s0)
+         : 100    p.mul = inv_sum;
+    0.00 :   d25982: fsw     fa4,-124(s0)
+         : 102    void dnnl::impl::cpu::rv64::jit_generator_t::operator()<dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t::call_params_t const*>(dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t::call_params_t const*) const:
+    0.00 :   d25986: addi    a0,s0,-152
+    0.00 :   d2598a: jalr    a5
+         : 90     dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool):
+    0.00 :   d2598c: j       d258c4 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0xde>
+    0.00 :   d2598e: ld      s1,136(sp)
+    0.00 :   d25990: ld      s2,128(sp)
+    0.00 :   d25992: fld     fs1,64(sp)
+    0.00 :   d25994: fld     fs2,56(sp)
+         : 52     jit_rvv_softmax_f32_exp_sub_sum(
+    0.00 :   d25996: fmv.s   fa0,fs0
+    0.00 :   d2599a: li      a4,0
+    0.00 :   d2599c: addi    a3,s0,-156
+    0.00 :   d259a0: mv      a2,s6
+    0.00 :   d259a2: mv      a1,s3
+    0.00 :   d259a4: mv      a0,s8
+    0.00 :   d259a6: jal     c77dc6 <dnnl::impl::cpu::rv64::jit_rvv_softmax_f32_exp_sub_sum(float const*, float*, long, float, float*, bool)>
+         : 59     const float log_sum = logf(sum_exp);
+    0.00 :   d259aa: flw     fa0,-156(s0)
+    0.00 :   d259ae: auipc   ra,0xff4f2
+    0.00 :   d259b2: jalr    -878(ra) # 217640 <logf@plt>
+         : 61     if (affine_kernel) {
+    0.00 :   d259b6: bnez    s7,d2589a <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0xb4>
+         : 70     for (dim_t i = 0; i < len; ++i)
+    0.00 :   d259ba: slli    s5,s6,0x2
+    0.00 :   d259be: blez    s6,d258c4 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0xde>
+    0.00 :   d259c2: mv      a0,s8
+    0.00 :   d259c4: add     s5,s5,s8
+    0.00 :   d259c6: mv      a1,s3
+         : 71     dst[i] = src[i] - max_val - log_sum;
+    0.00 :   d259c8: flw     fa5,0(a0)
+         : 70     for (dim_t i = 0; i < len; ++i)
+    0.00 :   d259cc: addi    a0,a0,4
+    0.00 :   d259ce: addi    a1,a1,4
+         : 71     dst[i] = src[i] - max_val - log_sum;
+    0.00 :   d259d0: fsub.s  fa5,fa5,fs0
+    0.00 :   d259d4: fsub.s  fa5,fa5,fa0
+    0.00 :   d259d8: fsw     fa5,-4(a1)
+         : 70     for (dim_t i = 0; i < len; ++i)
+    0.00 :   d259dc: bne     s5,a0,d259c8 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x1e2>
+    0.00 :   d259e0: j       d258c4 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0xde>
+         : 80     dst[i] = 0.f;
+    0.00 :   d259e2: mv      a2,s5
+    0.00 :   d259e4: li      a1,0
+    0.00 :   d259e6: mv      a0,s3
+    0.00 :   d259e8: auipc   ra,0xff4f2
+    0.00 :   d259ec: jalr    88(ra) # 217a40 <memset@plt>
+         : 94     if (affine_kernel) {
+    0.00 :   d259f0: bnez    s7,d25960 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x17a>
+         : 93     const float inv_sum = sum_exp ? (1.0f / sum_exp) : 1.0f;
+    0.00 :   d259f4: auipc   a5,0x2e3
+    0.00 :   d259f8: flw     fa4,-1508(a5) # 1008410 <typeinfo name for dnnl::impl::batch_normalization_desc_t+0x188>
+    0.00 :   d259fc: ld      s1,136(sp)
+    0.00 :   d259fe: ld      s2,128(sp)
+    0.00 :   d25a00: fld     fs1,64(sp)
+    0.00 :   d25a02: mv      a1,s3
+    0.00 :   d25a04: add     s5,s5,s3
+         : 104    dst[i] *= inv_sum;
+    0.00 :   d25a06: flw     fa5,0(a1)
+         : 103    for (dim_t i = 0; i < len; ++i)
+    0.00 :   d25a0a: addi    a1,a1,4
+         : 104    dst[i] *= inv_sum;
+    0.00 :   d25a0c: fmul.s  fa5,fa5,fa4
+    0.00 :   d25a10: fsw     fa5,-4(a1)
+         : 103    for (dim_t i = 0; i < len; ++i)
+    0.00 :   d25a14: bne     s5,a1,d25a06 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x220>
+    0.00 :   d25a18: j       d258c4 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0xde>
+         : 50     float sum_exp = 0.f;
+    0.00 :   d25a1a: sw      zero,-156(s0)
+         : 49     if (is_logsoftmax) {
+    0.00 :   d25a1e: bnez    a3,d25a60 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x27a>
+         : 76     = is_softmax_inf_as_zero && (max_val == -INFINITY);
+    0.00 :   d25a20: bnez    a4,d25a88 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x2a2>
+         : 77     if (jit_exp) {
+    0.00 :   d25a22: beqz    a6,d25a88 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x2a2>
+         : 45     float max_val = -INFINITY;
+    0.00 :   d25a26: auipc   a5,0x2e3
+    0.00 :   d25a2a: flw     fs0,-1338(a5) # 10084ec <typeinfo name for dnnl::impl::batch_normalization_desc_t+0x264>
+    0.00 :   d25a2e: j       d25900 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x11a>
+    0.00 :   d25a30: fmv.w.x fs0,zero
+         : 87     float e = all_minus_inf ? 0.f : expf(src[i] - max_val);
+    0.00 :   d25a34: flw     fa0,0(s1)
+         : 86     for (dim_t i = 0; i < len; ++i) {
+   36.00 :   d25a38: addi    s2,s2,4
+    0.00 :   d25a3a: addi    s1,s1,4
+         : 87     float e = all_minus_inf ? 0.f : expf(src[i] - max_val);
+    0.00 :   d25a3c: fsub.s  fa0,fa0,fs1
+   20.00 :   d25a40: auipc   ra,0xff4f1
+    0.00 :   d25a44: jalr    880(ra) # 216db0 <expf@plt>
+         : 89     sum_exp += e;
+    0.00 :   d25a48: fadd.s  fs0,fs0,fa0
+         : 88     dst[i] = e;
+    1.00 :   d25a4c: fsw     fa0,-4(s2)
+         : 89     sum_exp += e;
+   13.00 :   d25a50: fsw     fs0,-156(s0)
+         : 86     for (dim_t i = 0; i < len; ++i) {
+    0.00 :   d25a54: bne     s2,s8,d25a34 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x24e>
+    0.00 :   d25a58: ld      s1,136(sp)
+    0.00 :   d25a5a: ld      s2,128(sp)
+    0.00 :   d25a5c: fld     fs1,64(sp)
+    1.00 :   d25a5e: j       d25918 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x132>
+         : 51     if (jit_exp) {
+    0.00 :   d25a60: bnez    a6,d25a7e <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x298>
+         : 59     const float log_sum = logf(sum_exp);
+    0.00 :   d25a64: fmv.w.x fa0,zero
+    0.00 :   d25a68: auipc   ra,0xff4f2
+    0.00 :   d25a6c: jalr    -1064(ra) # 217640 <logf@plt>
+         : 61     if (affine_kernel) {
+    0.00 :   d25a70: beqz    s7,d258c4 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0xde>
+         : 45     float max_val = -INFINITY;
+    0.00 :   d25a74: auipc   a5,0x2e3
+    0.00 :   d25a78: flw     fs0,-1416(a5) # 10084ec <typeinfo name for dnnl::impl::batch_normalization_desc_t+0x264>
+    0.00 :   d25a7c: j       d2589a <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0xb4>
+    0.00 :   d25a7e: auipc   a5,0x2e3
+    0.00 :   d25a82: flw     fs0,-1426(a5) # 10084ec <typeinfo name for dnnl::impl::batch_normalization_desc_t+0x264>
+    0.00 :   d25a86: j       d25996 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x1b0>
+         : 94     if (affine_kernel) {
+    0.00 :   d25a88: bnez    s7,d25966 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0x180>
+    0.00 :   d25a8c: j       d258c4 <dnnl::impl::cpu::rv64::(anonymous namespace)::compute_softmax_f32_rvv(float const*, float*, long, bool, bool, dnnl::impl::cpu::rv64::jit_rvv_softmax_affine_kernel_t const*, bool)+0xde>
+    0.00 :   d25a8e: sd      s1,136(sp)
+    0.00 :   d25a90: sd      s2,128(sp)
+    0.00 :   d25a92: fsd     fs1,64(sp)
+    0.00 :   d25a94: fsd     fs2,56(sp)
+         : 107    }
+    0.00 :   d25a96: auipc   ra,0xff4f1
+    0.00 :   d25a9a: jalr    458(ra) # 216c60 <__stack_chk_fail@plt>
