@@ -1,0 +1,478 @@
+From 9785b603d6616d9fe42f25d4025ff28556db2427 Mon Sep 17 00:00:00 2001
+From: Zhang Jinhan <zhangjinhan@isrc.iscas.ac.cn>
+Date: Fri, 11 Sep 2026 14:37:59 +0800
+Subject: [PATCH 1/3] core: optimize float REDUCE_SUM2 with RVV
+
+Add an RVV 1.0 kernel for cv::reduce with dim=0 and CV_32F input/output
+through the CPU dispatch mechanism.
+
+Process four source rows per vector iteration to reduce intermediate
+buffer traffic while preserving source-row accumulation order. Use
+LMUL=4 with dynamic vector lengths for tails, and defer output writes
+until all input rows have been read to support overlapping matrices.
+
+The implementation is VLEN-agnostic.
+
+Functional test:
+
+    ./bin/opencv_test_core \
+        --gtest_filter='*Reduce*:*reduce*' \
+        --test_threads=1
+
+Performance test:
+
+    ./bin/opencv_perf_core \
+        --gtest_filter='*reduceR*' \
+        --perf_threads=1
+
+Performance was measured on SpacemiT K3 with VLEN=256, GCC 14.3.0,
+a Release build, and a single thread.
+
+CV_32FC1 REDUCE_SUM2 median time (ms), 10 samples per case:
+
+    Size         Baseline    Patched    Speedup
+    640x480         0.20       0.08       2.50x
+    1280x720        0.64       0.29       2.21x
+    1920x1080       1.33       1.05       1.27x
+
+Speedups are approximate and calculated from the rounded benchmark
+output.
+
+Co-authored-by: Yang Wang <yangwang@iscas.ac.cn>
+Co-authored-by: Yuansheng <yuansheng@isrc.iscas.ac.cn>
+---
+ modules/core/CMakeLists.txt            |  2 +-
+ modules/core/src/matrix_operations.cpp |  6 +-
+ modules/core/src/reduce.dispatch.cpp   |  8 +++
+ modules/core/src/reduce.simd.hpp       | 78 ++++++++++++++++++++++++++
+ 4 files changed, 92 insertions(+), 2 deletions(-)
+
+diff --git a/modules/core/CMakeLists.txt b/modules/core/CMakeLists.txt
+index 5a7cccc0ba36..2eb2c459a60a 100644
+--- a/modules/core/CMakeLists.txt
++++ b/modules/core/CMakeLists.txt
+@@ -15,7 +15,7 @@ ocv_add_dispatched_file(minmax SSE2 SSE4_1 AVX2 AVX512_SKX AVX512_ICL VSX3 LASX)
+ ocv_add_dispatched_file(nan_mask SSE2 AVX2 LASX)
+ ocv_add_dispatched_file(split SSE2 AVX2 LASX)
+ ocv_add_dispatched_file(sum SSE2 AVX2 AVX512_SKX AVX512_ICL LASX)
+-ocv_add_dispatched_file(reduce SSE2 SSSE3 AVX2 NEON_DOTPROD)
++ocv_add_dispatched_file(reduce SSE2 SSSE3 AVX2 NEON_DOTPROD RVV)
+ ocv_add_dispatched_file(norm SSE2 SSE4_1 AVX AVX2 AVX512_SKX AVX512_ICL NEON_DOTPROD LASX)
+ ocv_add_dispatched_file(lut AVX512_ICL)
+ ocv_add_dispatched_file(transpose AVX AVX2 NEON RVV LASX)
+diff --git a/modules/core/src/matrix_operations.cpp b/modules/core/src/matrix_operations.cpp
+index 5d63a885cde9..c7935f28e771 100644
+--- a/modules/core/src/matrix_operations.cpp
++++ b/modules/core/src/matrix_operations.cpp
+@@ -327,6 +327,7 @@ namespace cv
+ typedef void (*ReduceSumFunc)(const Mat& src, Mat& dst);
+ ReduceSumFunc getReduceCSumFunc(int sdepth, int ddepth);
+ ReduceSumFunc getReduceRSumFunc(int sdepth, int ddepth);
++ReduceSumFunc getReduceRSum2Func(int sdepth, int ddepth);
+ 
+ template <typename T, typename WT, typename Op>
+ struct ReduceR_SIMD
+@@ -865,7 +866,10 @@ void cv::reduce(InputArray _src, OutputArray _dst, int dim, int op, int dtype)
+         }
+         else if( op == REDUCE_SUM2 )
+         {
+-            if(sdepth == CV_8U && ddepth == CV_32S)
++            ReduceSumFunc simd_func = getReduceRSum2Func(sdepth, ddepth);
++            if(simd_func)
++                func = simd_func;
++            else if(sdepth == CV_8U && ddepth == CV_32S)
+                 func = reduceSum2R8u32s;
+             else if(sdepth == CV_8U && ddepth == CV_32F)
+                 func = reduceSum2R8u32f;
+diff --git a/modules/core/src/reduce.dispatch.cpp b/modules/core/src/reduce.dispatch.cpp
+index 0b6356078002..06a19802ff69 100644
+--- a/modules/core/src/reduce.dispatch.cpp
++++ b/modules/core/src/reduce.dispatch.cpp
+@@ -12,6 +12,7 @@ namespace cv {
+ typedef void (*ReduceSumFunc)(const Mat& src, Mat& dst);
+ ReduceSumFunc getReduceCSumFunc(int sdepth, int ddepth);
+ ReduceSumFunc getReduceRSumFunc(int sdepth, int ddepth);
++ReduceSumFunc getReduceRSum2Func(int sdepth, int ddepth);
+ 
+ ReduceSumFunc getReduceCSumFunc(int sdepth, int ddepth)
+ {
+@@ -27,4 +28,11 @@ ReduceSumFunc getReduceRSumFunc(int sdepth, int ddepth)
+         CV_CPU_DISPATCH_MODES_ALL);
+ }
+ 
++ReduceSumFunc getReduceRSum2Func(int sdepth, int ddepth)
++{
++    CV_INSTRUMENT_REGION();
++    CV_CPU_DISPATCH(getReduceRSum2Func, (sdepth, ddepth),
++        CV_CPU_DISPATCH_MODES_ALL);
++}
++
+ } // namespace cv
+diff --git a/modules/core/src/reduce.simd.hpp b/modules/core/src/reduce.simd.hpp
+index 374853bb29c1..a58c8400078a 100644
+--- a/modules/core/src/reduce.simd.hpp
++++ b/modules/core/src/reduce.simd.hpp
+@@ -10,6 +10,7 @@ CV_CPU_OPTIMIZATION_NAMESPACE_BEGIN
+ typedef void (*ReduceSumFunc)(const Mat& src, Mat& dst);
+ ReduceSumFunc getReduceCSumFunc(int sdepth, int ddepth);
+ ReduceSumFunc getReduceRSumFunc(int sdepth, int ddepth);
++ReduceSumFunc getReduceRSum2Func(int sdepth, int ddepth);
+ 
+ #ifndef CV_CPU_OPTIMIZATION_DECLARATIONS_ONLY
+ 
+@@ -1085,6 +1086,72 @@ static void reduceRowSum_64f64f(const Mat& srcmat, Mat& dstmat)
+ 
+ #endif // CV_SIMD || CV_SIMD_SCALABLE
+ 
++#if CV_RVV
++// dim=0, REDUCE_SUM2: accumulate each column in source-row order.
++// LMUL=4 processes 32 floats per iteration at VLEN=256, with dynamic
++// vector lengths for tails and other hardware vector lengths.
++static void reduceRowSum2_32f32f(const Mat& srcmat, Mat& dstmat)
++{
++    const int width = srcmat.cols * srcmat.channels();
++    AutoBuffer<float> buffer(width);
++    float* buf = buffer.data();
++
++    auto body = [&](const Range& range) {
++        const float* src = srcmat.ptr<float>(0);
++        for (int i = range.start; i < range.end; )
++        {
++            const size_t vl = __riscv_vsetvl_e32m4(range.end - i);
++            const vfloat32m4_t value = __riscv_vle32_v_f32m4(src + i, vl);
++            __riscv_vse32_v_f32m4(buf + i, __riscv_vfmul_vv_f32m4(value, value, vl), vl);
++            i += (int)vl;
++        }
++        int row = 1;
++        // Fuse four source rows to share the buffer load/store and vector
++        // length setup. Keep the FMA chain in source-row order.
++        for (; row <= srcmat.rows - 4; row += 4)
++        {
++            const float* src0 = srcmat.ptr<float>(row);
++            const float* src1 = srcmat.ptr<float>(row + 1);
++            const float* src2 = srcmat.ptr<float>(row + 2);
++            const float* src3 = srcmat.ptr<float>(row + 3);
++            for (int i = range.start; i < range.end; )
++            {
++                const size_t vl = __riscv_vsetvl_e32m4(range.end - i);
++                vfloat32m4_t sum = __riscv_vle32_v_f32m4(buf + i, vl);
++                vfloat32m4_t value = __riscv_vle32_v_f32m4(src0 + i, vl);
++                sum = __riscv_vfmacc_vv_f32m4(sum, value, value, vl);
++                value = __riscv_vle32_v_f32m4(src1 + i, vl);
++                sum = __riscv_vfmacc_vv_f32m4(sum, value, value, vl);
++                value = __riscv_vle32_v_f32m4(src2 + i, vl);
++                sum = __riscv_vfmacc_vv_f32m4(sum, value, value, vl);
++                value = __riscv_vle32_v_f32m4(src3 + i, vl);
++                sum = __riscv_vfmacc_vv_f32m4(sum, value, value, vl);
++                __riscv_vse32_v_f32m4(buf + i, sum, vl);
++                i += (int)vl;
++            }
++        }
++        for (; row < srcmat.rows; row++)
++        {
++            src = srcmat.ptr<float>(row);
++            for (int i = range.start; i < range.end; )
++            {
++                const size_t vl = __riscv_vsetvl_e32m4(range.end - i);
++                const vfloat32m4_t value = __riscv_vle32_v_f32m4(src + i, vl);
++                vfloat32m4_t sum = __riscv_vle32_v_f32m4(buf + i, vl);
++                sum = __riscv_vfmacc_vv_f32m4(sum, value, value, vl);
++                __riscv_vse32_v_f32m4(buf + i, sum, vl);
++                i += (int)vl;
++            }
++        }
++    };
++
++    // Ranges own disjoint buffer elements. Delay writing the output until
++    // all source rows have been read, including when src and dst alias.
++    parallel_for_(Range(0, width), body, width * sizeof(float) / 64);
++    memcpy(dstmat.ptr<float>(), buf, width * sizeof(float));
++}
++#endif
++
+ // =====================================================================
+ //  Dispatchers
+ // =====================================================================
+@@ -1127,6 +1194,17 @@ ReduceSumFunc getReduceRSumFunc(int sdepth, int ddepth)
+     return nullptr;
+ }
+ 
++ReduceSumFunc getReduceRSum2Func(int sdepth, int ddepth)
++{
++#if CV_RVV
++    if (sdepth == CV_32F && ddepth == CV_32F) return reduceRowSum2_32f32f;
++#else
++    CV_UNUSED(sdepth);
++    CV_UNUSED(ddepth);
++#endif
++    return nullptr;
++}
++
+ #endif // CV_CPU_OPTIMIZATION_DECLARATIONS_ONLY
+ 
+ CV_CPU_OPTIMIZATION_NAMESPACE_END
+
+From 32d1c8996c46799e4b9257fd0d0362eda94b14ec Mon Sep 17 00:00:00 2001
+From: Zhang Jinhan <zhangjinhan@isrc.iscas.ac.cn>
+Date: Wed, 16 Sep 2026 14:06:32 +0800
+Subject: [PATCH 2/3] core: rework RVV REDUCE_SUM2 with universal intrinsics
+
+Replace RVV-specific intrinsics with scalable universal intrinsics
+and remove parallel_for_ from the float REDUCE_SUM2 kernel.
+
+Unroll the main column loop over four vectors, with a single-vector
+loop and scalar tail for remaining elements. Retain four-row
+accumulation in source-row order.
+
+Keep the intermediate buffer and defer destination writes until all
+source rows have been consumed to preserve overlap handling.
+
+Co-authored-by: Yang Wang <yangwang@iscas.ac.cn>
+Co-authored-by: Yuansheng <yuansheng@isrc.iscas.ac.cn>
+---
+ modules/core/src/reduce.simd.hpp | 165 +++++++++++++++++++++----------
+ 1 file changed, 115 insertions(+), 50 deletions(-)
+
+diff --git a/modules/core/src/reduce.simd.hpp b/modules/core/src/reduce.simd.hpp
+index a58c8400078a..42bd31551d10 100644
+--- a/modules/core/src/reduce.simd.hpp
++++ b/modules/core/src/reduce.simd.hpp
+@@ -1086,69 +1086,134 @@ static void reduceRowSum_64f64f(const Mat& srcmat, Mat& dstmat)
+ 
+ #endif // CV_SIMD || CV_SIMD_SCALABLE
+ 
+-#if CV_RVV
+-// dim=0, REDUCE_SUM2: accumulate each column in source-row order.
+-// LMUL=4 processes 32 floats per iteration at VLEN=256, with dynamic
+-// vector lengths for tails and other hardware vector lengths.
++#if CV_RVV && CV_SIMD_SCALABLE
++static inline v_float32 reduceRowSum2Acc4(const v_float32& acc,
++                                           const float* src0, const float* src1,
++                                           const float* src2, const float* src3)
++{
++    v_float32 sum = acc;
++    v_float32 x = vx_load(src0);
++    sum = v_fma(x, x, sum);
++    x = vx_load(src1);
++    sum = v_fma(x, x, sum);
++    x = vx_load(src2);
++    sum = v_fma(x, x, sum);
++    x = vx_load(src3);
++    return v_fma(x, x, sum);
++}
++
++// dim=0, REDUCE_SUM2 for CV_32F. Keep the common implementation on
++// Universal Intrinsics; the dispatched backend selects RVV.
+ static void reduceRowSum2_32f32f(const Mat& srcmat, Mat& dstmat)
+ {
+     const int width = srcmat.cols * srcmat.channels();
++    const int height = srcmat.rows;
++    const int vlanes = VTraits<v_float32>::vlanes();
++    const int block = vlanes * 4;
+     AutoBuffer<float> buffer(width);
+     float* buf = buffer.data();
+ 
+-    auto body = [&](const Range& range) {
+-        const float* src = srcmat.ptr<float>(0);
+-        for (int i = range.start; i < range.end; )
++    const float* src = srcmat.ptr<float>(0);
++    int i = 0;
++    for (; i <= width - block; i += block)
++    {
++        v_float32 x0 = vx_load(src + i);
++        v_float32 x1 = vx_load(src + i + vlanes);
++        v_float32 x2 = vx_load(src + i + vlanes * 2);
++        v_float32 x3 = vx_load(src + i + vlanes * 3);
++        v_store(buf + i, v_mul(x0, x0));
++        v_store(buf + i + vlanes, v_mul(x1, x1));
++        v_store(buf + i + vlanes * 2, v_mul(x2, x2));
++        v_store(buf + i + vlanes * 3, v_mul(x3, x3));
++    }
++    for (; i <= width - vlanes; i += vlanes)
++    {
++        v_float32 x = vx_load(src + i);
++        v_store(buf + i, v_mul(x, x));
++    }
++    for (; i < width; i++)
++        buf[i] = src[i] * src[i];
++
++    int row = 1;
++    // Four rows per pass amortize buffer traffic while preserving source-row
++    // accumulation order. The outer loop stays serial: splitting width into
++    // tiny parallel stripes under-fills scalable vectors and adds scheduling
++    // overhead for this memory-streaming kernel.
++    for (; row <= height - 4; row += 4)
++    {
++        const float* src0 = srcmat.ptr<float>(row);
++        const float* src1 = srcmat.ptr<float>(row + 1);
++        const float* src2 = srcmat.ptr<float>(row + 2);
++        const float* src3 = srcmat.ptr<float>(row + 3);
++
++        i = 0;
++        for (; i <= width - block; i += block)
+         {
+-            const size_t vl = __riscv_vsetvl_e32m4(range.end - i);
+-            const vfloat32m4_t value = __riscv_vle32_v_f32m4(src + i, vl);
+-            __riscv_vse32_v_f32m4(buf + i, __riscv_vfmul_vv_f32m4(value, value, vl), vl);
+-            i += (int)vl;
++            v_float32 sum0 = vx_load(buf + i);
++            v_float32 sum1 = vx_load(buf + i + vlanes);
++            v_float32 sum2 = vx_load(buf + i + vlanes * 2);
++            v_float32 sum3 = vx_load(buf + i + vlanes * 3);
++            sum0 = reduceRowSum2Acc4(sum0, src0 + i, src1 + i, src2 + i, src3 + i);
++            sum1 = reduceRowSum2Acc4(sum1, src0 + i + vlanes, src1 + i + vlanes,
++                                     src2 + i + vlanes, src3 + i + vlanes);
++            sum2 = reduceRowSum2Acc4(sum2, src0 + i + vlanes * 2, src1 + i + vlanes * 2,
++                                     src2 + i + vlanes * 2, src3 + i + vlanes * 2);
++            sum3 = reduceRowSum2Acc4(sum3, src0 + i + vlanes * 3, src1 + i + vlanes * 3,
++                                     src2 + i + vlanes * 3, src3 + i + vlanes * 3);
++            v_store(buf + i, sum0);
++            v_store(buf + i + vlanes, sum1);
++            v_store(buf + i + vlanes * 2, sum2);
++            v_store(buf + i + vlanes * 3, sum3);
+         }
+-        int row = 1;
+-        // Fuse four source rows to share the buffer load/store and vector
+-        // length setup. Keep the FMA chain in source-row order.
+-        for (; row <= srcmat.rows - 4; row += 4)
++        for (; i <= width - vlanes; i += vlanes)
+         {
+-            const float* src0 = srcmat.ptr<float>(row);
+-            const float* src1 = srcmat.ptr<float>(row + 1);
+-            const float* src2 = srcmat.ptr<float>(row + 2);
+-            const float* src3 = srcmat.ptr<float>(row + 3);
+-            for (int i = range.start; i < range.end; )
+-            {
+-                const size_t vl = __riscv_vsetvl_e32m4(range.end - i);
+-                vfloat32m4_t sum = __riscv_vle32_v_f32m4(buf + i, vl);
+-                vfloat32m4_t value = __riscv_vle32_v_f32m4(src0 + i, vl);
+-                sum = __riscv_vfmacc_vv_f32m4(sum, value, value, vl);
+-                value = __riscv_vle32_v_f32m4(src1 + i, vl);
+-                sum = __riscv_vfmacc_vv_f32m4(sum, value, value, vl);
+-                value = __riscv_vle32_v_f32m4(src2 + i, vl);
+-                sum = __riscv_vfmacc_vv_f32m4(sum, value, value, vl);
+-                value = __riscv_vle32_v_f32m4(src3 + i, vl);
+-                sum = __riscv_vfmacc_vv_f32m4(sum, value, value, vl);
+-                __riscv_vse32_v_f32m4(buf + i, sum, vl);
+-                i += (int)vl;
+-            }
++            v_float32 sum = vx_load(buf + i);
++            sum = reduceRowSum2Acc4(sum, src0 + i, src1 + i, src2 + i, src3 + i);
++            v_store(buf + i, sum);
+         }
+-        for (; row < srcmat.rows; row++)
++        for (; i < width; i++)
+         {
+-            src = srcmat.ptr<float>(row);
+-            for (int i = range.start; i < range.end; )
+-            {
+-                const size_t vl = __riscv_vsetvl_e32m4(range.end - i);
+-                const vfloat32m4_t value = __riscv_vle32_v_f32m4(src + i, vl);
+-                vfloat32m4_t sum = __riscv_vle32_v_f32m4(buf + i, vl);
+-                sum = __riscv_vfmacc_vv_f32m4(sum, value, value, vl);
+-                __riscv_vse32_v_f32m4(buf + i, sum, vl);
+-                i += (int)vl;
+-            }
++            float sum = buf[i];
++            float x = src0[i]; sum += x * x;
++            x = src1[i]; sum += x * x;
++            x = src2[i]; sum += x * x;
++            x = src3[i]; sum += x * x;
++            buf[i] = sum;
+         }
+-    };
++    }
++
++    for (; row < height; row++)
++    {
++        src = srcmat.ptr<float>(row);
++        i = 0;
++        for (; i <= width - block; i += block)
++        {
++            v_float32 sum0 = vx_load(buf + i);
++            v_float32 sum1 = vx_load(buf + i + vlanes);
++            v_float32 sum2 = vx_load(buf + i + vlanes * 2);
++            v_float32 sum3 = vx_load(buf + i + vlanes * 3);
++            v_float32 x0 = vx_load(src + i);
++            v_float32 x1 = vx_load(src + i + vlanes);
++            v_float32 x2 = vx_load(src + i + vlanes * 2);
++            v_float32 x3 = vx_load(src + i + vlanes * 3);
++            v_store(buf + i, v_fma(x0, x0, sum0));
++            v_store(buf + i + vlanes, v_fma(x1, x1, sum1));
++            v_store(buf + i + vlanes * 2, v_fma(x2, x2, sum2));
++            v_store(buf + i + vlanes * 3, v_fma(x3, x3, sum3));
++        }
++        for (; i <= width - vlanes; i += vlanes)
++        {
++            v_float32 x = vx_load(src + i);
++            v_store(buf + i, v_fma(x, x, vx_load(buf + i)));
++        }
++        for (; i < width; i++)
++            buf[i] += src[i] * src[i];
++    }
+ 
+-    // Ranges own disjoint buffer elements. Delay writing the output until
+-    // all source rows have been read, including when src and dst alias.
+-    parallel_for_(Range(0, width), body, width * sizeof(float) / 64);
++    // Delay output stores until all source rows are consumed, preserving the
++    // existing overlap-safe behavior of the proposed optimized path.
+     memcpy(dstmat.ptr<float>(), buf, width * sizeof(float));
++    v_cleanup();
+ }
+ #endif
+ 
+@@ -1196,7 +1261,7 @@ ReduceSumFunc getReduceRSumFunc(int sdepth, int ddepth)
+ 
+ ReduceSumFunc getReduceRSum2Func(int sdepth, int ddepth)
+ {
+-#if CV_RVV
++#if CV_RVV && CV_SIMD_SCALABLE
+     if (sdepth == CV_32F && ddepth == CV_32F) return reduceRowSum2_32f32f;
+ #else
+     CV_UNUSED(sdepth);
+
+From 7ca6120943ef37895331260e9388d7b5369ff568 Mon Sep 17 00:00:00 2001
+From: Zhang Jinhan <zhangjinhan@isrc.iscas.ac.cn>
+Date: Wed, 16 Sep 2026 14:39:04 +0800
+Subject: [PATCH 3/3] core: use scalable SIMD guards for REDUCE_SUM2
+
+Remove the redundant CV_RVV condition from the kernel and dispatcher
+guards, as the implementation uses scalable universal intrinsics.
+
+Update the kernel comment to match.
+---
+ modules/core/src/reduce.simd.hpp | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/modules/core/src/reduce.simd.hpp b/modules/core/src/reduce.simd.hpp
+index 42bd31551d10..9660d903dd5e 100644
+--- a/modules/core/src/reduce.simd.hpp
++++ b/modules/core/src/reduce.simd.hpp
+@@ -1086,7 +1086,7 @@ static void reduceRowSum_64f64f(const Mat& srcmat, Mat& dstmat)
+ 
+ #endif // CV_SIMD || CV_SIMD_SCALABLE
+ 
+-#if CV_RVV && CV_SIMD_SCALABLE
++#if CV_SIMD_SCALABLE
+ static inline v_float32 reduceRowSum2Acc4(const v_float32& acc,
+                                            const float* src0, const float* src1,
+                                            const float* src2, const float* src3)
+@@ -1102,8 +1102,7 @@ static inline v_float32 reduceRowSum2Acc4(const v_float32& acc,
+     return v_fma(x, x, sum);
+ }
+ 
+-// dim=0, REDUCE_SUM2 for CV_32F. Keep the common implementation on
+-// Universal Intrinsics; the dispatched backend selects RVV.
++// dim=0, REDUCE_SUM2 for CV_32F using scalable universal intrinsics.
+ static void reduceRowSum2_32f32f(const Mat& srcmat, Mat& dstmat)
+ {
+     const int width = srcmat.cols * srcmat.channels();
+@@ -1261,7 +1260,7 @@ ReduceSumFunc getReduceRSumFunc(int sdepth, int ddepth)
+ 
+ ReduceSumFunc getReduceRSum2Func(int sdepth, int ddepth)
+ {
+-#if CV_RVV && CV_SIMD_SCALABLE
++#if CV_SIMD_SCALABLE
+     if (sdepth == CV_32F && ddepth == CV_32F) return reduceRowSum2_32f32f;
+ #else
+     CV_UNUSED(sdepth);

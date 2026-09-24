@@ -1,0 +1,29 @@
+diff --git a/modules/core/src/norm.dispatch.cpp b/modules/core/src/norm.dispatch.cpp
+index ca9aac1f26..715a6fdcd1 100644
+--- a/modules/core/src/norm.dispatch.cpp
++++ b/modules/core/src/norm.dispatch.cpp
+@@ -177,6 +177,24 @@ float normL2Sqr_(const float* a, const float* b, int n)
+         v_float32 t0 = v_sub(vx_load(a + j), vx_load(b + j));
+         v_d0 = v_muladd(t0, t0, v_d0);
+     }
++#if defined(__riscv_v) && __riscv_v == 1000000
++    // Bounded-avl tail (0 < r < vl): the compiler-generated scalar remainder loop
++    // below pays a back-edge branch, 3x vsetvli/vsetivli and a serial
++    // vfmv.s.f/vfredosum.vs/vfmv.f.s horizontal-reduction chain per short call,
++    // dominating normL2Sqr_ (about 70.6% of in-function samples).  Fold the tail
++    // into the vector accumulator with one bounded avl=r load pair + vfsub +
++    // tail-undisturbed vfmacc, so a single v_reduce_sum below performs the final
++    // horizontal reduction and j is consumed (no over-read: avl=r, r < vl).
++    if( j < n )
++    {
++        const size_t r = (size_t)(n - j);
++        vfloat32m1_t ta = __riscv_vle32_v_f32m1(a + j, r);
++        vfloat32m1_t tb = __riscv_vle32_v_f32m1(b + j, r);
++        vfloat32m1_t td = __riscv_vfsub_vv_f32m1(ta, tb, r);
++        v_d0 = __riscv_vfmacc_vv_f32m1_tu(v_d0, td, td, r);
++        j = n;
++    }
++#endif
+     d = v_reduce_sum(v_d0);
+ #endif
+     for( ; j < n; j++ )

@@ -1,0 +1,40 @@
+diff --git a/modules/core/src/matrix_operations.cpp b/modules/core/src/matrix_operations.cpp
+index 5d63a885cd..954d79ad3c 100644
+--- a/modules/core/src/matrix_operations.cpp
++++ b/modules/core/src/matrix_operations.cpp
+@@ -337,6 +337,35 @@ struct ReduceR_SIMD
+     }
+ };
+ 
++#if defined(__riscv_v) && __riscv_v == 1000000
++// RISC-V RVV 1.0 row-wise square-sum reduction for cv::reduce REDUCE_SUM on
++// float (OpAddSqr<float> = a + b*b).  The compiler autovectorizes the generic
++// loop at e32,m1 (8 lanes/op at VLEN=256) with only 2 live vectors,
++// under-utilizing the register file.  This explicit specialization uses LMUL=m4
++// (32 lanes/op; 2*4=8 live registers — well within the 32-register budget).
++// vfmacc.vv performs the fused multiply-add exactly like the current autovec
++// binary, so the per-element numerical result (buf + src*src) is unchanged.
++template <>
++struct ReduceR_SIMD<float, float, OpAddSqr<float, float, float> >
++{
++    int operator()(const float* src, int start, int end, float* buf,
++                   const OpAddSqr<float, float, float>&) const
++    {
++        int i = start;
++        size_t vl;
++        for( ; i < end; i += (int)vl )
++        {
++            vl = __riscv_vsetvl_e32m4(end - i);
++            vfloat32m4_t vs = __riscv_vle32_v_f32m4(src + i, vl);
++            vfloat32m4_t vb = __riscv_vle32_v_f32m4(buf + i, vl);
++            vb = __riscv_vfmacc_vv_f32m4(vb, vs, vs, vl);
++            __riscv_vse32_v_f32m4(buf + i, vb, vl);
++        }
++        return i;
++    }
++};
++#endif
++
+ 
+ template<typename T, typename ST, typename WT, class Op, class OpInit>
+ class ReduceR_Invoker : public ParallelLoopBody
