@@ -1,7 +1,9 @@
-From 1dc6d84c63197ec48f7d9da58372ce023e8b6149 Mon Sep 17 00:00:00 2001
+From 3f9a2c81d4b67e0a5c1f9d2e8b7a6c5d4e3f2a1b Mon Sep 17 00:00:00 2001
 From: test <test@test.com>
-Date: Thu, 24 Sep 2026 10:56:26 +0800
+Date: Thu, 24 Sep 2026 12:30:00 +0800
 Subject: [PATCH] monotonic: use mulhu reciprocal for RISC-V mtime conversion
+
+monotonic: use mulhu reciprocal for RISC-V mtime conversion
 
 getMonotonicUs_riscv converts raw mtime to microseconds on every call; a
 64-bit divide is iterative on many RISC-V cores. Precompute the reciprocal
@@ -13,14 +15,10 @@ zero overshoot for real timebases).
 Perf (K3/X100): ~+5.3% on the mtime-to-us conversion path (microbenchmark,
 best-of-5, rdtime 100MHz); end-to-end within noise.
 ---
- src/monotonic.c | 9 ++++++++-
- 1 file changed, 8 insertions(+), 1 deletion(-)
-
 diff --git a/src/monotonic.c b/src/monotonic.c
-index b198fe3..2e8acb1 100644
 --- a/src/monotonic.c
 +++ b/src/monotonic.c
-@@ -140,6 +140,9 @@ static void monotonicInit_aarch64(void) {
+@@ -300,6 +300,9 @@
  
  #if defined(USE_PROCESSOR_CLOCK) && defined(__riscv) && defined(__linux__)
  static long mono_ticksPerMicrosecond = 0;
@@ -30,7 +28,7 @@ index b198fe3..2e8acb1 100644
  
  static inline uint64_t read_mtime(void) {
      uint64_t val;
-@@ -178,7 +181,7 @@ static uint64_t get_timebase_frequency(void) {
+@@ -338,7 +341,7 @@
  }
  
  static monotime getMonotonicUs_riscv(void) {
@@ -39,8 +37,8 @@ index b198fe3..2e8acb1 100644
  }
  
  static void monotonicInit_riscv(void) {
-@@ -187,6 +190,10 @@ static void monotonicInit_riscv(void) {
-         fprintf(stderr, "monotonic: riscv, unable to determine clock rate\n");
+@@ -347,6 +350,10 @@
+         monotonicLog("riscv, unable to determine clock rate");
          return;
      }
 +    /* One mulhu replaces the per-call divide (iterative on many RISC-V
@@ -50,6 +48,3 @@ index b198fe3..2e8acb1 100644
      snprintf(monotonic_info_string, sizeof(monotonic_info_string),
              "RISC-V mtime @ %ld ticks/us", mono_ticksPerMicrosecond);
      getMonotonicUs = getMonotonicUs_riscv;
--- 
-2.43.0
-
