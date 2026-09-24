@@ -1,0 +1,228 @@
+diff --git a/cmake/onnxruntime_mlas.cmake b/cmake/onnxruntime_mlas.cmake
+index 2d38c2a997..2e981d6d49 100644
+--- a/cmake/onnxruntime_mlas.cmake
++++ b/cmake/onnxruntime_mlas.cmake
+@@ -1127,6 +1127,7 @@ else()
+               ${MLAS_SRC_DIR}/riscv64/qgemm_kernel_rvv.cpp
+               ${MLAS_SRC_DIR}/riscv64/activation_kernel_rvv.cpp
+               ${MLAS_SRC_DIR}/riscv64/qnbitgemm_kernel_rvv.cpp
++              ${MLAS_SRC_DIR}/activate.cpp
+               PROPERTIES COMPILE_FLAGS "-march=rv64gcv -mabi=lp64d")
+             list(APPEND mlas_private_compile_definitions MLAS_USE_RVV=1)
+ 
+diff --git a/onnxruntime/core/mlas/lib/activate.cpp b/onnxruntime/core/mlas/lib/activate.cpp
+index ef13d1e95a..26a74a8884 100644
+--- a/onnxruntime/core/mlas/lib/activate.cpp
++++ b/onnxruntime/core/mlas/lib/activate.cpp
+@@ -16,6 +16,10 @@ Abstract:
+ 
+ #include "mlasi.h"
+ 
++#if defined(MLAS_TARGET_RISCV64) && defined(MLAS_USE_RVV) && defined(__riscv_v)
++#include <riscv_vector.h>
++#endif
++
+ //
+ // Templates for bias addition functions.
+ //
+@@ -42,6 +46,13 @@ struct MLAS_BIAS_ADDITION<true>
+     {
+         return Value + MlasExtractLaneFloat32x4<0>(BiasBroadcast);
+     }
++
++#if defined(MLAS_TARGET_RISCV64) && defined(MLAS_USE_RVV) && defined(__riscv_v)
++    vfloat32m1_t AddRvv(vfloat32m1_t Value, size_t vl)
++    {
++        return __riscv_vfadd_vf_f32m1(Value, MlasExtractLaneFloat32x4<0>(BiasBroadcast), vl);
++    }
++#endif
+ };
+ 
+ template<>
+@@ -61,6 +72,14 @@ struct MLAS_BIAS_ADDITION<false>
+     {
+         return Value;
+     }
++
++#if defined(MLAS_TARGET_RISCV64) && defined(MLAS_USE_RVV) && defined(__riscv_v)
++    vfloat32m1_t AddRvv(vfloat32m1_t Value, size_t vl)
++    {
++        MLAS_UNREFERENCED_PARAMETER(vl);
++        return Value;
++    }
++#endif
+ };
+ 
+ //
+@@ -87,6 +106,14 @@ struct MLAS_ACTIVATION_FUNCTION<MlasIdentityActivation>
+     {
+         return Value;
+     }
++
++#if defined(MLAS_TARGET_RISCV64) && defined(MLAS_USE_RVV) && defined(__riscv_v)
++    vfloat32m1_t ActivateRvv(vfloat32m1_t Value, size_t vl)
++    {
++        MLAS_UNREFERENCED_PARAMETER(vl);
++        return Value;
++    }
++#endif
+ };
+ 
+ template<>
+@@ -112,6 +139,18 @@ struct MLAS_ACTIVATION_FUNCTION<MlasReluActivation>
+         return std::max(Value, 0.0f);
+ #endif
+     }
++
++#if defined(MLAS_TARGET_RISCV64) && defined(MLAS_USE_RVV) && defined(__riscv_v)
++    vfloat32m1_t ActivateRvv(vfloat32m1_t Value, size_t vl)
++    {
++        // ReLU: max(0, x) with the same NaN round-trip semantics as the
++        // generic MlasMaximumFloat32x4 fallback (comparison-based select,
++        // so a NaN input is preserved rather than clamped to 0).
++        vfloat32m1_t Zero = __riscv_vfmv_v_f_f32m1(0.0f, vl);
++        vbool1_t Mask = __riscv_vmfgt_vv_f32m1_b1(Zero, Value, vl);
++        return __riscv_vmerge_vvm_f32m1(Zero, Value, Mask, vl);
++    }
++#endif
+ };
+ 
+ template<>
+@@ -160,6 +199,20 @@ struct MLAS_ACTIVATION_FUNCTION<MlasLeakyReluActivation>
+         return (Value >= 0.0f) ? Value : ValueTimesAlpha;
+ #endif
+     }
++
++#if defined(MLAS_TARGET_RISCV64) && defined(MLAS_USE_RVV) && defined(__riscv_v)
++    vfloat32m1_t ActivateRvv(vfloat32m1_t Value, size_t vl)
++    {
++        // LeakyReLU: (0 < x) ? x : alpha*x, mirroring the generic fallback's
++        // `ZeroFloat32x4 < Value` comparison select. NaN comparisons are false,
++        // so a NaN input takes the alpha*x lane (NaN * alpha == NaN), matching
++        // the fallback exactly (including -0.0 which compares equal to zero).
++        vfloat32m1_t ValueTimesAlpha = __riscv_vfmul_vf_f32m1(
++            Value, MlasExtractLaneFloat32x4<0>(AlphaBroadcast), vl);
++        vbool1_t Mask = __riscv_vmfgt_vf_f32m1_b1(Value, 0.0f, vl);
++        return __riscv_vmerge_vvm_f32m1(Value, ValueTimesAlpha, Mask, vl);
++    }
++#endif
+ };
+ 
+ template<>
+@@ -193,6 +246,27 @@ struct MLAS_ACTIVATION_FUNCTION<MlasClipActivation>
+         return Value;
+ #endif
+     }
++
++#if defined(MLAS_TARGET_RISCV64) && defined(MLAS_USE_RVV) && defined(__riscv_v)
++    vfloat32m1_t ActivateRvv(vfloat32m1_t Value, size_t vl)
++    {
++        // Clip: min(max(x, Minimum), Maximum), reproducing the generic
++        // fallback's comparison-select semantics exactly:
++        //   max step: (Minimum > x) ? Minimum : x
++        //   min step: (x > Maximum) ? Maximum : x
++        // A NaN input survives the max step (NaN comparison is false) and the
++        // min step then also selects x, so NaN round-trips -- same as the
++        // MLAS_FLOAT32X4 fallback used on non-SIMD builds.
++        vfloat32m1_t Minimum = __riscv_vfmv_v_f_f32m1(
++            MlasExtractLaneFloat32x4<0>(MinimumBroadcast), vl);
++        vfloat32m1_t Maximum = __riscv_vfmv_v_f_f32m1(
++            MlasExtractLaneFloat32x4<0>(MaximumBroadcast), vl);
++        vbool1_t MaxMask = __riscv_vmfgt_vv_f32m1_b1(Minimum, Value, vl);
++        vfloat32m1_t Tmp = __riscv_vmerge_vvm_f32m1(Minimum, Value, MaxMask, vl);
++        vbool1_t MinMask = __riscv_vmfgt_vv_f32m1_b1(Tmp, Maximum, vl);
++        return __riscv_vmerge_vvm_f32m1(Maximum, Tmp, MinMask, vl);
++    }
++#endif
+ };
+ 
+ template<>
+@@ -232,6 +306,27 @@ struct MLAS_ACTIVATION_FUNCTION<MlasHardSigmoidActivation>
+         return Value;
+ #endif
+     }
++
++#if defined(MLAS_TARGET_RISCV64) && defined(MLAS_USE_RVV) && defined(__riscv_v)
++    vfloat32m1_t ActivateRvv(vfloat32m1_t Value, size_t vl)
++    {
++        // HardSigmoid: clamp(x*alpha+beta, Minimum, Maximum) with the same
++        // comparison-select NaN semantics as the generic fallback: the clamp
++        // steps are (t > Maximum) ? Maximum : t then (Minimum > t) ? Minimum : t.
++        // A NaN input flows through both selects unchanged (comparisons false).
++        vfloat32m1_t Tmp = __riscv_vfmacc_vf_f32m1(
++            __riscv_vfmv_v_f_f32m1(MlasExtractLaneFloat32x4<0>(BetaBroadcast), vl),
++            MlasExtractLaneFloat32x4<0>(AlphaBroadcast), Value, vl);
++        vfloat32m1_t Maximum = __riscv_vfmv_v_f_f32m1(
++            MlasExtractLaneFloat32x4<0>(MaximumBroadcast), vl);
++        vfloat32m1_t Minimum = __riscv_vfmv_v_f_f32m1(
++            MlasExtractLaneFloat32x4<0>(MinimumBroadcast), vl);
++        vbool1_t MaxMask = __riscv_vmfgt_vv_f32m1_b1(Tmp, Maximum, vl);
++        Tmp = __riscv_vmerge_vvm_f32m1(Maximum, Tmp, MaxMask, vl);
++        vbool1_t MinMask = __riscv_vmfgt_vv_f32m1_b1(Minimum, Tmp, vl);
++        return __riscv_vmerge_vvm_f32m1(Minimum, Tmp, MinMask, vl);
++    }
++#endif
+ };
+ 
+ template<>
+@@ -277,6 +372,25 @@ struct MLAS_ACTIVATION_FUNCTION<MlasHardSwishActivation>
+         return Value * Gate;
+ #endif
+     }
++
++#if defined(MLAS_TARGET_RISCV64) && defined(MLAS_USE_RVV) && defined(__riscv_v)
++    vfloat32m1_t ActivateRvv(vfloat32m1_t Value, size_t vl)
++    {
++        // HardSwish: x * clamp(x*alpha+beta, Minimum, Maximum) with the same
++        // comparison-select NaN semantics as the generic fallback: the gate
++        // clamp uses (t > Maximum) ? Maximum : t then (Minimum > t) ? Minimum : t.
++        // A NaN input flows through both selects unchanged, and NaN * gate == NaN.
++        vfloat32m1_t Gate = __riscv_vfmacc_vf_f32m1(
++            __riscv_vfmv_v_f_f32m1(Beta, vl), Alpha, Value, vl);
++        vfloat32m1_t Maximum = __riscv_vfmv_v_f_f32m1(Maximum, vl);
++        vfloat32m1_t Minimum = __riscv_vfmv_v_f_f32m1(Minimum, vl);
++        vbool1_t MaxMask = __riscv_vmfgt_vv_f32m1_b1(Gate, Maximum, vl);
++        Gate = __riscv_vmerge_vvm_f32m1(Maximum, Gate, MaxMask, vl);
++        vbool1_t MinMask = __riscv_vmfgt_vv_f32m1_b1(Minimum, Gate, vl);
++        Gate = __riscv_vmerge_vvm_f32m1(Minimum, Gate, MinMask, vl);
++        return __riscv_vfmul_vv_f32m1(Value, Gate, vl);
++    }
++#endif
+ };
+ 
+ template<MLAS_ACTIVATION_KIND ActivationKind, bool AddBias>
+@@ -331,6 +445,26 @@ Return Value:
+ 
+         BiasAddition.LoadNext(Bias);
+ 
++#if defined(MLAS_TARGET_RISCV64) && defined(MLAS_USE_RVV) && defined(__riscv_v)
++        // RVV runtime-VL path: process as many lanes as the hardware vector
++        // length allows per iteration (VLMAX for e32m1 = 8 floats at VLEN=256)
++        // instead of a fixed 4-float MLAS_FLOAT32X4 block. The activation and
++        // bias operations are lane-independent, so applying them to full-width
++        // chunks keeps element-wise semantics identical to the fixed-width path
++        // below while halving the loop-induction overhead per element.
++        if (n >= 8) {
++          size_t vl = __riscv_vsetvl_e32m1(n);
++          while (n >= vl && vl != 0) {
++            vfloat32m1_t Vector = __riscv_vle32_v_f32m1(buffer, vl);
++            Vector = BiasAddition.AddRvv(Vector, vl);
++            Vector = ActivationFunction.ActivateRvv(Vector, vl);
++            __riscv_vse32_v_f32m1(buffer, Vector, vl);
++            buffer += vl;
++            n -= vl;
++            vl = __riscv_vsetvl_e32m1(n);
++          }
++        }
++#else
+         if (n >= 4) {
+ 
+             do {
+@@ -342,6 +476,7 @@ Return Value:
+ 
+             } while (n >= 4);
+         }
++#endif
+ 
+         while (n > 0) {
+ 
