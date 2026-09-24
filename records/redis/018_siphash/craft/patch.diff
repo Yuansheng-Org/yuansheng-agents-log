@@ -1,0 +1,326 @@
+diff --git a/src/siphash.c b/src/siphash.c
+index 3c7069667..aa07b61a8 100644
+--- a/src/siphash.c
++++ b/src/siphash.c
+@@ -39,6 +39,7 @@
+       the function in the new form (returning an uint64_t) using just the
+       relevant test vector.
+  */
++#define _DEFAULT_SOURCE 1 /* expose syscall() (riscv_hwprobe) under strict -std */
+ #include <stdint.h>
+ #include <stdio.h>
+ #include <string.h>
+@@ -73,8 +74,6 @@ int siptlw(int c) {
+ #define UNALIGNED_LE_CPU
+ #endif
+ 
+-#define ROTL(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
+-
+ #define U32TO8_LE(p, v)                                                        \
+     (p)[0] = (uint8_t)((v));                                                   \
+     (p)[1] = (uint8_t)((v) >> 8);                                              \
+@@ -105,143 +104,188 @@ int siptlw(int c) {
+      ((uint64_t)(siptlw((p)[6])) << 48) |                                              \
+      ((uint64_t)(siptlw((p)[7])) << 56))
+ 
+-#define SIPROUND                                                               \
++/* ---------------------------------------------------------------------------
++ * RISC-V Zbb (bit-manipulation) acceleration of the SipHash rounds.
++ *
++ * On cores exposing the Zbb extension the constant rotations inside SIPROUND
++ * become single `rol` instructions, replacing the slli/srli/add sequences the
++ * baseline ISA forces (see bgsave_set rank-018: the synthesized rotations were
++ * ~46% of the hot loop).  The SipHash core is instantiated twice below
++ * (baseline + Zbb) and selected at runtime through the riscv_hwprobe syscall,
++ * keeping the binary portable to cores without Zbb.  Both variants compute
++ * the exact same rotation, so the hash output is bit-identical.
++ * ------------------------------------------------------------------------- */
++#if defined(__riscv) && defined(__linux__)
++#define _DEFAULT_SOURCE 1 /* expose syscall() under strict -std modes */
++#include <sys/syscall.h>
++#include <unistd.h>
++
++#if defined(__has_include)
++# if __has_include(<asm/hwprobe.h>)
++#  include <asm/hwprobe.h>
++# endif
++#endif
++
++#ifndef __NR_riscv_hwprobe
++#define __NR_riscv_hwprobe 258
++#endif
++#ifndef RISCV_HWPROBE_KEY_IMA_EXT_0
++#define RISCV_HWPROBE_KEY_IMA_EXT_0 4
++/* Fallback definition used when <asm/hwprobe.h> is unavailable; matches the
++ * kernel UAPI layout (long is 64-bit on rv64). */
++struct riscv_hwprobe { long key; unsigned long value; };
++#endif
++#ifndef RISCV_HWPROBE_EXT_ZBB
++#define RISCV_HWPROBE_EXT_ZBB (1ULL << 4)
++#endif
++
++/* One-time runtime probe: does this RISC-V core implement Zbb? */
++static int riscv64_has_zbb(void) {
++    static int cached = -1;
++    int detected = 0;
++
++    if (__atomic_load_n(&cached, __ATOMIC_RELAXED) >= 0)
++        return __atomic_load_n(&cached, __ATOMIC_RELAXED);
++
++#if defined(__NR_riscv_hwprobe) && defined(RISCV_HWPROBE_KEY_IMA_EXT_0)
++    {
++        struct riscv_hwprobe probes[] = {{RISCV_HWPROBE_KEY_IMA_EXT_0, 0}};
++        if (syscall(__NR_riscv_hwprobe, probes,
++                    sizeof(probes) / sizeof(probes[0]), 0, NULL, 0) == 0 &&
++            (probes[0].value & RISCV_HWPROBE_EXT_ZBB))
++            detected = 1;
++    }
++#endif
++
++    __atomic_store_n(&cached, detected, __ATOMIC_RELAXED);
++    return detected;
++}
++
++/* rol rd, rs1, rs2: OP, func3=0b001, funct7=0b0110000.  The .insn form is
++ * accepted by GNU as regardless of the -march baseline (the extension is
++ * only ever executed on cores confirmed to implement Zbb at runtime). */
++static inline uint64_t siphash_rol(uint64_t x, uint64_t b) {
++    uint64_t r;
++    __asm__ volatile(".insn r 0x33, 0x1, 0x30, %0, %1, %2"
++                     : "=r"(r) : "r"(x), "r"(b));
++    return r;
++}
++#endif /* __riscv && __linux__ */
++
++#define ROTL_BASE(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
++#if defined(__riscv) && defined(__linux__)
++#define ROTL_ZBB(x, b) siphash_rol(x, b)
++#else
++#define ROTL_ZBB(x, b) ROTL_BASE(x, b)
++#endif
++#define IN_BYTE_IDENT(p) (p)
++#define IN_BYTE_LOWER(p) siptlw(p)
++
++/* One SipHash round; `rotl` selects the rotation implementation so the core
++ * below can be instantiated for the baseline and the Zbb path. */
++#define SIPROUND_TMPL(rotl)                                                    \
+     do {                                                                       \
+         v0 += v1;                                                              \
+-        v1 = ROTL(v1, 13);                                                     \
++        v1 = rotl(v1, 13);                                                     \
+         v1 ^= v0;                                                              \
+-        v0 = ROTL(v0, 32);                                                     \
++        v0 = rotl(v0, 32);                                                     \
+         v2 += v3;                                                              \
+-        v3 = ROTL(v3, 16);                                                     \
++        v3 = rotl(v3, 16);                                                     \
+         v3 ^= v2;                                                              \
+         v0 += v3;                                                              \
+-        v3 = ROTL(v3, 21);                                                     \
++        v3 = rotl(v3, 21);                                                     \
+         v3 ^= v0;                                                              \
+         v2 += v1;                                                              \
+-        v1 = ROTL(v1, 17);                                                     \
++        v1 = rotl(v1, 17);                                                     \
+         v1 ^= v2;                                                              \
+-        v2 = ROTL(v2, 32);                                                     \
++        v2 = rotl(v2, 32);                                                     \
+     } while (0)
+ 
+-NO_SANITIZE("alignment")
+-uint64_t siphash(const uint8_t *in, const size_t inlen, const uint8_t *k) {
+-#ifndef UNALIGNED_LE_CPU
+-    uint64_t hash;
+-    uint8_t *out = (uint8_t*) &hash;
+-#endif
+-    uint64_t v0 = 0x736f6d6570736575ULL;
+-    uint64_t v1 = 0x646f72616e646f6dULL;
+-    uint64_t v2 = 0x6c7967656e657261ULL;
+-    uint64_t v3 = 0x7465646279746573ULL;
+-    uint64_t k0 = U8TO64_LE(k);
+-    uint64_t k1 = U8TO64_LE(k + 8);
+-    uint64_t m;
+-    const uint8_t *end = in + inlen - (inlen % sizeof(uint64_t));
+-    const int left = inlen & 7;
+-    uint64_t b = ((uint64_t)inlen) << 56;
+-    v3 ^= k1;
+-    v2 ^= k0;
+-    v1 ^= k1;
+-    v0 ^= k0;
+-
+-    for (; in != end; in += 8) {
+-        m = U8TO64_LE(in);
+-        v3 ^= m;
+-
+-        SIPROUND;
+-
+-        v0 ^= m;
+-    }
+-
+-    switch (left) {
+-    case 7: b |= ((uint64_t)in[6]) << 48; /* fall-thru */
+-    case 6: b |= ((uint64_t)in[5]) << 40; /* fall-thru */
+-    case 5: b |= ((uint64_t)in[4]) << 32; /* fall-thru */
+-    case 4: b |= ((uint64_t)in[3]) << 24; /* fall-thru */
+-    case 3: b |= ((uint64_t)in[2]) << 16; /* fall-thru */
+-    case 2: b |= ((uint64_t)in[1]) << 8; /* fall-thru */
+-    case 1: b |= ((uint64_t)in[0]); break;
+-    case 0: break;
++/* SipHash 1-2 core, instantiated for the baseline and (on RISC-V) the Zbb
++ * rotation path.  `rotl` selects the rotation implementation, `load64` the
++ * 8-byte load, `in_byte` the per-byte access used for the tail (case folding
++ * in the nocase variant). */
++#define SIPHASH_FUNC(name, rotl, load64, in_byte)                              \
++    NO_SANITIZE("alignment")                                                   \
++    static uint64_t name(const uint8_t *in, const size_t inlen,               \
++                         const uint8_t *k) {                                  \
++        uint64_t hash;                                                        \
++        uint8_t *out = (uint8_t *)&hash;                                      \
++        uint64_t v0 = 0x736f6d6570736575ULL;                                  \
++        uint64_t v1 = 0x646f72616e646f6dULL;                                  \
++        uint64_t v2 = 0x6c7967656e657261ULL;                                  \
++        uint64_t v3 = 0x7465646279746573ULL;                                  \
++        uint64_t k0 = load64(k);                                              \
++        uint64_t k1 = load64(k + 8);                                          \
++        uint64_t m;                                                           \
++        const uint8_t *end = in + inlen - (inlen % sizeof(uint64_t));        \
++        const int left = inlen & 7;                                           \
++        uint64_t b = ((uint64_t)inlen) << 56;                                 \
++        v3 ^= k1;                                                             \
++        v2 ^= k0;                                                             \
++        v1 ^= k1;                                                             \
++        v0 ^= k0;                                                             \
++                                                                              \
++        for (; in != end; in += 8) {                                          \
++            m = load64(in);                                                   \
++            v3 ^= m;                                                          \
++                                                                              \
++            SIPROUND_TMPL(rotl);                                                         \
++                                                                              \
++            v0 ^= m;                                                          \
++        }                                                                     \
++                                                                              \
++        switch (left) {                                                       \
++        case 7: b |= ((uint64_t)in_byte(in[6])) << 48; /* fall-thru */        \
++        case 6: b |= ((uint64_t)in_byte(in[5])) << 40; /* fall-thru */        \
++        case 5: b |= ((uint64_t)in_byte(in[4])) << 32; /* fall-thru */        \
++        case 4: b |= ((uint64_t)in_byte(in[3])) << 24; /* fall-thru */        \
++        case 3: b |= ((uint64_t)in_byte(in[2])) << 16; /* fall-thru */        \
++        case 2: b |= ((uint64_t)in_byte(in[1])) << 8; /* fall-thru */         \
++        case 1: b |= ((uint64_t)in_byte(in[0])); break;                       \
++        case 0: break;                                                        \
++        }                                                                     \
++                                                                              \
++        v3 ^= b;                                                              \
++                                                                              \
++        SIPROUND_TMPL(rotl);                                                  \
++                                                                              \
++        v0 ^= b;                                                              \
++        v2 ^= 0xff;                                                           \
++                                                                              \
++        SIPROUND_TMPL(rotl);                                                  \
++        SIPROUND_TMPL(rotl);                                                  \
++                                                                              \
++        b = v0 ^ v1 ^ v2 ^ v3;                                                \
++        U64TO8_LE(out, b);                                                    \
++        return hash;                                                          \
+     }
+ 
+-    v3 ^= b;
+-
+-    SIPROUND;
+-
+-    v0 ^= b;
+-    v2 ^= 0xff;
+-
+-    SIPROUND;
+-    SIPROUND;
++SIPHASH_FUNC(siphash_base, ROTL_BASE, U8TO64_LE, IN_BYTE_IDENT)
++SIPHASH_FUNC(siphash_nocase_base, ROTL_BASE, U8TO64_LE_NOCASE, IN_BYTE_LOWER)
++#if defined(__riscv) && defined(__linux__)
++SIPHASH_FUNC(siphash_zbb, ROTL_ZBB, U8TO64_LE, IN_BYTE_IDENT)
++SIPHASH_FUNC(siphash_nocase_zbb, ROTL_ZBB, U8TO64_LE_NOCASE, IN_BYTE_LOWER)
++#endif
++#undef SIPHASH_FUNC
+ 
+-    b = v0 ^ v1 ^ v2 ^ v3;
+-#ifndef UNALIGNED_LE_CPU
+-    U64TO8_LE(out, b);
+-    return hash;
+-#else
+-    return b;
++NO_SANITIZE("alignment")
++uint64_t siphash(const uint8_t *in, const size_t inlen, const uint8_t *k) {
++#if defined(__riscv) && defined(__linux__)
++    if (riscv64_has_zbb())
++        return siphash_zbb(in, inlen, k);
+ #endif
++    return siphash_base(in, inlen, k);
+ }
+ 
+ NO_SANITIZE("alignment")
+ uint64_t siphash_nocase(const uint8_t *in, const size_t inlen, const uint8_t *k)
+ {
+-#ifndef UNALIGNED_LE_CPU
+-    uint64_t hash;
+-    uint8_t *out = (uint8_t*) &hash;
+-#endif
+-    uint64_t v0 = 0x736f6d6570736575ULL;
+-    uint64_t v1 = 0x646f72616e646f6dULL;
+-    uint64_t v2 = 0x6c7967656e657261ULL;
+-    uint64_t v3 = 0x7465646279746573ULL;
+-    uint64_t k0 = U8TO64_LE(k);
+-    uint64_t k1 = U8TO64_LE(k + 8);
+-    uint64_t m;
+-    const uint8_t *end = in + inlen - (inlen % sizeof(uint64_t));
+-    const int left = inlen & 7;
+-    uint64_t b = ((uint64_t)inlen) << 56;
+-    v3 ^= k1;
+-    v2 ^= k0;
+-    v1 ^= k1;
+-    v0 ^= k0;
+-
+-    for (; in != end; in += 8) {
+-        m = U8TO64_LE_NOCASE(in);
+-        v3 ^= m;
+-
+-        SIPROUND;
+-
+-        v0 ^= m;
+-    }
+-
+-    switch (left) {
+-    case 7: b |= ((uint64_t)siptlw(in[6])) << 48; /* fall-thru */
+-    case 6: b |= ((uint64_t)siptlw(in[5])) << 40; /* fall-thru */
+-    case 5: b |= ((uint64_t)siptlw(in[4])) << 32; /* fall-thru */
+-    case 4: b |= ((uint64_t)siptlw(in[3])) << 24; /* fall-thru */
+-    case 3: b |= ((uint64_t)siptlw(in[2])) << 16; /* fall-thru */
+-    case 2: b |= ((uint64_t)siptlw(in[1])) << 8; /* fall-thru */
+-    case 1: b |= ((uint64_t)siptlw(in[0])); break;
+-    case 0: break;
+-    }
+-
+-    v3 ^= b;
+-
+-    SIPROUND;
+-
+-    v0 ^= b;
+-    v2 ^= 0xff;
+-
+-    SIPROUND;
+-    SIPROUND;
+-
+-    b = v0 ^ v1 ^ v2 ^ v3;
+-#ifndef UNALIGNED_LE_CPU
+-    U64TO8_LE(out, b);
+-    return hash;
+-#else
+-    return b;
++#if defined(__riscv) && defined(__linux__)
++    if (riscv64_has_zbb())
++        return siphash_nocase_zbb(in, inlen, k);
+ #endif
++    return siphash_nocase_base(in, inlen, k);
+ }
+ 
+ 
