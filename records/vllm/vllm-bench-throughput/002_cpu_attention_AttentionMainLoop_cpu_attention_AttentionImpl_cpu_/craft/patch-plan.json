@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-vllm-vllm-bench-throughput-002",
+  "blueprintId": "bp-vllm-vllm-bench-throughput-002",
+  "createdAt": "2026-09-21T08:05:53.441Z",
+  "objective": "修复 vllm-bench-throughput 在 SG2044/C920v2 上的 CPU attention 热点：gemm_micro_rvv_fma_Mx8_Ku4 的 A-slice 逐标量 flw 广播载入形成紧邻 load-use 链，且 4 条 loop-carried 累加器链与 32 字节（半 cache line）B 行载入在 memory/cache-bound 工作负载下主导周期；同时为 reduce_splits 的 producer/consumer flag 轮询加入 Zihintpause 有界递增退避。",
+  "changes": [
+    {
+      "filePath": "csrc/cpu/cpu_attn_rvv.hpp",
+      "action": "modify",
+      "rationale": "annotate 显示 QK^T 与 P·V 两个 FP32 GEMM microkernel（gemm_micro_rvv_fma_Mx8_Ku4）的计算区间合计约占函数内 60-75% 局部样本：热行为 A-slice 标量 flw（10.74%/10.54%）与其紧邻消费的 vfmacc.vf（7.66/8.67/10.30% 与 7.28/9.06/10.44%）。当前 Mx8 tile 每 8 个输出列只摊薄一次 A 标量载入，且 B 行只读 32 字节（半个 64B cache line），M<=4 时只有 4 条独立累加器链，无法隐藏 flw→vfmacc.vf 的 load-use 与 FMA 累加延迟。",
+      "instructions": [
+        "新增 gemm_micro_rvv_fma_Mx16_Ku4<M, kv_cache_t>（M<=4）：一次处理 16 个输出列，A 标量仍走 vfmacc_vf 广播但每次载入摊薄到 2 次 FMA；B 行改为连续 16 元素（64 字节整 cache line）载入；累加器链从 M 条变为 2*M 条。",
+        "逐输出元素的 FP32 累加顺序保持 k 严格递增不变，因此结果与 Mx8 kernel 位一致，满足 constraints.mustPreserve 的数值语义合同。",
+        "在 gemm_macro_rvv_fma_Mx8_Ku4 中，当 mb<=4 且 N%16==0 时按 16 列步进调用新 kernel；mb==8 继续走原 Mx8 kernel（M=8 的 16 列 tile 需要 32 个累加器寄存器，超出 VLEN=128 的 32 寄存器预算）。",
+        "保持 VLEN=128/256 的 LMUL_256 映射、k_cache/v_cache stride 合同、paged KV block 布局与所有调用点签名不变。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "csrc/cpu/cpu_arch_macros.h",
+      "action": "modify",
+      "rationale": "次要独立热点：reduce_splits 的 flag 紧轮询在构建未声明 zihintpause 时退化为每次 std::this_thread::yield()。需要一个不依赖构建期 __riscv_zihintpause 宏的 pause hint。",
+      "instructions": [
+        "增加 CPU_ATTN_SPIN_PAUSE()：优先复用 FAST_SPINNING；RISC-V 下未声明 zihintpause 时直接发射 `pause`（Zihintpause，编码为 fence w,0 的 HINT，未实现该扩展的核按 no-op 执行，不会 trap）；其它架构无 hint 时为空操作。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "csrc/cpu/cpu_attn_impl.hpp",
+      "action": "modify",
+      "rationale": "次要独立热点：reduce_splits 的 producer/consumer flag 紧轮询（0.03% jal sched_yield + 0.02% beqz，另有 guard_counter spin），无退避且每次等待都发起 sched_yield 系统调用，在高争用下放大 coherence 流量。",
+      "instructions": [
+        "增加 bounded_spin_wait 辅助：以 pause hint 做有界递增退避（1,2,4,...,1024 次），退避饱和后才 std::this_thread::yield()，避免每次轮询都进入系统调用。",
+        "reduce_splits 的 flags[split_idx] 轮询与 guard_counter 等待改用 bounded_spin_wait；保持 volatile bool 读 + std::atomic_thread_fence(acquire) 与写侧 release fence + store 的既有同步协议完全不变。"
+      ],
+      "risk": "low"
+    }
+  ],
+  "expectedDiffSummary": "csrc/cpu/cpu_attn_rvv.hpp 新增 Mx16（M<=4）FP32 RVV microkernel 并让 macro kernel 在 mb<=4 时以 16 列步进调用它，从而把 A-slice 标量 flw 载入摊薄一倍、把独立累加器链翻倍、并按整 cache line 载入 B 行；csrc/cpu/cpu_attn_impl.hpp 与 csrc/cpu/cpu_arch_macros.h 为 reduce_splits/guard_counter 轮询加入 Zihintpause 有界递增退避。补丁不改变 paged KV 布局、stride 合同、掩码语义与 FP32 累加顺序。"
+}
