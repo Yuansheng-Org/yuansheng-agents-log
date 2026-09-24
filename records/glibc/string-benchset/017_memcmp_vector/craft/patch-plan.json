@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-glibc-string-benchset-017",
+  "blueprintId": "bp-glibc-string-benchset-017",
+  "createdAt": "2026-09-11T13:53:22.094Z",
+  "objective": "memcmp kernel 的 found 路径用 2×vrgather.vx+2×vmv.x.s+2×zext 的向量 gather 提取差异字节（≈34.4% 样本），而命中分支时 src1/src2 未推进、差异字节可直接用 2 条标量 lbu 从 src+idx 地址加载（7 条指令 → 3 条），gather 提取链冗余",
+  "changes": [
+    {
+      "filePath": "sysdeps/riscv/rvv/memcmp.S",
+      "action": "modify",
+      "rationale": "memcmp kernel 的 found 路径用 2×vrgather.vx+2×vmv.x.s+2×zext 的向量 gather 提取差异字节（≈34.4% 样本），而命中分支时 src1/src2 未推进、差异字节可直接用 2 条标量 lbu 从 src+idx 地址加载（7 条指令 → 3 条），gather 提取链冗余",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 sysdeps/riscv/rvv/memcmp.S 来解决 blueprint bp-glibc-string-benchset-017。"
+}

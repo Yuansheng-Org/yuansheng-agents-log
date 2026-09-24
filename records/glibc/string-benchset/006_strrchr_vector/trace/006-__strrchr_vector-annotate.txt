@@ -1,0 +1,124 @@
+ Percent |	Source code & Disassembly of libc.so for cpu-clock (1435 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     00000000000a5f38 <__strrchr_vector>:
+         : 6     __strrchr_vector():
+         : 52    #endif
+         :
+         : 54    ENTRY (STRRCHR)
+         : 55    .option push
+         : 56    .option arch, +v
+         : 57    beqz ch, L(search_zero)
+    0.00 :   a5f38:  beqz    a1,a5fa8 <__strrchr_vector+0x70>
+         : 53    mv latest_ptr, zero
+    0.07 :   a5f3a:  li      a4,0
+         : 55    L(loop):
+         : 56    mv blk_base, str
+    0.91 :   a5f3e:  mv      a2,a0
+         :
+         : 58    vsetvli cur_vl, zero, e8, m2, ta, ma
+    0.63 :   a5f40:  vsetvli a6,zero,e8,m2,ta,ma
+         : 58    vle8ff.v vstr, (str)
+    0.00 :   a5f44:  vle8ff.v        v4,(a0)
+         :
+         : 61    vmseq.vi vmask_end, vstr, 0
+    0.84 :   a5f48:  vmseq.vi        v8,v4,0
+         : 61    vmsbf.m vvalid, vmask_end
+    0.63 :   a5f4c:  vmsbf.m v12,v8
+         : 62    vmseq.vx vmask_ch, vstr, ch
+    0.00 :   a5f50:  vmseq.vx        v10,v4,a1
+         : 63    vmand.mm vhit, vmask_ch, vvalid
+    1.05 :   a5f54:  vmand.mm        v0,v10,v12
+         :
+         : 66    vfirst.m first_idx, vhit
+    1.05 :   a5f58:  vfirst.m        a5,v0
+         : 66    csrr cur_vl, vl
+   35.26 :   a5f5c:  csrr    a6,vl
+         : 67    bltz first_idx, L(no_hit_in_block)
+   16.72 :   a5f60:  bltz    a5,a5f7a <__strrchr_vector+0x42>
+         :
+         : 70    vsetvli zero, cur_vl, e16, m4, ta, ma
+    3.34 :   a5f64:  vsetvli zero,a6,e16,m4,ta,ma
+         : 70    vid.v vidx
+    0.00 :   a5f68:  vid.v   v16
+         : 71    vmv.s.x vacc, x0
+    0.00 :   a5f6c:  vmv.s.x v20,zero
+         : 73    /* Compute per-block last hit index (or -1 if none). */
+         : 74    vredmaxu.vs vacc, vidx, vacc, vhit.t
+    0.00 :   a5f70:  vredmaxu.vs     v20,v16,v20,v0.t
+         : 74    vmv.x.s loc_max, vacc
+    0.77 :   a5f74:  vmv.x.s a3,v20
+         : 75    j L(loc_max_ready)
+   17.70 :   a5f78:  j       a5f7c <__strrchr_vector+0x44>
+         :
+         : 79    L(no_hit_in_block):
+         : 80    li loc_max, -1
+    4.53 :   a5f7a:  li      a3,-1
+         :
+         : 82    L(loc_max_ready):
+         : 83    vsetvli zero, cur_vl, e8, m2, ta, ma
+    0.00 :   a5f7c:  vsetvli zero,a6,e8,m2,ta,ma
+         : 82    vcpop.m len_valid, vvalid
+    0.00 :   a5f80:  vcpop.m a5,v12
+         :
+         : 85    bne len_valid, cur_vl, L(tail_block)
+   10.31 :   a5f84:  bne     a5,a6,a5f94 <__strrchr_vector+0x5c>
+         : 85    bltz loc_max, L(advance)
+    2.65 :   a5f88:  bltz    a3,a5f90 <__strrchr_vector+0x58>
+         :
+         : 88    add latest_ptr, blk_base, loc_max
+    0.00 :   a5f8c:  add     a4,a2,a3
+         :
+         : 91    L(advance):
+         : 92    add str, str, cur_vl
+    0.00 :   a5f90:  add     a0,a0,a6
+         : 91    j L(loop)
+    0.00 :   a5f92:  j       a5f3e <__strrchr_vector+0x6>
+         :
+         : 95    L(tail_block):
+         : 96    add str, blk_base, loc_max
+    0.35 :   a5f94:  add     a0,a2,a3
+         :
+         : 99    /* sign = -1 if loc_max < 0 else 0; then invert to
+         : 100   build selection mask */
+         : 101   srai loc_max, loc_max, XLEN_SHIFT
+    0.00 :   a5f98:  srai    a3,a3,0x3f
+         : 99    and len_valid, loc_max, latest_ptr
+    0.00 :   a5f9a:  and     a5,a3,a4
+         : 100   xori loc_max, loc_max, -1
+    0.00 :   a5f9e:  not     a3,a3
+         : 101   and str, loc_max, str
+    0.00 :   a5fa2:  and     a0,a0,a3
+         : 102   or str, str, len_valid
+    0.00 :   a5fa4:  or      a0,a0,a5
+         : 103   ret
+    0.00 :   a5fa6:  ret
+         :
+         : 108   L(search_zero):
+         : 109   L(sz_loop):
+         : 110   vsetvli cur_vl, zero, e8, m4, ta, ma
+    0.00 :   a5fa8:  vsetvli a6,zero,e8,m4,ta,ma
+         : 108   vle8ff.v vstr, (str)
+    0.00 :   a5fac:  vle8ff.v        v4,(a0)
+         :
+         : 111   vmseq.vi vmask_end, vstr, 0
+    0.84 :   a5fb0:  vmseq.vi        v8,v4,0
+         : 111   vfirst.m first_idx, vmask_end
+    0.00 :   a5fb4:  vfirst.m        a5,v8
+         : 112   bltz first_idx, L(sz_advance)
+    1.25 :   a5fb8:  bltz    a5,a5fc0 <__strrchr_vector+0x88>
+         : 113   add str, str, first_idx
+    0.07 :   a5fbc:  add     a0,a0,a5
+         : 114   ret
+    0.00 :   a5fbe:  ret
+         : 116   L(sz_advance):
+         : 117   csrr cur_vl, vl
+    0.14 :   a5fc0:  csrr    a6,vl
+         : 117   add str, str, cur_vl
+    0.49 :   a5fc4:  add     a0,a0,a6
+         : 118   j L(sz_loop)
+    0.42 :   a5fc6:  j       a5fa8 <__strrchr_vector+0x70>

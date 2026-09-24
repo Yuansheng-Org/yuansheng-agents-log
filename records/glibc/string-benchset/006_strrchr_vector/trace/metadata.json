@@ -1,0 +1,13 @@
+{
+  "software_name": "glibc",
+  "repository_url": "https://mirrors.bfsu.edu.cn/git/glibc.git",
+  "test_branch": "master",
+  "commit_hash": "bb213471bedc177b8efd3178584137fb81cc976a",
+  "run_datetime": "2026-08-14T07:37:34.033712",
+  "architecture": "riscv64",
+  "binaries": {
+    "bench-memcpy-elf-A": "Attribute Section: riscv\nFile Attributes\n  Tag_RISCV_stack_align: 16-bytes\n  Tag_RISCV_arch: \"rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_v1p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcd1p0_zve32f1p0_zve32x1p0_zve64d1p0_zve64f1p0_zve64x1p0_zvl128b1p0_zvl32b1p0_zvl64b1p0\"\n  Tag_RISCV_priv_spec: 1\n  Tag_RISCV_priv_spec_minor: 11\n",
+    "bench-memcpy-elf-h": "ELF 头：\n  Magic：  7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 \n  类别:                              ELF64\n  数据:                              2 补码，小端序 (little endian)\n  Version:                           1 (current)\n  OS/ABI:                            UNIX - System V\n  ABI 版本:                          0\n  类型:                              DYN (Position-Independent Executable file)\n  系统架构:                          RISC-V\n  版本:                              0x1\n  入口点地址：              0x1b18\n  程序头起点：              64 (bytes into file)\n  Start of section headers:          110104 (bytes into file)\n  标志：             0x5, RVC, double-float ABI\n  Size of this header:               64 (bytes)\n  Size of program headers:           56 (bytes)\n  Number of program headers:         11\n  Size of section headers:           64 (bytes)\n  Number of section headers:         39\n  Section header string table index: 38\n"
+  },
+  "warnings": []
+}

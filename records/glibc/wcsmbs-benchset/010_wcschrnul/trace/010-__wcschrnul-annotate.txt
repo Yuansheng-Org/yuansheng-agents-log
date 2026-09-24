@@ -1,0 +1,39 @@
+ Percent |	Source code & Disassembly of libc.so for cpu-clock (339 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     00000000000a76e8 <wcschrnul>:
+         : 6     __wcschrnul():
+         : 27    #endif
+         :
+         : 29    /* Find the first occurrence of WC in WCS.  */
+         : 30    wchar_t *
+         : 31    __wcschrnul (const wchar_t *wcs, const wchar_t wc)
+         : 32    {
+    0.00 :   a76e8:  addi    sp,sp,-16
+    2.36 :   a76ea:  sd      s0,0(sp)
+    0.29 :   a76ec:  sd      ra,8(sp)
+    0.00 :   a76ee:  addi    s0,sp,16
+         : 28    while (*wcs != L'\0')
+    0.00 :   a76f0:  lw      a5,0(a0)
+         : 29    if (*wcs == wc)
+    0.00 :   a76f2:  beq     a1,a5,a7700 <wcschrnul+0x18>
+    0.00 :   a76f6:  beqz    a5,a7700 <wcschrnul+0x18>
+         : 28    while (*wcs != L'\0')
+   94.40 :   a76f8:  lw      a5,4(a0)
+         : 32    break;
+         : 33    else
+         : 34    ++wcs;
+    1.18 :   a76fa:  addi    a0,a0,4
+         : 29    if (*wcs == wc)
+    0.00 :   a76fc:  bne     a5,a1,a76f6 <wcschrnul+0xe>
+         :
+         : 36    return (wchar_t *) wcs;
+         : 37    }
+    0.00 :   a7700:  ld      ra,8(sp)
+    1.77 :   a7702:  ld      s0,0(sp)
+    0.00 :   a7704:  addi    sp,sp,16
+    0.00 :   a7706:  ret

@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-glibc-string-benchset-017",
+  "patchPlanId": "pp-bp-glibc-string-benchset-017",
+  "createdAt": "2026-09-11T13:53:22.139Z",
+  "changedFiles": [
+    "sysdeps/riscv/rvv/memcmp.S"
+  ],
+  "gitDiff": "diff --git a/sysdeps/riscv/rvv/memcmp.S b/sysdeps/riscv/rvv/memcmp.S\nindex 004bf538f0..6b13236631 100644\n--- a/sysdeps/riscv/rvv/memcmp.S\n+++ b/sysdeps/riscv/rvv/memcmp.S\n@@ -62,12 +62,12 @@ L(loop):\n     li result, 0\n     ret\n L(found):\n-    vrgather.vx vtemp1, vdata1, temp\n-    vrgather.vx vtemp2, vdata2, temp\n-    vmv.x.s result, vtemp1\n-    vmv.x.s temp, vtemp2\n-    andi result, result, 0xff\n-    andi temp, temp, 0xff\n+    /* src1/src2 still point at the chunk bases when this branch is taken,\n+       so the differing bytes can be loaded directly.  */\n+    add a5, src1, temp\n+    lbu result, 0(a5)\n+    add a5, src2, temp\n+    lbu temp, 0(a5)\n     sub result, result, temp\n     ret\n .option pop\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

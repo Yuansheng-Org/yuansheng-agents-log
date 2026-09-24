@@ -1,0 +1,51 @@
+4-GLIBC-BENCHMARK wcsmbs-benchset RISC-V perf stat
+==================================================
+
+Source CSV: /workspace/results/4-glibc-benchmark_results.csv
+TestName: wcsmbs-benchset
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 151,747,267,700 |
+| task_clock | 151,359.9000000000 |
+| cpu_cycle | 332,843,836,300 |
+| instruction | 576,417,406,600 |
+| cache_references | NA |
+| cache_misses | NA |
+| branches | 202,456,361,000 |
+| branch_misses | 1,531,816,622 |
+| L1_dcache_loads | 174,451,731,100 |
+| L1_dcache_load_misses | 457,371,829 |
+| LLC_load_misses | NA |
+| LLC_loads | NA |
+| IPC | 1.7320000000 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 151.747268 |
+| branch_miss_rate | 0.757% |
+| L1_dcache_load_miss_rate | 0.262% |
+
+perf stat style summary
+-----------------------
+           151,747,267,700  duration_time
+        151,359.9000000000  task_clock
+           332,843,836,300  cpu_cycle
+           576,417,406,600  instruction
+                        NA  cache_references
+                        NA  cache_misses
+           202,456,361,000  branches
+             1,531,816,622  branch_misses
+           174,451,731,100  L1_dcache_loads
+               457,371,829  L1_dcache_load_misses
+                        NA  LLC_load_misses
+                        NA  LLC_loads
+              1.7320000000  IPC
+                151.747268  duration_s
+                    0.757%  branch_miss_rate
+                    0.262%  L1_dcache_load_miss_rate

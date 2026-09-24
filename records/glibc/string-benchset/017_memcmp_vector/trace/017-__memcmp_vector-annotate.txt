@@ -1,0 +1,61 @@
+ Percent |	Source code & Disassembly of libc.so for cpu-clock (614 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     00000000000a4760 <__memcmp_vector>:
+         : 6     __memcmp_vector():
+         :
+         : 47    ENTRY (MEMCMP)
+         : 48    .option push
+         : 49    .option arch, +v
+         : 50    L(loop):
+         : 51    vsetvli ivl, num, e8, ELEM_LMUL_SETTING, ta, ma
+    0.16 :   a4760:  vsetvli a3,a2,e8,m8,ta,ma
+         :
+         : 49    vle8.v vdata1, (src1)
+    1.79 :   a4764:  vle8.v  v0,(a0)
+         : 49    vle8.v vdata2, (src2)
+   17.43 :   a4768:  vle8.v  v8,(a1)
+         :
+         : 52    vmsne.vv vmask, vdata1, vdata2
+   24.76 :   a476c:  vmsne.vv        v16,v0,v8
+         : 52    sub num, num, ivl
+    0.00 :   a4770:  sub     a2,a2,a3
+         : 53    vfirst.m temp, vmask
+    0.00 :   a4772:  vfirst.m        a4,v16
+         :
+         : 56    bgez temp, L(found)
+   18.73 :   a4776:  bgez    a4,a4784 <__memcmp_vector+0x24>
+         :
+         : 58    add src1, src1, ivl
+    2.44 :   a477a:  add     a0,a0,a3
+         : 58    add src2, src2, ivl
+    0.00 :   a477c:  add     a1,a1,a3
+         :
+         : 61    bnez num, L(loop)
+    0.00 :   a477e:  bnez    a2,a4760 <__memcmp_vector>
+         :
+         : 63    li result, 0
+    0.00 :   a4780:  li      a0,0
+         : 63    ret
+    0.33 :   a4782:  ret
+         : 65    L(found):
+         : 66    vrgather.vx vtemp1, vdata1, temp
+    1.30 :   a4784:  vrgather.vx     v16,v0,a4
+         : 66    vrgather.vx vtemp2, vdata2, temp
+    0.98 :   a4788:  vrgather.vx     v24,v8,a4
+         : 67    vmv.x.s result, vtemp1
+    0.81 :   a478c:  vmv.x.s a0,v16
+         : 68    vmv.x.s temp, vtemp2
+   25.08 :   a4790:  vmv.x.s a4,v24
+         : 69    andi result, result, 0xff
+    5.54 :   a4794:  zext.b  a0,a0
+         : 70    andi temp, temp, 0xff
+    0.00 :   a4798:  zext.b  a4,a4
+         : 71    sub result, result, temp
+    0.00 :   a479c:  sub     a0,a0,a4
+         : 72    ret
+    0.65 :   a479e:  ret

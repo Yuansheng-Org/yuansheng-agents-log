@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-glibc-wcsmbs-benchset-010",
+  "blueprintId": "bp-glibc-wcsmbs-benchset-010",
+  "createdAt": "2026-09-11T13:57:13.426Z",
+  "objective": "wcschrnul 在 V-capable 目标上缺少 RVV 向量实现（wcs* 宽字符函数族整体缺失）：hot loop 为标量逐元素扫描（4B/iter），且 multiarch IFUNC 名单未包含 wcschrnul（无 dispatch slot），硬件向量能力完全未被利用",
+  "changes": [
+    {
+      "filePath": "wcsmbs/wcschrnul.c",
+      "action": "modify",
+      "rationale": "wcschrnul 在 V-capable 目标上缺少 RVV 向量实现（wcs* 宽字符函数族整体缺失）：hot loop 为标量逐元素扫描（4B/iter），且 multiarch IFUNC 名单未包含 wcschrnul（无 dispatch slot），硬件向量能力完全未被利用",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "sysdeps/riscv/rvv/wcschrnul.S",
+      "action": "modify",
+      "rationale": "wcschrnul 在 V-capable 目标上缺少 RVV 向量实现（wcs* 宽字符函数族整体缺失）：hot loop 为标量逐元素扫描（4B/iter），且 multiarch IFUNC 名单未包含 wcschrnul（无 dispatch slot），硬件向量能力完全未被利用",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "sysdeps/riscv/multiarch/wcschrnul-vector.S",
+      "action": "modify",
+      "rationale": "wcschrnul 在 V-capable 目标上缺少 RVV 向量实现（wcs* 宽字符函数族整体缺失）：hot loop 为标量逐元素扫描（4B/iter），且 multiarch IFUNC 名单未包含 wcschrnul（无 dispatch slot），硬件向量能力完全未被利用",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "sysdeps/riscv/multiarch/dl-symbol-redir-ifunc.h",
+      "action": "modify",
+      "rationale": "wcschrnul 在 V-capable 目标上缺少 RVV 向量实现（wcs* 宽字符函数族整体缺失）：hot loop 为标量逐元素扫描（4B/iter），且 multiarch IFUNC 名单未包含 wcschrnul（无 dispatch slot），硬件向量能力完全未被利用",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 wcsmbs/wcschrnul.c, sysdeps/riscv/rvv/wcschrnul.S, sysdeps/riscv/multiarch/wcschrnul-vector.S, sysdeps/riscv/multiarch/dl-symbol-redir-ifunc.h 来解决 blueprint bp-glibc-wcsmbs-benchset-010。"
+}

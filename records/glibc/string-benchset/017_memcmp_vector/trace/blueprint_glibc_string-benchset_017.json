@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-glibc-string-benchset-017",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-11T09:56:14.060Z",
+    "software": "glibc",
+    "testcaseIds": [
+      "string-benchset"
+    ],
+    "diagnosisId": "diag-20260911-095614",
+    "targetHardware": "SpacemiT K3 (spacemit-x100)",
+    "repositoryUrl": "https://mirrors.bfsu.edu.cn/git/glibc.git",
+    "testBranch": "master",
+    "commitHash": "bb213471bedc177b8efd3178584137fb81cc976a"
+  },
+  "problem": {
+    "summary": "glibc string-benchset 中 __memcmp_vector（RVV memcmp，rank 017，614 samples）主循环已用最大 LMUL（e8/m8, 256B/iter），但 found 路径的差异字节提取链（vrgather.vx×2 + vmv.x.s×2 + zext×2 ≈34.4%）在每次命中差异时执行，bench-memcmp 大量输入首 chunk 即命中使该路径成为显著 per-call 成本；命中分支时 src1/src2 仍指向 chunk 基址，可直接用标量 lbu 提取差异字节替代向量 gather。",
+    "evidence": [
+      "string-benchset perf stat（RISC-V）: IPC=1.251, branch_miss_rate=1.624%, L1_dcache_load_miss_rate=0.716%, LLC counters=NA",
+      "__memcmp_vector annotate: 25.08% 落在 vmv.x.s a4,v24（a4790，found 路径第二提取点），24.76% 落在 vmsne.vv v16,v0,v8（a476c，差异比较），18.73% 落在 bgez a4,a4784（a4776，命中分支），vrgather.vx×2 占 2.28%",
+      "found 路径提取链（vrgather×2 + vmv.x.s×2 + zext×2 ≈34.4%）每次命中差异时执行；bgez 命中分支在 add src1,src1,ivl 之前 → src1/src2 仍为 chunk 基址",
+      "源码核对：sysdeps/riscv/rvv/memcmp.S L(found) 用 vrgather.vx 提取差异字节；主循环 e8/m8 已最大 LMUL"
+    ]
+  },
+  "rootCause": {
+    "summary": "memcmp kernel 的 found 路径用 2×vrgather.vx+2×vmv.x.s+2×zext 的向量 gather 提取差异字节（≈34.4% 样本），而命中分支时 src1/src2 未推进、差异字节可直接用 2 条标量 lbu 从 src+idx 地址加载（7 条指令 → 3 条），gather 提取链冗余",
+    "candidateFiles": [
+      "sysdeps/riscv/rvv/memcmp.S"
+    ],
+    "performanceFactors": [
+      "Existing RISC-V Assembly Kernel Bottlenecks"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "memcmp 语义：返回 (unsigned char)s1[k] - (unsigned char)s2[k]（k=首个差异位置），相等返回 0",
+      "lbu 零扩展语义与 zext.b 一致（无符号字节比较）",
+      "found 分支点 src1/src2 未推进的事实（add 在未命中路径上）",
+      "主循环 e8/m8 最大 LMUL 结构"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "string-benchset"
+    ]
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.8,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "string-benchset perf stat 显示 IPC=1.251、LLC NA；__memcmp_vector（rank 017）annotate 中 found 路径的 vrgather.vx×2+vmv.x.s×2+zext×2 提取链占约 34.4%（vmv.x.s a4 单行 25.08%），而比较链（vle8 src2 17.43% + vmsne 24.76% + bgez 18.73%）为算法固有 load+compare 成本；源码核对 sysdeps/riscv/rvv/memcmp.S 确认 found 路径用向量 gather 提取差异字节，且 bgez 命中分支在 add 推进之前（src1/src2 仍为 chunk 基址）→ 可直接标量 lbu 提取；命中 pattern 'Existing RISC-V Assembly Kernel Bottlenecks'（route High），其 §1 访存原语替代原则支持该修复方向；证据链指向 found 路径 gather 提取冗余的代码实现根因。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "vmv.x.s a4 行 25.08% 可能部分来自采样 skid（precise_ip 未确认）与 vrgather 前置链归因，实际 gather 成本占比可能略低",
+      "若 K3 的 vrgather.vx（标量索引 gather）为低延迟实现且 lbu 的 load-use 延迟更高，lbu 替换的净收益可能有限，须 A/B 实测"
+    ],
+    "currentGaps": "precise_ip/Exact-IP 未确认（baseline_gap: sampling IP precision）；libc.so 直接 readelf -A 未采集（baseline_gap: build ISA）；LLC/cache counters NA（baseline_gap: cache counters）；采样 percent type=local period（baseline_gap: sampling metadata）；K3 上 vrgather.vx vs lbu 的延迟差未知",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV / string-benchset",
+    "recommendedFirstAction": "在 sysdeps/riscv/rvv/memcmp.S 的 L(found)（第 65-72 行）用标量字节加载替换 vrgather 提取：add a5,a0,a4 + lbu a0,0(a5) + add a5,a1,a4 + lbu a4,0(a5) + sub a0,a0,a4 + ret（利用命中分支时 src1/src2 未推进的事实，7 条指令减至 3 条）",
+    "recommendedVerification": "重跑 glibc bench-memcmp（string-benchset）并重新 perf annotate __memcmp_vector：确认 vrgather.vx×2 与 vmv.x.s×2 从 annotate 消失、found 路径变为 add+lbu+add+lbu+sub；对比 duration_time 与 found 路径份额；实测 K3 上 vrgather.vx vs lbu 延迟差",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 1.251,
+        "anomalyNote": "string-benchset 全用例 IPC；memcmp found 路径的 gather 提取链拉低短比较效率"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 1.624,
+        "anomalyNote": "全用例分支缺失率 1.624%；bgez/bnez 为数据相关分支"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.716,
+        "anomalyNote": "load miss 率低；lbu 提取命中已加载的 chunk（L1 命中）"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "__memcmp_vector",
+        "fileModule": "sysdeps/riscv/rvv/memcmp.S（annotate 内嵌 .S 源行 + 工作区源码逐指令核对）",
+        "rvvPattern": "Existing RISC-V Assembly Kernel Bottlenecks",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.3436,
+        "note": "glibc 手写 RVV memcmp 内核（两输入比较/内存密集，rank 017，614 samples）；主循环 e8/m8 已最大 LMUL；benefitUpperbound 取 found 路径提取链局部份额（vrgather×2 2.28% + vmv.x.s×2 25.89% + zext 5.54% + sub/ret 0.65% ≈ 34.4%）；比较链 60.9% 为算法固有成本"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "sysdeps/riscv/rvv/memcmp.S:64-72（L(found)，vrgather.vx 在第 65-66 行）",
+      "relatedKnowledge": "https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/79adb692a2720647e9dbe57de33fd50b41db295c\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/afb967b81e4169e9e563f6342f4f9f636627de5b\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/02594c8c011ca2cdc20334e9bb812ec8f6f37cf3\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/39abb1ac9421004dea61dc82ddbc8c187b9d6a65\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/2f77ecc6bc7dbc832cee4f0fe4d219fb172f775f\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/463c573e6b6489c588bee90124d5cf92db8ccaaa\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/5bc3b7f51308b8027e5468ef60d8336a960193e2\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/7ee5c907e533d669dd4e39052a61b88232ca705b\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/9b84b8682f2629a23ccebd68af9f82c701a308e4\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/92bcc6703acf346f0a5257de2410400a2e81a754\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/262168b04e6807fce6a78507c14cfc166ba72845\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/982376660c58f59a384486894a3f1092d6888e4b\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/8030876d1c77f37a3528cc0c541f75ba8d39e9f4\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/9135dffd177d457a8a1781b9e6c6d400648165cb\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/5b8b5ec9c55da6afef85195d12d1ac92647986f5\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/a11122f9c63bdb66e3f7bc7e2cd380cdc9c9a51c\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/b62586e31019a7654c65c1a4758d59c1b0e754ad\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/3a5365683799ded2df974671928b545a153650ca\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/f222eb2b0805c782740f338dead1e375a4562fb7\nhttps://code.ffmpeg.org/FFmpeg/FFmpeg/commit/e0eff64ed1e60d14391d55a91732ec612abf3f64",
+      "evidenceExplanation": "上游手写向量 .S 案例强调'先问有没有一条指令/更简单形态能表达该布局'（riscv-assembly-kernel-performance-optimization.md §1）与避免多余向量指令；与本函数 found 路径用 vrgather.vx 提取单个字节（可简化为标量 lbu）的形态一致，工作区源码第 65-66 行证实该 gather 使用"
+    }
+  }
+}
