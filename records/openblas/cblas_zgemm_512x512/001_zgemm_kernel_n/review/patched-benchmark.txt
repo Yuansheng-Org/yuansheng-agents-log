@@ -1,0 +1,87 @@
+META source_dir=<HOME>/openblas-patch-validation-20260916/worktrees/001_zgemm_kernel_n cpu=7 sizes=256\ 512\ 1024 warmups=1 measured_runs=3
+META uname=Linux k3 6.18.3-generic #1.0.0~rc2.4 SMP PREEMPT_DYNAMIC Thu Apr 16 11:50:58 CST 2026 riscv64 GNU/Linux
+META date=2026-09-16T16:43:20+08:00
+BEGIN bench=zgemm size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    10921.71 MFlops   0.012289 sec
+FREQ_AFTER_KHZ=2200000
+END bench=zgemm size=256 phase=warmup run=0
+BEGIN bench=zgemm size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    10837.64 MFlops   0.012384 sec
+FREQ_AFTER_KHZ=2200000
+END bench=zgemm size=256 phase=measured run=1
+BEGIN bench=zgemm size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    11418.60 MFlops   0.011754 sec
+FREQ_AFTER_KHZ=2200000
+END bench=zgemm size=256 phase=measured run=2
+BEGIN bench=zgemm size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    10828.57 MFlops   0.012395 sec
+FREQ_AFTER_KHZ=2200000
+END bench=zgemm size=256 phase=measured run=3
+BEGIN bench=zgemm size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    10062.23 MFlops   0.106710 sec
+FREQ_AFTER_KHZ=2200000
+END bench=zgemm size=512 phase=warmup run=0
+BEGIN bench=zgemm size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    10046.71 MFlops   0.106875 sec
+FREQ_AFTER_KHZ=2200000
+END bench=zgemm size=512 phase=measured run=1
+BEGIN bench=zgemm size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    10048.18 MFlops   0.106859 sec
+FREQ_AFTER_KHZ=2200000
+END bench=zgemm size=512 phase=measured run=2
+BEGIN bench=zgemm size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    10006.75 MFlops   0.107302 sec
+FREQ_AFTER_KHZ=2200000
+END bench=zgemm size=512 phase=measured run=3
+BEGIN bench=zgemm size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    10416.67 MFlops   0.824633 sec
+FREQ_AFTER_KHZ=2200000
+END bench=zgemm size=1024 phase=warmup run=0
+BEGIN bench=zgemm size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    10418.47 MFlops   0.824491 sec
+FREQ_AFTER_KHZ=2200000
+END bench=zgemm size=1024 phase=measured run=1
+BEGIN bench=zgemm size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    10399.87 MFlops   0.825966 sec
+FREQ_AFTER_KHZ=2200000
+END bench=zgemm size=1024 phase=measured run=2
+BEGIN bench=zgemm size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    10387.19 MFlops   0.826973 sec
+FREQ_AFTER_KHZ=2200000
+END bench=zgemm size=1024 phase=measured run=3

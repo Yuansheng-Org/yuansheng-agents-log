@@ -1,0 +1,843 @@
+META source_dir=<HOME>/openblas-patch-validation-2.1-20260916/OpenBLAS cpu=7 sizes=256\ 512\ 1024 warmups=1 measured_runs=3
+META uname=Linux k3 6.18.3-generic #1.0.0~rc2.4 SMP PREEMPT_DYNAMIC Thu Apr 16 11:50:58 CST 2026 riscv64 GNU/Linux
+META date=2026-09-16T17:32:38+08:00
+BEGIN bench=cblas_dgemm size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    10681.81 MFlops   0.003141 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_dgemm size=256 phase=warmup run=0
+BEGIN bench=cblas_dgemm size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    11194.83 MFlops   0.002997 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_dgemm size=256 phase=measured run=1
+BEGIN bench=cblas_dgemm size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    10805.79 MFlops   0.003105 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_dgemm size=256 phase=measured run=2
+BEGIN bench=cblas_dgemm size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    10895.11 MFlops   0.003080 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_dgemm size=256 phase=measured run=3
+BEGIN bench=cblas_dgemm size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    11448.01 MFlops   0.023448 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_dgemm size=512 phase=warmup run=0
+BEGIN bench=cblas_dgemm size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    11495.66 MFlops   0.023351 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_dgemm size=512 phase=measured run=1
+BEGIN bench=cblas_dgemm size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    11610.60 MFlops   0.023120 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_dgemm size=512 phase=measured run=2
+BEGIN bench=cblas_dgemm size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    11487.30 MFlops   0.023368 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_dgemm size=512 phase=measured run=3
+BEGIN bench=cblas_dgemm size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    12740.26 MFlops   0.168559 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_dgemm size=1024 phase=warmup run=0
+BEGIN bench=cblas_dgemm size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    12755.81 MFlops   0.168353 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_dgemm size=1024 phase=measured run=1
+BEGIN bench=cblas_dgemm size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    12753.67 MFlops   0.168382 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_dgemm size=1024 phase=measured run=2
+BEGIN bench=cblas_dgemm size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    12695.23 MFlops   0.169157 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_dgemm size=1024 phase=measured run=3
+BEGIN bench=cblas_sgemm size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    22918.18 MFlops   0.001464 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_sgemm size=256 phase=warmup run=0
+BEGIN bench=cblas_sgemm size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    22348.96 MFlops   0.001501 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_sgemm size=256 phase=measured run=1
+BEGIN bench=cblas_sgemm size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    22926.65 MFlops   0.001464 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_sgemm size=256 phase=measured run=2
+BEGIN bench=cblas_sgemm size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    23653.20 MFlops   0.001419 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_sgemm size=256 phase=measured run=3
+BEGIN bench=cblas_sgemm size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    25713.84 MFlops   0.010439 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_sgemm size=512 phase=warmup run=0
+BEGIN bench=cblas_sgemm size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    24957.03 MFlops   0.010756 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_sgemm size=512 phase=measured run=1
+BEGIN bench=cblas_sgemm size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    25201.08 MFlops   0.010652 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_sgemm size=512 phase=measured run=2
+BEGIN bench=cblas_sgemm size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    24892.52 MFlops   0.010784 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_sgemm size=512 phase=measured run=3
+BEGIN bench=cblas_sgemm size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    24243.88 MFlops   0.088578 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_sgemm size=1024 phase=warmup run=0
+BEGIN bench=cblas_sgemm size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    24306.48 MFlops   0.088350 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_sgemm size=1024 phase=measured run=1
+BEGIN bench=cblas_sgemm size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    24331.77 MFlops   0.088258 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_sgemm size=1024 phase=measured run=2
+BEGIN bench=cblas_sgemm size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    24252.92 MFlops   0.088545 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_sgemm size=1024 phase=measured run=3
+BEGIN bench=dtrmm size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    256 :    10103.94 MFlops    0.001660 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dtrmm size=256 phase=warmup run=0
+BEGIN bench=dtrmm size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    256 :    10027.45 MFlops    0.001673 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dtrmm size=256 phase=measured run=1
+BEGIN bench=dtrmm size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    256 :     9946.21 MFlops    0.001687 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dtrmm size=256 phase=measured run=2
+BEGIN bench=dtrmm size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    256 :    10050.47 MFlops    0.001669 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dtrmm size=256 phase=measured run=3
+BEGIN bench=dtrmm size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    512 :    11035.03 MFlops    0.012163 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dtrmm size=512 phase=warmup run=0
+BEGIN bench=dtrmm size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    512 :    11230.03 MFlops    0.011952 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dtrmm size=512 phase=measured run=1
+BEGIN bench=dtrmm size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    512 :    11382.08 MFlops    0.011792 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dtrmm size=512 phase=measured run=2
+BEGIN bench=dtrmm size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    512 :    11353.68 MFlops    0.011822 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dtrmm size=512 phase=measured run=3
+BEGIN bench=dtrmm size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+   1024 :    12044.86 MFlops    0.089145 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dtrmm size=1024 phase=warmup run=0
+BEGIN bench=dtrmm size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+   1024 :    12058.62 MFlops    0.089043 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dtrmm size=1024 phase=measured run=1
+BEGIN bench=dtrmm size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+   1024 :    12028.80 MFlops    0.089264 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dtrmm size=1024 phase=measured run=2
+BEGIN bench=dtrmm size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+   1024 :    12070.03 MFlops    0.088959 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dtrmm size=1024 phase=measured run=3
+BEGIN bench=cblas_cgemm size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    16384.61 MFlops   0.008192 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=256 phase=warmup run=0
+BEGIN bench=cblas_cgemm size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    16094.18 MFlops   0.008340 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=256 phase=measured run=1
+BEGIN bench=cblas_cgemm size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    16183.60 MFlops   0.008293 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=256 phase=measured run=2
+BEGIN bench=cblas_cgemm size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    15219.45 MFlops   0.008819 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=256 phase=measured run=3
+BEGIN bench=cblas_cgemm size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    15870.74 MFlops   0.067655 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=512 phase=warmup run=0
+BEGIN bench=cblas_cgemm size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    15901.77 MFlops   0.067523 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=512 phase=measured run=1
+BEGIN bench=cblas_cgemm size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    15842.32 MFlops   0.067777 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=512 phase=measured run=2
+BEGIN bench=cblas_cgemm size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    15667.91 MFlops   0.068531 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=512 phase=measured run=3
+BEGIN bench=cblas_cgemm size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    15540.36 MFlops   0.552750 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=1024 phase=warmup run=0
+BEGIN bench=cblas_cgemm size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    15350.08 MFlops   0.559602 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=1024 phase=measured run=1
+BEGIN bench=cblas_cgemm size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    15553.48 MFlops   0.552284 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=1024 phase=measured run=2
+BEGIN bench=cblas_cgemm size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    15395.40 MFlops   0.557955 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=1024 phase=measured run=3
+BEGIN bench=ztrmm size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    256 :     8994.50 MFlops    0.007461 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ztrmm size=256 phase=warmup run=0
+BEGIN bench=ztrmm size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    256 :     8923.09 MFlops    0.007521 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ztrmm size=256 phase=measured run=1
+BEGIN bench=ztrmm size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    256 :     8920.27 MFlops    0.007523 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ztrmm size=256 phase=measured run=2
+BEGIN bench=ztrmm size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    256 :     8900.56 MFlops    0.007540 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ztrmm size=256 phase=measured run=3
+BEGIN bench=ztrmm size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    512 :     8768.45 MFlops    0.061228 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ztrmm size=512 phase=warmup run=0
+BEGIN bench=ztrmm size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    512 :     8720.13 MFlops    0.061567 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ztrmm size=512 phase=measured run=1
+BEGIN bench=ztrmm size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    512 :     8763.21 MFlops    0.061264 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ztrmm size=512 phase=measured run=2
+BEGIN bench=ztrmm size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+    512 :     8755.46 MFlops    0.061318 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ztrmm size=512 phase=measured run=3
+BEGIN bench=ztrmm size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+   1024 :     8801.81 MFlops    0.487964 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ztrmm size=1024 phase=warmup run=0
+BEGIN bench=ztrmm size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+   1024 :     8781.82 MFlops    0.489075 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ztrmm size=1024 phase=measured run=1
+BEGIN bench=ztrmm size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+   1024 :     8797.53 MFlops    0.488201 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ztrmm size=1024 phase=measured run=2
+BEGIN bench=ztrmm size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U
+   SIZE       Flops
+   1024 :     8829.50 MFlops    0.486434 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ztrmm size=1024 phase=measured run=3
+BEGIN bench=csyrk size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    256 :    15251.29 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=csyrk size=256 phase=warmup run=0
+BEGIN bench=csyrk size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    256 :    15511.86 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=csyrk size=256 phase=measured run=1
+BEGIN bench=csyrk size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    256 :    15535.79 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=csyrk size=256 phase=measured run=2
+BEGIN bench=csyrk size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    256 :    15662.09 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=csyrk size=256 phase=measured run=3
+BEGIN bench=csyrk size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    512 :    16779.39 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=csyrk size=512 phase=warmup run=0
+BEGIN bench=csyrk size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    512 :    16239.26 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=csyrk size=512 phase=measured run=1
+BEGIN bench=csyrk size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    512 :    16578.79 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=csyrk size=512 phase=measured run=2
+BEGIN bench=csyrk size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    512 :    16602.16 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=csyrk size=512 phase=measured run=3
+BEGIN bench=csyrk size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+   1024 :    14815.20 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=csyrk size=1024 phase=warmup run=0
+BEGIN bench=csyrk size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+   1024 :    15102.79 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=csyrk size=1024 phase=measured run=1
+BEGIN bench=csyrk size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+   1024 :    15037.70 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=csyrk size=1024 phase=measured run=2
+BEGIN bench=csyrk size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+   1024 :    14775.18 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=csyrk size=1024 phase=measured run=3
+BEGIN bench=dtrsm size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    256 :     7352.33 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=dtrsm size=256 phase=warmup run=0
+BEGIN bench=dtrsm size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    256 :     7567.32 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=dtrsm size=256 phase=measured run=1
+BEGIN bench=dtrsm size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    256 :     7334.38 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=dtrsm size=256 phase=measured run=2
+BEGIN bench=dtrsm size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    256 :     7894.29 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=dtrsm size=256 phase=measured run=3
+BEGIN bench=dtrsm size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    512 :     9579.31 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=dtrsm size=512 phase=warmup run=0
+BEGIN bench=dtrsm size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    512 :     9688.30 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=dtrsm size=512 phase=measured run=1
+BEGIN bench=dtrsm size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    512 :     9585.78 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=dtrsm size=512 phase=measured run=2
+BEGIN bench=dtrsm size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    512 :     9894.82 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=dtrsm size=512 phase=measured run=3
+BEGIN bench=dtrsm size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+   1024 :    10992.15 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=dtrsm size=1024 phase=warmup run=0
+BEGIN bench=dtrsm size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+   1024 :    10991.03 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=dtrsm size=1024 phase=measured run=1
+BEGIN bench=dtrsm size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+   1024 :    11015.20 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=dtrsm size=1024 phase=measured run=2
+BEGIN bench=dtrsm size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+   1024 :    10968.07 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=dtrsm size=1024 phase=measured run=3
+BEGIN bench=zsyrk size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    256 :     8697.03 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=zsyrk size=256 phase=warmup run=0
+BEGIN bench=zsyrk size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    256 :     8730.59 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=zsyrk size=256 phase=measured run=1
+BEGIN bench=zsyrk size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    256 :     8756.41 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=zsyrk size=256 phase=measured run=2
+BEGIN bench=zsyrk size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    256 :     8667.45 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=zsyrk size=256 phase=measured run=3
+BEGIN bench=zsyrk size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    512 :     8758.98 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=zsyrk size=512 phase=warmup run=0
+BEGIN bench=zsyrk size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    512 :     8798.28 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=zsyrk size=512 phase=measured run=1
+BEGIN bench=zsyrk size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    512 :     8790.84 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=zsyrk size=512 phase=measured run=2
+BEGIN bench=zsyrk size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+    512 :     8719.67 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=zsyrk size=512 phase=measured run=3
+BEGIN bench=zsyrk size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+   1024 :     8769.15 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=zsyrk size=1024 phase=warmup run=0
+BEGIN bench=zsyrk size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+   1024 :     8762.17 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=zsyrk size=1024 phase=measured run=1
+BEGIN bench=zsyrk size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+   1024 :     8740.07 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=zsyrk size=1024 phase=measured run=2
+BEGIN bench=zsyrk size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Uplo = U Trans = N Loops = 1
+   SIZE       Flops
+   1024 :     8769.08 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=zsyrk size=1024 phase=measured run=3
+BEGIN bench=strsm size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    256 :    13075.47 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=strsm size=256 phase=warmup run=0
+BEGIN bench=strsm size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    256 :    12929.79 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=strsm size=256 phase=measured run=1
+BEGIN bench=strsm size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    256 :    13003.69 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=strsm size=256 phase=measured run=2
+BEGIN bench=strsm size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    256 :    12995.71 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=strsm size=256 phase=measured run=3
+BEGIN bench=strsm size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    512 :    18570.88 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=strsm size=512 phase=warmup run=0
+BEGIN bench=strsm size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    512 :    18307.66 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=strsm size=512 phase=measured run=1
+BEGIN bench=strsm size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    512 :    18691.89 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=strsm size=512 phase=measured run=2
+BEGIN bench=strsm size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    512 :    18290.50 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=strsm size=512 phase=measured run=3
+BEGIN bench=strsm size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+   1024 :    19938.22 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=strsm size=1024 phase=warmup run=0
+BEGIN bench=strsm size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+   1024 :    19877.90 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=strsm size=1024 phase=measured run=1
+BEGIN bench=strsm size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+   1024 :    19924.67 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=strsm size=1024 phase=measured run=2
+BEGIN bench=strsm size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+   1024 :    19984.45 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=strsm size=1024 phase=measured run=3
+BEGIN bench=ztrsm size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    256 :     8014.58 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=ztrsm size=256 phase=warmup run=0
+BEGIN bench=ztrsm size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    256 :     8122.36 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=ztrsm size=256 phase=measured run=1
+BEGIN bench=ztrsm size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    256 :     8047.17 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=ztrsm size=256 phase=measured run=2
+BEGIN bench=ztrsm size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    256 :     7999.81 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=ztrsm size=256 phase=measured run=3
+BEGIN bench=ztrsm size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    512 :     8287.18 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=ztrsm size=512 phase=warmup run=0
+BEGIN bench=ztrsm size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    512 :     8310.41 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=ztrsm size=512 phase=measured run=1
+BEGIN bench=ztrsm size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    512 :     8297.36 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=ztrsm size=512 phase=measured run=2
+BEGIN bench=ztrsm size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+    512 :     8275.67 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=ztrsm size=512 phase=measured run=3
+BEGIN bench=ztrsm size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+   1024 :     8518.65 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=ztrsm size=1024 phase=warmup run=0
+BEGIN bench=ztrsm size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+   1024 :     8536.36 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=ztrsm size=1024 phase=measured run=1
+BEGIN bench=ztrsm size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+   1024 :     8521.83 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=ztrsm size=1024 phase=measured run=2
+BEGIN bench=ztrsm size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = U Loops = 1
+   SIZE       Flops
+   1024 :     8526.08 MFlops
+FREQ_AFTER_KHZ=2200000
+END bench=ztrsm size=1024 phase=measured run=3

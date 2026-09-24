@@ -1,0 +1,171 @@
+META source_dir=<HOME>/openblas-patch-validation-level2-20260917/worktrees/002_saxpy_k cpu=7 sizes=256\ 512\ 1024 warmups=1 measured_runs=3
+META uname=Linux k3 6.18.3-generic #1.0.0~rc2.4 SMP PREEMPT_DYNAMIC Thu Apr 16 11:50:58 CST 2026 riscv64 GNU/Linux
+META date=2026-09-17T20:41:18+08:00
+BEGIN bench=saxpy size=256 phase=warmup run=0 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    256 :     4320.63 MFlops 0.000000119 sec
+FREQ_AFTER_KHZ=2200000
+END bench=saxpy size=256 phase=warmup run=0
+BEGIN bench=saxpy size=256 phase=measured run=1 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    256 :     4276.26 MFlops 0.000000120 sec
+FREQ_AFTER_KHZ=2200000
+END bench=saxpy size=256 phase=measured run=1
+BEGIN bench=saxpy size=256 phase=measured run=2 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    256 :     4644.56 MFlops 0.000000110 sec
+FREQ_AFTER_KHZ=2200000
+END bench=saxpy size=256 phase=measured run=2
+BEGIN bench=saxpy size=256 phase=measured run=3 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    256 :     4518.35 MFlops 0.000000113 sec
+FREQ_AFTER_KHZ=2200000
+END bench=saxpy size=256 phase=measured run=3
+BEGIN bench=saxpy size=512 phase=warmup run=0 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    512 :     5989.84 MFlops 0.000000171 sec
+FREQ_AFTER_KHZ=2200000
+END bench=saxpy size=512 phase=warmup run=0
+BEGIN bench=saxpy size=512 phase=measured run=1 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    512 :     5764.33 MFlops 0.000000178 sec
+FREQ_AFTER_KHZ=2200000
+END bench=saxpy size=512 phase=measured run=1
+BEGIN bench=saxpy size=512 phase=measured run=2 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    512 :     5801.53 MFlops 0.000000177 sec
+FREQ_AFTER_KHZ=2200000
+END bench=saxpy size=512 phase=measured run=2
+BEGIN bench=saxpy size=512 phase=measured run=3 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    512 :     5948.24 MFlops 0.000000172 sec
+FREQ_AFTER_KHZ=2200000
+END bench=saxpy size=512 phase=measured run=3
+BEGIN bench=saxpy size=1024 phase=warmup run=0 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+   1024 :     6879.85 MFlops 0.000000298 sec
+FREQ_AFTER_KHZ=2200000
+END bench=saxpy size=1024 phase=warmup run=0
+BEGIN bench=saxpy size=1024 phase=measured run=1 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+   1024 :     7035.53 MFlops 0.000000291 sec
+FREQ_AFTER_KHZ=2200000
+END bench=saxpy size=1024 phase=measured run=1
+BEGIN bench=saxpy size=1024 phase=measured run=2 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+   1024 :     6838.67 MFlops 0.000000299 sec
+FREQ_AFTER_KHZ=2200000
+END bench=saxpy size=1024 phase=measured run=2
+BEGIN bench=saxpy size=1024 phase=measured run=3 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+   1024 :     6882.56 MFlops 0.000000298 sec
+FREQ_AFTER_KHZ=2200000
+END bench=saxpy size=1024 phase=measured run=3
+BEGIN bench=daxpy size=256 phase=warmup run=0 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    256 :     2719.24 MFlops 0.000000188 sec
+FREQ_AFTER_KHZ=2200000
+END bench=daxpy size=256 phase=warmup run=0
+BEGIN bench=daxpy size=256 phase=measured run=1 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    256 :     2784.49 MFlops 0.000000184 sec
+FREQ_AFTER_KHZ=2200000
+END bench=daxpy size=256 phase=measured run=1
+BEGIN bench=daxpy size=256 phase=measured run=2 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    256 :     2917.04 MFlops 0.000000176 sec
+FREQ_AFTER_KHZ=2200000
+END bench=daxpy size=256 phase=measured run=2
+BEGIN bench=daxpy size=256 phase=measured run=3 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    256 :     2789.62 MFlops 0.000000184 sec
+FREQ_AFTER_KHZ=2200000
+END bench=daxpy size=256 phase=measured run=3
+BEGIN bench=daxpy size=512 phase=warmup run=0 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    512 :     3359.03 MFlops 0.000000305 sec
+FREQ_AFTER_KHZ=2200000
+END bench=daxpy size=512 phase=warmup run=0
+BEGIN bench=daxpy size=512 phase=measured run=1 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    512 :     3311.49 MFlops 0.000000309 sec
+FREQ_AFTER_KHZ=2200000
+END bench=daxpy size=512 phase=measured run=1
+BEGIN bench=daxpy size=512 phase=measured run=2 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    512 :     3451.06 MFlops 0.000000297 sec
+FREQ_AFTER_KHZ=2200000
+END bench=daxpy size=512 phase=measured run=2
+BEGIN bench=daxpy size=512 phase=measured run=3 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+    512 :     3437.93 MFlops 0.000000298 sec
+FREQ_AFTER_KHZ=2200000
+END bench=daxpy size=512 phase=measured run=3
+BEGIN bench=daxpy size=1024 phase=warmup run=0 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+   1024 :     3773.51 MFlops 0.000000543 sec
+FREQ_AFTER_KHZ=2200000
+END bench=daxpy size=1024 phase=warmup run=0
+BEGIN bench=daxpy size=1024 phase=measured run=1 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+   1024 :     3729.33 MFlops 0.000000549 sec
+FREQ_AFTER_KHZ=2200000
+END bench=daxpy size=1024 phase=measured run=1
+BEGIN bench=daxpy size=1024 phase=measured run=2 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+   1024 :     3787.78 MFlops 0.000000541 sec
+FREQ_AFTER_KHZ=2200000
+END bench=daxpy size=1024 phase=measured run=2
+BEGIN bench=daxpy size=1024 phase=measured run=3 cpu=7 loops=10000
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Inc_x = 1 Inc_y = 1 Loops = 10000
+   SIZE       Flops
+   1024 :     3792.61 MFlops 0.000000540 sec
+FREQ_AFTER_KHZ=2200000
+END bench=daxpy size=1024 phase=measured run=3

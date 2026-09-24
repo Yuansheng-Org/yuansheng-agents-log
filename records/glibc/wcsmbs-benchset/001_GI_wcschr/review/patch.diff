@@ -1,5 +1,5 @@
 From 702b3740b68c5544a277cfccf49c535b45c216dd Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?=E7=94=B0=E5=AE=81?= <tianning24@iscas.ac.cn>
+From: =?UTF-8?q?=E7=94=B0=E5=AE=81?=
 Date: Fri, 11 Sep 2026 21:56:28 +0800
 Subject: [PATCH] riscv: Add RVV wcschr with multiarch wiring
 MIME-Version: 1.0
@@ -55,7 +55,7 @@ Validation:
 - make test t=wcsmbs/test-wcschr: PASS
 - Target benchmark coverage: 498/498 cases
 
-Signed-off-by: 田宁 <tianning24@iscas.ac.cn>
+Signed-off-by: 田宁
 ---
  sysdeps/riscv/multiarch/wcschr-generic.c           |  17 ++
  sysdeps/unix/sysv/linux/riscv/multiarch/Makefile   |   7 +

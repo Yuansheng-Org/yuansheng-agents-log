@@ -1,5 +1,5 @@
 From 66176220ab1ce8b17dc507cdbde9241c885e495d Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?=E7=94=B0=E5=AE=81?= <tianning24@iscas.ac.cn>
+From: =?UTF-8?q?=E7=94=B0=E5=AE=81?=
 Date: Thu, 10 Sep 2026 14:49:40 +0800
 Subject: [PATCH] rvv: Add vectorized A8 source scanline fetch
 MIME-Version: 1.0
@@ -8,7 +8,7 @@ Content-Transfer-Encoding: 8bit
 
 Add an RVV source iterator for untransformed A8 images. The iterator follows the existing rvv_iters[] dispatch architecture and expands alpha bytes to a8r8g8b8 pixels with a VLA loop. This keeps the generic accessor table unchanged while covering the common ID-transform, narrow source path.
 
-Performance data from the remote Spacemit X100 K3 at 2.2 GHz, pinned to CPU 2. Official lowlevel-blt-bench was run three times in baseline/patched interleaved order under flock -x /home/tiann/.pixman-benchmark.lock. Values are MPix/s, higher is better; each row lists L1, L2, M, HT, VT, R and RT.
+Performance data from the remote Spacemit X100 K3 at 2.2 GHz, pinned to CPU 2. Official lowlevel-blt-bench was run three times in baseline/patched interleaved order under flock -x <HOME>/.pixman-benchmark.lock. Values are MPix/s, higher is better; each row lists L1, L2, M, HT, VT, R and RT.
 
 src_8_0565 median: baseline 355.537, 325.690, 302.949, 165.714, 122.234, 82.3582, 28.8145; patched 373.946, 351.513, 321.952, 215.603, 157.977, 108.608, 36.2890; change +5.18%, +7.93%, +6.27%, +30.11%, +29.24%, +31.87%, +25.94%.
 
@@ -16,7 +16,7 @@ src_8_8888 median: baseline 2178.090, 1482.210, 1235.920, 319.966, 183.630, 166.
 
 Validation: release build PASS; Pixman test suite 35/35 PASS; target path is registered in rvv_iters[] for PIXMAN_a8 and exercised by the A8 source benchmark; related A8 source cases show no regression.
 
-Signed-off-by: 田宁 <tianning24@iscas.ac.cn>
+Signed-off-by: 田宁
 ---
  pixman/pixman-rvv.c | 37 +++++++++++++++++++++++++++++++++++++
  1 file changed, 37 insertions(+)

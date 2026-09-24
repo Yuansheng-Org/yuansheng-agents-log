@@ -1,5 +1,5 @@
 From a88176ac62e5a1023849262a4a82685194cc20b6 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?=E7=94=B0=E5=AE=81?= <tianning24@iscas.ac.cn>
+From: =?UTF-8?q?=E7=94=B0=E5=AE=81?=
 Date: Wed, 9 Sep 2026 18:30:27 +0800
 Subject: [PATCH] rvv: Reuse vlmax in component-alpha OVER composite
 MIME-Version: 1.0
@@ -58,7 +58,7 @@ Validation:
 - Pixman test suite: 35/35 PASS
 - Target-path perf coverage: PASS
 
-Signed-off-by: 田宁 <tianning24@iscas.ac.cn>
+Signed-off-by: 田宁
 ---
  pixman/pixman-rvv.c | 26 ++++++++++++++++++++++++--
  1 file changed, 24 insertions(+), 2 deletions(-)

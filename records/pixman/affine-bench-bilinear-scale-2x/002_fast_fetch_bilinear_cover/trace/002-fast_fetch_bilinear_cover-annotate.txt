@@ -1,7 +1,7 @@
  Percent |	Source code & Disassembly of libpixman-1.so.0.46.5 for cycles:u (120 samples, percent: local period)
 --------------------------------------------------------------------------------------------------------------------
          :
-         : 1     /home/yuansheng-ci/workspaces/runs/20260812-run-9-296d9110de22/results/perf_record/affine-bench-bilinear-scale-2x/annotate_all/symfs//workspace/build/pixman/libpixman-1.so.0.46.5：     文件格式 elf64-littleriscv
+         : 1     <HOME>/workspaces/runs/20260812-run-9-296d9110de22/results/perf_record/affine-bench-bilinear-scale-2x/annotate_all/symfs//workspace/build/pixman/libpixman-1.so.0.46.5：     文件格式 elf64-littleriscv
          :
          :
          : 4     Disassembly of section .text:

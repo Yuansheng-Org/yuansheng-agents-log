@@ -1,0 +1,87 @@
+META source_dir=<HOME>/openblas-patch-validation-20260916/worktrees/004_ctrmm_kernel_LN cpu=7 sizes=256\ 512\ 1024 warmups=1 measured_runs=3
+META uname=Linux k3 6.18.3-generic #1.0.0~rc2.4 SMP PREEMPT_DYNAMIC Thu Apr 16 11:50:58 CST 2026 riscv64 GNU/Linux
+META date=2026-09-16T16:45:04+08:00
+BEGIN bench=ctrmm size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = N
+   SIZE       Flops
+    256 :    17688.82 MFlops    0.003794 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ctrmm size=256 phase=warmup run=0
+BEGIN bench=ctrmm size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = N
+   SIZE       Flops
+    256 :    18061.32 MFlops    0.003716 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ctrmm size=256 phase=measured run=1
+BEGIN bench=ctrmm size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = N
+   SIZE       Flops
+    256 :    17713.72 MFlops    0.003789 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ctrmm size=256 phase=measured run=2
+BEGIN bench=ctrmm size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Side = L Uplo = U Trans = N Diag = N
+   SIZE       Flops
+    256 :    18361.10 MFlops    0.003655 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ctrmm size=256 phase=measured run=3
+BEGIN bench=ctrmm size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = N
+   SIZE       Flops
+    512 :    17410.66 MFlops    0.030836 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ctrmm size=512 phase=warmup run=0
+BEGIN bench=ctrmm size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = N
+   SIZE       Flops
+    512 :    17620.41 MFlops    0.030469 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ctrmm size=512 phase=measured run=1
+BEGIN bench=ctrmm size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = N
+   SIZE       Flops
+    512 :    17630.56 MFlops    0.030451 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ctrmm size=512 phase=measured run=2
+BEGIN bench=ctrmm size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Side = L Uplo = U Trans = N Diag = N
+   SIZE       Flops
+    512 :    17646.76 MFlops    0.030423 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ctrmm size=512 phase=measured run=3
+BEGIN bench=ctrmm size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = N
+   SIZE       Flops
+   1024 :    15500.16 MFlops    0.277092 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ctrmm size=1024 phase=warmup run=0
+BEGIN bench=ctrmm size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = N
+   SIZE       Flops
+   1024 :    15528.87 MFlops    0.276580 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ctrmm size=1024 phase=measured run=1
+BEGIN bench=ctrmm size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = N
+   SIZE       Flops
+   1024 :    15344.97 MFlops    0.279894 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ctrmm size=1024 phase=measured run=2
+BEGIN bench=ctrmm size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Side = L Uplo = U Trans = N Diag = N
+   SIZE       Flops
+   1024 :    15439.92 MFlops    0.278173 sec
+FREQ_AFTER_KHZ=2200000
+END bench=ctrmm size=1024 phase=measured run=3

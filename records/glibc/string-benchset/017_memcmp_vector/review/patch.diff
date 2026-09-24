@@ -53,7 +53,7 @@ was 0.84%, and no regression of 5% or more was repeatable.
 
 Tested on riscv64 with string/test-memcmp and string/test-memcmpeq.
 
-Signed-off-by: Ning Tian <tianning24@iscas.ac.cn>
+Signed-off-by: Ning Tian
 ---
  sysdeps/riscv/rvv/memcmp.S | 15 +++++++--------
  1 file changed, 7 insertions(+), 8 deletions(-)

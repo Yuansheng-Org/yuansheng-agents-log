@@ -1,0 +1,87 @@
+META source_dir=<HOME>/openblas-patch-validation-20260916/worktrees/003_cgemm_oncopy cpu=7 sizes=256\ 512\ 1024 warmups=1 measured_runs=3
+META uname=Linux k3 6.18.3-generic #1.0.0~rc2.4 SMP PREEMPT_DYNAMIC Thu Apr 16 11:50:58 CST 2026 riscv64 GNU/Linux
+META date=2026-09-16T16:45:51+08:00
+BEGIN bench=cblas_cgemm size=256 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    15780.18 MFlops   0.008505 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=256 phase=warmup run=0
+BEGIN bench=cblas_cgemm size=256 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    15716.28 MFlops   0.008540 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=256 phase=measured run=1
+BEGIN bench=cblas_cgemm size=256 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    15393.06 MFlops   0.008719 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=256 phase=measured run=2
+BEGIN bench=cblas_cgemm size=256 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 256, N= 256, K= 256 :    15616.40 MFlops   0.008595 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=256 phase=measured run=3
+BEGIN bench=cblas_cgemm size=512 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    15748.16 MFlops   0.068182 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=512 phase=warmup run=0
+BEGIN bench=cblas_cgemm size=512 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    16159.83 MFlops   0.066445 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=512 phase=measured run=1
+BEGIN bench=cblas_cgemm size=512 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    16000.04 MFlops   0.067109 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=512 phase=measured run=2
+BEGIN bench=cblas_cgemm size=512 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M= 512, N= 512, K= 512 :    16208.96 MFlops   0.066244 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=512 phase=measured run=3
+BEGIN bench=cblas_cgemm size=1024 phase=warmup run=0 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    15313.83 MFlops   0.560927 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=1024 phase=warmup run=0
+BEGIN bench=cblas_cgemm size=1024 phase=measured run=1 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    15461.78 MFlops   0.555559 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=1024 phase=measured run=1
+BEGIN bench=cblas_cgemm size=1024 phase=measured run=2 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    15689.53 MFlops   0.547495 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=1024 phase=measured run=2
+BEGIN bench=cblas_cgemm size=1024 phase=measured run=3 cpu=7
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step=1 : Transa=N : Transb=N
+          SIZE                   Flops             Time
+ M=1024, N=1024, K=1024 :    15603.20 MFlops   0.550524 sec
+FREQ_AFTER_KHZ=2200000
+END bench=cblas_cgemm size=1024 phase=measured run=3

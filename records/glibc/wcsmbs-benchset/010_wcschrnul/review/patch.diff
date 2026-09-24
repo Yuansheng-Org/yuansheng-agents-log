@@ -1,5 +1,5 @@
 From 3dfd97522f589907bbe03a99162fe9a2ef5c603e Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?=E7=94=B0=E5=AE=81?= <tianning24@iscas.ac.cn>
+From: =?UTF-8?q?=E7=94=B0=E5=AE=81?=
 Date: Sun, 20 Sep 2026 16:32:36 +0800
 Subject: [PATCH] riscv: Add RVV wcschrnul with multiarch wiring
 MIME-Version: 1.0
@@ -42,7 +42,7 @@ Validation on both systems:
 - make test t=wcsmbs/test-wcschrnul: PASS
 - bench-wcschrnul coverage: 480/480 cases in all six formal runs
 
-Signed-off-by: 田宁 <tianning24@iscas.ac.cn>
+Signed-off-by: 田宁
 ---
  .../riscv/multiarch/dl-symbol-redir-ifunc.h   |  1 +
  sysdeps/riscv/multiarch/wcschrnul-generic.c   | 13 +++++

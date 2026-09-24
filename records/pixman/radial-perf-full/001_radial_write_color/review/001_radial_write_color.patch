@@ -1,5 +1,5 @@
 From 74e7e53539ff3e7bd18b4730d3661146518f1ced Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?=E7=94=B0=E5=AE=81?= <tianning24@iscas.ac.cn>
+From: =?UTF-8?q?=E7=94=B0=E5=AE=81?=
 Date: Thu, 10 Sep 2026 11:26:06 +0800
 Subject: [PATCH] rvv: Vectorize radial gradient root solving
 MIME-Version: 1.0
@@ -21,7 +21,7 @@ patched     0.005958  0.005936  0.005960  0.005958
 Median time is reduced by 31.89% (1.468x). The generated
 radial.png SHA-256 is identical for baseline and patched builds.
 
-Signed-off-by: 田宁 <tianning24@iscas.ac.cn>
+Signed-off-by: 田宁
 ---
  pixman/pixman-private.h         | 14 +++++++
  pixman/pixman-radial-gradient.c | 47 ++++++++++++++++++++++

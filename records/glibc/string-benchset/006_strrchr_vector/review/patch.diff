@@ -1,5 +1,5 @@
 From 7eac3a1bb5a40c4919c2d23f6fc631f325e1bed6 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?=E7=94=B0=E5=AE=81?= <tianning24@iscas.ac.cn>
+From: =?UTF-8?q?=E7=94=B0=E5=AE=81?=
 Date: Mon, 21 Sep 2026 17:56:16 +0800
 Subject: [PATCH] riscv: Use regular loads away from page boundaries in RVV
  strrchr
@@ -44,7 +44,7 @@ Validation:
 - make test t=string/test-strrchr: PASS
 - Target benchmark coverage: 2232/2232 cases
 
-Signed-off-by: 田宁 <tianning24@iscas.ac.cn>
+Signed-off-by: 田宁
 ---
  sysdeps/riscv/rvv/strrchr.S | 21 +++++++++++++++++----
  1 file changed, 17 insertions(+), 4 deletions(-)

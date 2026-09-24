@@ -1,0 +1,171 @@
+META source_dir=<HOME>/openblas-patch-validation-level2-20260917/worktrees/002_sgemv_n cpu=7 sizes=256\ 512\ 1024 warmups=1 measured_runs=3
+META uname=Linux k3 6.18.3-generic #1.0.0~rc2.4 SMP PREEMPT_DYNAMIC Thu Apr 16 11:50:58 CST 2026 riscv64 GNU/Linux
+META date=2026-09-17T20:42:29+08:00
+BEGIN bench=sgemv size=256 phase=warmup run=0 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    256x256 :     5874.44 MFlops   0.000022 sec
+FREQ_AFTER_KHZ=2200000
+END bench=sgemv size=256 phase=warmup run=0
+BEGIN bench=sgemv size=256 phase=measured run=1 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    256x256 :     5833.16 MFlops   0.000022 sec
+FREQ_AFTER_KHZ=2200000
+END bench=sgemv size=256 phase=measured run=1
+BEGIN bench=sgemv size=256 phase=measured run=2 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    256x256 :     5817.72 MFlops   0.000023 sec
+FREQ_AFTER_KHZ=2200000
+END bench=sgemv size=256 phase=measured run=2
+BEGIN bench=sgemv size=256 phase=measured run=3 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    256x256 :     5816.13 MFlops   0.000023 sec
+FREQ_AFTER_KHZ=2200000
+END bench=sgemv size=256 phase=measured run=3
+BEGIN bench=sgemv size=512 phase=warmup run=0 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    512x512 :     6301.01 MFlops   0.000083 sec
+FREQ_AFTER_KHZ=2200000
+END bench=sgemv size=512 phase=warmup run=0
+BEGIN bench=sgemv size=512 phase=measured run=1 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    512x512 :     6339.19 MFlops   0.000083 sec
+FREQ_AFTER_KHZ=2200000
+END bench=sgemv size=512 phase=measured run=1
+BEGIN bench=sgemv size=512 phase=measured run=2 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    512x512 :     6303.53 MFlops   0.000083 sec
+FREQ_AFTER_KHZ=2200000
+END bench=sgemv size=512 phase=measured run=2
+BEGIN bench=sgemv size=512 phase=measured run=3 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    512x512 :     6287.75 MFlops   0.000083 sec
+FREQ_AFTER_KHZ=2200000
+END bench=sgemv size=512 phase=measured run=3
+BEGIN bench=sgemv size=1024 phase=warmup run=0 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+   1024x1024 :     5209.88 MFlops   0.000403 sec
+FREQ_AFTER_KHZ=2200000
+END bench=sgemv size=1024 phase=warmup run=0
+BEGIN bench=sgemv size=1024 phase=measured run=1 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+   1024x1024 :     5287.97 MFlops   0.000397 sec
+FREQ_AFTER_KHZ=2200000
+END bench=sgemv size=1024 phase=measured run=1
+BEGIN bench=sgemv size=1024 phase=measured run=2 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+   1024x1024 :     5162.68 MFlops   0.000406 sec
+FREQ_AFTER_KHZ=2200000
+END bench=sgemv size=1024 phase=measured run=2
+BEGIN bench=sgemv size=1024 phase=measured run=3 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+   1024x1024 :     5206.73 MFlops   0.000403 sec
+FREQ_AFTER_KHZ=2200000
+END bench=sgemv size=1024 phase=measured run=3
+BEGIN bench=dgemv size=256 phase=warmup run=0 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    256x256 :     3110.86 MFlops   0.000042 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dgemv size=256 phase=warmup run=0
+BEGIN bench=dgemv size=256 phase=measured run=1 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    256x256 :     3158.90 MFlops   0.000041 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dgemv size=256 phase=measured run=1
+BEGIN bench=dgemv size=256 phase=measured run=2 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    256x256 :     3153.58 MFlops   0.000042 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dgemv size=256 phase=measured run=2
+BEGIN bench=dgemv size=256 phase=measured run=3 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 256  To : 256 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    256x256 :     3167.27 MFlops   0.000041 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dgemv size=256 phase=measured run=3
+BEGIN bench=dgemv size=512 phase=warmup run=0 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    512x512 :     4454.34 MFlops   0.000118 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dgemv size=512 phase=warmup run=0
+BEGIN bench=dgemv size=512 phase=measured run=1 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    512x512 :     4436.78 MFlops   0.000118 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dgemv size=512 phase=measured run=1
+BEGIN bench=dgemv size=512 phase=measured run=2 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    512x512 :     4515.35 MFlops   0.000116 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dgemv size=512 phase=measured run=2
+BEGIN bench=dgemv size=512 phase=measured run=3 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 512  To : 512 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+    512x512 :     4483.65 MFlops   0.000117 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dgemv size=512 phase=measured run=3
+BEGIN bench=dgemv size=1024 phase=warmup run=0 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+   1024x1024 :     1946.30 MFlops   0.001078 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dgemv size=1024 phase=warmup run=0
+BEGIN bench=dgemv size=1024 phase=measured run=1 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+   1024x1024 :     1946.13 MFlops   0.001078 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dgemv size=1024 phase=measured run=1
+BEGIN bench=dgemv size=1024 phase=measured run=2 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+   1024x1024 :     1942.68 MFlops   0.001080 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dgemv size=1024 phase=measured run=2
+BEGIN bench=dgemv size=1024 phase=measured run=3 cpu=7 loops=100
+FREQ_BEFORE_KHZ=2200000
+From : 1024  To : 1024 Step =   1 Trans = 'N' Inc_x = 1 Inc_y = 1 Loops = 100
+   SIZE       Flops
+   1024x1024 :     1945.03 MFlops   0.001078 sec
+FREQ_AFTER_KHZ=2200000
+END bench=dgemv size=1024 phase=measured run=3
