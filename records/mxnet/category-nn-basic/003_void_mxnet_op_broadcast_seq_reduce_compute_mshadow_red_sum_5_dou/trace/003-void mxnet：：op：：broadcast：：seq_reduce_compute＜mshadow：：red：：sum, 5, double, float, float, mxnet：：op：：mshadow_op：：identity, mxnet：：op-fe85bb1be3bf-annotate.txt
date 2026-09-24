@@ -1,0 +1,268 @@
+ Percent |	Source code & Disassembly of libmxnet.so for cpu-clock (15123 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3       Disassembly of section .text:
+         :
+         : 5       00000000013bc8d0 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]>:
+         : 6       void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]:
+         : 448     const Shape<ndim> sshape,
+         : 449     const Shape<ndim> rshape,
+         : 450     const Shape<ndim> rstride) {
+         : 451     const int thread_count = engine::OpenMP::Get()->GetRecommendedOMPThreadCount();
+         : 452     if (N >= thread_count) {
+         : 453     #pragma omp parallel for num_threads(thread_count)
+    0.00 :   13bc8d0:        addi    sp,sp,-176
+    0.00 :   13bc8d2:        sd      ra,168(sp)
+    0.00 :   13bc8d4:        sd      s0,160(sp)
+    0.00 :   13bc8d6:        sd      s1,152(sp)
+    0.00 :   13bc8d8:        addi    s0,sp,176
+    0.00 :   13bc8da:        sd      s2,144(sp)
+    0.00 :   13bc8dc:        sd      s3,136(sp)
+    0.00 :   13bc8de:        sd      s4,128(sp)
+    0.00 :   13bc8e0:        auipc   s3,0x8385
+    0.00 :   13bc8e4:        ld      s3,904(s3) # 9741c68 <__stack_chk_guard@GLIBC_2.27>
+         : 449     for (index_t idx = 0; idx < static_cast<index_t>(N); ++idx) {
+    0.00 :   13bc8e8:        ld      s1,0(a0)
+         : 448     #pragma omp parallel for num_threads(thread_count)
+    0.00 :   13bc8ea:        ld      a5,0(s3)
+    0.00 :   13bc8ee:        sd      a5,-72(s0)
+    0.00 :   13bc8f2:        li      a5,0
+    0.00 :   13bc8f4:        mv      s2,a0
+    0.00 :   13bc8f6:        auipc   ra,0xff1e2
+    0.00 :   13bc8fa:        jalr    1578(ra) # 59ef20 <omp_get_num_threads@plt>
+    0.00 :   13bc8fe:        mv      s4,a0
+    0.00 :   13bc900:        auipc   ra,0xff1e3
+    0.00 :   13bc904:        jalr    -1392(ra) # 59f390 <omp_get_thread_num@plt>
+    0.00 :   13bc908:        rem     t4,s1,s4
+    0.00 :   13bc90c:        div     t2,s1,s4
+    0.00 :   13bc910:        blt     a0,t4,13bca9a <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x1ca>
+    0.00 :   13bc914:        mul     a0,t2,a0
+    0.00 :   13bc918:        add     t4,t4,a0
+    0.00 :   13bc91a:        add     t2,t2,t4
+    0.00 :   13bc91c:        bge     t4,t2,13bca64 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x194>
+         : 450     seq_reduce_assign<Reducer, ndim, AType, DType, OType, OP, IndexOP>(
+    0.00 :   13bc920:        ld      t1,48(s2)
+    0.00 :   13bc924:        ld      s1,40(s2)
+    0.00 :   13bc928:        ld      t0,24(s2)
+         : 448     #pragma omp parallel for num_threads(thread_count)
+    0.00 :   13bc92c:        ld      t3,16(s2)
+    0.00 :   13bc930:        lbu     s4,64(s2)
+    0.00 :   13bc934:        ld      a7,8(s2)
+         : 450     seq_reduce_assign<Reducer, ndim, AType, DType, OType, OP, IndexOP>(
+    0.00 :   13bc938:        ld      t6,56(s2)
+         : 452     void mshadow::red::sum::SetInitValue<double>(double&):
+         : 1043    /*!
+         : 1044    *\brief set the initial value during reduction
+         : 1045    */
+         : 1046    template<typename DType>
+         : 1047    MSHADOW_XINLINE static void SetInitValue(DType &initv) { // NOLINT(*)
+         : 1048    initv = 0;
+    0.00 :   13bc93c:        fmv.d.x fa2,zero
+         : 1050    void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]:
+    0.00 :   13bc940:        ld      s2,32(s2)
+    0.00 :   13bc944:        slli    a5,t4,0x2
+    0.00 :   13bc948:        sd      s5,120(sp)
+    0.00 :   13bc94a:        sd      s6,112(sp)
+    0.00 :   13bc94c:        addi    a1,t1,-8
+    0.00 :   13bc950:        addi    t5,s1,-8
+    0.00 :   13bc954:        add     t0,t0,a5
+    0.00 :   13bc956:        addi    a2,s0,-112
+         : 458     mshadow::Shape<5> mxnet::op::mxnet_op::unravel<5>(long, mshadow::Shape<5> const&):
+         : 682     /* Compute coordinates from flattened index given shape */
+         : 683     template <int ndim>
+         : 684     MSHADOW_XINLINE Shape<ndim> unravel(const index_t idx, const Shape<ndim>& shape) {
+         : 685     Shape<ndim> ret;
+         : 686     #pragma unroll
+         : 687     for (index_t i = ndim - 1, j = idx; i >= 0; --i) {
+    0.00 :   13bc95a:        addi    a5,s1,32
+    0.00 :   13bc95e:        addi    a0,s0,-120
+    0.00 :   13bc962:        mv      a3,t4
+         : 683     auto tmp = j / shape[i];
+    0.00 :   13bc964:        ld      a6,0(a5)
+         : 682     for (index_t i = ndim - 1, j = idx; i >= 0; --i) {
+    0.00 :   13bc968:        addi    a5,a5,-8
+    0.00 :   13bc96a:        addi    a0,a0,-8
+         : 684     ret[i]   = j - tmp * shape[i];
+    0.00 :   13bc96c:        rem     a4,a3,a6
+    0.00 :   13bc970:        sd      a4,8(a0)
+         : 683     auto tmp = j / shape[i];
+    0.00 :   13bc972:        div     a3,a3,a6
+         : 682     for (index_t i = ndim - 1, j = idx; i >= 0; --i) {
+    0.00 :   13bc976:        bne     t5,a5,13bc964 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x94>
+    0.00 :   13bc97a:        mv      s5,s2
+    0.00 :   13bc97c:        addi    a3,s0,-152
+         : 686     long mxnet::op::mxnet_op::ravel<5>(mshadow::Shape<5> const&, mshadow::Shape<5> const&):
+         : 669     index_t ret = 0;
+    0.00 :   13bc980:        li      a6,0
+         : 672     ret = ret * shape[i] + (shape[i] > coord[i]) * coord[i];
+    0.00 :   13bc982:        ld      a5,0(s5)
+    0.00 :   13bc986:        ld      a4,0(a3)
+         : 671     for (int i = 0; i < ndim; ++i) {
+    0.00 :   13bc988:        addi    a3,a3,8
+    0.00 :   13bc98a:        addi    s5,s5,8
+         : 672     ret = ret * shape[i] + (shape[i] > coord[i]) * coord[i];
+    0.00 :   13bc98c:        slt     a0,a4,a5
+    0.00 :   13bc990:        neg     a0,a0
+    0.00 :   13bc994:        and     a4,a4,a0
+    0.00 :   13bc996:        mul     a5,a5,a6
+    0.00 :   13bc99a:        add     a6,a4,a5
+         : 671     for (int i = 0; i < ndim; ++i) {
+    0.00 :   13bc99e:        bne     a3,a2,13bc982 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0xb2>
+         : 673     void mshadow::red::sum::SetInitValue<double>(double&):
+    0.00 :   13bc9a2:        fsd     fa2,-168(s0)
+         : 1044    void mshadow::red::sum::SetInitValue<double>(double&, double&):
+         : 1051    *\brief set the initial value during reduction
+         : 1052    */
+         : 1053    template<typename DType>
+         : 1054    MSHADOW_XINLINE static void SetInitValue(DType &initv, DType &residual) { // NOLINT(*)
+         : 1055    SetInitValue(initv);
+         : 1056    residual = 0;
+    0.00 :   13bc9a6:        fsd     fa2,-160(s0)
+         : 1058    void mxnet::op::broadcast::seq_reduce_assign<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(long, unsigned long, bool, float const*, float*, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, bool):
+         : 364     for (size_t k = 0; k < M; ++k) {
+    0.00 :   13bc9aa:        beqz    a7,13bca94 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x1c4>
+    0.00 :   13bc9ae:        li      a0,0
+         : 365     coord      = mxnet_op::unravel(k, rshape);
+    0.77 :   13bc9b0:        mv      s5,a0
+         : 367     mshadow::Shape<5> mxnet::op::mxnet_op::unravel<5>(long, mshadow::Shape<5> const&):
+         : 682     for (index_t i = ndim - 1, j = idx; i >= 0; --i) {
+    0.00 :   13bc9b2:        addi    a5,t1,32
+    0.00 :   13bc9b6:        addi    a3,s0,-80
+         : 683     auto tmp = j / shape[i];
+    0.00 :   13bc9ba:        ld      s6,0(a5)
+         : 682     for (index_t i = ndim - 1, j = idx; i >= 0; --i) {
+    0.00 :   13bc9be:        addi    a5,a5,-8
+    0.79 :   13bc9c0:        addi    a3,a3,-8
+         : 684     ret[i]   = j - tmp * shape[i];
+    0.77 :   13bc9c2:        rem     a4,s5,s6
+   15.06 :   13bc9c6:        sd      a4,8(a3)
+         : 683     auto tmp = j / shape[i];
+    0.00 :   13bc9c8:        div     s5,s5,s6
+         : 682     for (index_t i = ndim - 1, j = idx; i >= 0; --i) {
+   17.75 :   13bc9cc:        bne     a1,a5,13bc9ba <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0xea>
+         : 684     void mxnet::op::broadcast::seq_reduce_assign<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(long, unsigned long, bool, float const*, float*, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, bool):
+    0.00 :   13bc9d0:        addi    a3,s0,-152
+    0.00 :   13bc9d4:        mv      s5,a2
+    0.00 :   13bc9d6:        li      a4,40
+    0.00 :   13bc9da:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   13bc9de:        vle8.v  v1,(s5)
+   25.87 :   13bc9e2:        sub     a4,a4,a5
+    0.00 :   13bc9e4:        add     s5,s5,a5
+    0.00 :   13bc9e6:        vse8.v  v1,(a3)
+    8.37 :   13bc9ea:        add     a3,a3,a5
+    0.77 :   13bc9ec:        bnez    a4,13bc9da <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x10a>
+         : 375     long mxnet::op::mxnet_op::dot<5>(mshadow::Shape<5> const&, mshadow::Shape<5> const&):
+         : 695     /* Compute dot product of two vector */
+         : 696     template <int ndim>
+         : 697     MSHADOW_XINLINE index_t dot(const Shape<ndim>& coord, const Shape<ndim>& stride) {
+         : 698     index_t ret = 0;
+         : 699     #pragma unroll
+         : 700     for (int i = 0; i < ndim; ++i) {
+    0.00 :   13bc9ee:        mv      s5,t6
+         : 702     void mxnet::op::broadcast::seq_reduce_assign<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(long, unsigned long, bool, float const*, float*, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, bool):
+    0.00 :   13bc9f0:        addi    a5,s0,-152
+         : 366     long mxnet::op::mxnet_op::dot<5>(mshadow::Shape<5> const&, mshadow::Shape<5> const&):
+         : 693     index_t ret = 0;
+    0.00 :   13bc9f4:        li      a3,0
+         : 696     ret += coord[i] * stride[i];
+    1.55 :   13bc9f6:        ld      a4,0(a5)
+    0.75 :   13bc9f8:        ld      s6,0(s5)
+         : 695     for (int i = 0; i < ndim; ++i) {
+    0.01 :   13bc9fc:        addi    a5,a5,8
+    1.62 :   13bc9fe:        addi    s5,s5,8
+         : 696     ret += coord[i] * stride[i];
+    1.50 :   13bca00:        mul     a4,a4,s6
+    0.00 :   13bca04:        add     a3,a3,a4
+         : 695     for (int i = 0; i < ndim; ++i) {
+    5.69 :   13bca06:        bne     a5,a2,13bc9f6 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x126>
+         : 697     void mxnet::op::broadcast::seq_reduce_assign<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(long, unsigned long, bool, float const*, float*, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, bool):
+         : 366     AType temp = OP::Map(big[j + mxnet_op::dot(coord, rstride)]);
+    0.03 :   13bca0a:        add     a3,a3,a6
+    0.00 :   13bca0c:        slli    a3,a3,0x2
+    0.00 :   13bca0e:        add     a3,a3,t3
+    2.43 :   13bca10:        flw     fa5,0(a3)
+         : 367     void mshadow::red::sum::Reduce<double>(double volatile&, double, double volatile&):
+         : 996     DType y = src - residual;
+    3.09 :   13bca14:        fld     fa3,-160(s0)
+         : 997     DType t = dst + y;
+    0.00 :   13bca18:        fld     fa4,-168(s0)
+         : 999     void mxnet::op::broadcast::seq_reduce_assign<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(long, unsigned long, bool, float const*, float*, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, bool):
+    0.00 :   13bca1c:        fcvt.d.s        fa5,fa5
+         : 367     void mshadow::red::sum::Reduce<double>(double volatile&, double, double volatile&):
+         : 996     DType y = src - residual;
+    0.00 :   13bca20:        fsub.d  fa5,fa5,fa3
+         : 997     DType t = dst + y;
+    0.00 :   13bca24:        fadd.d  fa4,fa5,fa4
+         : 999     std::isinf(double):
+         : 1164    && !_GLIBCXX_NO_OBSOLETE_ISINF_ISNAN_DYNAMIC
+         : 1165    using ::isinf;
+         : 1166    #else
+         : 1167    constexpr bool
+         : 1168    isinf(double __x)
+         : 1169    { return __builtin_isinf(__x); }
+    6.10 :   13bca28:        fclass.d        a5,fa4
+    0.00 :   13bca2c:        andi    a5,a5,129
+         : 1172    void mshadow::red::sum::Reduce<double>(double volatile&, double, double volatile&):
+         : 998     if (isinf_typed::IsInf(t)) {
+    4.57 :   13bca30:        beqz    a5,13bca82 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x1b2>
+         : 999     residual = 0;
+    0.00 :   13bca32:        fsd     fa2,-160(s0)
+         : 1003    dst = t;
+    0.87 :   13bca36:        fsd     fa4,-168(s0)
+         : 1005    void mxnet::op::broadcast::seq_reduce_assign<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(long, unsigned long, bool, float const*, float*, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, bool):
+         : 364     for (size_t k = 0; k < M; ++k) {
+    0.00 :   13bca3a:        addi    a0,a0,1
+    0.00 :   13bca3c:        bne     a7,a0,13bc9b0 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0xe0>
+         : 390     assign(&small[idx], addto, OType(val));
+    0.00 :   13bca40:        fld     fa5,-168(s0)
+    0.00 :   13bca44:        fcvt.s.d        fa5,fa5
+         : 393     void mxnet::op::broadcast::assign<float>(float*, bool, float):
+         : 294     if (addto) {
+    0.00 :   13bca48:        beqz    s4,13bca54 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x184>
+         : 295     *dst += src;
+    0.00 :   13bca4c:        flw     fa4,0(t0)
+    0.00 :   13bca50:        fadd.s  fa5,fa5,fa4
+    0.00 :   13bca54:        fsw     fa5,0(t0)
+    0.00 :   13bca58:        addi    t4,t4,1
+    0.00 :   13bca5a:        addi    t0,t0,4
+    0.00 :   13bca5c:        bne     t2,t4,13bc95a <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x8a>
+    0.00 :   13bca60:        ld      s5,120(sp)
+    0.00 :   13bca62:        ld      s6,112(sp)
+         : 304     void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]:
+         : 448     #pragma omp parallel for num_threads(thread_count)
+    0.00 :   13bca64:        ld      a4,-72(s0)
+    0.00 :   13bca68:        ld      a5,0(s3)
+    0.00 :   13bca6c:        xor     a5,a5,a4
+    0.00 :   13bca6e:        li      a4,0
+    0.00 :   13bca70:        bnez    a5,13bcaa0 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x1d0>
+    0.00 :   13bca72:        ld      ra,168(sp)
+    0.00 :   13bca74:        ld      s0,160(sp)
+    0.00 :   13bca76:        ld      s1,152(sp)
+    0.00 :   13bca78:        ld      s2,144(sp)
+    0.00 :   13bca7a:        ld      s3,136(sp)
+    0.00 :   13bca7c:        ld      s4,128(sp)
+    0.00 :   13bca7e:        addi    sp,sp,176
+    0.00 :   13bca80:        ret
+         : 462     void mshadow::red::sum::Reduce<double>(double volatile&, double, double volatile&):
+         : 1001    residual = (t - dst) - y;
+    1.63 :   13bca82:        fld     fa3,-168(s0)
+    0.00 :   13bca86:        fsub.d  fa3,fa4,fa3
+    0.00 :   13bca8a:        fsub.d  fa5,fa3,fa5
+    0.00 :   13bca8e:        fsd     fa5,-160(s0)
+    0.00 :   13bca92:        j       13bca36 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x166>
+         : 1007    void mxnet::op::broadcast::seq_reduce_assign<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(long, unsigned long, bool, float const*, float*, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, mshadow::Shape<5> const&, bool):
+         : 364     for (size_t k = 0; k < M; ++k) {
+    0.00 :   13bca94:        fmv.w.x fa5,zero
+    0.00 :   13bca98:        j       13bca48 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x178>
+    0.00 :   13bca9a:        addi    t2,t2,1
+         : 365     void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]:
+         : 449     for (index_t idx = 0; idx < static_cast<index_t>(N); ++idx) {
+    0.00 :   13bca9c:        li      t4,0
+    0.00 :   13bca9e:        j       13bc914 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]+0x44>
+    0.00 :   13bcaa0:        sd      s5,120(sp)
+    0.00 :   13bcaa2:        sd      s6,112(sp)
+         : 448     #pragma omp parallel for num_threads(thread_count)
+    0.00 :   13bcaa4:        auipc   ra,0xff1e2
+    0.00 :   13bcaa8:        jalr    -308(ra) # 59e970 <__stack_chk_fail@plt>

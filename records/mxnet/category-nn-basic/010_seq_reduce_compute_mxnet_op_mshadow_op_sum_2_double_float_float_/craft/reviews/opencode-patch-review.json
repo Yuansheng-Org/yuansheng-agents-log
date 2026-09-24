@@ -1,0 +1,63 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-mxnet-category-nn-basic-010-r1",
+  "patchCandidateId": "pc-bp-mxnet-category-nn-basic-010",
+  "reviewedAt": "2026-09-21",
+  "reviewer": "opencode-comet-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "not-applicable",
+    "notes": "arch-scan 机器判定 archSpecific=false（matches 为空），补丁未检测到 RISC-V 架构相关代码，按规则跳过架构专项审核，仅做通用质量审核。PatchCandidate 首字段 archReviewWarning 已由工具自动写入对应警告。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "src/operator/mshadow_op.h",
+      "line": 1818,
+      "evidence": "patch.diff hunk @@ -1814,15 +1814,21 @@ 中被替换的原文为 `-  MSHADOW_XINLINE static void Reduce(volatile AType& dst, volatile DType src) {  // NOLINT(*)` 与 `-  MSHADOW_XINLINE static void Reduce(volatile AType& dst,` / `-                                     volatile DType src,` / `-                                     volatile DType& residual) {`；蓝图 recommendedFirstAction 逐字为「分两步实施，优先第一步：①在 src/operator/mshadow_op.h:1823-1825 去掉 ... volatile 限定 ... ②在 src/operator/tensor/broadcast_reduce-inl.h:364-371 的 seq_reduce_assign 内层循环按 patterns/rvv_widening_reduction_kernels.md §The fix 改造为分块 RVV 归约」，本补丁仅实施步骤①。",
+      "severity": "suggestion",
+      "category": "根因覆盖完整性",
+      "suggestion": "步骤②（分块 RVV 归约：vle32.v 载入 → vfmul.vv 在 f32 下平方 → vfwcvt.f.f.v widening → 向量寄存器内累加 → vfredosum.vs 有序水平归约）本轮未覆盖。经独立复核，mxnet 仓库不存在可挂载的 RVV 向量数学管线：在 src/、include/、3rdparty/mshadow/ 下搜索 __riscv_v、riscv_vector.h、MSHADOW_USE_RVV、vsetvl 均为 0 个文件（仅 MSHADOW_USE_SSE 存在于 4 个文件），故步骤②属新增 RVV 后端而非最小修复，建议独立立项。另需注意：本补丁未改动 broadcast_reduce-inl.h，故 PatchPlan.changes 中该文件的条目未被本次实施触及。"
+    },
+    {
+      "id": "F2",
+      "file": "src/operator/mshadow_op.h",
+      "line": 1836,
+      "evidence": "patch.diff 第一处 hunk（@@ -1814,15 +1814,21 @@）的第二段被替换原文为 `-  MSHADOW_XINLINE static void Merge(volatile DType& dst_val,` / `-                                    volatile DType& src_val) {`，新增为 `+  MSHADOW_XINLINE static void Merge(DType& dst_val,` / `+                                    DType& src_val) {`；该 hunk 结束后的 4 参 Merge 与 Finalize 未出现在任何 hunk 中，即仍保留 volatile。蓝图 recommendedFirstAction 步骤①只点名两处 Reduce 重载（:1818 与 :1823-1825）。",
+      "severity": "suggestion",
+      "category": "一致性",
+      "suggestion": "本轮按最小性刻意只改 Reduce（2 重载）与 2 参 Merge（其函数体调用 Reduce，若不同步改会造成 volatile 左值绑定到非 volatile 引用的编译错误）。Finalize 为空函数体、4 参 Merge 仅在 broadcast_reduce-inl.h:386 的每线程一次合并路径调用，均非每元素热点，保留 volatile 不影响本次根因修复。若后续希望统一 struct sum 的 reducer 接口风格，可作为独立清理项，不在本蓝图范围内。"
+    },
+    {
+      "id": "F3",
+      "file": "src/operator/mshadow_op.h",
+      "line": 1818,
+      "evidence": "patch.diff 新增注释逐字包含「The floating-point operation sequence is unchanged, so the compensated-summation result is bit-identical (FLT_EVAL_METHOD == 0 on the target).」；蓝图 constraints.mustPreserve 逐字含「稳定算法语义：平方和（L2 范数）的补偿求和结构不得替换为朴素 sum(x*x)；要求与标量 reference 位一致时必须使用 ordered 归约」与「归约数值语义：必须保持「先在 f32 精度下平方 (fmul.s)，再 widening 到 f64 累加」的顺序」。",
+      "severity": "suggestion",
+      "category": "可移植性",
+      "suggestion": "移除 volatile 的位一致性论证依赖 FLT_EVAL_METHOD == 0（RISC-V 与 x86-64 SSE 成立）。在允许中间表达式超额精度的目标（如未启用 SSE 的 i386 x87）上，volatile 曾强制每步按声明类型舍入，移除后可能改变补偿求和的中间舍入。建议在 CI 或构建配置中确认相关目标的 FLT_EVAL_METHOD；若存在非 0 目标且需位级一致，可在该目标上保留 volatile 分支。本项不影响当前 RISC-V 目标。"
+    }
+  ]
+}

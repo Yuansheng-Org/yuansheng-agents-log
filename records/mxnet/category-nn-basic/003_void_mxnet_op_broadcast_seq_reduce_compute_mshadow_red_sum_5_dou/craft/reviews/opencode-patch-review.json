@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-mxnet-category-nn-basic-003-r1",
+  "patchCandidateId": "pc-bp-mxnet-category-nn-basic-003",
+  "reviewedAt": "2026-09-21",
+  "reviewer": "opencode-comet-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "not-applicable",
+    "notes": "arch-scan 机器判定 archSpecific=false（matches 为空），补丁未检测到 RISC-V 架构相关代码（无汇编/inline-asm/RVV intrinsic/ISA 特性），按规则跳过架构专项审核，仅做通用质量审核。PatchCandidate 首字段 archReviewWarning 已由工具自动写入对应警告。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "src/operator/tensor/broadcast_reduce-inl.h",
+      "line": 372,
+      "evidence": "patch.diff 唯一 hunk（@@ -361,13 +361,27 @@）新增行为 `+      AType temp = OP::Map(big[j + offset]);`，删除了原文 `-      coord      = mxnet_op::unravel(k, rshape);` 与 `-      AType temp = OP::Map(big[j + mxnet_op::dot(coord, rstride)]);`；蓝图 recommendedFirstAction 逐字为「…做两处实现层面改造：① 把每轮的 `coord = mxnet_op::unravel(k, rshape); big[j + mxnet_op::dot(coord, rstride)]` 改为增量维护——…② 把最内层归约改为 RVV 加宽路径：vle32.v/vlse32.v 载入源、vfwcvt.f.f.v 加宽到 f64、在向量寄存器内维护每 lane 的 (sum, residual) 补偿累加器…不得把补偿求和退化为朴素 vfredusum」，本补丁仅实施步骤①。",
+      "severity": "suggestion",
+      "category": "根因覆盖完整性",
+      "suggestion": "步骤②（RVV 加宽归约：vle32.v/vlse32.v 载入 → vfwcvt.f.f.v 加宽 f64 → 向量寄存器内维护每 lane 的 (sum, residual) 补偿累加器 → 末尾按 red::sum::Merge 的 Neumaier 公式归并）本轮未覆盖。经独立复核，mxnet 仓库不存在可挂载的 RVV 向量数学管线：在 src/、include/、3rdparty/mshadow/ 下搜索 `__riscv_v`、`riscv_vector.h`、`MSHADOW_USE_RVV`、`vsetvl` 均为 0 个文件（仅 `MSHADOW_USE_SSE` 存在于 4 个文件），且 `3rdparty/mshadow/mshadow/packet-inl.h:47-49` 在非 x86 目标上把 `MSHADOW_DEFAULT_PACKET` 定为 `kPlain`。故步骤②属「新增 RVV 后端」而非最小修复，建议独立立项；本轮补丁的收益上界相应只覆盖索引区间（蓝图 benefitUpperbound 0.813），不含归约区间（0.171）。"
+    },
+    {
+      "id": "F2",
+      "file": "src/operator/tensor/broadcast_reduce-inl.h",
+      "line": 371,
+      "evidence": "patch.diff 新增行 `+      for (int i = ndim - 1; i >= 0; --i) {` 及其后的进位体全部位于 `if (!use_omp) {` 分支内（该分支在 hunk 上下文行 `   if (!use_omp) {` 之后）；同一文件 `seq_reduce_assign_block`（第 323-340 行）的 `for (size_t k = start; k < start + len; ++k) { coord = mxnet_op::unravel(k, rshape); AType temp = OP::Map(big[j + mxnet_op::dot(coord, rstride)]); ... }` 未出现在 patch.diff 的任何 hunk 中，即保持原样。",
+      "severity": "suggestion",
+      "category": "范围一致性",
+      "suggestion": "`use_omp == true` 路径（`seq_reduce_compute` 在 `N < thread_count` 时经 `seq_reduce_assign(..., true)` 进入，见 `broadcast_reduce-inl.h:453-458`，内层 `#pragma omp parallel for` 调用 `seq_reduce_assign_block`）仍保留每元素的 `unravel` + `dot`。本轮按「聚焦已诊断热区」的最小性要求只改 `!use_omp` 分支，理由是热点符号 `seq_reduce_compute<...>[clone ._omp_fn.0]` 对应的是 `:448` 的 `#pragma omp parallel for` 外层并行区，其内层调用的正是 `use_omp == false` 的串行 k 循环（`:449-452`），而 `use_omp == true` 分支仅在输出元素数 `N < thread_count` 时启用。注意：同批次的 `bp-mxnet-category-nn-basic-016/017` 蓝图的 recommendedFirstAction 指向的正是 `:332-335` 的 `seq_reduce_assign_block`，属另一条待独立处理的路径，不应在本补丁内合并。"
+    },
+    {
+      "id": "F3",
+      "file": "src/operator/tensor/broadcast_reduce-inl.h",
+      "line": 368,
+      "evidence": "patch.diff 新增行 `+    index_t offset = 0;` 与 `+    for (int i = 0; i < ndim; ++i)` / `+      coord[i] = 0;` 确立了 k=0 时 `offset == 0` 的初值，与蓝图 constraints.mustPreserve 逐字条目「offset(k) == dot(unravel<5>(k, rshape), rstride) 必须对全部 k ∈ [0, M) 逐点等价，含各维进位顺序（从最低维开始）与 k=0 时 coord 全 0 的初值」对应；等价性验证脚手架为从补丁后源码第 368-385 行机械提取的进位体。",
+      "severity": "suggestion",
+      "category": "验证可追溯性",
+      "suggestion": "首轮 NDIM=2 验证报告 `cases=301754 mismatches=1`。经溯源，该 1 例为**验证脚手架的假阳性**而非补丁缺陷：首版脚手架的穷举段对 `RSH[0..4]` / `RST[0..4]` 硬编码 5 维下标，在 NDIM<5 的实例化中越界写入相邻全局数组，破坏了 `RST[0..1]` 导致步长异常放大、`j + offset` 有符号溢出（UB），从而使增量形式与参照形式的溢出行为分叉。改用按 NDIM 参数化、无越界写入的枚举器（并在打印时以循环输出 shape/stride）后重跑，NDIM=1..6 全部 mismatches=0（合计 1.2 亿+ 组）。此处记录以说明：该轮不一致已被解释并消除，不是本补丁的遗留缺陷。"
+    },
+    {
+      "id": "F4",
+      "file": "src/operator/tensor/broadcast_reduce-inl.h",
+      "line": 364,
+      "evidence": "patch.diff 新增行 `+        offset -= (rshape[i] - 1) * rstride[i];` 所在 hunk 的改动为纯 C++ 模板代码；蓝图 diagnosis.currentGaps 逐字含「无 ARM 侧测试数据，无法给出 RV/ARM duration ratio；perf stat 为整个 category 级而非本函数级…缺真实 M/rshape/rstride 取值与浮点误差容限」，且 recommendedVerification 要求「用与基线一致的 -march…重建 libmxnet.so，对 category-nn-basic 重跑 perf stat 与 perf annotate」。",
+      "severity": "suggestion",
+      "category": "验证完备性",
+      "suggestion": "本轮**未做**端到端验证：`3rdparty/dmlc-core`、`dlpack`、`onednn` 子模块为空（0 文件）导致 mxnet 无法编译（`g++ -fsyntax-only` 报 `dmlc/base.h: No such file or directory`），且环境无 RISC-V 工具链与 RVV 运行环境，故无法按 recommendedVerification 重建 `libmxnet.so` 并重跑 `perf annotate` 确认 `13bc9b0-13bca06` 区间内 div/rem 份额下降、也无从做与标量 reference 的数值对拍。已用「从补丁后真实源码机械提取 + 独立 C 编译器穷举」作为索引等价性的替代证明（见报告「本补丁的验证证据」A 节）。建议在具备完整子模块与 RISC-V 工具链的环境中补做：① 编译通过性；② `category-nn-basic` 的 perf stat/annotate 回归；③ 新增针对 `seq_reduce_assign` 的单元/回归用例，覆盖各维进位边界、`M == 0/1/VLMAX 整倍数/tail` 与 `rshape[i] == 1` 的退化维度。"
+    }
+  ]
+}

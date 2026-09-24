@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-category-activation-019",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T02:18:21.635Z",
+    "software": "mxnet",
+    "testcaseIds": [
+      "category-activation"
+    ],
+    "diagnosisId": "diag-20260921T021821635Z-e4a53e7e",
+    "targetHardware": "XuanTie C920v2 (SOPHGO SG2044, RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede",
+    "specBaseline": 3.014851
+  },
+  "problem": {
+    "summary": "mxnet ReLU 激活 backward kernel（backward_grad_tuned<relu_grad>）在 RISC-V C920v2 上以全标量分支形态执行：每元素 2 次 compare（feq.s NaN 检查 + flt.s 符号检查）+ 2 次分支（beqz/bnez）+ 3 次访存/指针操作；单 hot loop 占函数内 ≈100.0% 局部样本份额（flt.s 21.05%、feq.s 13.16%、beqz 10.53%、flw/fsw 各 18.42%），硬件与 build 均支持 RVV 1.0 但全函数 zero v*，RVV compare/mask/select 完全未参与。",
+    "evidence": [
+      "perf annotate 局部份额（114 samples, cpu-clock, local period）：`21.05 : 124e2a6: flt.s a1,fa3,fa5`、`13.16 : 124e2a0: feq.s a1,fa5,fa5`、`10.53 : 124e2a4: beqz`、`18.42 : 124e29c: flw fa4,0(a5)`、`18.42 : 124e2b0: fsw fa4,0(a4)`、`14.04 : 124e2b4: addi` —— 单 main loop ≈100.0%",
+      "perf stat（整 testcase）：IPC=0.562；LLC_load_miss_rate=43.99%；L1_dcache_load_miss_rate=5.16%；branch_miss_rate=2.72%",
+      "opperf 实测 RISC-V 侧 Activation backward 52.30us（input_3）等 —— 无 ARM 对照，仅方向性证据",
+      "硬件 `rv64imafdcv_..._zve64d_zvfh` 与 build `rv64i2p1_..._v1p0_zvl128b1p0` 均含 `v`；VLEN=128；全函数 zero `v*`"
+    ]
+  },
+  "rootCause": {
+    "summary": "relu_grad 是 lane-independent 的 piecewise activation backward（NaN→a / a>0→1 / else 0），但每元素以标量 feq.s/flt.s 双 compare + beqz/bnez 双分支 + 3 次访存/指针的形态执行，branch/compare 密集；全函数在 RVV-capable 硬件上 zero v*，RVV compare/mask/select 完全未参与。",
+    "candidateFiles": [
+      "src/operator/mshadow_op.h"
+    ],
+    "performanceFactors": [
+      "RVV Elementwise Activation Kernels",
+      "No vectorization"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "relu_grad 三分支语义：NaN→a（NaN 传播含 payload 位）/ a>0→1 / else 0（mshadow_op.h:1536-1545）",
+      "signed-zero 行为（-0.0f > 0 为 false → 输出 0）",
+      "NaN payload 传播与 ±NaN canonicalization 与 reference 逐位一致",
+      "out[i]=lhs[i]·relu_grad(rhs[i]) 乘法顺序（含 ×0/×1 的符号位）",
+      "KERNEL_ASSIGN(out[i], req=1) 直写语义与 OpenMP 分片边界"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-activation"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-activation"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "impact 侧证据不完整：采样为 local period 无法量化 workload 级收益；Sampling IP precision 未确认；NaN payload/signed-zero 语义的向量化等价需验证；无 ARM 对照。需人工确认 mask/select 方案与数值语义后再转发。",
+    "reasoning": "整 testcase IPC=0.562 与 branch_miss_rate=2.72% 构成指标层；perf annotate 显示单 hot loop（124e298-124e2ba ≈100.0% 局部份额）以 compare/branch/select 主导（feq.s 13.16% + flt.s 21.05% + beqz 10.53%），模式匹配 RVV Elementwise Activation Kernels（route High：annotate 源码行映射 + mshadow_op.h:1536-1545 确认 lane-independent relu_grad piecewise 语义 + hardware/build 均含 v 且 zero v*）；知识层 OpenCV/oneDNN/llama.cpp/MNN 的 RVV activation/masked 执行提交证明同类分段激活以 compare/mask/select 向量化。因无 ARM 对照、local-period 采样且 NaN/signed-zero 语义待验证，impact 为 Low，结论 probable_root_cause。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "若输入分布几乎全部 a>0（典型 ReLU 后向），relu_grad 分支预测命中率高，向量化收益主要来自减少指令数与访存而非分支消除",
+      "小 N（短 tensor）低于向量化 crossover 时收益有限，OpenMP 分片开销可能主导",
+      "全局 branch_miss_rate 仅 2.72%，分支本身并非系统级瓶颈，收益可能小于函数内样本份额暗示"
+    ],
+    "currentGaps": "无 ARM 侧对照数据；采样元数据不完整（percent=local period）；Sampling IP precision 未确认；NaN payload 传播与 signed-zero 语义的向量化等价待验证；输入分布（NaN/正/负比例）与小 N crossover 未评估。",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 mask/select 向量化方案的数值语义：vmfeq(x,x) 取反生成的 NaN mask 与 feq.s 分支的 payload 逐位可比性、-0.0f 的 signed-zero 行为、×0/×1 符号位，以及是否接受函数内收益仅以方向性表述。",
+    "affectedTarget": "RV + category-activation（mxnet opperf）",
+    "recommendedFirstAction": "在 src/operator/mshadow_op.h:1536-1545 的 relu_grad 与 mxnet_op.h LaunchTuned 路径实现 RVV 向量化：vle32 载入 rhs/lhs、vmfgt 生成 a>0 mask、vmfeq(x,x) 取反生成 NaN mask、两级 vmerge 实现 NaN→a / a>0→1 / else 0、vfmul 乘 grad、vse32 写回，branch-free 化，fixed-VL main + runtime-VL tail。",
+    "recommendedVerification": "重新运行 category-activation opperf benchmark，并以 global-period 重采同一函数 annotate 确认 feq.s/flt.s/beqz/bnez 分支份额消失、vsetvli/vmfgt/vmfeq/vmerge/vse32 出现；覆盖 NaN payload、-0.0f、±0/±Inf/subnormal、N=0/小 N/step 整倍数/全 tail 长度与极端输入分布（大量 NaN/全零），比对向量与 scalar reference 的逐位一致性。",
+    "metricEvidence": [
+      {
+        "metric": "Activation backward avg time (us)",
+        "rv": 52.3007,
+        "anomalyNote": "RISC-V 侧 opperf 实测 Activation input_3 backward 52.30us（2,097.152 KB 分配）；无 ARM 对照，仅方向性证据"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.562,
+        "anomalyNote": "整 testcase IPC 0.562，latency-bound 倾向"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 43.99,
+        "anomalyNote": "全局 LLC 缺失率 43.99%，内存流量大；本函数内由 compare/branch 与访存主导"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 2.72,
+        "anomalyNote": "全局分支缺失率 2.72%；本函数 per-element 双分支形态是函数内成本，系统级非主导"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>, mshadow::cpu>::LaunchTuned<backward_grad_tuned<relu_grad>, float, float*, float*, float*>(...) [clone ._omp_fn.0]",
+        "fileModule": "src/operator/mshadow_op.h",
+        "rvvPattern": "RVV Elementwise Activation Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 1,
+        "note": "ReLU 激活 backward：lane-independent piecewise activation（NaN→a / a>0→1 / else 0），per-element 双 compare + 双分支 + 3 访存/指针；全函数 zero v*"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/operator/mshadow_op.h:1536-1545; mxnet_op.h:1077-1096",
+      "relatedKnowledge": "https://github.com/opencv/opencv/commit/524d8ae01c6336c6d3cc7420ca71055246a61843; https://github.com/opencv/opencv/commit/86241653a7815dac1525639544cc3c44bab1277e; https://github.com/opencv/opencv/pull/27072; https://github.com/uxlfoundation/oneDNN/commit/aa23ab5573918d442c30a277ad615db36ed786ce; https://github.com/uxlfoundation/oneDNN/commit/d5ae4488090377e04c4f9d7d55bbd41e6bad7c4a; https://github.com/ggml-org/llama.cpp/pull/17227; https://github.com/ggml-org/llama.cpp/pull/15057; https://github.com/alibaba/MNN/pull/4508; https://github.com/alibaba/MNN/pull/4484; https://github.com/alibaba/MNN/pull/4044; https://github.com/alibaba/MNN/commit/b7268aa3dab754190ed7d86dc16b9bab02e73d12; https://github.com/alibaba/MNN/pull/4359",
+      "evidenceExplanation": "mshadow_op.h:1536-1545 定义 relu_grad（NaN→a / a>0→1 / else 0 的 lane-independent 分段语义），annotate 显示 per-element feq.s/flt.s 双 compare 与 beqz/bnez 双分支（合计 ≈45% 局部份额）且 zero v*；OpenCV/oneDNN/llama.cpp/MNN 的 RVV activation 与 masked conditional execution 提交（524d8ae01c63、#27072、aa23ab557391、#17227、#4484 等）证明分段激活以 RVV compare/mask/select（vmfgt/vmfeq/vmerge）branch-free 实现，支撑本 kernel 的向量化修复方向。"
+    }
+  }
+}

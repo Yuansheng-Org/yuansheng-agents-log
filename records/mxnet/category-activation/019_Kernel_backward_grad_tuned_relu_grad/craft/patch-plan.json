@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-category-activation-019",
+  "blueprintId": "bp-mxnet-category-activation-019",
+  "createdAt": "2026-09-21T11:20:41Z",
+  "objective": "Replace the scalar branch/compare-dense execution of the float32 ReLU backward kernel (backward_grad_tuned<relu_grad> wrapped in op_with_req, launched from src/operator/nn/activation-inl.h) with an RVV-vectorized branch-free mask/select path on RVV-capable RISC-V targets, eliminating the per-element feq.s/flt.s compares and beqz/bnez branches (and the per-element scalar loads/pointer updates) for the contiguous float32 case, while keeping the existing scalar kernel as fallback for every other dtype/request/target and preserving the exact piecewise semantics (NaN->a payload propagation, a>0->1, else 0, signed-zero and the lhs*relu_grad(rhs) operand order).",
+  "changes": [
+    {
+      "filePath": "src/operator/mshadow_op.h",
+      "action": "modify",
+      "rationale": "Root cause: relu_grad is a lane-independent piecewise activation backward (IsNan(a)->a / a>DType(0)->1 / else 0) evaluated per element with two scalar compares (feq.s NaN check + flt.s sign check), two branches (beqz/bnez) and three memory/pointer operations; on the RVV-capable SG2044 the whole main loop is scalar with zero v* instructions, so RVV compare/mask/select never participate. Provide a guarded RVV float32 kernel that computes the same piecewise result branch-free with compare masks and vmerge.",
+      "instructions": [
+        "Add `#if defined(__riscv) && defined(__riscv_v)` + `#include <riscv_vector.h>` after the existing include block (before `#ifdef __CUDACC__`), so the RVV code is only compiled when the V extension is enabled.",
+        "Immediately after the `relu_grad` struct definition (around mshadow_op.h:1536-1545) add a guarded `namespace relu_grad_rvv` containing a block helper and a range driver. Do NOT change the scalar `relu_grad::Map` body.",
+        "Block helper `relu_grad_block_f32m1<accumulate>(out, lhs, rhs, vl)`: load x=rhs with `__riscv_vle32_v_f32m1` and g=lhs with `__riscv_vle32_v_f32m1`; build the a>0 mask with `__riscv_vmfgt_vf_f32m1_b32(x, 0.0f, vl)`; build m = vmerge(0.0f, 1.0f, gt) so a>0 maps to 1 and everything else to 0; build the NaN mask with `__riscv_vmfne_vv_f32m1_b32(x, x, vl)` and `m = vmerge(m, x, nan)` so NaN lanes return the input x itself (payload-preserving, matching IsNan(a)->a); compute `res = __riscv_vfmul_vv_f32m1(g, m, vl)` (operand order g*m matches the scalar `a * GRAD_OP::Map(...)`); for the accumulate (kAddTo) instantiation add the existing out with `__riscv_vfadd_vv_f32m1` before storing; store with `__riscv_vse32_v_f32m1`.",
+        "Range driver `relu_grad_apply_range<accumulate>(out, lhs, rhs, n)`: fixed-VL main loop using `__riscv_vsetvlmax_e32m1()` so there is never an over-read/over-write, followed by a runtime-VL tail using `__riscv_vsetvl_e32m1(n - i)`.",
+        "Keep the RVV block guarded by `#if defined(__riscv) && defined(__riscv_v)`; add nothing outside the guard and do not touch other operators."
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/operator/nn/activation-inl.h",
+      "action": "modify",
+      "rationale": "The diagnosed hotspot is the exact instantiation `Kernel<op_with_req<backward_grad_tuned<relu_grad>, 1>, cpu>::LaunchTuned<backward_grad_tuned<relu_grad>, float, float*, float*, float*>` reached through `ActivationBackward`. The launch site must route the contiguous float32 case to the vectorized path while every other dtype/signature keeps the original scalar LaunchTuned body, and multi-core scalability must be preserved because the original path is OpenMP-parallel.",
+      "instructions": [
+        "Inside `namespace mxnet { namespace op {`, before `ActivationForward`, add a guarded (`#if defined(__riscv) && defined(__riscv_v)`) partial specialization `template <int req> struct Kernel<op_with_req<backward_grad_tuned<mshadow_op::relu_grad>, req>, mshadow::cpu>`.",
+        "Provide the variadic `template <typename... Args> Launch(Stream<cpu>*, size_t N, Args... args)` fallback that reproduces the original scalar LaunchTuned body (OpenMP parallel for over `op_type::Map(i, args...)`), so non-float32 signatures and non-RVV builds are unchanged.",
+        "Provide a non-template `Launch(Stream<cpu>*, size_t N, float* out, float* lhs, float* rhs)` overload that calls `mshadow_op::relu_grad_rvv::relu_grad_apply_range<(req == kAddTo)>`; it is selected only for the contiguous float32 (out, lhs, rhs) signature and must return true.",
+        "Preserve OpenMP scalability in the float overload: when `_OPENMP` is available and `omp_threads >= 2 && N >= 4096`, partition [0,N) into per-thread contiguous chunks and run `relu_grad_apply_range` on each chunk under `#pragma omp parallel for num_threads(omp_threads)`; otherwise run a single serial range.",
+        "Handle `req == kNullOp` as a no-op (return true without writing) and `N == 0` as a no-op, matching `KERNEL_ASSIGN`.",
+        "Do not modify `ActivationForward`, `ActivationBackward`, the request switch, or any other activation's kernel; the specialization must only match `relu_grad`."
+      ],
+      "risk": "low"
+    }
+  ],
+  "expectedDiffSummary": "src/operator/mshadow_op.h: add guarded <riscv_vector.h> include + a `relu_grad_rvv` namespace with a branch-free f32m1 block (vle32 rhs/lhs, vmfgt a>0 mask, vmerge to 0/1, vmfne(x,x) NaN mask, vmerge NaN->x, vfmul g*m, optional vfadd for kAddTo, vse32) and a fixed-VL-main/runtime-VL-tail range driver; scalar relu_grad::Map untouched. src/operator/nn/activation-inl.h: add a guarded partial specialization of Kernel<op_with_req<backward_grad_tuned<relu_grad>, req>, cpu> that routes contiguous float32 to the RVV range driver with OpenMP chunking (kAddTo handled via accumulate, kNullOp no-op) and keeps the original scalar LaunchTuned body as the variadic fallback for all other dtypes/signatures."
+}

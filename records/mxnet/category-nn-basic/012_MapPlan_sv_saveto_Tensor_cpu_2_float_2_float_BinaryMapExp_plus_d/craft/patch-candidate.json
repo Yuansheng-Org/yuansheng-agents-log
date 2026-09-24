@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "WARNING: 本补丁未检测到 RISC-V 架构相关代码（汇编/inline-asm/RVV intrinsic/ISA 特性），已跳过架构专项审核，仅做通用质量审核。",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-mxnet-category-nn-basic-012",
+  "patchPlanId": "pp-bp-mxnet-category-nn-basic-012",
+  "createdAt": "2026-09-21T07:56:04.110Z",
+  "changedFiles": [
+    "CMakeLists.txt"
+  ],
+  "gitDiff": "diff --git a/CMakeLists.txt b/CMakeLists.txt\nindex 53a6978f4..06605aa95 100644\n--- a/CMakeLists.txt\n+++ b/CMakeLists.txt\n@@ -243,6 +243,20 @@ if(MSVC)\n else()\n   include(CheckCXXCompilerFlag)\n   set(CMAKE_C_FLAGS \"${CMAKE_C_FLAGS} -Wall -Wno-sign-compare\")\n+  # Math functions that lower to a single hardware instruction (sqrt is the\n+  # canonical example) are otherwise compiled with an errno-preserving guard:\n+  # frflags / flt.s / fsflags plus a call into libm for negative inputs. Inside\n+  # the elementwise operator kernels that guard runs once per element and costs\n+  # more than the sqrt itself (perf annotate of category-nn-basic rank 012:\n+  # flt.s 14.4% + fsflags 13.6% vs fsqrt.s 16.1%). The operator path never reads\n+  # errno -- every errno use in this tree follows a syscall or stdio call, never\n+  # a math call -- so request the pure hardware lowering. Unlike -ffast-math\n+  # this does not reassociate floating-point arithmetic and does not change\n+  # NaN/Inf semantics.\n+  check_cxx_compiler_flag(\"-fno-math-errno\" MXNET_COMPILER_HAS_NO_MATH_ERRNO)\n+  if(MXNET_COMPILER_HAS_NO_MATH_ERRNO)\n+    set(CMAKE_C_FLAGS \"${CMAKE_C_FLAGS} -fno-math-errno\")\n+  endif()\n   if(CMAKE_BUILD_TYPE STREQUAL \"Debug\")\n     set(CMAKE_C_FLAGS \"${CMAKE_C_FLAGS} -O0 -g\")\n     set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -D_GLIBCXX_ASSERTIONS\")\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

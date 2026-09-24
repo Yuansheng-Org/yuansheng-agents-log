@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-category-nn-basic-003",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T04:40:36.466Z",
+    "software": "mxnet",
+    "testcaseIds": [
+      "category-nn-basic"
+    ],
+    "diagnosisId": "diag-20260921-044036",
+    "targetHardware": "SOPHGO SG2044 (XuanTie C920v2, RVV 1.0, VLEN=128, vlenb=16)",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede"
+  },
+  "problem": {
+    "summary": "在 RISC-V SG2044（RVV 1.0，VLEN=128）上运行 mxnet-opperf category-nn-basic 时，ndim=5 的 broadcast sum 归约 kernel（seq_reduce_compute<mshadow::red::sum,5,double,float,float,identity,...>）存在两个可分离热点：① 每个 reduce 元素都重新做一次 5 维索引分解（unravel<5> 的 5 次 div/rem + 5 次 coord 栈写）、一次 40 字节 Shape<5> 结构拷贝（编译器以 vsetvli/vle8.v/vse8.v 字节拷贝循环实现）和一次 5 元素点积（dot<5>），而实际内存访问只有 1 次 flw——索引计算区间占本函数 ≈81.3% 样本（最高行 25.87% : 13bc9e2: sub a4,a4,a5）；② 归约区间占 ≈17.1%，以标量执行 mshadow::red::sum 的补偿求和 + isinf(t) 守卫，累加器因 volatile 形参被强制驻留栈上（fld/fsd 往返）。两区间合计 ≈98% 样本，zero v*（除编译器生成的 Shape 字节拷贝）。",
+    "evidence": [
+      "Duration(s): RV=1286.224210, ARM=N/A — ratio N/A（未提供 ARM 侧测试数据，仅 RISC-V 侧 perf stat；该缺口已记入 currentGaps）",
+      "热点函数 rank 003：void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(...) [clone ._omp_fn.0]，annotate 15123 samples（local period）；索引计算区间 13bc9b0-13bca06 占 ≈81.3%（最高行 25.87% : 13bc9e2: sub a4,a4,a5；含 sd a4,8(a3) 15.06%、bne a1,a5,13bc9ba 17.75%、add a3,a3,a5 8.37%、bne a5,a2,13bc9f6 5.69%），归约区间 13bca0a-13bca3c 占 ≈17.1%（fclass.d 6.10%、beqz 4.57%、fld 3.09%）",
+      "代码与知识证据：src/operator/tensor/broadcast_reduce-inl.h:364-368 的串行 k 循环（coord = mxnet_op::unravel(k, rshape); AType temp = OP::Map(big[j + mxnet_op::dot(coord, rstride)]); Reducer::Reduce(val, temp, residual);）配合 src/operator/mxnet_op.h 的 unravel<5>（for i = ndim-1..0: tmp = j/shape[i]; ret[i] = j - tmp*shape[i]）与 dot<5>（ret += coord[i]*stride[i]），以及 3rdparty/mshadow/mshadow/base.h:987-1005 的 mshadow::red::sum::Reduce（y = src - residual; t = dst + y; if (isinf(t)) residual = 0; else residual = (t - dst) - y; dst = t;，volatile 形参）；命中 pattern Loop Induction Variable Strength Reduction 与 RVV Widening Additive Reduction Kernels，共 19 条上游 Related PRs"
+    ]
+  },
+  "rootCause": {
+    "summary": "ndim=5 的 broadcast sum 归约内核在每个 reduce 元素上重复执行 5 维索引分解（5 div + 5 rem）、40 字节 Shape<5> 结构物化拷贝与 5 元素点积，索引计算成本远高于其唯一的一次访存（占 ≈81.3% 样本）；同时归约本身以标量补偿求和 + isinf 守卫执行，累加器因 volatile 形参驻留栈上，无 RVV 加宽/寄存器内累加载体（占 ≈17.1%）。",
+    "candidateFiles": [
+      "src/operator/tensor/broadcast_reduce-inl.h",
+      "src/operator/mxnet_op.h",
+      "3rdparty/mshadow/mshadow/base.h"
+    ],
+    "performanceFactors": [
+      "Loop Induction Variable Strength Reduction",
+      "RVV Widening Additive Reduction Kernels"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "offset(k) == dot(unravel<5>(k, rshape), rstride) 必须对全部 k ∈ [0, M) 逐点等价，含各维进位顺序（从最低维开始）与 k=0 时 coord 全 0 的初值",
+      "边界与退化输入：M == 0 时循环零次执行；rshape[i] == 0 不得引入除零；j + offset 不得越出 big 合法范围；offset 与回绕补偿量不得溢出",
+      "必须保留 mshadow::red::sum 的补偿求和递推与 isinf(t) → residual = 0 守卫，不得退化为朴素 vfredusum 求和",
+      "跨 lane 归并必须使用 red::sum::Merge 的同一 Neumaier 公式（含 isinf(t1) 分支）",
+      "向量化会改变加法结合顺序，结果可能与标量 reference 存在末位差异；必须按项目容差验证，要求确定性时不得默认 unordered 归约等价",
+      "vfwcvt 加宽与最终 OType(val) 收窄（double→float）舍入须与标量 fcvt.d.s/fcvt.s.d 一致；M == 0 时 val 为 SetInitValue 的 0",
+      "k/offset 必须按实际 vl 推进，不得用最后一次 vl 做最终归约；不得改变 seq_reduce_compute 对 idx 的 OMP 并行与 N >= thread_count 分派",
+      "不得改变共享 sum::Reduce / red::sum::Reduce 的 volatile 形参在其他 reducer 路径上的既有语义",
+      "非 RVV 环境与非满足 short_cutoff 的输入必须保留标量 fallback"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-nn-basic",
+      "category-join-split"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-nn-basic"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.84,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "指标层：testcase 级 perf stat 显示 IPC 0.567926 偏低、L1_dcache_load_miss_rate 仅 0.974%、LLC_load_miss_rate 22.822%、branch_miss_rate 0.960%，指向 compute/latency-bound（每元素多维索引计算主导）而非内存带宽受限。热点层：rank 003 的 annotate（cpu-clock, 15123 samples, local period）显示索引计算区间 13bc9b0-13bca06 占 ≈81.3%（unravel<5> 的 5 div/rem + 5 次 coord 栈写、40 字节 Shape<5> 拷贝的 vsetvli/vle8.v/vse8.v 循环、dot<5> 的 5 mul/add，而实际访存仅 flw 2.43%），归约区间 13bca0a-13bca3c 占 ≈17.1%（补偿求和 + fclass.d Inf 守卫 + volatile 累加器栈往返）；两区间地址不相交、机制与修复对象可分离，判为 primary + independent。代码与知识层：源码逐字绑定该结构为 broadcast_reduce-inl.h:364-368 的串行 k 循环 + mxnet_op 的 unravel<5>/dot<5> + mshadow base.h 的 red::sum::Reduce，而 build ISA 已含 v1p0/zve32f/zve64f/zve64d、硬件为 RVV 1.0 VLEN=128，说明缺的是循环级索引强度削减与 RVV 加宽归约载体而非构建能力；两个 pattern 的 3+16 条上游 Related PRs 分别提供指针递增/预计算 end-pointer 与 widening 稳定归约的实现先例。因无 ARM 对照、函数级 workload 贡献与浮点重排容限未知，收益幅度只作方向性判断。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "索引区间的 81.3% 份额可能部分来自采样 skid：`sub a4,a4,a5`/`bne` 是 40 字节拷贝循环与 5 维分解循环的回边，样本可能落在循环控制而非计算本身；但即便如此，其代价仍是每元素重复的索引/结构物化开销，与结论方向一致。",
+      "若真实 rshape 各维很小（如全为 1~2）且 M 很短，强度削减的进位分支频率上升、收益下降；此时瓶颈也可能在 OMP 对 idx 的划分（N 与 thread_count 的比值）或外层循环，而非单条 reduce 循环。"
+    ],
+    "currentGaps": "无 ARM 侧测试数据，无法给出 RV/ARM duration ratio；perf stat 为整个 category 级而非本函数级，IPC 与 cache 指标不能直接归因到本函数；采样元数据不完整（event=cpu-clock，percent type=local period，scope/窗口/函数级 workload 贡献未知），收益只能表述为本函数内局部样本份额；未提供 precise_ip/Exact-IP 信息（baseline_gap: sampling IP precision），25.87% 只能锚定索引区间，不能做单指令 latency 归因；缺真实 M/rshape/rstride 取值与浮点误差容限。",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV / category-nn-basic",
+    "recommendedFirstAction": "在 src/operator/tensor/broadcast_reduce-inl.h:349-390 的串行 k 循环上做两处实现层面改造：① 把每轮的 `coord = mxnet_op::unravel(k, rshape); big[j + mxnet_op::dot(coord, rstride)]` 改为增量维护——循环外保留一份 Shape<5> coord 与 index_t offset（k=0 时全 0），循环内直接用 big[j + offset] 取元素，然后从最低维开始进位（++coord[i] < rshape[i] 时 offset += rstride[i] 并跳出；否则 offset -= (rshape[i]-1)*rstride[i] 并继续进位），从而消除每元素 5 div/rem、40 字节 Shape<5> 拷贝与 5 元素点积；若 reduce 维在 rstride 下规则，可进一步按常量步进推进 offset 并按 references/kernel-conventions.md §3 预计算 end-pointer 做 p != end 比较。② 把最内层归约改为 RVV 加宽路径：vle32.v/vlse32.v 载入源、vfwcvt.f.f.v 加宽到 f64、在向量寄存器内维护每 lane 的 (sum, residual) 补偿累加器并逐 lane 推进与 red::sum::Reduce 相同的递推、用 vfabs.v+vmfge.vf 生成 |t|==+inf 掩码并以 vmerge.vvm 把 residual 置 0，末尾按 red::sum::Merge 的 Neumaier 公式归并各 lane。不得把补偿求和退化为朴素 vfredusum，不得改变索引映射等价性、加宽/收窄舍入、空输入初值、OMP 结构与 volatile 形参在其他路径上的既有语义。",
+    "recommendedVerification": "用与基线一致的 -march（含 v/zve32f/zve64f/zve64d，与 Tag_RISCV_arch 对齐）和相同优化级别重建 libmxnet.so，对 category-nn-basic 重跑 perf stat 与 perf annotate：确认 13bc9b0-13bca06 内 div/rem/sd a4,8(a3)/bne a1,a5/sub a4,a4,a5/add a3,a3,a5/mul a4,a4,s6 的份额大幅下降、替换为少量 add/addi 偏移推进与一次比较；确认 13bca0a-13bca3c 内 fclass.d/beqz/fld/fsd 与标量 fsub.d/fadd.d 份额下降并出现 vsetvli/vle32.v 或 vlse32.v/vfwcvt.f.f.v/vfsub.vv/vfadd.vv/vfabs.v/vmfge.vf/vmerge.vvm 与末尾归并；逐点核对 offset(k) == dot(unravel<5>(k, rshape), rstride) 覆盖各维进位边界、M = 0/1/VLMAX 整倍数/tail 与有效值集中在早期数据块的输入；与标量 reference 逐输出对拍并给出最大 ULP/相对误差；最后比较 duration_time、instructions/element 与 cycles/element。",
+    "metricEvidence": [
+      {
+        "metric": "Duration(s)",
+        "rv": 1286.22421,
+        "anomalyNote": "单次运行 1286.224210 s（duration_time=1,286,224,209,532 ns，为整个 category 的总时长）；无 ARM 侧对照数据，无法给出 ratio"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.567926,
+        "anomalyNote": "偏低（<1），提示受每元素多维索引计算与串行累加依赖限制而非内存带宽限制"
+      },
+      {
+        "metric": "L1 dcache load miss rate(%)",
+        "rv": 0.974,
+        "anomalyNote": "极低（20,051,832,424/2,058,199,557,124），排除 L1 访存瓶颈"
+      },
+      {
+        "metric": "LLC load miss rate(%)",
+        "rv": 22.822,
+        "anomalyNote": "中等偏高（23,954,176,105/104,962,280,393），但结合极低 L1 miss 与低 IPC，不构成主导瓶颈"
+      },
+      {
+        "metric": "Branch miss rate(%)",
+        "rv": 0.96,
+        "anomalyNote": "很低（9,608,665,932/1,000,398,926,853），说明 5 维分解/拷贝/点积的计数循环回边高度可预测，代价来自指令数量而非误预测"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]",
+        "fileModule": "src/operator/tensor/broadcast_reduce-inl.h:349-390",
+        "rvvPattern": "Loop Induction Variable Strength Reduction",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.813,
+        "note": "primary finding：索引计算区间 13bc9b0-13bca06（每 reduce 元素一次）承载本函数 15123 个样本中的 ≈81.3%，含 unravel<5> 的 5 次 div/rem + 5 次 coord 栈写、40 字节 Shape<5> 结构拷贝（vsetvli/vle8.v/vse8.v 循环）与 dot<5> 的 5 次 mul/add，而实际访存仅 1 次 flw（2.43%）；属整数索引计算与循环控制类开销。benefitUpperbound 为当前 sampled event（cpu-clock, local period）下的函数内局部样本份额，非 workload 级 Amdahl 上界。"
+      },
+      {
+        "hotspotFunction": "void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::sum, 5, double, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>, mshadow::Shape<5>) [clone ._omp_fn.0]",
+        "fileModule": "src/operator/tensor/broadcast_reduce-inl.h:349-390",
+        "rvvPattern": "RVV Widening Additive Reduction Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.171,
+        "note": "independent finding：归约区间 13bca0a-13bca3c 承载本函数样本的 ≈17.1%，以标量执行 mshadow::red::sum 的补偿求和（fsub.d/fadd.d）+ isinf(t) 守卫（fclass.d/andi/beqz）+ volatile 累加器栈往返（fld/fsd），输入经 fcvt.d.s 加宽到 double；属加性（稳定）归约类计算。与 primary 的 evidence 落在不相交地址集合、机制与修复对象可分离。benefitUpperbound 同为函数内局部样本份额。"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/operator/tensor/broadcast_reduce-inl.h:349-390（seq_reduce_assign 的 for (size_t k = 0; k < M; ++k)：coord = mxnet_op::unravel(k, rshape); AType temp = OP::Map(big[j + mxnet_op::dot(coord, rstride)]); Reducer::Reduce(val, temp, residual);）与 :445-459（seq_reduce_compute 的 OMP-over-idx 分派）、src/operator/mxnet_op.h（unravel<ndim> 的 for (i = ndim-1, j = idx; i >= 0; --i) { tmp = j/shape[i]; ret[i] = j - tmp*shape[i]; } 与 dot<ndim> 的 ret += coord[i]*stride[i]）、3rdparty/mshadow/mshadow/base.h:987-1005（mshadow::red::sum::Reduce 的补偿求和 + isinf 守卫，volatile 形参）",
+      "relatedKnowledge": "https://github.com/torvalds/linux/commit/18be4ca5cb4e5a86833de97d331f5bc14a6c5a6d ; https://github.com/OpenMathLib/OpenBLAS/commit/477dd40f073c371d175d48e8b264ea40449515df ; https://github.com/OpenMathLib/OpenBLAS/commit/d832ee50868a48bb8a16d4343d428c11d80065ec ; https://github.com/opencv/opencv/pull/27096 ; https://github.com/opencv/opencv/commit/33d632f85e4c1cc4d70bc7210c2f126fa8a4b0bb ; https://github.com/opencv/opencv/pull/26624 ; https://github.com/uxlfoundation/oneDNN/pull/5361 ; https://github.com/uxlfoundation/oneDNN/commit/a95f0060cfcb75aeee7b937f18dbb2ff32064f50 ; https://github.com/openjdk/jdk/commit/72297d22d19e34ff26bd34644dc087a1dec9527e ; https://github.com/openjdk/jdk/commit/08a2f841ec78a10f8d6d54b2ac3a92e89f765f14 ; https://github.com/openjdk/jdk/commit/2c1e4c381615ce52276f4bf331a1e7a845af4b6e ; https://github.com/openjdk/jdk/pull/20910 ; https://github.com/openjdk/jdk/commit/134b63f0e8c4093f7ad0a528d6996898ab881d5c ; https://github.com/openjdk/jdk/pull/16629 ; https://github.com/openjdk/jdk/commit/1aebab780c5b84a85b6f10884d05bb29bae3c3bf ; https://github.com/openjdk/jdk/commit/1b6281d98cf0e7c5435c563bfedd6f07b79bfa62 ; https://github.com/OpenMathLib/OpenBLAS/commit/c37509c213a34a8cae449ededd7bc7064675ecc4 ; https://github.com/OpenMathLib/OpenBLAS/commit/3918d8504e7720d94221025ae6078a2459ccb104 ; https://github.com/alibaba/MNN/pull/4433",
+      "evidenceExplanation": "源码链路逐字解释了 annotate 的指令形态：broadcast_reduce-inl.h:365 的 coord = mxnet_op::unravel(k, rshape) 展开为 ndim=5 的 5 次 `tmp = j / shape[i]; ret[i] = j - tmp*shape[i];`（对应 rem/div + sd a4,8(a3) + bne a1,a5,13bc9ba 回边），且 unravel 按值返回 Shape<5> 触发 40 字节结构拷贝（对应 vsetvli a5,a4,e8,m1 + vle8.v/vse8.v + sub a4,a4,a5 + add a3,a3,a5 + bnez 循环）；:366 的 dot(coord, rstride) 展开为 5 次 ret += coord[i]*stride[i]（对应 ld/ld/mul/add + bne a5,a2,13bc9f6 回边）；:368 调用 mshadow::red::sum::Reduce（base.h:993-1004），其 volatile 形参导致 dst/residual 驻留栈上并每轮强制 fld/fsd，isinf(t) 守卫编译为 fclass.d + andi 0x81 + beqz。build ISA（Tag_RISCV_arch 含 v1p0/zve32f/zve64f/zve64d/zvl128b）与硬件（RVV 1.0, VLEN=128）均已具备向量能力，且全仓不存在任何 RVV 实现载体，说明根因是循环级索引强度削减与 RVV 加宽归约载体缺失而非构建配置问题。命中 pattern 的 Related PRs（Linux 内核的指针递增/预计算 end-pointer、OpenBLAS 的 edge-loop 指针传播与 scaled norm 归约、OpenCV/oneDNN 的 RVV 加性归约、OpenJDK 的 checksum/hash 与 popcount/product 归约、MNN 的 widening sum）分别提供了两类修复的实现先例；其中 widening-reduction pattern 明确要求保留稳定算法（Welford/Kahan）与 Inf/NaN 防护。"
+    }
+  }
+}

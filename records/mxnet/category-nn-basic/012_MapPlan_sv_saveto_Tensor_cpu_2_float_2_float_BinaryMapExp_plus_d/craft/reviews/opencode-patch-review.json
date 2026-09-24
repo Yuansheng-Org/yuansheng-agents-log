@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-mxnet-category-nn-basic-012-r1",
+  "patchCandidateId": "pc-bp-mxnet-category-nn-basic-012",
+  "reviewedAt": "2026-09-21",
+  "reviewer": "opencode-comet-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "not-applicable",
+    "notes": "arch-scan 机器判定 archSpecific=false（matches 为空），补丁为 CMake 构建开关，未检测到 RISC-V 架构相关代码（无汇编/inline-asm/RVV intrinsic/ISA 特性），按规则跳过架构专项审核，仅做通用质量审核。PatchCandidate 首字段 archReviewWarning 已由工具自动写入对应警告。注意：补丁效果仅体现在 RISC-V 目标上（移除 fsqrt.s 之后的 frflags/flt.s/fsflags/jalr sqrtf@plt errno 保持序列），该序列的存在性由 rank 012 的 RISC-V annotate 直接观测。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "CMakeLists.txt",
+      "line": 246,
+      "evidence": "patch.diff 唯一 hunk（@@ -243,6 +243,20 @@）新增行 `+  # Math functions that lower to a single hardware instruction (sqrt is the` 与 `+  check_cxx_compiler_flag(\"-fno-math-errno\" MXNET_COMPILER_HAS_NO_MATH_ERRNO)` / `+  if(MXNET_COMPILER_HAS_NO_MATH_ERRNO)` / `+    set(CMAKE_C_FLAGS \"${CMAKE_C_FLAGS} -fno-math-errno\")`；蓝图 recommendedFirstAction 逐字为「分两步，优先第一步：①消除 sqrt 的 errno 保持型 lowering——核对并修改构建配置使该 TU/目标启用 -fno-math-errno（mxnet 的 CMake 编译选项），或在 src/operator/math_functions-inl.h:44-46 把 float sqrt(float a) 从 return ::sqrtf(a) 改为直接落到硬件语义的 __builtin_sqrtf(a)（必要时仅对 a<0 的冷路径保留 ::sqrtf 调用），从而删除每个元素的 frflags/flt.s/fsflags/bnez 菱形」，本补丁采用其中的构建配置分支。",
+      "severity": "suggestion",
+      "category": "蓝图方案有效性",
+      "suggestion": "蓝图给出的备选（改为 `__builtin_sqrtf(a)`）经实测**无法达到目的**，因此本轮改走同一行动项中的构建开关分支。实测证据（x86-64 `gcc -O2`，默认 `-fmath-errno`）：`sqrtf(a)` 与 `__builtin_sqrtf(a)` 以及 `(float)__builtin_sqrt((double)a)` 三者生成的指令序列**逐条相同**，均为 `pxor/ucomiss/ja` + `sqrtss` + `ret` + `jmp sqrtf@PLT`（即守卫仍在）；只有 `-fno-math-errno` 下才变为 `sqrtss` + `ret`。建议 Trace 侧在后续蓝图中把 `__builtin_sqrtf` 从可选项中去掉，因为 GCC 对 math builtin 的 errno 处理由 `-fmath-errno` 统一控制，builtin 形式不豁免。同时记录本补丁与 `PatchPlan.changes` 的偏差：plan 列出的 3 个文件（`src/operator/math_functions-inl.h`、`src/operator/mshadow_op.h`、`3rdparty/mshadow/mshadow/tensor_cpu-inl.h`）本轮均未改动，实际改动为 `CMakeLists.txt`；这是采用蓝图同一行动项的另一分支所致，非漏做。"
+    },
+    {
+      "id": "F2",
+      "file": "CMakeLists.txt",
+      "line": 247,
+      "evidence": "patch.diff 新增行 `+  # the elementwise operator kernels that guard runs once per element and costs` / `+  # more than the sqrt itself (perf annotate of category-nn-basic rank 012:` / `+  # flt.s 14.4% + fsflags 13.6% vs fsqrt.s 16.1%). The operator path never reads` 位于 `   set(CMAKE_C_FLAGS \"${CMAKE_C_FLAGS} -Wall -Wno-sign-compare\")`（上下文行）之后、`   if(CMAKE_BUILD_TYPE STREQUAL \"Debug\")`（上下文行）之前；该位置在 `else()`（非 MSVC 分支）内，而 `CMAKE_C_FLAGS` 在第 270 行被追加进 `CMAKE_CXX_FLAGS`，故开关作用于全部非 MSVC 编译单元。",
+      "severity": "suggestion",
+      "category": "影响范围",
+      "suggestion": "`-fno-math-errno` 经 `CMAKE_C_FLAGS` 生效于**所有非 MSVC 编译单元的全部单指令数学函数**（sqrt 是 GCC 文档给出的唯一示例，故实际影响面主要是 sqrt，但语义上覆盖所有此类函数），比已诊断的热点（`math::sqrt` 的 float 重载，经 `mshadow_op::square_root` → `MapPlan`）更广。这是刻意的取舍：作用域精确的替代方案均已实测失败或被否决——`__attribute__((optimize(\"no-math-errno\")))` 加在包装函数上**既未消除守卫、又阻止内联**（实测 `use_attr` 编译为 `jmp sq_attr`、`map_attr` 每元素 `call sq_attr`，反而逐元素引入函数调用）；在 `math_functions-inl.h` 写 `fsqrt.s` 内联汇编可精确作用域，但本环境无 RISC-V 汇编器无法验证，且把架构相关 asm 引入通用数学包装头会提高维护成本。若后续需要收窄范围，可改为对各平台分支的 `mxnet` 目标分别调用 `target_compile_options(mxnet PRIVATE -fno-math-errno)`（注意 `CMakeLists.txt` 中有 5 处 `add_library(mxnet ...)` 分支：718/720、748、753、801、833，需逐一处理）。"
+    },
+    {
+      "id": "F3",
+      "file": "CMakeLists.txt",
+      "line": 248,
+      "evidence": "patch.diff 新增行 `+  # errno -- every errno use in this tree follows a syscall or stdio call, never` / `+  # a math call -- so request the pure hardware lowering. Unlike -ffast-math` 与 `+  check_cxx_compiler_flag(\"-fno-math-errno\" MXNET_COMPILER_HAS_NO_MATH_ERRNO)`；蓝图 constraints.mustPreserve 逐字含「errno 合同：只有在证明算子路径不读取 errno 后，才可移除 errno 保持型 lowering；否则必须保留显式 slow path」与「禁止使用 -ffast-math 等会改变 NaN/Inf 语义或重结合浮点加法的编译开关替代本项修复」。",
+      "severity": "suggestion",
+      "category": "验证完备性",
+      "suggestion": "**本项是本次交付最大的验证缺口，须在完整环境中补验**：本环境**没有可用的 cmake**（`/nix/store` 下仅有 `*-cmake-*.drv` 等未构建产物；系统无 `cmake`；Python 无 `cmake` 模块、无 `pip`），因此**未能实际运行 configure** 以确认 `check_cxx_compiler_flag` 的检出结果、`CMAKE_C_FLAGS` 的拼接结果，以及 `-fno-math-errno` 确实出现在 `libmxnet.so` 相关 TU 的编译命令行上。已做的替代检查：编辑前后 `CMakeLists.txt` 的 `if/foreach/function/macro/while` 与对应 `endif/...` 嵌套深度均为 0（HEAD 与工作树一致），新增的 `if(MXNET_COMPILER_HAS_NO_MATH_ERRNO)`/`endif()` 配对正确，且插入点位于已存在的 `include(CheckCXXCompilerFlag)`（第 244 行）之后。另需注意：`-fno-math-errno` 的守卫消除与数值位级一致（22,874,381 例 0 差异，含 ±0/±Inf/NaN/±NAN、子正规数 0x00000000-0x00200000 全枚举、0x3f000000-0x3f800000 全枚举、0xbf800000-0xc0000000 全枚举、4,000,000 组随机位模式）两项结论均在 **x86-64** 上得出，属**跨目标外推**——依据是 `-fmath-errno` 的守卫插入属 GCC 中端行为（x86 生成「比较+分支+libm 调用」序列，与 RISC-V annotate 观测到的 `fsflags`/`flt.s`/`jalr sqrtf@plt` 结构同构），但必须在 RISC-V 上复测确认。建议补做：① `cmake` 配置并在 `compile_commands.json` / `make VERBOSE=1` 中确认开关生效；② 重建 `libmxnet.so` 后重跑 `category-nn-basic` 的 perf annotate，确认 `11b420e flt.s`（14.41%）与 `11b4212 fsflags`（13.55%）消失；③ 全仓 `errno` 审计扩展到 `3rdparty/` 下所有被编译的子项目（本轮已审计 `src/` 与 `3rdparty/mshadow/`、`3rdparty/mshadow-ps/`，未覆盖其余第三方目录）。"
+    },
+    {
+      "id": "F4",
+      "file": "CMakeLists.txt",
+      "line": 245,
+      "evidence": "patch.diff 上下文行 `   set(CMAKE_C_FLAGS \"${CMAKE_C_FLAGS} -Wall -Wno-sign-compare\")` 未出现在任何增删行中；蓝图 recommendedFirstAction 逐字含「②在 3rdparty/mshadow/mshadow/tensor_cpu-inl.h:177 的 for (index_t x = 0; x < shape[1]; ++x) 增加「输出最后一维连续、各叶子在 run 内为 unit-stride 或同列重复」的向量化快速路径，用 __riscv_vsetvl_e32m4 动态 vl 循环把 plus/div/mul/minus 映射为 vfadd.vv/vfdiv.vv/vfmul.vv/vfsub.vv，并把广播索引 (y / ystride_) % length_ 提到 run 外计算一次；不满足条件时回退原标量路径」，本补丁未实施该步。",
+      "severity": "suggestion",
+      "category": "根因覆盖完整性",
+      "suggestion": "步骤②（`MapPlan` 的 RVV 向量化快速路径）本轮未实施。经独立复核，mxnet 仓库不存在可挂载的 RVV 向量数学管线：在 src/、include/、3rdparty/mshadow/ 下搜索 `__riscv_v`、`riscv_vector.h`、`MSHADOW_USE_RVV`、`vsetvl` 均为 0 个文件，`3rdparty/mshadow/mshadow/packet-inl.h:47-49` 在非 x86 目标上把 `MSHADOW_DEFAULT_PACKET` 定为 `kPlain`；且 `MapPlan` 是通用循环，加入「输出最后一维连续且各叶子 unit-stride 或同列重复」的运行时判定需要新的计划查询接口与构建期特性开关，属新增 RVV 后端而非最小修复。建议与「mxnet RVV 向量后端」专项一并立项。"
+    }
+  ]
+}
