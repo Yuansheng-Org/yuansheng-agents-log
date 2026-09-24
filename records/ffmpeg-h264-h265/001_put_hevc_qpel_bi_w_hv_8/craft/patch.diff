@@ -1,0 +1,912 @@
+diff --git a/libavcodec/riscv/Makefile b/libavcodec/riscv/Makefile
+index c05e5c7903..fb4ee12f6e 100644
+--- a/libavcodec/riscv/Makefile
++++ b/libavcodec/riscv/Makefile
+@@ -41,6 +41,7 @@ OBJS-$(CONFIG_H264QPEL) += riscv/h264qpel_init.o
+ RVV-OBJS-$(CONFIG_H264QPEL) += riscv/h264qpel_rvv.o
+ OBJS-$(CONFIG_HEVC_DECODER) += riscv/hevcdsp_init.o
+ RVV-OBJS-$(CONFIG_HEVC_DECODER) += riscv/hevcdsp_idct_rvv.o
++RVV-OBJS-$(CONFIG_HEVC_DECODER) += riscv/h26x/hevcdsp_qpel_rvv.o
+ RVV-OBJS-$(CONFIG_HEVC_DECODER)  += riscv/h26x/h2656_inter_rvv.o
+ OBJS-$(CONFIG_HUFFYUV_DECODER) += riscv/huffyuvdsp_init.o
+ RVV-OBJS-$(CONFIG_HUFFYUV_DECODER) += riscv/huffyuvdsp_rvv.o
+diff --git a/libavcodec/riscv/h26x/h2656dsp.h b/libavcodec/riscv/h26x/h2656dsp.h
+index 6d2ac55556..be8a7b2936 100644
+--- a/libavcodec/riscv/h26x/h2656dsp.h
++++ b/libavcodec/riscv/h26x/h2656dsp.h
+@@ -24,4 +24,45 @@
+ void ff_h2656_put_pixels_8_rvv_256(int16_t *dst, const uint8_t *src, ptrdiff_t srcstride, int height, intptr_t mx, intptr_t my, int width);
+ void ff_h2656_put_pixels_8_rvv_128(int16_t *dst, const uint8_t *src, ptrdiff_t srcstride, int height, intptr_t mx, intptr_t my, int width);
+ 
++
++/* HEVC qpel/epel weighted-pel (dsp_template.c bi_w / inter_template uni_w) */
++#define HEVC_PEL_W_DECLS(D) \
++void ff_put_hevc_qpel_uni_w_h_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, const uint8_t *src, ptrdiff_t srcstride, \
++                                        int height, int denom, int wx, int ox, intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_qpel_uni_w_v_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, const uint8_t *src, ptrdiff_t srcstride, \
++                                        int height, int denom, int wx, int ox, intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_qpel_uni_w_hv_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, const uint8_t *src, ptrdiff_t srcstride, \
++                                         int height, int denom, int wx, int ox, intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_qpel_bi_w_h_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, const uint8_t *src, ptrdiff_t srcstride, \
++                                       const int16_t *src2, int height, int denom, int wx0, int wx1, int ox, \
++                                       intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_qpel_bi_w_v_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, const uint8_t *src, ptrdiff_t srcstride, \
++                                       const int16_t *src2, int height, int denom, int wx0, int wx1, int ox, \
++                                       intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_qpel_bi_w_hv_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, const uint8_t *src, ptrdiff_t srcstride, \
++                                        const int16_t *src2, int height, int denom, int wx0, int wx1, int ox, \
++                                        intptr_t mx, intptr_t my, int width);
++HEVC_PEL_W_DECLS(8)
++HEVC_PEL_W_DECLS(9)
++HEVC_PEL_W_DECLS(10)
++HEVC_PEL_W_DECLS(12)
++
++#define HEVC_PEL_W_EPEL_DECLS(D) \
++void ff_put_hevc_epel_uni_w_h_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, const uint8_t *src, ptrdiff_t srcstride, \
++                                        int height, int denom, int wx, int ox, intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_epel_uni_w_v_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, const uint8_t *src, ptrdiff_t srcstride, \
++                                        int height, int denom, int wx, int ox, intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_epel_uni_w_hv_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, const uint8_t *src, ptrdiff_t srcstride, \
++                                         int height, int denom, int wx, int ox, intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_epel_bi_w_h_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, const uint8_t *src, ptrdiff_t srcstride, \
++                                       const int16_t *src2, int height, int denom, int wx0, int wx1, int ox, \
++                                       intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_epel_bi_w_v_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, const uint8_t *src, ptrdiff_t srcstride, \
++                                       const int16_t *src2, int height, int denom, int wx0, int wx1, int ox, \
++                                       intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_epel_bi_w_hv_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, const uint8_t *src, ptrdiff_t srcstride, \
++                                        const int16_t *src2, int height, int denom, int wx0, int wx1, int ox, \
++                                        intptr_t mx, intptr_t my, int width);
++HEVC_PEL_W_EPEL_DECLS(8)
++
+ #endif
+diff --git a/libavcodec/riscv/h26x/hevcdsp_qpel_rvv.S b/libavcodec/riscv/h26x/hevcdsp_qpel_rvv.S
+new file mode 100644
+index 0000000000..f6a2b86ab7
+--- /dev/null
++++ b/libavcodec/riscv/h26x/hevcdsp_qpel_rvv.S
+@@ -0,0 +1,782 @@
++/*
++ * Copyright (c) 2026
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "libavutil/riscv/asm.S"
++
++/* HEVC qpel/epel weighted-pel RVV kernels.
++ *
++ * Semantics from libavcodec/hevc/dsp_template.c (bi_w family) and
++ * libavcodec/h26x/h2656_inter_template.c (uni_w family).
++ *
++ * Calling convention: up to 13 arguments; a0-a7 in registers, the rest
++ * (wx1, ox, mx, my, width) arrive on the stack at sp+0..32.
++ *
++ * Frame: sp+0..512 args/coeffs/saved regs, sp+512..12800 tmp buffer.
++ * s0 = tmp base, s1-s8 = filter coeffs, s9 = ox'<<log2Wd (bi_w) / ox' (uni_w),
++ * s10 = log2Wd (bi_w) / shift (uni_w).
++ */
++
++        .section .rodata
++        .align 6
++hevc_local_qpel_filters:
++        .byte 0, 0, 0, 0, 0, 0, 0, 0
++        .byte -1, 4, -10, 58, 17, -5, 1, 0
++        .byte -1, 4, -11, 40, 40, -11, 4, -1
++        .byte 0, 1, -5, 17, 58, -10, 4, -1
++hevc_local_epel_filters:
++        .byte 0, 0, 0, 0
++        .byte -2, 58, 10, -2
++        .byte -4, 54, 16, -2
++        .byte -6, 46, 28, -4
++        .byte -4, 36, 36, -4
++        .byte -4, 28, 46, -6
++        .byte -2, 16, 54, -4
++        .byte -2, 10, 58, -2
++
++/* Load 8 signed coefficients of row idx into s1..s8. clobbers t0,t1 */
++.macro hevc_coeffs tbl, idx, tap
++        .option push
++        .option nopic
++        la      t0, \tbl
++        .option pop
++    .ifc \tap, qpel
++        slli    t1, \idx, 3
++    .else
++        slli    t1, \idx, 2
++    .endif
++        add     t0, t0, t1
++        lb      s1, 0(t0)
++        lb      s2, 1(t0)
++        lb      s3, 2(t0)
++        lb      s4, 3(t0)
++    .ifc \tap, qpel
++        lb      s5, 4(t0)
++        lb      s6, 5(t0)
++        lb      s7, 6(t0)
++        lb      s8, 7(t0)
++    .else
++        li      s5, 0
++        li      s6, 0
++        li      s7, 0
++        li      s8, 0
++    .endif
++.endm
++
++/* Horizontal 8-tap accumulate of one row into acc. Row ptr t3, pixel size ps. */
++.macro hevc_h8 acc, ps
++    .if \ps == 1
++        vle8.v  v0, (t3)
++        addi    t1, t3, -1
++        vle8.v  v1, (t1)
++        addi    t1, t3, -2
++        vle8.v  v2, (t1)
++        addi    t1, t3, -3
++        vle8.v  v3, (t1)
++        addi    t1, t3, 1
++        vle8.v  v4, (t1)
++        addi    t1, t3, 2
++        vle8.v  v5, (t1)
++        addi    t1, t3, 3
++        vle8.v  v6, (t1)
++        addi    t1, t3, 4
++        vle8.v  v7, (t1)
++    .else
++        vle16.v v0, (t3)
++        addi    t1, t3, -2
++        vle16.v v1, (t1)
++        addi    t1, t3, -4
++        vle16.v v2, (t1)
++        addi    t1, t3, -6
++        vle16.v v3, (t1)
++        addi    t1, t3, 2
++        vle16.v v4, (t1)
++        addi    t1, t3, 4
++        vle16.v v5, (t1)
++        addi    t1, t3, 6
++        vle16.v v6, (t1)
++        addi    t1, t3, 8
++        vle16.v v7, (t1)
++    .endif
++        vwmaccsu.vx \acc, s1, v3
++        vwmaccsu.vx \acc, s2, v2
++        vwmaccsu.vx \acc, s3, v1
++        vwmaccsu.vx \acc, s4, v0
++        vwmaccsu.vx \acc, s5, v4
++        vwmaccsu.vx \acc, s6, v5
++        vwmaccsu.vx \acc, s7, v6
++        vwmaccsu.vx \acc, s8, v7
++.endm
++
++/* Horizontal 4-tap (epel) accumulate into acc. */
++.macro hevc_h4 acc, ps
++    .if \ps == 1
++        vle8.v  v0, (t3)
++        addi    t1, t3, -1
++        vle8.v  v1, (t1)
++        addi    t1, t3, 1
++        vle8.v  v2, (t1)
++        addi    t1, t3, 2
++        vle8.v  v3, (t1)
++    .else
++        vle16.v v0, (t3)
++        addi    t1, t3, -2
++        vle16.v v1, (t1)
++        addi    t1, t3, 2
++        vle16.v v2, (t1)
++        addi    t1, t3, 4
++        vle16.v v3, (t1)
++    .endif
++        vwmaccsu.vx \acc, s1, v1
++        vwmaccsu.vx \acc, s2, v0
++        vwmaccsu.vx \acc, s3, v2
++        vwmaccsu.vx \acc, s4, v3
++.endm
++
++/* Shift e32 acc (v8) by bshift and store e16 to tmp row (t4). */
++.macro hevc_store_tmp bshift
++    .if \bshift > 0
++        vsetvli zero, zero, e32, m2, ta, ma
++        vsra.vi v8, v8, \bshift
++        vnsrl.wi v9, v8, 0
++        vsetvli zero, zero, e16, m2, ta, ma
++        vse16.v v9, (t4)
++    .else
++        vsetvli zero, zero, e16, m2, ta, ma
++        vse16.v v8, (t4)
++    .endif
++.endm
++
++/* bi_w combine of e32 acc v16. a4=src2 row, t4=dst row, t5=vl, t2=width. */
++.macro hevc_combine_biw depth, clip, ps, ishv
++        vsetvli zero, zero, e32, m4, ta, ma
++    .if \ishv
++        li      t1, 6
++        vsra.vx v16, v16, t1
++    .endif
++        lw      t1, 32(sp)
++        vmul.vx v16, v16, t1
++        vsetvli zero, zero, e16, m2, ta, ma
++        vle16.v v18, (a4)
++        lw      t1, 28(sp)
++        vwmul.vx v20, v18, t1
++        vsetvli zero, zero, e32, m4, ta, ma
++        vadd.vv v16, v16, v20
++        vadd.vx v16, v16, s9
++        mv      t1, s10
++        addi    t1, t1, 1
++        vsra.vx v16, v16, t1
++        vmax.vx v16, v16, zero
++        li      t1, \clip
++        vmin.vx v16, v16, t1
++        vsetvli zero, zero, e32, m4, ta, ma
++        vnsrl.wi v9, v16, 0
++    .if \ps == 1
++        vsetvli zero, zero, e16, m2, ta, ma
++        vnsrl.wi v9, v9, 0
++        vsetvli zero, zero, e8, m2, ta, ma
++        vse8.v v9, (t4)
++    .else
++        vsetvli zero, zero, e16, m2, ta, ma
++        vse16.v v9, (t4)
++    .endif
++.endm
++
++/* uni_w combine of e32 acc v16. s9=ox', s10=shift. */
++.macro hevc_combine_uniw depth, clip, ps, ishv
++        vsetvli zero, zero, e32, m4, ta, ma
++    .if \ishv
++        li      t1, 6
++        vsra.vx v16, v16, t1
++    .endif
++        lw      t1, 24(sp)              /* wx (a6) */
++        vmul.vx v16, v16, t1
++        mv      t1, s10
++        addi    t1, t1, -1
++        li      a6, 1
++        sll     t1, a6, t1
++        vadd.vx v16, v16, t1
++        mv      t1, s10
++        vsra.vx v16, v16, t1
++        vadd.vx v16, v16, s9
++        vmax.vx v16, v16, zero
++        li      t1, \clip
++        vmin.vx v16, v16, t1
++        vsetvli zero, zero, e32, m4, ta, ma
++        vnsrl.wi v9, v16, 0
++    .if \ps == 1
++        vsetvli zero, zero, e16, m2, ta, ma
++        vnsrl.wi v9, v9, 0
++        vsetvli zero, zero, e8, m2, ta, ma
++        vse8.v v9, (t4)
++    .else
++        vsetvli zero, zero, e16, m2, ta, ma
++        vse16.v v9, (t4)
++    .endif
++.endm
++
++/* Dispatch combine by op. */
++.macro hevc_combine_sel op, depth, clip, ps, ishv
++    .ifc \op, bi_w
++        hevc_combine_biw \depth, \clip, \ps, \ishv
++    .else
++        hevc_combine_uniw \depth, \clip, \ps, \ishv
++    .endif
++.endm
++
++/* Reload src2 row pointer for current row (r = height - t0). */
++.macro hevc_reload_src2 op, heightsp
++    .ifc \op, bi_w
++        lw      t1, \heightsp
++        sub     t1, t1, t0
++        slli    t1, t1, 7
++        lw      a4, 16(sp)
++        add     a4, a4, t1
++    .endif
++.endm
++
++/* Advance row pointers after a combine. t5=vl(e16). */
++.macro hevc_advance ps, t3mul
++    .if \t3mul == 1
++        add     t3, t3, t5              /* src (e8): vl bytes */
++    .else
++        slli    t1, t5, 1
++        add     t3, t3, t1              /* src (e16) or tmp: vl*2 bytes */
++    .endif
++        slli    t1, t5, 1
++        add     a4, a4, t1              /* src2: vl*2 bytes per tile */
++    .if \ps == 1
++        add     t4, t4, t5
++    .else
++        add     t4, t4, t1
++    .endif
++        sub     t2, t2, t5
++.endm
++
++/* Shared prologue for all hevc_pel_w_* functions.
++ * Reads the 5 stack args, saves all args + s-regs, sets up tmp.
++ * \ps needed for srcstride handling. Clobbers t0-t5.
++ */
++.macro hevc_prologue op
++    .ifc \op, bi_w
++        lw      t1, 0(sp)               /* wx1 */
++        lw      t2, 8(sp)               /* ox */
++        lw      t3, 16(sp)              /* mx */
++        lw      t4, 24(sp)              /* my */
++        lw      t5, 32(sp)              /* width */
++    .else
++        lw      t3, 0(sp)               /* mx */
++        lw      t4, 8(sp)               /* my */
++        lw      t5, 16(sp)              /* width */
++        li      t1, 0                   /* wx1 unused */
++        li      t2, 0                   /* ox unused */
++    .endif
++        li      t0, 12800
++        sub     sp, sp, t0
++        sw      a0,  0(sp)
++        sw      a1,  4(sp)
++        sw      a2,  8(sp)
++        sw      a3,  12(sp)
++        sw      a4,  16(sp)
++        sw      a5,  20(sp)
++        sw      a6,  24(sp)
++        sw      a7,  28(sp)
++        sw      t1, 32(sp)
++        sw      t2, 36(sp)
++        sw      t3, 40(sp)
++        sw      t4, 44(sp)
++        sw      t5, 48(sp)
++        sd      ra,  56(sp)
++        sd      s0,  64(sp)
++        sd      s1,  72(sp)
++        sd      s2,  80(sp)
++        sd      s3,  88(sp)
++        sd      s4,  96(sp)
++        sd      s5,  104(sp)
++        sd      s6,  112(sp)
++        sd      s7,  120(sp)
++        sd      s8,  128(sp)
++        sd      s9,  136(sp)
++        sd      s10, 144(sp)
++        sd      s11, 152(sp)
++        addi    s0, sp, 512
++.endm
++
++/* Shared epilogue. */
++.macro hevc_epilogue
++        ld      ra,  56(sp)
++        ld      s0,  64(sp)
++        ld      s1,  72(sp)
++        ld      s2,  80(sp)
++        ld      s3,  88(sp)
++        ld      s4,  96(sp)
++        ld      s5,  104(sp)
++        ld      s6,  112(sp)
++        ld      s7,  120(sp)
++        ld      s8,  128(sp)
++        ld      s9,  136(sp)
++        ld      s10, 144(sp)
++        ld      s11, 152(sp)
++        li      t0, 12800
++        add     sp, sp, t0
++        addi    sp, sp, 512
++        ret
++.endm
++
++/* Common entry: constants (s9/s10), mx/my coeffs stored to stack.
++ * \op, \depth, \ps, \bshift, \clip, \bdoff, \bdu, \tbl are macro args.
++ */
++.macro hevc_consts op, tap, depth, ps, bshift, clip, bdoff, bdu, tbl
++        lw      a2, 8(sp)
++        lw      a3, 12(sp)
++    .ifc \op, bi_w
++        lw      t0, 24(sp)              /* denom (a6) */
++        addi    t0, t0, \bdoff
++        mv      s10, t0
++        lw      t0, 36(sp)
++    .if \bshift > 0
++        slli    t0, t0, \bshift
++    .endif
++        addi    t0, t0, 1
++        sll     s9, t0, s10
++    .else
++        lw      t0, 20(sp)              /* denom (a5) */
++        addi    t0, t0, \bdu
++        mv      s10, t0
++        lw      t0, 28(sp)              /* ox (a7) */
++    .if \bshift > 0
++        slli    t0, t0, \bshift
++    .endif
++        mv      s9, t0
++    .endif
++        lw      t1, 40(sp)
++        hevc_coeffs \tbl, t1, \tap
++        sd      s1, 160(sp)
++        sd      s2, 168(sp)
++        sd      s3, 176(sp)
++        sd      s4, 184(sp)
++        sd      s5, 192(sp)
++        sd      s6, 200(sp)
++        sd      s7, 208(sp)
++        sd      s8, 216(sp)
++        lw      t1, 44(sp)
++        hevc_coeffs \tbl, t1, \tap
++        sd      s1, 224(sp)
++        sd      s2, 232(sp)
++        sd      s3, 240(sp)
++        sd      s4, 248(sp)
++        sd      s5, 256(sp)
++        sd      s6, 264(sp)
++        sd      s7, 272(sp)
++        sd      s8, 280(sp)
++.endm
++
++.macro hevc_load_height op
++    .ifc \op, bi_w
++        lw      t0, 20(sp)              /* height (a5) */
++    .else
++        lw      t0, 16(sp)              /* height (a4) */
++    .endif
++.endm
++
++/* Row-advance helpers by pixel size. */
++.macro hevc_src_row_inc ps
++        add     a2, a2, a3              /* a3 is the byte srcstride */
++.endm
++.macro hevc_dst_row_inc
++        lw      t1, 4(sp)
++        lw      t5, 0(sp)
++        add     t5, t5, t1
++        sw      t5, 0(sp)
++.endm
++.macro hevc_src2_row_inc
++        addi    a4, a4, 128
++.endm
++
++/* ---------------------------------------------------------------- */
++/* _h variants: horizontal filter + combine, no tmp                  */
++/* ---------------------------------------------------------------- */
++.macro hevc_pel_w_h op, tap, depth, ps, bshift, clip, bdoff, bdu, tbl
++func ff_put_hevc_\tap\()_\op\()_h_\depth\()_rvv, zve32x
++        lpad    0
++        hevc_prologue \op
++        hevc_consts \op, \tap, \depth, \ps, \bshift, \clip, \bdoff, \bdu, \tbl
++        ld      s1, 160(sp)
++        ld      s2, 168(sp)
++        ld      s3, 176(sp)
++        ld      s4, 184(sp)
++        ld      s5, 192(sp)
++        ld      s6, 200(sp)
++        ld      s7, 208(sp)
++        ld      s8, 216(sp)
++        hevc_load_height \op
++1:      lw      t2, 48(sp)
++        hevc_reload_src2 \op, 20(sp)
++        mv      t3, a2
++        lw      t4, 0(sp)
++2:    .if \ps == 1
++        vsetvli t5, t2, e8, m1, ta, ma
++    .else
++        vsetvli t5, t2, e16, m1, ta, ma
++    .endif
++        vmv.v.i v8, 0
++    .ifc \tap, qpel
++        hevc_h8 v8, \ps
++    .else
++        hevc_h4 v8, \ps
++    .endif
++        vsetvli zero, zero, e32, m4, ta, ma
++    .if \bshift > 0
++        vsra.vi v8, v8, \bshift
++    .endif
++        vmv.v.v v16, v8
++        hevc_combine_sel \op, \depth, \clip, \ps, 0
++        hevc_advance \ps, \ps
++        bnez    t2, 2b
++        hevc_dst_row_inc
++        hevc_src_row_inc \ps
++        addi    t0, t0, -1
++        bnez    t0, 1b
++        hevc_epilogue
++endfunc
++.endm
++
++/* ---------------------------------------------------------------- */
++/* _v variants: vertical filter + combine                             */
++/* ---------------------------------------------------------------- */
++.macro hevc_pel_w_v op, tap, depth, ps, bshift, clip, bdoff, bdu, tbl
++func ff_put_hevc_\tap\()_\op\()_v_\depth\()_rvv, zve32x
++        lpad    0
++        hevc_prologue \op
++        hevc_consts \op, \tap, \depth, \ps, \bshift, \clip, \bdoff, \bdu, \tbl
++        ld      s1, 224(sp)
++        ld      s2, 232(sp)
++        ld      s3, 240(sp)
++        ld      s4, 248(sp)
++        ld      s5, 256(sp)
++        ld      s6, 264(sp)
++        ld      s7, 272(sp)
++        ld      s8, 280(sp)
++        hevc_load_height \op
++        mv      t6, a2
++3:      lw      t2, 48(sp)
++        hevc_reload_src2 \op, 20(sp)
++        mv      t3, t6
++        lw      t4, 0(sp)
++4:    .if \ps == 1
++        vsetvli t5, t2, e8, m1, ta, ma
++    .else
++        vsetvli t5, t2, e16, m1, ta, ma
++    .endif
++        vmv.v.i v8, 0
++        mv      t1, t3
++    .ifc \tap, qpel
++        sub     t1, t1, a3
++        sub     t1, t1, a3
++        sub     t1, t1, a3
++    .if \ps == 1
++        vle8.v  v0, (t1)
++    .else
++        vle16.v v0, (t1)
++    .endif
++        add     t1, t1, a3
++    .if \ps == 1
++        vle8.v  v1, (t1)
++    .else
++        vle16.v v1, (t1)
++    .endif
++        add     t1, t1, a3
++    .if \ps == 1
++        vle8.v  v2, (t1)
++    .else
++        vle16.v v2, (t1)
++    .endif
++        add     t1, t1, a3
++    .if \ps == 1
++        vle8.v  v3, (t1)
++    .else
++        vle16.v v3, (t1)
++    .endif
++        add     t1, t1, a3
++    .if \ps == 1
++        vle8.v  v4, (t1)
++    .else
++        vle16.v v4, (t1)
++    .endif
++        add     t1, t1, a3
++    .if \ps == 1
++        vle8.v  v5, (t1)
++    .else
++        vle16.v v5, (t1)
++    .endif
++        add     t1, t1, a3
++    .if \ps == 1
++        vle8.v  v6, (t1)
++    .else
++        vle16.v v6, (t1)
++    .endif
++        add     t1, t1, a3
++    .if \ps == 1
++        vle8.v  v7, (t1)
++    .else
++        vle16.v v7, (t1)
++    .endif
++        vwmaccsu.vx v8, s1, v0
++        vwmaccsu.vx v8, s2, v1
++        vwmaccsu.vx v8, s3, v2
++        vwmaccsu.vx v8, s4, v3
++        vwmaccsu.vx v8, s5, v4
++        vwmaccsu.vx v8, s6, v5
++        vwmaccsu.vx v8, s7, v6
++        vwmaccsu.vx v8, s8, v7
++    .else
++        sub     t1, t1, a3
++    .if \ps == 1
++        vle8.v  v0, (t1)
++    .else
++        vle16.v v0, (t1)
++    .endif
++        add     t1, t1, a3
++    .if \ps == 1
++        vle8.v  v1, (t1)
++    .else
++        vle16.v v1, (t1)
++    .endif
++        add     t1, t1, a3
++    .if \ps == 1
++        vle8.v  v2, (t1)
++    .else
++        vle16.v v2, (t1)
++    .endif
++        add     t1, t1, a3
++    .if \ps == 1
++        vle8.v  v3, (t1)
++    .else
++        vle16.v v3, (t1)
++    .endif
++        vwmaccsu.vx v8, s1, v0
++        vwmaccsu.vx v8, s2, v1
++        vwmaccsu.vx v8, s3, v2
++        vwmaccsu.vx v8, s4, v3
++    .endif
++    .if \ps == 1
++        vsetvli zero, zero, e16, m2, ta, ma
++        vsetvli zero, zero, e32, m4, ta, ma
++    .else
++        vsetvli zero, zero, e32, m4, ta, ma
++    .endif
++    .if \bshift > 0
++        vsra.vi v8, v8, \bshift
++    .endif
++        vmv.v.v v16, v8
++        hevc_combine_sel \op, \depth, \clip, \ps, 0
++        hevc_advance \ps, \ps
++        bnez    t2, 4b
++        hevc_dst_row_inc
++        add     t6, t6, a3              /* a3 is the byte srcstride */
++        addi    t0, t0, -1
++        bnez    t0, 3b
++        hevc_epilogue
++endfunc
++.endm
++
++/* ---------------------------------------------------------------- */
++/* _hv variants: horizontal into tmp, vertical + combine              */
++/* ---------------------------------------------------------------- */
++.macro hevc_pel_w_hv op, tap, depth, ps, bshift, clip, bdoff, bdu, tbl
++func ff_put_hevc_\tap\()_\op\()_hv_\depth\()_rvv, zve32x
++        lpad    0
++        hevc_prologue \op
++        hevc_consts \op, \tap, \depth, \ps, \bshift, \clip, \bdoff, \bdu, \tbl
++    .ifc \tap, qpel
++        sub     a2, a2, a3
++        sub     a2, a2, a3
++        sub     a2, a2, a3
++    .else
++        sub     a2, a2, a3
++    .endif
++        ld      s1, 160(sp)
++        ld      s2, 168(sp)
++        ld      s3, 176(sp)
++        ld      s4, 184(sp)
++        ld      s5, 192(sp)
++        ld      s6, 200(sp)
++        ld      s7, 208(sp)
++        ld      s8, 216(sp)
++        hevc_load_height \op
++    .ifc \tap, qpel
++        addi    t0, t0, 7
++    .else
++        addi    t0, t0, 3
++    .endif
++        mv      t6, s0
++1:      lw      t2, 48(sp)
++        mv      t3, a2
++        mv      t4, t6
++2:    .if \ps == 1
++        vsetvli t5, t2, e8, m1, ta, ma
++    .else
++        vsetvli t5, t2, e16, m1, ta, ma
++    .endif
++        vmv.v.i v8, 0
++    .ifc \tap, qpel
++        hevc_h8 v8, \ps
++    .else
++        hevc_h4 v8, \ps
++    .endif
++        hevc_store_tmp \bshift
++    .if \ps == 1
++        add     t3, t3, t5
++    .else
++        slli    t1, t5, 1
++        add     t3, t3, t1
++    .endif
++        slli    t5, t5, 1
++        add     t4, t4, t5
++        srli    t5, t5, 1
++        sub     t2, t2, t5
++        bnez    t2, 2b
++        hevc_src_row_inc \ps
++        addi    t6, t6, 128
++        addi    t0, t0, -1
++        bnez    t0, 1b
++        ld      s1, 224(sp)
++        ld      s2, 232(sp)
++        ld      s3, 240(sp)
++        ld      s4, 248(sp)
++        ld      s5, 256(sp)
++        ld      s6, 264(sp)
++        ld      s7, 272(sp)
++        ld      s8, 280(sp)
++        hevc_load_height \op
++    .ifc \tap, qpel
++        addi    t6, s0, 3 * 128
++    .else
++        addi    t6, s0, 1 * 128
++    .endif
++3:      lw      t2, 48(sp)
++        hevc_reload_src2 \op, 20(sp)
++        mv      t3, t6
++        lw      t4, 0(sp)
++4:      vsetvli t5, t2, e16, m2, ta, ma
++        vmv.v.i v16, 0
++        mv      t1, t3
++    .ifc \tap, qpel
++        addi    t1, t1, -384
++        vle16.v v0, (t1)
++        addi    t1, t1, 128
++        vle16.v v1, (t1)
++        addi    t1, t1, 128
++        vle16.v v2, (t1)
++        addi    t1, t1, 128
++        vle16.v v3, (t1)
++        addi    t1, t1, 128
++        vle16.v v4, (t1)
++        addi    t1, t1, 128
++        vle16.v v5, (t1)
++        addi    t1, t1, 128
++        vle16.v v6, (t1)
++        addi    t1, t1, 128
++        vle16.v v7, (t1)
++        vwmacc.vx v16, s1, v0
++        vwmacc.vx v16, s2, v1
++        vwmacc.vx v16, s3, v2
++        vwmacc.vx v16, s4, v3
++        vwmacc.vx v16, s5, v4
++        vwmacc.vx v16, s6, v5
++        vwmacc.vx v16, s7, v6
++        vwmacc.vx v16, s8, v7
++    .else
++        addi    t1, t1, -128
++        vle16.v v0, (t1)
++        addi    t1, t1, 128
++        vle16.v v1, (t1)
++        addi    t1, t1, 128
++        vle16.v v2, (t1)
++        addi    t1, t1, 128
++        vle16.v v3, (t1)
++        vwmacc.vx v16, s1, v0
++        vwmacc.vx v16, s2, v1
++        vwmacc.vx v16, s3, v2
++        vwmacc.vx v16, s4, v3
++    .endif
++        hevc_combine_sel \op, \depth, \clip, \ps, 1
++        hevc_advance \ps, 2
++        bnez    t2, 4b
++        hevc_dst_row_inc
++        hevc_src2_row_inc
++        addi    t6, t6, 128
++        addi    t0, t0, -1
++        bnez    t0, 3b
++        hevc_epilogue
++endfunc
++.endm
++
++/* ------------------------------------------------------------------ */
++/* instantiations                                                      */
++/* ------------------------------------------------------------------ */
++.macro hevc_w op, tap, dir, depth, ps, bshift, clip, bdoff, bdu, tbl
++    .ifc \dir, h
++        hevc_pel_w_h \op, \tap, \depth, \ps, \bshift, \clip, \bdoff, \bdu, \tbl
++    .endif
++    .ifc \dir, v
++        hevc_pel_w_v \op, \tap, \depth, \ps, \bshift, \clip, \bdoff, \bdu, \tbl
++    .endif
++    .ifc \dir, hv
++        hevc_pel_w_hv \op, \tap, \depth, \ps, \bshift, \clip, \bdoff, \bdu, \tbl
++    .endif
++.endm
++
++/* qpel bi_w (12) */
++hevc_w bi_w, qpel, h,  8, 1, 0, 255, 6, 0, hevc_local_qpel_filters
++hevc_w bi_w, qpel, v,  8, 1, 0, 255, 6, 0, hevc_local_qpel_filters
++hevc_w bi_w, qpel, hv, 8, 1, 0, 255, 6, 0, hevc_local_qpel_filters
++hevc_w bi_w, qpel, h,  9, 2, 1, 511, 5, 0, hevc_local_qpel_filters
++hevc_w bi_w, qpel, v,  9, 2, 1, 511, 5, 0, hevc_local_qpel_filters
++hevc_w bi_w, qpel, hv, 9, 2, 1, 511, 5, 0, hevc_local_qpel_filters
++hevc_w bi_w, qpel, h,  10, 2, 2, 1023, 4, 0, hevc_local_qpel_filters
++hevc_w bi_w, qpel, v,  10, 2, 2, 1023, 4, 0, hevc_local_qpel_filters
++hevc_w bi_w, qpel, hv, 10, 2, 2, 1023, 4, 0, hevc_local_qpel_filters
++hevc_w bi_w, qpel, h,  12, 2, 4, 4095, 2, 0, hevc_local_qpel_filters
++hevc_w bi_w, qpel, v,  12, 2, 4, 4095, 2, 0, hevc_local_qpel_filters
++hevc_w bi_w, qpel, hv, 12, 2, 4, 4095, 2, 0, hevc_local_qpel_filters
++
++/* qpel uni_w (12) */
++hevc_w uni_w, qpel, h,  8, 1, 0, 255, 0, 6, hevc_local_qpel_filters
++hevc_w uni_w, qpel, v,  8, 1, 0, 255, 0, 6, hevc_local_qpel_filters
++hevc_w uni_w, qpel, hv, 8, 1, 0, 255, 0, 6, hevc_local_qpel_filters
++hevc_w uni_w, qpel, h,  9, 2, 1, 511, 0, 5, hevc_local_qpel_filters
++hevc_w uni_w, qpel, v,  9, 2, 1, 511, 0, 5, hevc_local_qpel_filters
++hevc_w uni_w, qpel, hv, 9, 2, 1, 511, 0, 5, hevc_local_qpel_filters
++hevc_w uni_w, qpel, h,  10, 2, 2, 1023, 0, 4, hevc_local_qpel_filters
++hevc_w uni_w, qpel, v,  10, 2, 2, 1023, 0, 4, hevc_local_qpel_filters
++hevc_w uni_w, qpel, hv, 10, 2, 2, 1023, 0, 4, hevc_local_qpel_filters
++hevc_w uni_w, qpel, h,  12, 2, 4, 4095, 0, 2, hevc_local_qpel_filters
++hevc_w uni_w, qpel, v,  12, 2, 4, 4095, 0, 2, hevc_local_qpel_filters
++hevc_w uni_w, qpel, hv, 12, 2, 4, 4095, 0, 2, hevc_local_qpel_filters
++
++/* epel bi_w (3) */
++hevc_w bi_w, epel, h,  8, 1, 0, 255, 6, 0, hevc_local_epel_filters
++hevc_w bi_w, epel, v,  8, 1, 0, 255, 6, 0, hevc_local_epel_filters
++hevc_w bi_w, epel, hv, 8, 1, 0, 255, 6, 0, hevc_local_epel_filters
++
++/* epel uni_w (3) */
++hevc_w uni_w, epel, h,  8, 1, 0, 255, 0, 6, hevc_local_epel_filters
++hevc_w uni_w, epel, v,  8, 1, 0, 255, 0, 6, hevc_local_epel_filters
++hevc_w uni_w, epel, hv, 8, 1, 0, 255, 0, 6, hevc_local_epel_filters
+diff --git a/libavcodec/riscv/hevcdsp_init.c b/libavcodec/riscv/hevcdsp_init.c
+index 597b635248..f9521264dc 100644
+--- a/libavcodec/riscv/hevcdsp_init.c
++++ b/libavcodec/riscv/hevcdsp_init.c
+@@ -43,6 +43,33 @@ void ff_hevc_add_residual_32x32_8_rvv(uint8_t *_dst, const int16_t *coeffs,
+         member[7][v][h] = ff_h2656_put_pixels_##8_##ext; \
+         member[9][v][h] = ff_h2656_put_pixels_##8_##ext;
+ 
++
++/* 9/10/12-bit weighted-pel qpel (bi_w / uni_w) and 8-bit epel weighted-pel */
++#define SET_HEVC_PEL_W_Q(D, EXT)                                                        \
++    do {                                                                                 \
++        int i;                                                                           \
++        for (i = 1; i < 10; i++) {                                                       \
++            c->put_hevc_qpel_uni_w[i][0][1] = ff_put_hevc_qpel_uni_w_h_##D##_##EXT;      \
++            c->put_hevc_qpel_uni_w[i][1][0] = ff_put_hevc_qpel_uni_w_v_##D##_##EXT;      \
++            c->put_hevc_qpel_uni_w[i][1][1] = ff_put_hevc_qpel_uni_w_hv_##D##_##EXT;     \
++            c->put_hevc_qpel_bi_w[i][0][1]  = ff_put_hevc_qpel_bi_w_h_##D##_##EXT;       \
++            c->put_hevc_qpel_bi_w[i][1][0]  = ff_put_hevc_qpel_bi_w_v_##D##_##EXT;       \
++            c->put_hevc_qpel_bi_w[i][1][1]  = ff_put_hevc_qpel_bi_w_hv_##D##_##EXT;      \
++        }                                                                                \
++    } while (0)
++#define SET_HEVC_PEL_W_E(D, EXT)                                                         \
++    do {                                                                                 \
++        int i;                                                                           \
++        for (i = 1; i < 10; i++) {                                                       \
++            c->put_hevc_epel_uni_w[i][0][1] = ff_put_hevc_epel_uni_w_h_##D##_##EXT;      \
++            c->put_hevc_epel_uni_w[i][1][0] = ff_put_hevc_epel_uni_w_v_##D##_##EXT;      \
++            c->put_hevc_epel_uni_w[i][1][1] = ff_put_hevc_epel_uni_w_hv_##D##_##EXT;     \
++            c->put_hevc_epel_bi_w[i][0][1]  = ff_put_hevc_epel_bi_w_h_##D##_##EXT;       \
++            c->put_hevc_epel_bi_w[i][1][0]  = ff_put_hevc_epel_bi_w_v_##D##_##EXT;       \
++            c->put_hevc_epel_bi_w[i][1][1]  = ff_put_hevc_epel_bi_w_hv_##D##_##EXT;      \
++        }                                                                                \
++    } while (0)
++
+ void ff_hevc_dsp_init_riscv(HEVCDSPContext *c, const int bit_depth)
+ {
+ #if HAVE_RVV
+@@ -77,6 +104,23 @@ void ff_hevc_dsp_init_riscv(HEVCDSPContext *c, const int bit_depth)
+     }
+ 
+     if (vlenb >= 16) {
++        switch (bit_depth){
++            case 8:
++                SET_HEVC_PEL_W_Q(8, rvv);
++                SET_HEVC_PEL_W_E(8, rvv);
++                break;
++            case 9:
++                SET_HEVC_PEL_W_Q(9, rvv);
++                break;
++            case 10:
++                SET_HEVC_PEL_W_Q(10, rvv);
++                break;
++            case 12:
++                SET_HEVC_PEL_W_Q(12, rvv);
++                break;
++            default:
++                break;
++        }
+         switch (bit_depth){
+             case 8:
+                 c->add_residual[0]             = ff_hevc_add_residual_4x4_8_rvv;

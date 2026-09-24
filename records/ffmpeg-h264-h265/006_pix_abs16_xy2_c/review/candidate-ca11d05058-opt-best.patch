@@ -1,0 +1,115 @@
+From 0018b474558c31b60a95d989542e031282c83398 Mon Sep 17 00:00:00 2001
+From: Fei Zhang <zhangfei@iscas.ac.cn>
+Date: Wed, 16 Sep 2026 21:25:48 +0800
+Subject: [PATCH] avcodec/riscv: add RVV pix_abs16_xy2
+
+Reuse horizontal sums between reference rows and process two rows per
+iteration. Accumulate the differences in 16-bit lanes and perform a
+single widening reduction at the end.
+
+Spacemit X100, VLEN=256, GCC 15.2.0, CPU 0:
+
+                           upstream       patched
+pix_abs_0_3_c                 202.8           205.8
+pix_abs_0_3_rvv_i32              -              99.3
+
+Median nanoseconds per call over seven checkasm runs, with 200 ms per
+function.
+
+Passes motion checkasm on hardware and under QEMU with VLEN 128, 256,
+512 and 1024.
+---
+ libavcodec/riscv/me_cmp_init.c |  3 ++
+ libavcodec/riscv/me_cmp_rvv.S  | 53 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 56 insertions(+)
+
+diff --git a/libavcodec/riscv/me_cmp_init.c b/libavcodec/riscv/me_cmp_init.c
+index dac1366332..c35de65a96 100644
+--- a/libavcodec/riscv/me_cmp_init.c
++++ b/libavcodec/riscv/me_cmp_init.c
+@@ -38,6 +38,8 @@ int ff_pix_abs16_y2_rvv(MPVEncContext *v, const uint8_t *pix1, const uint8_t *pi
+                           ptrdiff_t stride, int h);
+ int ff_pix_abs8_y2_rvv(MPVEncContext *v, const uint8_t *pix1, const uint8_t *pix2,
+                           ptrdiff_t stride, int h);
++int ff_pix_abs16_xy2_rvv(MPVEncContext *v, const uint8_t *pix1, const uint8_t *pix2,
++                          ptrdiff_t stride, int h);
+ 
+ int ff_sse16_rvv(MPVEncContext *v, const uint8_t *pix1, const uint8_t *pix2,
+                    ptrdiff_t stride, int h);
+@@ -91,6 +93,7 @@ av_cold void ff_me_cmp_init_riscv(MECmpContext *c, AVCodecContext *avctx)
+         c->pix_abs[1][1] = ff_pix_abs8_x2_rvv;
+         c->pix_abs[0][2] = ff_pix_abs16_y2_rvv;
+         c->pix_abs[1][2] = ff_pix_abs8_y2_rvv;
++        c->pix_abs[0][3] = ff_pix_abs16_xy2_rvv;
+ 
+         c->sse[0] = ff_sse16_rvv;
+         c->sse[1] = ff_sse8_rvv;
+diff --git a/libavcodec/riscv/me_cmp_rvv.S b/libavcodec/riscv/me_cmp_rvv.S
+index 0b7a49bb0c..88cd0125fc 100644
+--- a/libavcodec/riscv/me_cmp_rvv.S
++++ b/libavcodec/riscv/me_cmp_rvv.S
+@@ -172,6 +172,59 @@ func ff_pix_abs8_y2_rvv, zve32x
+         pix_abs_ret
+ endfunc
+ 
++/* Reuse horizontal sums between rows and reduce the column SADs only once. */
++func ff_pix_abs16_xy2_rvv, zve32x
++        lpad    0
++        csrwi           vxrm, 0
++        vsetivli        zero, 1, e32, m1, ta, ma
++        vmv.s.x         v0, zero
++        vsetivli        zero, 16, e16, m2, ta, ma
++        vmv.v.i         v16, 0
++        vsetvli         zero, zero, e8, m1, ta, ma
++        addi            a5, a2, 1
++        vle8.v          v2, (a2)
++        vle8.v          v4, (a5)
++        vwaddu.vv       v8, v2, v4
++        add             a2, a2, a3
++1:
++        addi            a5, a2, 1
++        vle8.v          v2, (a2)
++        vle8.v          v4, (a5)
++        vle8.v          v6, (a1)
++        vwaddu.vv       v10, v2, v4
++        vsetvli         zero, zero, e16, m2, ta, ma
++        vadd.vv         v12, v8, v10
++        vsetvli         zero, zero, e8, m1, ta, ma
++        vnclipu.wi      v4, v12, 2
++        vmaxu.vv        v2, v6, v4
++        vminu.vv        v4, v6, v4
++        vsub.vv         v2, v2, v4
++        vwaddu.wv       v16, v16, v2
++        add             a1, a1, a3
++        add             a2, a2, a3
++        addi            a5, a2, 1
++        vle8.v          v2, (a2)
++        vle8.v          v4, (a5)
++        vle8.v          v6, (a1)
++        vwaddu.vv       v8, v2, v4
++        vsetvli         zero, zero, e16, m2, ta, ma
++        vadd.vv         v12, v10, v8
++        vsetvli         zero, zero, e8, m1, ta, ma
++        vnclipu.wi      v4, v12, 2
++        vmaxu.vv        v2, v6, v4
++        vminu.vv        v4, v6, v4
++        vsub.vv         v2, v2, v4
++        vwaddu.wv       v16, v16, v2
++        add             a1, a1, a3
++        add             a2, a2, a3
++        addi            a4, a4, -2
++        bnez            a4, 1b
++
++        vsetvli         zero, zero, e16, m2, ta, ma
++        vwredsumu.vs    v0, v16, v0
++        pix_abs_ret
++endfunc
++
+ func ff_sse16_rvv, zve32x
+         lpad    0
+         vsetivli        t0, 16, e32, m4, ta, ma
+
+base-commit: 1f9ba3fb6b196e8a4c955bcaada2f9feb492b66b
+-- 
+2.53.0
+

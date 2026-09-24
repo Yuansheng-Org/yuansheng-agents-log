@@ -1,0 +1,219 @@
+diff --git a/libswscale/riscv/Makefile b/libswscale/riscv/Makefile
+index 7c8977d940..b9a91f98d3 100644
+--- a/libswscale/riscv/Makefile
++++ b/libswscale/riscv/Makefile
+@@ -1,7 +1,8 @@
+ OBJS += riscv/rgb2rgb.o \
+         riscv/swscale.o
+ RV-OBJS += riscv/rgb2rgb_rvb.o
+-RVV-OBJS += riscv/input_rvv.o \
++RVV-OBJS += riscv/yuv2planeX_rvv.o \
++            riscv/input_rvv.o \
+             riscv/range_rvv.o \
+             riscv/rgb2rgb_rvv.o
+ 
+diff --git a/libswscale/riscv/swscale.c b/libswscale/riscv/swscale.c
+index 49c492f153..23bd3e5d45 100644
+--- a/libswscale/riscv/swscale.c
++++ b/libswscale/riscv/swscale.c
+@@ -71,10 +71,45 @@ RVV_INPUT(bgra32);
+ RVV_INPUT(rgb24);
+ RVV_INPUT(rgba32);
+ 
++#if HAVE_RVV && (__riscv_xlen == 64)
++#define DECL_PLANE(depth, endian) \
++void ff_yuv2planeX_##depth##endian##_rvv(const int16_t *, int, const int16_t **, \
++                                      uint8_t *, int, const uint8_t *, int);
++DECL_PLANE(9, LE)
++DECL_PLANE(9, BE)
++DECL_PLANE(10, LE)
++DECL_PLANE(10, BE)
++DECL_PLANE(12, LE)
++DECL_PLANE(12, BE)
++DECL_PLANE(14, LE)
++DECL_PLANE(14, BE)
++#undef DECL_PLANE
++void ff_yuv2nv12cX_8_rvv(enum AVPixelFormat, const uint8_t *, const int16_t *, int,
++                       const int16_t **, const int16_t **, uint8_t *, int);
++void ff_yuv2nv21cX_8_rvv(enum AVPixelFormat, const uint8_t *, const int16_t *, int,
++                       const int16_t **, const int16_t **, uint8_t *, int);
++#endif
++
+ av_cold void ff_sws_init_swscale_riscv(SwsInternal *c)
+ {
+ #if HAVE_RVV
+     int flags = av_get_cpu_flags();
++#if __riscv_xlen == 64
++    const enum AVPixelFormat format = c->opts.dst_format;
++    if ((flags & AV_CPU_FLAG_RVV_I32) && ff_rv_vlen_least(128)) {
++        if (isNBPS(format) && !isSemiPlanarYUV(format) && !isDataInHighBits(format)) {
++            switch (av_pix_fmt_desc_get(format)->comp[0].depth) {
++            case 9: c->yuv2planeX = isBE(format) ? ff_yuv2planeX_9BE_rvv : ff_yuv2planeX_9LE_rvv; break;
++            case 10: c->yuv2planeX = isBE(format) ? ff_yuv2planeX_10BE_rvv : ff_yuv2planeX_10LE_rvv; break;
++            case 12: c->yuv2planeX = isBE(format) ? ff_yuv2planeX_12BE_rvv : ff_yuv2planeX_12LE_rvv; break;
++            case 14: c->yuv2planeX = isBE(format) ? ff_yuv2planeX_14BE_rvv : ff_yuv2planeX_14LE_rvv; break;
++            }
++        }
++        if (format == AV_PIX_FMT_NV12) c->yuv2nv12cX = ff_yuv2nv12cX_8_rvv;
++        if (format == AV_PIX_FMT_NV21) c->yuv2nv12cX = ff_yuv2nv21cX_8_rvv;
++    }
++#endif
++
+ 
+     if ((flags & AV_CPU_FLAG_RVV_I32) && (flags & AV_CPU_FLAG_RVB)) {
+         switch (c->opts.src_format) {
+diff --git a/libswscale/riscv/yuv2planeX_rvv.S b/libswscale/riscv/yuv2planeX_rvv.S
+new file mode 100644
+index 0000000000..aafb1c3e07
+--- /dev/null
++++ b/libswscale/riscv/yuv2planeX_rvv.S
+@@ -0,0 +1,149 @@
++/*
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "libavutil/riscv/asm.S"
++
++/* Correct low-bit planar output and native RVV interleaved chroma. */
++#if __riscv_xlen == 64
++.macro yuv2planeX depth, be
++func ff_yuv2planeX_\depth\()\be\()_rvv, zve32x
++        lpad    0
++        blez    a4, 3f
++        li      a5, 0                  // column byte offset
++        li      a7, (1 << \depth) - 1
++1:      vsetvli a6, a4, e16, m1, ta, ma
++        vsetvli zero, zero, e32, m2, ta, ma
++        li      t5, 1 << (26 - \depth)
++        vmv.v.x v16, t5
++        vsetvli zero, zero, e16, m1, ta, ma
++        mv      t0, a2
++        mv      t1, a0
++        mv      t2, a1
++        blez    t2, 4f
++2:      ld      t3, 0(t0)
++        add     t3, t3, a5
++        vle16.v v2, (t3)
++        lh      t4, 0(t1)
++        vwmacc.vx v16, t4, v2
++        addi    t0, t0, 8
++        addi    t1, t1, 2
++        addi    t2, t2, -1
++        bnez    t2, 2b
++4:      vsetvli zero, zero, e32, m2, ta, ma
++        vsra.vi v16, v16, 27 - \depth
++        vmax.vx v16, v16, zero
++        vmin.vx v16, v16, a7
++        vsetvli zero, zero, e16, m1, ta, ma
++        vnsrl.wi v2, v16, 0
++.ifc \be, BE
++        vsrl.vi v3, v2, 8
++        vsll.vi v4, v2, 8
++        vor.vv  v2, v3, v4
++.endif
++        vse16.v v2, (a3)
++        sub     a4, a4, a6
++        slli    a6, a6, 1
++        add     a3, a3, a6
++        add     a5, a5, a6
++        bnez    a4, 1b
++3:      ret
++endfunc
++.endm
++.irp depth, 9, 10, 12, 14
++    yuv2planeX \depth, LE
++    yuv2planeX \depth, BE
++.endr
++
++.macro nv_chroma nv21
++func ff_yuv2nv\nv21\()cX_8_rvv, zve32x
++        lpad    0
++        blez    a7, 5f
++        li      a0, 0                 // column byte offset; format chosen in C
++1:      vsetvli t6, a7, e16, m1, ta, ma
++        vsetvli zero, zero, e32, m2, ta, ma
++        vid.v   v8
++        srli    t0, a0, 1
++        vadd.vx v8, v8, t0
++        vand.vi v8, v8, 7
++        vsetvli zero, zero, e8, mf2, ta, ma
++        vluxei32.v v2, (a1), v8
++        vsetvli zero, zero, e16, m1, ta, ma
++        vzext.vf2 v4, v2
++        vsetvli zero, zero, e32, m2, ta, ma
++        vzext.vf2 v16, v4
++        vsll.vi v16, v16, 12
++        vadd.vi v8, v8, 3
++        vand.vi v8, v8, 7
++        vsetvli zero, zero, e8, mf2, ta, ma
++        vluxei32.v v2, (a1), v8
++        vsetvli zero, zero, e16, m1, ta, ma
++        vzext.vf2 v4, v2
++        vsetvli zero, zero, e32, m2, ta, ma
++        vzext.vf2 v18, v4
++        vsll.vi v18, v18, 12
++        vsetvli zero, zero, e16, m1, ta, ma
++        mv      t0, a4
++        mv      t1, a5
++        mv      t2, a2
++        mv      t3, a3
++        blez    t3, 3f
++2:      ld      t4, 0(t0)
++        add     t4, t4, a0
++        vle16.v v2, (t4)
++        ld      t4, 0(t1)
++        add     t4, t4, a0
++        vle16.v v4, (t4)
++        lh      t5, 0(t2)
++        vwmacc.vx v16, t5, v2
++        vwmacc.vx v18, t5, v4
++        addi    t0, t0, 8
++        addi    t1, t1, 8
++        addi    t2, t2, 2
++        addi    t3, t3, -1
++        bnez    t3, 2b
++3:      vsetvli zero, zero, e32, m2, ta, ma
++        vsra.vi v16, v16, 19
++        vsra.vi v18, v18, 19
++        vmax.vx v16, v16, zero
++        vmax.vx v18, v18, zero
++        li      t0, 255
++        vmin.vx v16, v16, t0
++        vmin.vx v18, v18, t0
++        vsetvli zero, zero, e16, m1, ta, ma
++        vnsrl.wi v2, v16, 0
++        vnsrl.wi v3, v18, 0
++        vsetvli zero, zero, e8, mf2, ta, ma
++.if \nv21 == 21
++        vnsrl.wi v5, v2, 0
++        vnsrl.wi v4, v3, 0
++.else
++        vnsrl.wi v4, v2, 0
++        vnsrl.wi v5, v3, 0
++.endif
++        vsseg2e8.v v4, (a6)
++        sub     a7, a7, t6
++        slli    t6, t6, 1
++        add     a0, a0, t6
++        add     a6, a6, t6
++        bnez    a7, 1b
++5:      ret
++endfunc
++.endm
++nv_chroma 12
++nv_chroma 21
++#endif

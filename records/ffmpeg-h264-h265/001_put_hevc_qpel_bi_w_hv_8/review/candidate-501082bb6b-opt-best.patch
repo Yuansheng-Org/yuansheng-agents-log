@@ -1,0 +1,415 @@
+From 9b74581129def912c2960af862ba86203e3d2b28 Mon Sep 17 00:00:00 2001
+From: Fei Zhang <zhangfei@iscas.ac.cn>
+Date: Mon, 21 Sep 2026 09:38:40 +0800
+Subject: [PATCH] avcodec/riscv: add RVV HEVC weighted interpolation
+
+Use RVV for the existing weighted qpel and epel DSP entry points. Keep
+the C functions for width 4 and width 6 epel blocks, where vector setup
+exceeds the useful work on the tested processor.
+
+The horizontal and vertical filters use widening multiply-accumulate.
+Two-dimensional interpolation stores the horizontal result in an
+intermediate 16-bit buffer before the vertical pass.
+---
+ libavcodec/riscv/Makefile                    |   2 +
+ libavcodec/riscv/h26x/h2656dsp.h             |  35 +++++
+ libavcodec/riscv/h26x/hevcdsp_weighted.c     | 155 +++++++++++++++++++
+ libavcodec/riscv/h26x/hevcdsp_weighted_rvv.S | 119 ++++++++++++++
+ libavcodec/riscv/hevcdsp_init.c              |  29 ++++
+ 5 files changed, 340 insertions(+)
+ create mode 100644 libavcodec/riscv/h26x/hevcdsp_weighted.c
+ create mode 100644 libavcodec/riscv/h26x/hevcdsp_weighted_rvv.S
+
+diff --git a/libavcodec/riscv/Makefile b/libavcodec/riscv/Makefile
+index 0299215120..b2cabcfe92 100644
+--- a/libavcodec/riscv/Makefile
++++ b/libavcodec/riscv/Makefile
+@@ -39,6 +39,8 @@ OBJS-$(CONFIG_H264QPEL) += riscv/h264qpel_init.o
+ RVV-OBJS-$(CONFIG_H264QPEL) += riscv/h264qpel_rvv.o
+ OBJS-$(CONFIG_HEVC_DECODER) += riscv/hevcdsp_init.o
+ RVV-OBJS-$(CONFIG_HEVC_DECODER) += riscv/hevcdsp_idct_rvv.o
++RVV-OBJS-$(CONFIG_HEVC_DECODER) += riscv/h26x/hevcdsp_weighted.o \
++                                  riscv/h26x/hevcdsp_weighted_rvv.o
+ RVV-OBJS-$(CONFIG_HEVC_DECODER)  += riscv/h26x/h2656_inter_rvv.o
+ OBJS-$(CONFIG_HUFFYUV_DECODER) += riscv/huffyuvdsp_init.o
+ RVV-OBJS-$(CONFIG_HUFFYUV_DECODER) += riscv/huffyuvdsp_rvv.o
+diff --git a/libavcodec/riscv/h26x/h2656dsp.h b/libavcodec/riscv/h26x/h2656dsp.h
+index 6d2ac55556..4dde722d2a 100644
+--- a/libavcodec/riscv/h26x/h2656dsp.h
++++ b/libavcodec/riscv/h26x/h2656dsp.h
+@@ -24,4 +24,39 @@
+ void ff_h2656_put_pixels_8_rvv_256(int16_t *dst, const uint8_t *src, ptrdiff_t srcstride, int height, intptr_t mx, intptr_t my, int width);
+ void ff_h2656_put_pixels_8_rvv_128(int16_t *dst, const uint8_t *src, ptrdiff_t srcstride, int height, intptr_t mx, intptr_t my, int width);
+ 
++#define HEVC_PEL_W_DECLS(pel, D) \
++void ff_put_hevc_##pel##_uni_w_h_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, \
++                                            const uint8_t *src, ptrdiff_t srcstride, \
++                                            int height, int denom, int wx, int ox, \
++                                            intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_##pel##_uni_w_v_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, \
++                                            const uint8_t *src, ptrdiff_t srcstride, \
++                                            int height, int denom, int wx, int ox, \
++                                            intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_##pel##_uni_w_hv_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, \
++                                             const uint8_t *src, ptrdiff_t srcstride, \
++                                             int height, int denom, int wx, int ox, \
++                                             intptr_t mx, intptr_t my, int width); \
++void ff_put_hevc_##pel##_bi_w_h_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, \
++                                           const uint8_t *src, ptrdiff_t srcstride, \
++                                           const int16_t *src2, int height, int denom, \
++                                           int wx0, int wx1, int ox, intptr_t mx, \
++                                           intptr_t my, int width); \
++void ff_put_hevc_##pel##_bi_w_v_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, \
++                                           const uint8_t *src, ptrdiff_t srcstride, \
++                                           const int16_t *src2, int height, int denom, \
++                                           int wx0, int wx1, int ox, intptr_t mx, \
++                                           intptr_t my, int width); \
++void ff_put_hevc_##pel##_bi_w_hv_##D##_rvv(uint8_t *dst, ptrdiff_t dststride, \
++                                            const uint8_t *src, ptrdiff_t srcstride, \
++                                            const int16_t *src2, int height, int denom, \
++                                            int wx0, int wx1, int ox, intptr_t mx, \
++                                            intptr_t my, int width);
++HEVC_PEL_W_DECLS(qpel, 8)
++HEVC_PEL_W_DECLS(qpel, 9)
++HEVC_PEL_W_DECLS(qpel, 10)
++HEVC_PEL_W_DECLS(qpel, 12)
++HEVC_PEL_W_DECLS(epel, 8)
++#undef HEVC_PEL_W_DECLS
++
+ #endif
+diff --git a/libavcodec/riscv/h26x/hevcdsp_weighted.c b/libavcodec/riscv/h26x/hevcdsp_weighted.c
+new file mode 100644
+index 0000000000..146bce28e6
+--- /dev/null
++++ b/libavcodec/riscv/h26x/hevcdsp_weighted.c
+@@ -0,0 +1,155 @@
++/*
++ * Copyright (c) 2026 Fei Zhang
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "config.h"
++
++#include "libavutil/attributes.h"
++
++#include "libavcodec/hevc/dsp.h"
++#include "libavcodec/riscv/h26x/h2656dsp.h"
++
++typedef void (*HEVCWeightedRow)(uint8_t *dst, const uint8_t *src,
++                                const int16_t *src2, int width,
++                                const int8_t *filter, ptrdiff_t step,
++                                const int32_t *params);
++
++#define HEVC_W_ROW_DECL(input, output, taps, raw)                               \
++void ff_hevc_w_row_##input##_##output##_##taps##_##raw##_rvv(                  \
++    uint8_t *dst, const uint8_t *src, const int16_t *src2, int width,           \
++    const int8_t *filter, ptrdiff_t step, const int32_t *params);
++HEVC_W_ROW_DECL(u8,  8, 8, 0)
++HEVC_W_ROW_DECL(u8,  8, 4, 0)
++HEVC_W_ROW_DECL(u16, 16, 8, 0)
++HEVC_W_ROW_DECL(s16, 8, 8, 0)
++HEVC_W_ROW_DECL(s16, 8, 4, 0)
++HEVC_W_ROW_DECL(s16, 16, 8, 0)
++HEVC_W_ROW_DECL(u8, 16, 8, 1)
++HEVC_W_ROW_DECL(u8, 16, 4, 1)
++HEVC_W_ROW_DECL(u16, 16, 8, 1)
++#undef HEVC_W_ROW_DECL
++
++static av_always_inline void hevc_weighted_hv(uint8_t *dst, ptrdiff_t dst_stride,
++                                               const uint8_t *src, ptrdiff_t src_stride,
++                                               const int16_t *src2, int height, int width,
++                                               const int8_t *hf, const int8_t *vf,
++                                               int taps, int depth,
++                                               const int32_t *params)
++{
++    int16_t tmp[(MAX_PB_SIZE + 7) * MAX_PB_SIZE];
++    int32_t raw_params[7] = { 0, 0, 0, 0, 0, 0, depth - 8 };
++    int32_t final_params[7] = {
++        params[0], params[1], params[2], params[3],
++        params[4], params[5], 6
++    };
++    const int before = taps / 2 - 1;
++    const int pixel_size = depth > 8 ? 2 : 1;
++    HEVCWeightedRow horizontal = depth > 8 ? ff_hevc_w_row_u16_16_8_1_rvv :
++                                 taps == 8 ? ff_hevc_w_row_u8_16_8_1_rvv :
++                                             ff_hevc_w_row_u8_16_4_1_rvv;
++    HEVCWeightedRow vertical = depth > 8 ? ff_hevc_w_row_s16_16_8_0_rvv :
++                               taps == 8 ? ff_hevc_w_row_s16_8_8_0_rvv :
++                                           ff_hevc_w_row_s16_8_4_0_rvv;
++
++    src -= before * src_stride + before * pixel_size;
++    for (int y = 0; y < height + taps - 1; y++)
++        horizontal((uint8_t *)(tmp + y * width), src + y * src_stride,
++                   NULL, width, hf, pixel_size, raw_params);
++
++    for (int y = 0; y < height; y++) {
++        vertical(dst, (const uint8_t *)(tmp + y * width), src2, width,
++                 vf, width * 2, final_params);
++        dst += dst_stride;
++        if (src2)
++            src2 += MAX_PB_SIZE;
++    }
++}
++
++static av_always_inline void hevc_weighted(uint8_t *dst, ptrdiff_t dst_stride,
++                                            const uint8_t *src, ptrdiff_t src_stride,
++                                            const int16_t *src2, int height,
++                                            int denom, int wx0, int wx1, int ox,
++                                            intptr_t mx, intptr_t my, int width,
++                                            int depth, int taps, int dir, int bi)
++{
++    const int pixel_size = depth > 8 ? 2 : 1;
++    const int shift = denom + 14 - depth;
++    const int scale = 1 << (depth - 8);
++    int32_t params[7] = {
++        wx0, wx1,
++        bi ? (ox * scale + 1) * (1 << shift) : 1 << (shift - 1),
++        shift + bi, bi ? 0 : ox * scale, (1 << depth) - 1, depth - 8
++    };
++    const int8_t *hf = taps == 8 ? ff_hevc_qpel_filters[mx] :
++                                   ff_hevc_epel_filters[mx];
++    const int8_t *vf = taps == 8 ? ff_hevc_qpel_filters[my] :
++                                   ff_hevc_epel_filters[my];
++
++    if (dir == 2) {
++        hevc_weighted_hv(dst, dst_stride, src, src_stride, src2, height, width,
++                         hf, vf, taps, depth, params);
++    } else {
++        const ptrdiff_t step = dir ? src_stride : pixel_size;
++        HEVCWeightedRow row = depth > 8 ? ff_hevc_w_row_u16_16_8_0_rvv :
++                              taps == 8 ? ff_hevc_w_row_u8_8_8_0_rvv :
++                                          ff_hevc_w_row_u8_8_4_0_rvv;
++
++        src -= (taps / 2 - 1) * step;
++        for (int y = 0; y < height; y++) {
++            row(dst, src, src2, width, dir ? vf : hf, step, params);
++            dst += dst_stride;
++            src += src_stride;
++            if (src2)
++                src2 += MAX_PB_SIZE;
++        }
++    }
++}
++
++#define HEVC_W_FN(pel, taps, depth, dir, mode)                                  \
++void ff_put_hevc_##pel##_uni_w_##dir##_##depth##_rvv(                          \
++    uint8_t *dst, ptrdiff_t dst_stride, const uint8_t *src,                     \
++    ptrdiff_t src_stride, int height, int denom, int wx, int ox,                \
++    intptr_t mx, intptr_t my, int width)                                         \
++{                                                                                \
++    hevc_weighted(dst, dst_stride, src, src_stride, NULL, height, denom,         \
++                  0, wx, ox, mx, my, width, depth, taps, mode, 0);               \
++}                                                                                \
++                                                                                 \
++void ff_put_hevc_##pel##_bi_w_##dir##_##depth##_rvv(                           \
++    uint8_t *dst, ptrdiff_t dst_stride, const uint8_t *src,                     \
++    ptrdiff_t src_stride, const int16_t *src2, int height, int denom,           \
++    int wx0, int wx1, int ox, intptr_t mx, intptr_t my, int width)              \
++{                                                                                \
++    hevc_weighted(dst, dst_stride, src, src_stride, src2, height, denom,         \
++                  wx0, wx1, ox, mx, my, width, depth, taps, mode, 1);            \
++}
++
++#define HEVC_W_ALL(pel, taps, depth) \
++    HEVC_W_FN(pel, taps, depth, h,  0) \
++    HEVC_W_FN(pel, taps, depth, v,  1) \
++    HEVC_W_FN(pel, taps, depth, hv, 2)
++
++HEVC_W_ALL(qpel, 8, 8)
++HEVC_W_ALL(qpel, 8, 9)
++HEVC_W_ALL(qpel, 8, 10)
++HEVC_W_ALL(qpel, 8, 12)
++HEVC_W_ALL(epel, 4, 8)
++
++#undef HEVC_W_ALL
++#undef HEVC_W_FN
+diff --git a/libavcodec/riscv/h26x/hevcdsp_weighted_rvv.S b/libavcodec/riscv/h26x/hevcdsp_weighted_rvv.S
+new file mode 100644
+index 0000000000..8c54d0706f
+--- /dev/null
++++ b/libavcodec/riscv/h26x/hevcdsp_weighted_rvv.S
+@@ -0,0 +1,119 @@
++/*
++ * Copyright (c) 2026 Fei Zhang
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "libavutil/riscv/asm.S"
++
++/* params = { wx0, wx1, round, shift, offset, max, filter_shift } */
++.macro hevc_w_row input, output, taps, raw=0
++func ff_hevc_w_row_\input\()_\output\()_\taps\()_\raw\()_rvv, zve32x
++        lpad    0
++1:      vsetvli t0, a3, e32, m2, ta, ma
++        vmv.v.i v16, 0
++        vsetvli zero, zero, e16, m1, ta, ma
++        mv      t1, a1
++.irp k, 0, 1, 2, 3
++        lb      t2, \k(a4)
++.ifc \input, u8
++        vle8.v  v2, (t1)
++        vzext.vf2 v4, v2
++.else
++        vle16.v v4, (t1)
++.endif
++.ifc \input, s16
++        vwmacc.vx v16, t2, v4
++.else
++        vwmaccsu.vx v16, t2, v4
++.endif
++        add     t1, t1, a5
++.endr
++.if \taps == 8
++.irp k, 4, 5, 6, 7
++        lb      t2, \k(a4)
++.ifc \input, u8
++        vle8.v  v2, (t1)
++        vzext.vf2 v4, v2
++.else
++        vle16.v v4, (t1)
++.endif
++.ifc \input, s16
++        vwmacc.vx v16, t2, v4
++.else
++        vwmaccsu.vx v16, t2, v4
++.endif
++        add     t1, t1, a5
++.endr
++.endif
++        vsetvli zero, zero, e32, m2, ta, ma
++        lw      t2, 24(a6)
++        vsra.vx v16, v16, t2
++.if !\raw
++        lw      t2, 4(a6)
++        vmul.vx v16, v16, t2
++        beqz    a2, 2f
++        vle16.v v4, (a2)
++        vsext.vf2 v20, v4
++        lw      t2, 0(a6)
++        vmul.vx v20, v20, t2
++        vadd.vv v16, v16, v20
++        slli    t1, t0, 1
++        add     a2, a2, t1
++2:      lw      t2, 8(a6)
++        vadd.vx v16, v16, t2
++        lw      t2, 12(a6)
++        vsra.vx v16, v16, t2
++        lw      t2, 16(a6)
++        vadd.vx v16, v16, t2
++        vmax.vx v16, v16, zero
++        lw      t2, 20(a6)
++        vmin.vx v16, v16, t2
++.endif
++        vsetvli zero, zero, e16, m1, ta, ma
++        vnsrl.wi v2, v16, 0
++.if \output == 8
++        vsetvli zero, zero, e8, mf2, ta, ma
++        vnsrl.wi v4, v2, 0
++        vse8.v  v4, (a0)
++        add     a0, a0, t0
++.else
++        vse16.v v2, (a0)
++        slli    t1, t0, 1
++        add     a0, a0, t1
++.endif
++.ifc \input, u8
++        add     a1, a1, t0
++.else
++        slli    t1, t0, 1
++        add     a1, a1, t1
++.endif
++        sub     a3, a3, t0
++        bnez    a3, 1b
++        ret
++endfunc
++.endm
++
++hevc_w_row u8,  8, 8
++hevc_w_row u8,  8, 4
++hevc_w_row u16, 16, 8
++hevc_w_row s16, 8, 8
++hevc_w_row s16, 8, 4
++hevc_w_row s16, 16, 8
++hevc_w_row u8, 16, 8, 1
++hevc_w_row u8, 16, 4, 1
++hevc_w_row u16, 16, 8, 1
+diff --git a/libavcodec/riscv/hevcdsp_init.c b/libavcodec/riscv/hevcdsp_init.c
+index 597b635248..3fb9235758 100644
+--- a/libavcodec/riscv/hevcdsp_init.c
++++ b/libavcodec/riscv/hevcdsp_init.c
+@@ -43,6 +43,18 @@ void ff_hevc_add_residual_32x32_8_rvv(uint8_t *_dst, const int16_t *coeffs,
+         member[7][v][h] = ff_h2656_put_pixels_##8_##ext; \
+         member[9][v][h] = ff_h2656_put_pixels_##8_##ext;
+ 
++#define SET_HEVC_PEL_W(pel, D, EXT, first)                                      \
++    do {                                                                        \
++        for (int i = first; i < 10; i++) {                                      \
++            c->put_hevc_##pel##_uni_w[i][0][1] = ff_put_hevc_##pel##_uni_w_h_##D##_##EXT;  \
++            c->put_hevc_##pel##_uni_w[i][1][0] = ff_put_hevc_##pel##_uni_w_v_##D##_##EXT;  \
++            c->put_hevc_##pel##_uni_w[i][1][1] = ff_put_hevc_##pel##_uni_w_hv_##D##_##EXT; \
++            c->put_hevc_##pel##_bi_w[i][0][1]  = ff_put_hevc_##pel##_bi_w_h_##D##_##EXT;   \
++            c->put_hevc_##pel##_bi_w[i][1][0]  = ff_put_hevc_##pel##_bi_w_v_##D##_##EXT;   \
++            c->put_hevc_##pel##_bi_w[i][1][1]  = ff_put_hevc_##pel##_bi_w_hv_##D##_##EXT;  \
++        }                                                                       \
++    } while (0)
++
+ void ff_hevc_dsp_init_riscv(HEVCDSPContext *c, const int bit_depth)
+ {
+ #if HAVE_RVV
+@@ -77,6 +89,23 @@ void ff_hevc_dsp_init_riscv(HEVCDSPContext *c, const int bit_depth)
+     }
+ 
+     if (vlenb >= 16) {
++        switch (bit_depth) {
++            case 8:
++                SET_HEVC_PEL_W(qpel, 8, rvv, 2);
++                SET_HEVC_PEL_W(epel, 8, rvv, 3);
++                break;
++            case 9:
++                SET_HEVC_PEL_W(qpel, 9, rvv, 2);
++                break;
++            case 10:
++                SET_HEVC_PEL_W(qpel, 10, rvv, 2);
++                break;
++            case 12:
++                SET_HEVC_PEL_W(qpel, 12, rvv, 2);
++                break;
++            default:
++                break;
++        }
+         switch (bit_depth){
+             case 8:
+                 c->add_residual[0]             = ff_hevc_add_residual_4x4_8_rvv;
+-- 
+2.53.0
+

@@ -1,0 +1,100 @@
+diff --git a/libavcodec/riscv/h264_chroma_init_riscv.c b/libavcodec/riscv/h264_chroma_init_riscv.c
+index b6bde42c0a..b695d20996 100644
+--- a/libavcodec/riscv/h264_chroma_init_riscv.c
++++ b/libavcodec/riscv/h264_chroma_init_riscv.c
+@@ -32,6 +32,13 @@ void h264_avg_chroma_mc4_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t str
+ void h264_put_chroma_mc2_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t stride, int h, int x, int y);
+ void h264_avg_chroma_mc2_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t stride, int h, int x, int y);
+ 
++void ff_put_h264_chroma_mc8_16_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t stride, int h, int x, int y);
++void ff_avg_h264_chroma_mc8_16_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t stride, int h, int x, int y);
++void ff_put_h264_chroma_mc4_16_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t stride, int h, int x, int y);
++void ff_avg_h264_chroma_mc4_16_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t stride, int h, int x, int y);
++void ff_put_h264_chroma_mc2_16_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t stride, int h, int x, int y);
++void ff_avg_h264_chroma_mc2_16_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t stride, int h, int x, int y);
++
+ av_cold void ff_h264chroma_init_riscv(H264ChromaContext *c, int bit_depth)
+ {
+ #if HAVE_RVV
+@@ -45,6 +52,14 @@ av_cold void ff_h264chroma_init_riscv(H264ChromaContext *c, int bit_depth)
+         c->avg_h264_chroma_pixels_tab[1] = h264_avg_chroma_mc4_rvv;
+         c->put_h264_chroma_pixels_tab[2] = h264_put_chroma_mc2_rvv;
+         c->avg_h264_chroma_pixels_tab[2] = h264_avg_chroma_mc2_rvv;
++    } else if (bit_depth > 8 && (flags & AV_CPU_FLAG_RVV_I32) &&
++               ff_rv_vlen_least(128)) {
++        c->put_h264_chroma_pixels_tab[0] = ff_put_h264_chroma_mc8_16_rvv;
++        c->avg_h264_chroma_pixels_tab[0] = ff_avg_h264_chroma_mc8_16_rvv;
++        c->put_h264_chroma_pixels_tab[1] = ff_put_h264_chroma_mc4_16_rvv;
++        c->avg_h264_chroma_pixels_tab[1] = ff_avg_h264_chroma_mc4_16_rvv;
++        c->put_h264_chroma_pixels_tab[2] = ff_put_h264_chroma_mc2_16_rvv;
++        c->avg_h264_chroma_pixels_tab[2] = ff_avg_h264_chroma_mc2_16_rvv;
+     }
+ #endif
+ }
+diff --git a/libavcodec/riscv/h264_mc_chroma.S b/libavcodec/riscv/h264_mc_chroma.S
+index 79394b987d..58076be243 100644
+--- a/libavcodec/riscv/h264_mc_chroma.S
++++ b/libavcodec/riscv/h264_mc_chroma.S
+@@ -380,3 +380,62 @@ func h264_avg_chroma_mc2_rvv, zve32x
+         li      t6, 2
+         j       21b
+ endfunc
++
++// 16-bit (high bit depth >= 9) H.264 chroma MC. Mirrors the general
++// 4-tap path of h264chroma_template.c exactly:
++//   r[i] = (A*s0[i] + B*s0[i+1] + C*s1[i] + D*s1[i+1] + 32) >> 6
++//   avg: dst[i] = (dst[i] + r[i] + 1) >> 1
++// with A=(8-x)(8-y), B=x(8-y), C=(8-x)y, D=xy. The A/B/C/D weighting
++// is depth-independent (weights sum to 64, no overflow for 16-bit
++// pixels), so a single kernel serves all bit depths > 8.
++// Signature: (uint16_t *dst, const uint16_t *src, ptrdiff_t stride,
++//             int h, int x, int y)  -- a0..a5
++.macro h264_chroma_mc16 op, w
++func ff_\op\()_h264_chroma_mc\w\()_16_rvv, zve32x
++        lpad    0
++        li      t0, 8
++        sub     t1, t0, a4              // 8 - x
++        sub     t2, t0, a5              // 8 - y
++        mul     t3, t1, t2              // A
++        mul     t4, a4, t2              // B
++        mul     t5, t1, a5              // C
++        mul     t6, a4, a5              // D
++        srai    a2, a2, 1               // stride in uint16 units
++        slli    a2, a2, 1               // ... back to bytes (row advance)
++        li      t0, 32                  // rounding bias
++1:
++        vsetivli zero, \w, e16, m1, ta, ma
++        vle16.v v0, (a1)                // s0[0..w-1]
++        addi    a6, a1, 2
++        vle16.v v1, (a6)                // s0[1..w]
++        add     a6, a1, a2
++        vle16.v v2, (a6)                // s1[0..w-1]
++        addi    a6, a6, 2
++        vle16.v v3, (a6)                // s1[1..w]
++        vwmulu.vx v4, v0, t3            // A*s0
++        vwmaccu.vx v4, t4, v1           // + B*s0[+1]
++        vwmaccu.vx v4, t5, v2           // + C*s1
++        vwmaccu.vx v4, t6, v3           // + D*s1[+1]
++        vsetvli zero, zero, e32, m2, ta, ma
++        vadd.vx v4, v4, t0              // + 32 (e32)
++        vnsrl.wi v6, v4, 6              // narrow + >> 6  -> e16 (separate dest)
++        vsetvli zero, zero, e16, m1, ta, ma
++.ifc \op, avg
++        vle16.v v5, (a0)
++        vaaddu.vv v6, v6, v5            // (dst + r + 1) >> 1
++.endif
++        vse16.v v6, (a0)
++        add     a1, a1, a2
++        add     a0, a0, a2
++        addi    a3, a3, -1
++        bnez    a3, 1b
++        ret
++endfunc
++.endm
++
++        h264_chroma_mc16 put, 8
++        h264_chroma_mc16 put, 4
++        h264_chroma_mc16 put, 2
++        h264_chroma_mc16 avg, 8
++        h264_chroma_mc16 avg, 4
++        h264_chroma_mc16 avg, 2

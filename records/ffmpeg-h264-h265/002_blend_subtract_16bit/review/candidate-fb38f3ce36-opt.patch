@@ -1,0 +1,296 @@
+diff --git a/libavfilter/blend.h b/libavfilter/blend.h
+index e6636839db..55313184a4 100644
+--- a/libavfilter/blend.h
++++ b/libavfilter/blend.h
+@@ -87,6 +87,7 @@ typedef struct FilterParams {
+                   struct FilterParams *param, SliceParams *sliceparam);
+ } FilterParams;
+ 
++void ff_blend_init_riscv(FilterParams *param, int depth);
+ void ff_blend_init_x86(FilterParams *param, int depth);
+ 
+ #endif /* AVFILTER_BLEND_H */
+diff --git a/libavfilter/riscv/Makefile b/libavfilter/riscv/Makefile
+index 32b07eec1a..1a5101258c 100644
+--- a/libavfilter/riscv/Makefile
++++ b/libavfilter/riscv/Makefile
+@@ -3,4 +3,9 @@ RVV-OBJS-$(CONFIG_AFIR_FILTER)               += riscv/af_afir_rvv.o
+ OBJS-$(CONFIG_BLACKDETECT_FILTER) += riscv/vf_blackdetect_init.o
+ RVV-OBJS-$(CONFIG_BLACKDETECT_FILTER) += riscv/vf_blackdetect_rvv.o
+ 
++OBJS-$(CONFIG_BLEND_FILTER) += riscv/vf_blend_init.o
++RVV-OBJS-$(CONFIG_BLEND_FILTER) += riscv/vf_blend_rvv.o
++OBJS-$(CONFIG_TBLEND_FILTER) += riscv/vf_blend_init.o
++RVV-OBJS-$(CONFIG_TBLEND_FILTER) += riscv/vf_blend_rvv.o
++
+ SHLIBOBJS += riscv/cpu_common.o
+diff --git a/libavfilter/riscv/vf_blend_init.c b/libavfilter/riscv/vf_blend_init.c
+new file mode 100644
+index 0000000000..1e2c86ae28
+--- /dev/null
++++ b/libavfilter/riscv/vf_blend_init.c
+@@ -0,0 +1,87 @@
++/*
++ * Copyright (c) 2013 Paul B Mahol
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "config.h"
++#include "libavutil/riscv/cpu.h"
++#include "libavfilter/blend.h"
++
++#define DECL_BLEND(name, depth) \
++void ff_blend_##name##_##depth##_rvv(const uint8_t *, ptrdiff_t, const uint8_t *, ptrdiff_t, \
++    uint8_t *, ptrdiff_t, ptrdiff_t, ptrdiff_t, FilterParams *, SliceParams *);
++DECL_BLEND(addition, 8)
++DECL_BLEND(and, 8)
++DECL_BLEND(darken, 8)
++DECL_BLEND(difference, 8)
++DECL_BLEND(extremity, 8)
++DECL_BLEND(grainextract, 8)
++DECL_BLEND(grainmerge, 8)
++DECL_BLEND(hardmix, 8)
++DECL_BLEND(lighten, 8)
++DECL_BLEND(multiply, 8)
++DECL_BLEND(or, 8)
++DECL_BLEND(screen, 8)
++DECL_BLEND(subtract, 8)
++DECL_BLEND(xor, 8)
++DECL_BLEND(subtract, 16)
++DECL_BLEND(addition, 16)
++DECL_BLEND(and, 16)
++DECL_BLEND(grainextract, 16)
++DECL_BLEND(grainmerge, 16)
++DECL_BLEND(lighten, 16)
++DECL_BLEND(phoenix, 16)
++#undef DECL_BLEND
++
++av_cold void ff_blend_init_riscv(FilterParams *param, int depth)
++{
++#if HAVE_RVV
++    if (param->opacity != 1.0 || !(av_get_cpu_flags() & AV_CPU_FLAG_RVV_I32) ||
++        !ff_rv_vlen_least(128))
++        return;
++    if (depth == 8) {
++        switch (param->mode) {
++        case BLEND_ADDITION: param->blend = ff_blend_addition_8_rvv; break;
++        case BLEND_AND: param->blend = ff_blend_and_8_rvv; break;
++        case BLEND_DARKEN: param->blend = ff_blend_darken_8_rvv; break;
++        case BLEND_DIFFERENCE: param->blend = ff_blend_difference_8_rvv; break;
++        case BLEND_EXTREMITY: param->blend = ff_blend_extremity_8_rvv; break;
++        case BLEND_GRAINEXTRACT: param->blend = ff_blend_grainextract_8_rvv; break;
++        case BLEND_GRAINMERGE: param->blend = ff_blend_grainmerge_8_rvv; break;
++        case BLEND_HARDMIX: param->blend = ff_blend_hardmix_8_rvv; break;
++        case BLEND_LIGHTEN: param->blend = ff_blend_lighten_8_rvv; break;
++        case BLEND_MULTIPLY: param->blend = ff_blend_multiply_8_rvv; break;
++        case BLEND_OR: param->blend = ff_blend_or_8_rvv; break;
++        case BLEND_SCREEN: param->blend = ff_blend_screen_8_rvv; break;
++        case BLEND_SUBTRACT: param->blend = ff_blend_subtract_8_rvv; break;
++        case BLEND_XOR: param->blend = ff_blend_xor_8_rvv; break;
++        }
++    }
++    if (depth == 16) {
++        switch (param->mode) {
++        case BLEND_SUBTRACT: param->blend = ff_blend_subtract_16_rvv; break;
++        case BLEND_ADDITION: param->blend = ff_blend_addition_16_rvv; break;
++        case BLEND_AND: param->blend = ff_blend_and_16_rvv; break;
++        case BLEND_GRAINEXTRACT: param->blend = ff_blend_grainextract_16_rvv; break;
++        case BLEND_GRAINMERGE: param->blend = ff_blend_grainmerge_16_rvv; break;
++        case BLEND_LIGHTEN: param->blend = ff_blend_lighten_16_rvv; break;
++        case BLEND_PHOENIX: param->blend = ff_blend_phoenix_16_rvv; break;
++        }
++    }
++#endif
++}
+diff --git a/libavfilter/riscv/vf_blend_rvv.S b/libavfilter/riscv/vf_blend_rvv.S
+new file mode 100644
+index 0000000000..6bd4e07175
+--- /dev/null
++++ b/libavfilter/riscv/vf_blend_rvv.S
+@@ -0,0 +1,158 @@
++/*
++ * Copyright (c) 2013 Paul B Mahol
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "libavutil/riscv/asm.S"
++
++.macro blend name, depth, wide
++func ff_blend_\name\()_\depth\()_rvv, zve32x
++        lpad    0
++        blez    a6, 3f
++        blez    a7, 3f
++        li      t5, (1 << \depth) - 1
++        li      t6, 1 << (\depth - 1)
++1:      mv      t1, a6
++        mv      t2, a0
++        mv      t3, a2
++        mv      t4, a4
++2:      vsetvli t0, t1, e\depth, m1, ta, ma
++.if \depth == 8
++        vle8.v  v2, (t2)
++        vle8.v  v4, (t3)
++.else
++        vle16.v v2, (t2)
++        vle16.v v4, (t3)
++.endif
++        vsetvli zero, zero, e\wide, m2, ta, ma
++        vzext.vf2 v8, v2
++        vzext.vf2 v10, v4
++.ifc \name, addition
++        vadd.vv v16, v8, v10
++        vminu.vx v16, v16, t5
++.endif
++.ifc \name, and
++        vand.vv v16, v8, v10
++.endif
++.ifc \name, darken
++        vminu.vv v16, v8, v10
++.endif
++.ifc \name, difference
++        vsub.vv v16, v8, v10
++        vneg.v v18, v16
++        vmax.vv v16, v16, v18
++.endif
++.ifc \name, extremity
++        vadd.vv v16, v8, v10
++        vrsub.vx v16, v16, t5
++        vneg.v v18, v16
++        vmax.vv v16, v16, v18
++.endif
++.ifc \name, grainextract
++        vsub.vv v16, v8, v10
++        vadd.vx v16, v16, t6
++        vmax.vx v16, v16, zero
++        vmin.vx v16, v16, t5
++.endif
++.ifc \name, grainmerge
++        vadd.vv v16, v8, v10
++        vsub.vx v16, v16, t6
++        vmax.vx v16, v16, zero
++        vmin.vx v16, v16, t5
++.endif
++.ifc \name, hardmix
++        vadd.vv v16, v8, v10
++        vmsltu.vx v0, v16, t5
++        vmv.v.x v18, t5
++        vmerge.vxm v16, v18, zero, v0
++.endif
++.ifc \name, lighten
++        vmaxu.vv v16, v8, v10
++.endif
++.ifc \name, multiply
++        vmul.vv v16, v8, v10
++        vdivu.vx v16, v16, t5
++.endif
++.ifc \name, or
++        vor.vv v16, v8, v10
++.endif
++.ifc \name, screen
++        vrsub.vx v8, v8, t5
++        vrsub.vx v10, v10, t5
++        vmul.vv v16, v8, v10
++        vdivu.vx v16, v16, t5
++        vrsub.vx v16, v16, t5
++.endif
++.ifc \name, subtract
++        vsub.vv v16, v8, v10
++        vmax.vx v16, v16, zero
++.endif
++.ifc \name, xor
++        vxor.vv v16, v8, v10
++.endif
++.ifc \name, phoenix
++        vmaxu.vv v16, v8, v10
++        vminu.vv v18, v8, v10
++        vsub.vv v16, v16, v18
++        vrsub.vx v16, v16, t5
++.endif
++        vsetvli zero, zero, e\depth, m1, ta, ma
++        vnsrl.wi v2, v16, 0
++.if \depth == 8
++        vse8.v  v2, (t4)
++.else
++        vse16.v v2, (t4)
++.endif
++        sub     t1, t1, t0
++ .if \depth == 16
++        slli    t0, t0, 1
++ .endif
++        add     t2, t2, t0
++        add     t3, t3, t0
++        add     t4, t4, t0
++        bnez    t1, 2b
++        add     a0, a0, a1
++        add     a2, a2, a3
++        add     a4, a4, a5
++        addi    a7, a7, -1
++        bnez    a7, 1b
++3:      ret
++endfunc
++.endm
++
++blend addition, 8, 16
++blend and, 8, 16
++blend darken, 8, 16
++blend difference, 8, 16
++blend extremity, 8, 16
++blend grainextract, 8, 16
++blend grainmerge, 8, 16
++blend hardmix, 8, 16
++blend lighten, 8, 16
++blend multiply, 8, 16
++blend or, 8, 16
++blend screen, 8, 16
++blend subtract, 8, 16
++blend xor, 8, 16
++blend subtract, 16, 32
++blend addition, 16, 32
++blend and, 16, 32
++blend grainextract, 16, 32
++blend grainmerge, 16, 32
++blend lighten, 16, 32
++blend phoenix, 16, 32
+diff --git a/libavfilter/vf_blend_init.h b/libavfilter/vf_blend_init.h
+index 4ee0b94ba5..f80ad8adff 100644
+--- a/libavfilter/vf_blend_init.h
++++ b/libavfilter/vf_blend_init.h
+@@ -192,6 +192,8 @@ av_unused static void ff_blend_init(FilterParams *param, int depth)
+ 
+ #if ARCH_X86 && HAVE_X86ASM
+     ff_blend_init_x86(param, depth);
++#elif ARCH_RISCV
++    ff_blend_init_riscv(param, depth);
+ #endif
+ }
+ 

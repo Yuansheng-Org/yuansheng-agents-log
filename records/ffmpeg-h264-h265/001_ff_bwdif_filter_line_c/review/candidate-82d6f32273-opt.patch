@@ -1,0 +1,314 @@
+diff --git a/libavfilter/bwdifdsp.c b/libavfilter/bwdifdsp.c
+index 58e18f0a92..74c709c1c5 100644
+--- a/libavfilter/bwdifdsp.c
++++ b/libavfilter/bwdifdsp.c
+@@ -222,5 +222,7 @@ av_cold void ff_bwdif_init_filter_line(BWDIFDSPContext *s, int bit_depth)
+     ff_bwdif_init_x86(s, bit_depth);
+ #elif ARCH_AARCH64
+     ff_bwdif_init_aarch64(s, bit_depth);
++#elif ARCH_RISCV
++    ff_bwdif_init_riscv(s, bit_depth);
+ #endif
+ }
+diff --git a/libavfilter/bwdifdsp.h b/libavfilter/bwdifdsp.h
+index 4a350e5ccc..21b9156f3c 100644
+--- a/libavfilter/bwdifdsp.h
++++ b/libavfilter/bwdifdsp.h
+@@ -38,6 +38,7 @@ typedef struct BWDIFDSPContext {
+ } BWDIFDSPContext;
+ 
+ void ff_bwdif_init_filter_line(BWDIFDSPContext *bwdif, int bit_depth);
++void ff_bwdif_init_riscv(BWDIFDSPContext *s, int bit_depth);
+ void ff_bwdif_init_x86(BWDIFDSPContext *bwdif, int bit_depth);
+ void ff_bwdif_init_aarch64(BWDIFDSPContext *bwdif, int bit_depth);
+ 
+diff --git a/libavfilter/riscv/Makefile b/libavfilter/riscv/Makefile
+index 32b07eec1a..f3210d466c 100644
+--- a/libavfilter/riscv/Makefile
++++ b/libavfilter/riscv/Makefile
+@@ -4,3 +4,6 @@ OBJS-$(CONFIG_BLACKDETECT_FILTER) += riscv/vf_blackdetect_init.o
+ RVV-OBJS-$(CONFIG_BLACKDETECT_FILTER) += riscv/vf_blackdetect_rvv.o
+ 
+ SHLIBOBJS += riscv/cpu_common.o
++
++OBJS-$(CONFIG_BWDIF_FILTER) += riscv/vf_bwdif_init.o
++RVV-OBJS-$(CONFIG_BWDIF_FILTER) += riscv/vf_bwdif_rvv.o
+diff --git a/libavfilter/riscv/vf_bwdif_init.c b/libavfilter/riscv/vf_bwdif_init.c
+new file mode 100644
+index 0000000000..c7f2031e7b
+--- /dev/null
++++ b/libavfilter/riscv/vf_bwdif_init.c
+@@ -0,0 +1,58 @@
++/*
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "config.h"
++#include "libavutil/riscv/cpu.h"
++#include "libavfilter/bwdifdsp.h"
++
++#if HAVE_RVV && (__riscv_xlen == 64)
++void ff_bwdif_line_rvv(uint8_t *, const uint8_t **, int, int);
++void ff_bwdif_edge_rvv(uint8_t *, const uint8_t **, int, int, int);
++#define ROWS_COMMON \
++    const uint8_t *p = prev, *c = cur, *n = next; \
++    const uint8_t *p2 = parity ? p : c, *n2 = parity ? c : n; \
++    const uint8_t *rows[] = {p2, n2, p+mrefs, p+prefs, c+mrefs, c+prefs, \
++        n+mrefs, n+prefs, p2+mrefs2, n2+mrefs2, p2+prefs2, n2+prefs2
++static void filter_line(void *dst, const void *prev, const void *cur, const void *next,
++                        int w, int prefs, int mrefs, int prefs2, int mrefs2,
++                        int prefs3, int mrefs3, int prefs4, int mrefs4,
++                        int parity, int clip_max)
++{
++    ROWS_COMMON, c+mrefs3, c+prefs3, p2+mrefs4, n2+mrefs4,
++        p2+prefs4, n2+prefs4};
++    ff_bwdif_line_rvv(dst, rows, w, clip_max);
++}
++static void filter_edge(void *dst, const void *prev, const void *cur, const void *next,
++                        int w, int prefs, int mrefs, int prefs2, int mrefs2,
++                        int parity, int clip_max, int spat)
++{
++    ROWS_COMMON};
++    ff_bwdif_edge_rvv(dst, rows, w, clip_max, spat);
++}
++#undef ROWS_COMMON
++#endif
++av_cold void ff_bwdif_init_riscv(BWDIFDSPContext *s, int bit_depth)
++{
++#if HAVE_RVV && (__riscv_xlen == 64)
++    if (bit_depth == 8 && (av_get_cpu_flags() & AV_CPU_FLAG_RVV_I32) &&
++        ff_rv_vlen_least(128)) {
++        s->filter_line = filter_line;
++        s->filter_edge = filter_edge;
++    }
++#endif
++}
+diff --git a/libavfilter/riscv/vf_bwdif_rvv.S b/libavfilter/riscv/vf_bwdif_rvv.S
+new file mode 100644
+index 0000000000..773a8b16f1
+--- /dev/null
++++ b/libavfilter/riscv/vf_bwdif_rvv.S
+@@ -0,0 +1,209 @@
++/*
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "libavutil/riscv/asm.S"
++
++#if __riscv_xlen == 64
++.macro absdiff dest, x, y
++        vsub.vv \dest, \x, \y
++        vneg.v v30, \dest
++        vmax.vv \dest, \dest, v30
++.endm
++.macro bwdif edge
++        lpad 0
++        blez a2, 9f
++        li t6, 0
++1:      vsetvli t0, a2, e32, m1, ta, ma
++        ld t1, 0(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v1, v31
++        ld t1, 8(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v2, v31
++        ld t1, 16(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v3, v31
++        ld t1, 24(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v4, v31
++        ld t1, 32(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v5, v31
++        ld t1, 40(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v6, v31
++        ld t1, 48(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v7, v31
++        ld t1, 56(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v8, v31
++.if \edge
++        beqz a4, 2f
++.endif
++        ld t1, 64(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v9, v31
++        ld t1, 72(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v10, v31
++        ld t1, 80(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v11, v31
++        ld t1, 88(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v12, v31
++.if !\edge
++        ld t1, 96(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v13, v31
++        ld t1, 104(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v14, v31
++        ld t1, 112(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v15, v31
++        ld t1, 120(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v16, v31
++        ld t1, 128(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v17, v31
++        ld t1, 136(a1)
++        add t1, t1, t6
++        vle8.v v31, (t1)
++        vzext.vf4 v18, v31
++.endif
++2:      vadd.vv v19, v1, v2
++        vsrl.vi v19, v19, 1
++        absdiff v21, v1, v2
++        absdiff v22, v3, v5
++        absdiff v23, v4, v6
++        vadd.vv v22, v22, v23
++        vsrl.vi v22, v22, 1
++        absdiff v23, v7, v5
++        absdiff v24, v8, v6
++        vadd.vv v23, v23, v24
++        vsrl.vi v23, v23, 1
++        vsrl.vi v20, v21, 1
++        vmax.vv v20, v20, v22
++        vmax.vv v20, v20, v23
++        vmsne.vx v25, v20, zero
++.if \edge
++        beqz a4, 3f
++.endif
++        vadd.vv v22, v9, v10
++        vsrl.vi v22, v22, 1
++        vsub.vv v22, v22, v5
++        vadd.vv v23, v11, v12
++        vsrl.vi v23, v23, 1
++        vsub.vv v23, v23, v6
++        vsub.vv v24, v19, v5
++        vsub.vv v26, v19, v6
++        vmin.vv v27, v22, v23
++        vmax.vv v22, v22, v23
++        vmax.vv v27, v27, v24
++        vmax.vv v27, v27, v26
++        vmin.vv v22, v22, v24
++        vmin.vv v22, v22, v26
++        vneg.v v27, v27
++        vmax.vv v20, v20, v22
++        vmax.vv v20, v20, v27
++3:      vadd.vv v22, v5, v6
++.if \edge
++        vsrl.vi v28, v22, 1
++.else
++        absdiff v23, v5, v6
++        vmslt.vv v26, v21, v23
++        vadd.vv v23, v13, v14
++        li t1, 5077
++        vmul.vx v28, v22, t1
++        li t1, 981
++        vmul.vx v24, v23, t1
++        vsub.vv v28, v28, v24
++        vsra.vi v28, v28, 13
++        vadd.vv v24, v1, v2
++        li t1, 5570
++        vmul.vx v24, v24, t1
++        vadd.vv v27, v9, v10
++        vadd.vv v27, v27, v11
++        vadd.vv v27, v27, v12
++        li t1, 3801
++        vmul.vx v27, v27, t1
++        vsub.vv v24, v24, v27
++        vadd.vv v27, v15, v16
++        vadd.vv v27, v27, v17
++        vadd.vv v27, v27, v18
++        li t1, 1016
++        vmul.vx v27, v27, t1
++        vadd.vv v24, v24, v27
++        vsra.vi v24, v24, 2
++        li t1, 4309
++        vmul.vx v22, v22, t1
++        vadd.vv v24, v24, v22
++        li t1, 213
++        vmul.vx v23, v23, t1
++        vsub.vv v24, v24, v23
++        vsra.vi v24, v24, 13
++        vmmv.m v0, v26
++        vmerge.vvm v28, v28, v24, v0
++.endif
++        vadd.vv v22, v19, v20
++        vsub.vv v23, v19, v20
++        vmin.vv v28, v28, v22
++        vmax.vv v28, v28, v23
++        vmax.vx v28, v28, zero
++        vmin.vx v28, v28, a3
++        vmmv.m v0, v25
++        vmerge.vvm v28, v19, v28, v0
++        vsetvli zero, t0, e16, mf2, ta, ma
++        vnsrl.wi v29, v28, 0
++        vsetvli zero, t0, e8, mf4, ta, ma
++        vnsrl.wi v31, v29, 0
++        vse8.v v31, (a0)
++        add a0, a0, t0
++        add t6, t6, t0
++        sub a2, a2, t0
++        bnez a2, 1b
++9:      ret
++.endm
++func ff_bwdif_line_rvv, zve32x
++        bwdif 0
++endfunc
++func ff_bwdif_edge_rvv, zve32x
++        bwdif 1
++endfunc
++
++#endif

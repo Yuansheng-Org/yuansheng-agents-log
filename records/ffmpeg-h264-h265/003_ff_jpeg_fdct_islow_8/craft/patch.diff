@@ -1,0 +1,357 @@
+diff --git a/libavcodec/fdctdsp.c b/libavcodec/fdctdsp.c
+index d20558ce88..2d217ae664 100644
+--- a/libavcodec/fdctdsp.c
++++ b/libavcodec/fdctdsp.c
+@@ -48,5 +48,7 @@ av_cold void ff_fdctdsp_init(FDCTDSPContext *c, AVCodecContext *avctx)
+     ff_fdctdsp_init_ppc(c, avctx, high_bit_depth);
+ #elif ARCH_X86
+     ff_fdctdsp_init_x86(c, avctx, high_bit_depth);
++#elif ARCH_RISCV
++    ff_fdctdsp_init_riscv(c, avctx, high_bit_depth);
+ #endif
+ }
+diff --git a/libavcodec/fdctdsp.h b/libavcodec/fdctdsp.h
+index cad99ed7ca..a8a45310f0 100644
+--- a/libavcodec/fdctdsp.h
++++ b/libavcodec/fdctdsp.h
+@@ -38,6 +38,8 @@ void ff_fdctdsp_init_ppc(FDCTDSPContext *c, struct AVCodecContext *avctx,
+                          unsigned high_bit_depth);
+ void ff_fdctdsp_init_x86(FDCTDSPContext *c, struct AVCodecContext *avctx,
+                          unsigned high_bit_depth);
++void ff_fdctdsp_init_riscv(FDCTDSPContext *c, struct AVCodecContext *avctx,
++                           unsigned high_bit_depth);
+ 
+ void ff_fdct_ifast(int16_t *data);
+ void ff_fdct_ifast248(int16_t *data);
+diff --git a/libavcodec/riscv/Makefile b/libavcodec/riscv/Makefile
+index 90f186877a..a8b46c2c06 100644
+--- a/libavcodec/riscv/Makefile
++++ b/libavcodec/riscv/Makefile
+@@ -98,3 +98,5 @@ OBJS-$(CONFIG_VORBIS_DECODER) += riscv/vorbisdsp_init.o
+ RVV-OBJS-$(CONFIG_VORBIS_DECODER) += riscv/vorbisdsp_rvv.o
+ 
+ SHLIBOBJS += riscv/cpu_common.o
++OBJS-$(CONFIG_FDCTDSP) += riscv/fdctdsp_init.o
++RVV-OBJS-$(CONFIG_FDCTDSP) += riscv/fdctdsp_rvv.o
+diff --git a/libavcodec/riscv/fdctdsp_init.c b/libavcodec/riscv/fdctdsp_init.c
+new file mode 100644
+index 0000000000..61dd3f4312
+--- /dev/null
++++ b/libavcodec/riscv/fdctdsp_init.c
+@@ -0,0 +1,47 @@
++/*
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "libavutil/attributes.h"
++#include "libavutil/cpu.h"
++#include "libavutil/riscv/cpu.h"
++#include "libavcodec/avcodec.h"
++#include "libavcodec/fdctdsp.h"
++
++void ff_jpeg_fdct_islow_8_rvv(int16_t *data);
++
++av_cold void ff_fdctdsp_init_riscv(FDCTDSPContext *c, AVCodecContext *avctx,
++                                   unsigned high_bit_depth)
++{
++#if HAVE_RVV
++    int flags = av_get_cpu_flags();
++
++    if (!high_bit_depth && (flags & AV_CPU_FLAG_RVV_I32) &&
++        ff_rv_vlen_least(128)) {
++        /* ff_jpeg_fdct_islow_8 is the default (dct_algo == FF_DCT_AUTO or
++         * explicitly selected slow/accurate).  Only override that exact
++         * algorithm; ff_fdct_ifast / ff_faandct keep their own paths. */
++        if (avctx->dct_algo != FF_DCT_FASTINT
++#if CONFIG_FAANDCT
++            && avctx->dct_algo != FF_DCT_FAAN
++#endif
++            && avctx->bits_per_raw_sample < 9) {
++            c->fdct = ff_jpeg_fdct_islow_8_rvv;
++        }
++    }
++#endif
++}
+diff --git a/libavcodec/riscv/fdctdsp_rvv.S b/libavcodec/riscv/fdctdsp_rvv.S
+new file mode 100644
+index 0000000000..0a4c8abb39
+--- /dev/null
++++ b/libavcodec/riscv/fdctdsp_rvv.S
+@@ -0,0 +1,263 @@
++/*
++ * Copyright (c) 2026
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "libavutil/riscv/asm.S"
++
++/* ff_jpeg_fdct_islow_8 RVV implementation.
++ * The 8-point butterfly of jfdctint_template.c is applied lane-wise:
++ * - Pass 1 (rows): the 8x8 block is loaded as 8 COLUMN vectors (vlse16,
++ *   stride = 16 bytes), so the row butterfly on row r becomes a vector op
++ *   across the 8 column vectors at lane r (pairs x0+x7, x1+x6, ...).
++ *   Results are stored back in-place column-wise (vsse16, stride 16),
++ *   which reproduces the C row-major intermediate exactly.
++ * - Pass 2 (columns): reload the intermediate as 8 ROW vectors (vle16)
++ *   and apply the same butterfly lane-wise. Store back row-wise.
++ *
++ * All multiplies are done in e32 (mod 2^32), DESCALE(x,n) = (x+(1<<(n-1)))>>n
++ * via vadd.vx + vsra.vi, truncation to int16 via vnsrl.wi (low 16 bits),
++ * matching the C integer semantics bit-exactly.
++ *
++ * regs: v0..v7 = 8 input vectors (e16, 8 lanes), v8..v31 = temps (e32).
++ */
++
++/* FDCT butterfly macro, applied to 8 vectors v0..v7 (e32).
++ * descale output ordering: out0..out7 = e0,o1,e2,o3,e4,o5,e6,o7.
++ * \even_shift: even outputs e0/e4 (pass1: 4=<<PASS1_BITS; pass2: 4=OUT_SHIFT)
++ * \odd_shift:  odd outputs o1..o7 and e2/e6 descale
++ * \even_round: rounding bias for even outputs (pass1: 0; pass2: 1<<(4-1)=8)
++ * \odd_round:  rounding bias for odd outputs (pass1: 1<<8=256; pass2: 1<<16)
++ */
++.macro fdct_butterfly even_shift, odd_shift, even_round, odd_round
++        /* t0a..t7a */
++        vadd.vv v8,  v0, v7        /* t0a = in0+in7 */
++        vsub.vv v9,  v0, v7        /* t7a = in0-in7 */
++        vadd.vv v10, v1, v6        /* t1a = in1+in6 */
++        vsub.vv v11, v1, v6        /* t6a = in1-in6 */
++        vadd.vv v12, v2, v5        /* t2a = in2+in5 */
++        vsub.vv v13, v2, v5        /* t5a = in2-in5 */
++        vadd.vv v14, v3, v4        /* t3a = in3+in4 */
++        vsub.vv v15, v3, v4        /* t4a = in3-in4 */
++        /* tmp10..tmp13 */
++        vadd.vv v16, v8,  v14      /* tmp10 = t0a+t3a */
++        vsub.vv v17, v8,  v14      /* tmp13 = t0a-t3a */
++        vadd.vv v18, v10, v12      /* tmp11 = t1a+t2a */
++        vsub.vv v19, v10, v12      /* tmp12 = t1a-t2a */
++        /* even: e0 = tmp10+tmp11 ; e4 = tmp10-tmp11 */
++        vadd.vv v20, v16, v18
++        vsub.vv v21, v16, v18
++        /* z1 = (tmp12+tmp13)*4433 ; e2/e6 */
++        vadd.vv v22, v19, v17      /* tmp12+tmp13 */
++        li      t5, 4433
++        vmul.vx v22, v22, t5       /* z1 */
++        li      t5, 6270
++        vmul.vx v23, v17, t5       /* tmp13*6270 */
++        vadd.vv v23, v23, v22      /* e2 = z1 + tmp13*6270 */
++        li      t5, -15137
++        vmul.vx v24, v19, t5       /* tmp12*(-15137) */
++        vadd.vv v24, v24, v22      /* e6 = z1 + tmp12*(-15137) */
++        /* odd part */
++        vadd.vv v25, v15, v9       /* z1 = t4a+t7a */
++        vadd.vv v26, v13, v11      /* z2 = t5a+t6a */
++        vadd.vv v27, v15, v11      /* z3 = t4a+t6a */
++        vadd.vv v28, v13, v9       /* z4 = t5a+t7a */
++        vadd.vv v29, v27, v28      /* z3+z4 */
++        li      t5, 9633
++        vmul.vx v29, v29, t5       /* z5 = (z3+z4)*9633 */
++        li      t5, 2446
++        vmul.vx v15, v15, t5       /* t4a*2446 */
++        li      t5, 16819
++        vmul.vx v13, v13, t5       /* t5a*16819 */
++        li      t5, 25172
++        vmul.vx v11, v11, t5       /* t6a*25172 */
++        li      t5, 12299
++        vmul.vx v9,  v9,  t5       /* t7a*12299 */
++        li      t5, -7373
++        vmul.vx v25, v25, t5       /* z1*(-7373) */
++        li      t5, -20995
++        vmul.vx v26, v26, t5       /* z2*(-20995) */
++        li      t5, -16069
++        vmul.vx v27, v27, t5       /* z3*(-16069) */
++        li      t5, -3196
++        vmul.vx v28, v28, t5       /* z4*(-3196) */
++        vadd.vv v27, v27, v29      /* z3 += z5 */
++        vadd.vv v28, v28, v29      /* z4 += z5 */
++        vadd.vv v30, v15, v25      /* o7 = t4a+z1+z3 */
++        vadd.vv v30, v30, v27
++        vadd.vv v31, v13, v26      /* o5 = t5a+z2+z4 */
++        vadd.vv v31, v31, v28
++        vadd.vv v13, v11, v26      /* o3 = t6a+z2+z3 */
++        vadd.vv v13, v13, v27
++        vadd.vv v11, v9,  v25      /* o1 = t7a+z1+z4 */
++        vadd.vv v11, v11, v28
++        /* descale + narrow to e16 */
++.if \even_round
++        li      t5, \even_round
++        vadd.vx v20, v20, t5
++        vadd.vx v21, v21, t5
++.endif
++.if \even_shift < 0
++        /* pass 1: even outputs are << PASS1_BITS (no rounding) */
++        vsll.vi v20, v20, -\even_shift
++        vsll.vi v21, v21, -\even_shift
++.else
++        vsra.vi v20, v20, \even_shift
++        vsra.vi v21, v21, \even_shift
++.endif
++        li      t5, \odd_round
++        vadd.vx v23, v23, t5
++        vadd.vx v24, v24, t5
++        vadd.vx v11, v11, t5
++        vadd.vx v13, v13, t5
++        vadd.vx v30, v30, t5
++        vadd.vx v31, v31, t5
++        vsra.vi v23, v23, \odd_shift
++        vsra.vi v24, v24, \odd_shift
++        vsra.vi v11, v11, \odd_shift
++        vsra.vi v13, v13, \odd_shift
++        vsra.vi v30, v30, \odd_shift
++        vsra.vi v31, v31, \odd_shift
++        vnsrl.wi v0,  v20, 0
++        vnsrl.wi v1,  v11, 0
++        vnsrl.wi v2,  v23, 0
++        vnsrl.wi v3,  v13, 0
++        vnsrl.wi v4,  v21, 0
++        vnsrl.wi v5,  v31, 0
++        vnsrl.wi v6,  v24, 0
++        vnsrl.wi v7,  v30, 0
++.endm
++
++/* Load 8 columns (stride 16 bytes) as e16 vectors and widen to e32.
++ * vwcvt must be issued in e16 mode (sim widens from self.vsew). */
++.macro fdct_load_cols base, stride
++        vsetivli zero, 8, e16, m1, ta, ma
++        vlse16.v v0,  (\base), \stride
++        vwcvt.x.x.v v0,  v0
++        add     t0, \base, 2
++        vlse16.v v1,  (t0), \stride
++        vwcvt.x.x.v v1,  v1
++        add     t0, \base, 4
++        vlse16.v v2,  (t0), \stride
++        vwcvt.x.x.v v2,  v2
++        add     t0, \base, 6
++        vlse16.v v3,  (t0), \stride
++        vwcvt.x.x.v v3,  v3
++        add     t0, \base, 8
++        vlse16.v v4,  (t0), \stride
++        vwcvt.x.x.v v4,  v4
++        add     t0, \base, 10
++        vlse16.v v5,  (t0), \stride
++        vwcvt.x.x.v v5,  v5
++        add     t0, \base, 12
++        vlse16.v v6,  (t0), \stride
++        vwcvt.x.x.v v6,  v6
++        add     t0, \base, 14
++        vlse16.v v7,  (t0), \stride
++        vwcvt.x.x.v v7,  v7
++        vsetivli zero, 8, e32, m1, ta, ma
++.endm
++
++/* Store 8 e16 vectors column-wise (stride 16 bytes) — writes the C
++ * row-major intermediate in place. */
++.macro fdct_store_cols base, stride
++        vsetivli zero, 8, e16, m1, ta, ma
++        vsse16.v v0,  (\base), \stride
++        add     t0, \base, 2
++        vsse16.v v1,  (t0), \stride
++        add     t0, \base, 4
++        vsse16.v v2,  (t0), \stride
++        add     t0, \base, 6
++        vsse16.v v3,  (t0), \stride
++        add     t0, \base, 8
++        vsse16.v v4,  (t0), \stride
++        add     t0, \base, 10
++        vsse16.v v5,  (t0), \stride
++        add     t0, \base, 12
++        vsse16.v v6,  (t0), \stride
++        add     t0, \base, 14
++        vsse16.v v7,  (t0), \stride
++        vsetivli zero, 8, e32, m1, ta, ma
++.endm
++
++/* Load 8 rows (consecutive int16) as e16 vectors and widen to e32. */
++.macro fdct_load_rows base
++        vsetivli zero, 8, e16, m1, ta, ma
++        vle16.v  v0,  (\base)
++        vwcvt.x.x.v v0,  v0
++        add     t0, \base, 16
++        vle16.v  v1,  (t0)
++        vwcvt.x.x.v v1,  v1
++        add     t0, \base, 32
++        vle16.v  v2,  (t0)
++        vwcvt.x.x.v v2,  v2
++        add     t0, \base, 48
++        vle16.v  v3,  (t0)
++        vwcvt.x.x.v v3,  v3
++        add     t0, \base, 64
++        vle16.v  v4,  (t0)
++        vwcvt.x.x.v v4,  v4
++        add     t0, \base, 80
++        vle16.v  v5,  (t0)
++        vwcvt.x.x.v v5,  v5
++        add     t0, \base, 96
++        vle16.v  v6,  (t0)
++        vwcvt.x.x.v v6,  v6
++        add     t0, \base, 112
++        vle16.v  v7,  (t0)
++        vwcvt.x.x.v v7,  v7
++        vsetivli zero, 8, e32, m1, ta, ma
++.endm
++
++/* Store 8 e16 row vectors back row-wise. */
++.macro fdct_store_rows base
++        vsetivli zero, 8, e16, m1, ta, ma
++        vse16.v  v0,  (\base)
++        add     t0, \base, 16
++        vse16.v  v1,  (t0)
++        add     t0, \base, 32
++        vse16.v  v2,  (t0)
++        add     t0, \base, 48
++        vse16.v  v3,  (t0)
++        add     t0, \base, 64
++        vse16.v  v4,  (t0)
++        add     t0, \base, 80
++        vse16.v  v5,  (t0)
++        add     t0, \base, 96
++        vse16.v  v6,  (t0)
++        add     t0, \base, 112
++        vse16.v  v7,  (t0)
++        vsetivli zero, 8, e32, m1, ta, ma
++.endm
++
++/* Pass 1 (row transform): intermediate scaled by 2^PASS1_BITS on the even
++ * outputs (no rounding), odd outputs DESCALE by CONST_BITS-PASS1_BITS = 9
++ * with rounding bias 1<<8.  Stored to the block in place (row-major). */
++func ff_jpeg_fdct_islow_8_rvv, zve32x
++        lpad    0
++        li      t4, 16
++        fdct_load_cols a0, t4
++        fdct_butterfly -4, 9, 0, 256
++        fdct_store_cols a0, t4
++        /* Pass 2 (column transform): even DESCALE by OUT_SHIFT = PASS1_BITS
++         * = 4 (bias 8), odd DESCALE by CONST_BITS+OUT_SHIFT = 17 (bias 1<<16) */
++        fdct_load_rows a0
++        fdct_butterfly 4, 17, 8, 65536
++        fdct_store_rows a0
++        ret
++endfunc

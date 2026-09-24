@@ -1,0 +1,208 @@
+diff --git a/libavutil/riscv/tx_float_init.c b/libavutil/riscv/tx_float_init.c
+index 078b700b1b..699a8e1890 100644
+--- a/libavutil/riscv/tx_float_init.c
++++ b/libavutil/riscv/tx_float_init.c
+@@ -27,6 +27,7 @@ TX_DECL_FN(fft2_ns, rvv)
+ TX_DECL_FN(fft4_ns, rvv)
+ TX_DECL_FN(fft8_ns, rvv)
+ TX_DECL_FN(fft16_ns, rvv)
++TX_DECL_FN(mdct_inv, rvv)
+ 
+ static av_cold int rvv_init(AVTXContext *s, const FFTXCodelet *cd,
+                             uint64_t flags, FFTXCodeletOptions *opts,
+@@ -42,5 +43,19 @@ const FFTXCodelet * const ff_tx_codelet_list_float_riscv[] = {
+     TX_DEF(fft8_ns,  FFT,  8,  8, 2, 0, 192, rvv_init, rvv, RVV_F32, AV_TX_INPLACE | FF_TX_PRESHUFFLE, 0),
+     TX_DEF(fft16_ns, FFT, 16, 16, 2, 0, 192, rvv_init, rvv, RVV_F32, AV_TX_INPLACE | FF_TX_PRESHUFFLE, 0),
+ 
++    &(const FFTXCodelet){
++        .name       = NULL_IF_CONFIG_SMALL("mdct_inv_float_rvv"),
++        .function   = ff_tx_mdct_inv_float_rvv,
++        .type       = TX_TYPE(MDCT),
++        .flags      = AV_TX_UNALIGNED | FF_TX_OUT_OF_PLACE | FF_TX_INVERSE_ONLY,
++        .factors    = { 2, TX_FACTOR_ANY },
++        .nb_factors = 2,
++        .min_len    = 2,
++        .max_len    = TX_LEN_UNLIMITED,
++        .init       = TX_NAME(ff_tx_mdct_init),
++        .cpu_flags  = AV_CPU_FLAG_RVV_F32,
++        .prio       = 192,
++    },
++
+     NULL,
+ };
+diff --git a/libavutil/riscv/tx_float_rvv.S b/libavutil/riscv/tx_float_rvv.S
+index 1ec51dc9de..c76f65babc 100644
+--- a/libavutil/riscv/tx_float_rvv.S
++++ b/libavutil/riscv/tx_float_rvv.S
+@@ -381,3 +381,136 @@ func ff_tx_fft16_ns_float_rvv, zve32f, zvl128b
+         addi    sp, sp, 48
+         ret
+ endfunc
++
++// MDCT inverse, out of place. Mirrors the exact arithmetic of
++// ff_tx_mdct_inv() in tx_template.c:
++//   loop 1 (folding + pre-twiddle): for i in [0, len2)
++//       k = s->map[i] (already <<= 1 for the inverse path)
++//       tmp = { in2[-k*stride], in1[k*stride] }
++//       z[i] = CMUL3(tmp, s->exp[i])
++//   sub-FFT: s->fn[0](&s->sub[0], z, z, sizeof(TXComplex))
++//   loop 2 (post-twiddle): for i in [0, len4)
++//       i0 = len4+i, i1 = len4-i-1
++//       src1 = { z[i1].im, z[i1].re }; src0 = { z[i0].im, z[i0].re }
++//       CMUL(z[i1].re, z[i0].im, src1, exp[len2+i1].im, exp[len2+i1].re)
++//       CMUL(z[i0].re, z[i1].im, src0, exp[len2+i0].im, exp[len2+i0].re)
++// The strided loads/stores walk the i1 mirror pair downwards, so each
++// vector iteration covers vl consecutive (i0, i1) pairs.
++//
++// Signature (av_tx_fn): (AVTXContext *s, void *dst, void *src, ptrdiff_t stride)
++//   a0 = s, a1 = dst (z), a2 = src, a3 = stride (bytes)
++func ff_tx_mdct_inv_float_rvv, zve32f, zvl128b
++        lpad    0
++        lw      a4, 0(a0)               // s->len
++        ld      a5, 16(a0)              // s->exp
++        ld      a6, 8(a0)               // s->map
++        srai    a4, a4, 1               // len2
++        srai    t1, a3, 2               // stride in TXSample units
++        slli    t3, a4, 1               // 2*len2
++        addi    t3, t3, -1              // 2*len2 - 1
++        mul     t3, t3, t1              // c = (2*len2-1)*stride
++
++        addi    sp, sp, -32
++        sd      ra, 0(sp)
++        sd      s0, 8(sp)
++        sd      s1, 16(sp)
++        sd      s2, 24(sp)
++        mv      s0, a1                  // z base (kept across the sub-FFT call)
++        mv      s1, a0                  // s
++        mv      s2, a1                  // advancing z pointer (loop 1)
++
++        // ---- loop 1: folding + pre-twiddle ----
++        // tmp.re = in2[-k*stride] = src[(2*len2-1-k)*stride] (vluxei32, 4B elems)
++        // tmp.im = in1[k*stride]   = src[k*stride]
++        // z[i]   = CMUL3(tmp, exp[i])
++1:
++        vsetvli t2, a4, e32, m1, ta, ma // vl = min(remaining len2, VLMAX)
++        vle32.v v2, (a6)                // k = s->map[i..]
++        vmul.vx v3, v2, t1              // k*stride
++        vmv.v.x v4, t3                  // c
++        vsub.vv v4, v4, v3              // (2*len2-1-k)*stride (re index)
++        vluxei32.v v6, (a2), v4         // tmp.re
++        vluxei32.v v7, (a2), v3         // tmp.im
++        vlseg2e32.v v8, (a5)            // exp[i] -> v8 re, v9 im
++        vfmul.vv v10, v6, v8            // re*er
++        vfmul.vv v11, v7, v9            // im*ei
++        vfsub.vv v12, v10, v11          // z[i].re
++        vfmul.vv v10, v6, v9            // re*ei
++        vfmul.vv v11, v7, v8            // im*er
++        vfadd.vv v13, v10, v11          // z[i].im
++        vsseg2e32.v v12, (s2)           // z[i] = (re, im) interleaved
++        slli    t4, t2, 3               // vl*8
++        add     s2, s2, t4              // z += vl complex
++        add     a5, a5, t4              // exp += vl complex
++        slli    t4, t2, 2               // vl*4
++        add     a6, a6, t4              // map += vl ints
++        sub     a4, a4, t2              // remaining -= vl
++        bnez    a4, 1b
++
++        // ---- sub-FFT: s->fn[0](&s->sub[0], z, z, sizeof(TXComplex)) ----
++        ld      t0, 40(s1)              // s->fn[0]
++        ld      a0, 32(s1)              // &s->sub[0]
++        mv      a1, s0
++        mv      a2, s0
++        li      a3, 8
++        jalr    t0
++
++        // ---- loop 2: post-twiddle ----
++        lw      a4, 0(s1)               // s->len
++        srai    a4, a4, 1               // len2
++        srai    t0, a4, 1               // len4 (remaining counter)
++        ld      a5, 16(s1)              // s->exp
++        slli    t6, a4, 3               // len2*8
++        add     a5, a5, t6              // exp2 = s->exp + len2
++        slli    t6, t0, 3               // len4*8
++        add     t1, s0, t6              // p_z0 = z + len4*8        (+vl*8/iter)
++        addi    t2, t1, -8              // p_z1 = z + (len4-1)*8     (-vl*8/iter)
++        slli    t6, t0, 3
++        add     t3, a5, t6              // p_e0 = exp2 + len4*8      (+vl*8/iter)
++        addi    t4, t3, -8              // p_e1 = exp2 + (len4-1)*8  (-vl*8/iter)
++        li      t5, -8                  // byte stride for the mirror walk
++        beqz    t0, 3f
++2:
++        vsetvli t6, t0, e32, m1, ta, ma // vl pairs
++        vlseg2e32.v v2, (t1)            // v2 = z[i0].re, v3 = z[i0].im
++        vlse32.v  v1, (t2), t5          // b1 = z[i1].re
++        addi    a6, t2, 4
++        vlse32.v  v0, (a6), t5          // a1 = z[i1].im
++        vlseg2e32.v v6, (t3)            // v6 = exp2[i0].re, v7 = exp2[i0].im
++        vlse32.v  v5, (t4), t5          // d1 = exp2[i1].re
++        addi    a6, t4, 4
++        vlse32.v  v4, (a6), t5          // c1 = exp2[i1].im
++        // outA = (a1*c1 - b1*d1, a1*d1 + b1*c1)  -> z[i1].re, z[i0].im
++        vfmul.vv v8, v0, v4
++        vfmul.vv v9, v1, v5
++        vfsub.vv v10, v8, v9            // outA_re
++        vfmul.vv v8, v0, v5
++        vfmul.vv v9, v1, v4
++        vfadd.vv v13, v8, v9            // outA_im
++        // outB = (a0*c0 - b0*d0, a0*d0 + b0*c0)  -> z[i0].re, z[i1].im
++        vfmul.vv v8, v3, v7
++        vfmul.vv v9, v2, v6
++        vfsub.vv v12, v8, v9            // outB_re
++        vfmul.vv v8, v3, v6
++        vfmul.vv v9, v2, v7
++        vfadd.vv v14, v8, v9            // outB_im
++        vsseg2e32.v v12, (t1)           // z[i0] = (outB_re, outA_im)
++        vsse32.v  v10, (t2), t5         // z[i1].re = outA_re
++        addi    a6, t2, 4
++        vsse32.v  v14, (a6), t5         // z[i1].im = outB_im
++        mv      s2, t6                  // save vl
++        slli    t6, s2, 3               // vl*8
++        add     t1, t1, t6
++        sub     t2, t2, t6
++        add     t3, t3, t6
++        sub     t4, t4, t6
++        sub     t0, t0, s2              // remaining -= vl
++        bnez    t0, 2b
++3:
++        ld      ra, 0(sp)
++        ld      s0, 8(sp)
++        ld      s1, 16(sp)
++        ld      s2, 24(sp)
++        addi    sp, sp, 32
++        ret
++endfunc
+diff --git a/libavutil/tx_priv.h b/libavutil/tx_priv.h
+index 9ab0d2d0bd..45b4ab167e 100644
+--- a/libavutil/tx_priv.h
++++ b/libavutil/tx_priv.h
+@@ -380,6 +380,17 @@ int ff_tx_mdct_gen_exp_float (AVTXContext *s, int *pre_tab);
+ int ff_tx_mdct_gen_exp_double(AVTXContext *s, int *pre_tab);
+ int ff_tx_mdct_gen_exp_int32 (AVTXContext *s, int *pre_tab);
+ 
++/* Shared MDCT init, used by both the C and the RISC-V mdct_inv codelets. */
++int ff_tx_mdct_init_float_c (AVTXContext *s, const FFTXCodelet *cd,
++                             uint64_t flags, FFTXCodeletOptions *opts,
++                             int len, int inv, const void *scale);
++int ff_tx_mdct_init_double_c(AVTXContext *s, const FFTXCodelet *cd,
++                             uint64_t flags, FFTXCodeletOptions *opts,
++                             int len, int inv, const void *scale);
++int ff_tx_mdct_init_int32_c (AVTXContext *s, const FFTXCodelet *cd,
++                             uint64_t flags, FFTXCodeletOptions *opts,
++                             int len, int inv, const void *scale);
++
+ /* Lists of codelets */
+ extern const FFTXCodelet * const ff_tx_codelet_list_float_c       [];
+ extern const FFTXCodelet * const ff_tx_codelet_list_float_x86     [];
+diff --git a/libavutil/tx_template.c b/libavutil/tx_template.c
+index ecee572e40..399b068f71 100644
+--- a/libavutil/tx_template.c
++++ b/libavutil/tx_template.c
+@@ -1220,7 +1220,7 @@ static const FFTXCodelet TX_NAME(ff_tx_mdct_naive_inv_def) = {
+     .prio       = FF_TX_PRIO_MIN,
+ };
+ 
+-static av_cold int TX_NAME(ff_tx_mdct_init)(AVTXContext *s,
++av_cold int TX_NAME(ff_tx_mdct_init)(AVTXContext *s,
+                                             const FFTXCodelet *cd,
+                                             uint64_t flags,
+                                             FFTXCodeletOptions *opts,
