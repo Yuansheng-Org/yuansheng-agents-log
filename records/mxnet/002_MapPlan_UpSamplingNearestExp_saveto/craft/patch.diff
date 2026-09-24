@@ -1,0 +1,148 @@
+diff --git a/3rdparty/mshadow/mshadow/extension/spatial_upsampling_nearest.h b/3rdparty/mshadow/mshadow/extension/spatial_upsampling_nearest.h
+index a9ecad486..c0a24eaf9 100644
+--- a/3rdparty/mshadow/mshadow/extension/spatial_upsampling_nearest.h
++++ b/3rdparty/mshadow/mshadow/extension/spatial_upsampling_nearest.h
+@@ -24,7 +24,12 @@
+ */
+ #ifndef MSHADOW_EXTENSION_SPATIAL_UPSAMPLING_NEAREST_H_
+ #define MSHADOW_EXTENSION_SPATIAL_UPSAMPLING_NEAREST_H_
++#include <cstdint>
++#include <vector>
+ #include "../extension.h"
++#if defined(__riscv_v_intrinsic) || defined(__riscv_vector)
++#include <riscv_vector.h>
++#endif
+ 
+ namespace mshadow {
+ namespace expr {
+@@ -84,6 +89,66 @@ struct Plan<UpSamplingNearestExp<SrcExp, DType, srcdim>, DType> {
+   const index_t new_height_;
+   const index_t src_height_;
+ };
++
++#if defined(__riscv_v_intrinsic) || defined(__riscv_vector)
++/*!
++ * \brief RVV 1.0 nearest-neighbour upsampling for contiguous NCHW float32
++ *        tensors with a single integer scale.
++ *
++ *        The horizontal source byte-offset table w_byte[x] = (x / scale) * 4
++ *        depends only on `scale` and the output width, so it is built once per
++ *        call and reused for every output row and channel, removing the
++ *        per-element integer division of the scalar reference. The main loop
++ *        then performs a vluxei32 indexed load from the current source row and
++ *        a contiguous vse32 store; runtime vsetvl keeps the code
++ *        VLEN-agnostic. floor(x / scale) / floor(y / scale) semantics match
++ *        Plan<UpSamplingNearestExp>::Eval element-for-element.
++ *
++ *        Preconditions (checked by the caller): src/dst contiguous and
++ *        non-overlapping, dst_height == src_height * scale,
++ *        dst_width == src_width * scale, scale >= 1 and
++ *        (src_width - 1) * sizeof(float) fits in uint32_t.
++ */
++inline void mshadow_rvv_upsampling_nearest_f32(const float *src, float *dst,
++                                               index_t planes,
++                                               index_t src_height,
++                                               index_t src_width,
++                                               index_t scale) {
++  if (planes <= 0 || src_height <= 0 || src_width <= 0 || scale <= 0) return;
++  const index_t dst_height = src_height * scale;
++  const index_t dst_width = src_width * scale;
++  const index_t float_bytes = static_cast<index_t>(sizeof(float));
++  std::vector<uint32_t> w_byte(static_cast<size_t>(dst_width));
++  for (index_t x = 0, sw = 0, in_group = 0; x < dst_width; ++x) {
++    w_byte[static_cast<size_t>(x)] = static_cast<uint32_t>(sw * float_bytes);
++    if (++in_group == scale) {
++      in_group = 0;
++      ++sw;
++    }
++  }
++  // Row-level parallelism, matching the original MapPlan `omp parallel for`
++  // over flattened rows; the offset table is read-only and shared.
++  const index_t total_rows = planes * dst_height;
++#ifndef __CUDACC__
++  #pragma omp parallel for
++#endif
++  for (index_t r = 0; r < total_rows; ++r) {
++    const index_t p = r / dst_height;
++    const index_t y = r % dst_height;
++    const float *src_row = src + (p * src_height + y / scale) * src_width;
++    float *dst_row = dst + (p * dst_height + y) * dst_width;
++    index_t x = 0;
++    while (x < dst_width) {
++      size_t vl = __riscv_vsetvl_e32m4(static_cast<size_t>(dst_width - x));
++      vuint32m4_t voff = __riscv_vle32_v_u32m4(w_byte.data() + x, vl);
++      vfloat32m4_t v = __riscv_vluxei32_v_f32m4(src_row, voff, vl);
++      __riscv_vse32_v_f32m4(dst_row + x, v, vl);
++      x += static_cast<index_t>(vl);
++    }
++  }
++}
++#endif  // defined(__riscv_v_intrinsic) || defined(__riscv_vector)
++
+ }  // namespace expr
+ }  // namespace mshadow
+ #endif  // MSHADOW_EXTENSION_SPATIAL_UPSAMPLING_NEAREST_H_
+diff --git a/src/operator/nn/upsampling-inl.h b/src/operator/nn/upsampling-inl.h
+index 34b3b5959..90e13eee3 100644
+--- a/src/operator/nn/upsampling-inl.h
++++ b/src/operator/nn/upsampling-inl.h
+@@ -83,6 +83,49 @@ struct UpSamplingParam : public dmlc::Parameter<UpSamplingParam> {
+   }
+ };  // struct UpSamplingParam
+ 
++/*!
++ * \brief Try to run the RVV 1.0 nearest-neighbour upsampling fast path.
++ *        The generic template is a no-op so that non-RVV builds and non-float
++ *        / non-CPU instantiations keep the original expression path unchanged.
++ *        The <cpu, float> specialization is only compiled when RVV is enabled.
++ */
++template <typename xpu, typename DType>
++inline bool UpSamplingNearestTryRVV(const mshadow::Tensor<xpu, 4, DType>& data,
++                                    mshadow::Tensor<xpu, 4, DType>& out,
++                                    const std::vector<OpReqType>& req,
++                                    int scale) {
++  return false;
++}
++
++#if defined(__riscv_v_intrinsic) || defined(__riscv_vector)
++template <>
++inline bool UpSamplingNearestTryRVV<mshadow::cpu, float>(
++    const mshadow::Tensor<mshadow::cpu, 4, float>& data,
++    mshadow::Tensor<mshadow::cpu, 4, float>& out,
++    const std::vector<OpReqType>& req,
++    int scale) {
++  if (req[up_enum::kOut] != kWriteTo || scale < 1) {
++    return false;
++  }
++  if (!out.CheckContiguous() || !data.CheckContiguous()) {
++    return false;
++  }
++  const mshadow::index_t s = static_cast<mshadow::index_t>(scale);
++  if (out.size(0) != data.size(0) || out.size(1) != data.size(1) ||
++      out.size(2) != data.size(2) * s || out.size(3) != data.size(3) * s) {
++    return false;
++  }
++  // Keep the u32 byte offsets from overflowing; absurd widths fall back.
++  if (data.size(3) > (static_cast<mshadow::index_t>(1) << 30)) {
++    return false;
++  }
++  mshadow::expr::mshadow_rvv_upsampling_nearest_f32(
++      data.dptr_, out.dptr_, data.size(0) * data.size(1), data.size(2),
++      data.size(3), s);
++  return true;
++}
++#endif  // defined(__riscv_v_intrinsic) || defined(__riscv_vector)
++
+ template <typename xpu, typename DType>
+ void UpSamplingForward(const OpContext& ctx,
+                        const UpSamplingParam& param,
+@@ -117,6 +160,9 @@ void UpSamplingForward(const OpContext& ctx,
+     }
+   } else {
+     Tensor<xpu, 4, DType> data = in_data[up_enum::kData].get<xpu, 4, DType>(s);
++    if (UpSamplingNearestTryRVV<xpu, DType>(data, out, req, param.scale)) {
++      return;
++    }
+     Assign(out, req[up_enum::kOut], upsampling_nearest(data, param.scale));
+   }
+ }
