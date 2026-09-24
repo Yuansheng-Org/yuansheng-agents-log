@@ -10,15 +10,13 @@
 
 ## 已筛选补丁的产物归档
 
-本分支仅整理 `add-openblas` 已筛选的 9 个openblas补丁目录，按 `records/openblas/<测试用例>/<函数>/` 组织。测例名称取自 Agent Debug Trace 的 `source.testcaseIds`；原有补丁和专家复核文件保留，新增的 Trace、Craft 中间产物来自 Agent Debug。
+本分支仅整理 `add-openblas` 已筛选的 7 个openblas补丁目录，按 `records/openblas/<测试用例>/<函数>/` 组织。测例名称取自 Agent Debug Trace 的 `source.testcaseIds`；原有补丁和专家复核文件保留，新增的 Trace、Craft 中间产物来自 Agent Debug。
 
 | 补丁目录 | 测试用例 | Agent Debug Trace 来源 | Blueprint ID |
 | --- | --- | --- | --- |
 | [001_cgemm_kernel_n](cblas_cgemm_512x512/001_cgemm_kernel_n/) | `cblas_cgemm_512x512` | `trace/openblas-2/cblas_cgemm_512x512/001_cgemm_kernel_n` | `bp-openblas-cblas_cgemm_512x512-001` |
-| [001_cgemm_kernel_r](cher2k_512x512/001_cgemm_kernel_r/) | `cher2k_512x512` | `trace/openblas-2/cher2k_512x512/001_cgemm_kernel_r` | `bp-openblas-cher2k_512x512-001` |
 | [001_sgemm_kernel](cblas_sgemm_512x512/001_sgemm_kernel/) | `cblas_sgemm_512x512` | `trace/openblas-2/cblas_sgemm_512x512/001_sgemm_kernel` | `bp-openblas-cblas_sgemm_512x512-001` |
 | [001_zgemm_kernel_n](cblas_zgemm_512x512/001_zgemm_kernel_n/) | `cblas_zgemm_512x512` | `trace/openblas-2/cblas_zgemm_512x512/001_zgemm_kernel_n` | `bp-openblas-cblas_zgemm_512x512-001` |
-| [001_zgemm_kernel_r](zher2k_512x512/001_zgemm_kernel_r/) | `zher2k_512x512` | `trace/openblas-2/zher2k_512x512/001_zgemm_kernel_r` | `bp-openblas-zher2k_512x512-001` |
 | [002_saxpy_k](sger_2048x2048/002_saxpy_k/) | `sger_2048x2048` | `trace/openblas-level2/sger_2048x2048/002_saxpy_k` | `bp-openblas-sger_2048x2048-002` |
 | [002_sgemv_n](sgemv_2048x2048/002_sgemv_n/) | `sgemv_2048x2048` | `trace/openblas-level2/sgemv_2048x2048/002_sgemv_n` | `bp-openblas-sgemv_2048x2048-002` |
 | [003_cgemm_oncopy](cblas_cgemm_512x512/003_cgemm_oncopy/) | `cblas_cgemm_512x512` | `trace/openblas-2/cblas_cgemm_512x512/003_cgemm_oncopy` | `bp-openblas-cblas_cgemm_512x512-003` |
