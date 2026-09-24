@@ -1,0 +1,224 @@
+ Percent |	Source code & Disassembly of checkasm for cpu-clock (1 samples, percent: local period)
+------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     00000000000b2c92 <avg_h264_chroma_mc4_16_c>:
+         : 6     avg_h264_chroma_mc4_16_c():
+         :
+         : 175   #define op_avg(a, b) a = (((a)+(((b) + 32)>>6)+1)>>1)
+         : 176   #define op_put(a, b) a = (((b) + 32)>>6)
+         :
+         : 178   H264_CHROMA_MC(put_       , op_put)
+         : 179   H264_CHROMA_MC(avg_       , op_avg)
+    0.00 :   b2c92:  mulw    t4,a4,a5
+    0.00 :   b2c96:  li      t1,8
+    0.00 :   b2c98:  subw    a7,t1,a4
+    0.00 :   b2c9c:  subw    t1,t1,a5
+    0.00 :   b2ca0:  srai    a2,a2,0x1
+    0.00 :   b2ca2:  mulw    a4,t1,a4
+    0.00 :   b2ca6:  mulw    a5,a7,a5
+    0.00 :   b2caa:  mulw    t1,a7,t1
+    0.00 :   b2cae:  beqz    t4,b2dee <avg_h264_chroma_mc4_16_c+0x15c>
+    0.00 :   b2cb2:  blez    a3,b2f66 <avg_h264_chroma_mc4_16_c+0x2d4>
+    0.00 :   b2cb6:  addi    sp,sp,-32
+    0.00 :   b2cb8:  sd      s0,24(sp)
+    0.00 :   b2cba:  sd      s1,16(sp)
+    0.00 :   b2cbc:  sd      s2,8(sp)
+    0.00 :   b2cbe:  slli    a2,a2,0x1
+    0.00 :   b2cc0:  li      t5,0
+    0.00 :   b2cc2:  add     a7,a1,a2
+    0.00 :   b2cc6:  lhu     s2,0(a1)
+    0.00 :   b2cca:  lhu     s1,2(a1)
+    0.00 :   b2cce:  lhu     s0,0(a7)
+    0.00 :   b2cd2:  lhu     a6,2(a7)
+    0.00 :   b2cd6:  mulw    s2,s2,t1
+    0.00 :   b2cda:  lhu     t2,0(a0)
+    0.00 :   b2cde:  lhu     t0,2(a0)
+    0.00 :   b2ce2:  lhu     t6,4(a0)
+    0.00 :   b2ce6:  lhu     t3,6(a0)
+    0.00 :   b2cea:  addiw   t5,t5,1
+    0.00 :   b2cec:  mulw    s1,s1,a4
+    0.00 :   b2cf0:  mulw    s0,s0,a5
+    0.00 :   b2cf4:  addw    s1,s1,s2
+    0.00 :   b2cf8:  mulw    a6,a6,t4
+    0.00 :   b2cfc:  addw    s0,s0,s1
+    0.00 :   b2cfe:  addw    a6,a6,s0
+    0.00 :   b2d02:  addiw   a6,a6,32
+    0.00 :   b2d06:  sraiw   a6,a6,0x6
+    0.00 :   b2d0a:  addw    a6,t2,a6
+    0.00 :   b2d0e:  addiw   a6,a6,1
+    0.00 :   b2d10:  sraiw   a6,a6,0x1
+    0.00 :   b2d14:  sh      a6,0(a0)
+    0.00 :   b2d18:  lhu     s1,2(a1)
+    0.00 :   b2d1c:  lhu     s0,4(a1)
+    0.00 :   b2d20:  lhu     t2,2(a7)
+    0.00 :   b2d24:  lhu     a6,4(a7)
+    0.00 :   b2d28:  mulw    s1,s1,t1
+    0.00 :   b2d2c:  mulw    s0,s0,a4
+    0.00 :   b2d30:  mulw    t2,t2,a5
+    0.00 :   b2d34:  addw    s0,s0,s1
+    0.00 :   b2d36:  mulw    a6,a6,t4
+    0.00 :   b2d3a:  addw    t2,t2,s0
+    0.00 :   b2d3e:  addw    a6,a6,t2
+    0.00 :   b2d42:  addiw   a6,a6,32
+    0.00 :   b2d46:  sraiw   a6,a6,0x6
+    0.00 :   b2d4a:  addw    a6,t0,a6
+    0.00 :   b2d4e:  addiw   a6,a6,1
+    0.00 :   b2d50:  sraiw   a6,a6,0x1
+    0.00 :   b2d54:  sh      a6,2(a0)
+    0.00 :   b2d58:  lhu     s0,4(a1)
+    0.00 :   b2d5c:  lhu     t2,6(a1)
+    0.00 :   b2d60:  lhu     t0,4(a7)
+    0.00 :   b2d64:  lhu     a6,6(a7)
+    0.00 :   b2d68:  mulw    s0,s0,t1
+    0.00 :   b2d6c:  mulw    t2,t2,a4
+    0.00 :   b2d70:  mulw    t0,t0,a5
+    0.00 :   b2d74:  addw    t2,t2,s0
+    0.00 :   b2d78:  mulw    a6,a6,t4
+    0.00 :   b2d7c:  addw    t0,t0,t2
+    0.00 :   b2d80:  addw    a6,a6,t0
+    0.00 :   b2d84:  addiw   a6,a6,32
+    0.00 :   b2d88:  sraiw   a6,a6,0x6
+    0.00 :   b2d8c:  addw    a6,t6,a6
+    0.00 :   b2d90:  addiw   a6,a6,1
+    0.00 :   b2d92:  sraiw   a6,a6,0x1
+    0.00 :   b2d96:  sh      a6,4(a0)
+    0.00 :   b2d9a:  lhu     t2,6(a1)
+    0.00 :   b2d9e:  lhu     t0,8(a1)
+    0.00 :   b2da2:  lhu     t6,6(a7)
+    0.00 :   b2da6:  lhu     a6,8(a7)
+    0.00 :   b2daa:  mulw    t2,t2,t1
+    0.00 :   b2dae:  mv      a1,a7
+    0.00 :   b2db0:  mulw    t0,t0,a4
+    0.00 :   b2db4:  mulw    a7,t6,a5
+    0.00 :   b2db8:  addw    t6,t0,t2
+    0.00 :   b2dbc:  mulw    a6,a6,t4
+    0.00 :   b2dc0:  addw    a7,a7,t6
+    0.00 :   b2dc4:  addw    a6,a6,a7
+    0.00 :   b2dc8:  addiw   a6,a6,32
+    0.00 :   b2dcc:  sraiw   a6,a6,0x6
+    0.00 :   b2dd0:  addw    t3,t3,a6
+    0.00 :   b2dd4:  addiw   t3,t3,1
+    0.00 :   b2dd6:  sraiw   t3,t3,0x1
+    0.00 :   b2dda:  sh      t3,6(a0)
+    0.00 :   b2dde:  add     a0,a0,a2
+    0.00 :   b2de0:  bne     a3,t5,b2cc2 <avg_h264_chroma_mc4_16_c+0x30>
+    0.00 :   b2de4:  ld      s0,24(sp)
+    0.00 :   b2de6:  ld      s1,16(sp)
+    0.00 :   b2de8:  ld      s2,8(sp)
+    0.00 :   b2dea:  addi    sp,sp,32
+    0.00 :   b2dec:  ret
+    0.00 :   b2dee:  addw    a4,a4,a5
+    0.00 :   b2df0:  mv      a7,a4
+    0.00 :   b2df2:  bnez    a4,b2e8e <avg_h264_chroma_mc4_16_c+0x1fc>
+    0.00 :   b2df4:  slli    a2,a2,0x1
+    0.00 :   b2df6:  blez    a3,b2f68 <avg_h264_chroma_mc4_16_c+0x2d6>
+    0.00 :   b2dfa:  lhu     t4,0(a1)
+    0.00 :   b2dfe:  lhu     t3,0(a0)
+    0.00 :   b2e02:  lhu     a7,2(a0)
+    0.00 :   b2e06:  mulw    t4,t4,t1
+    0.00 :   b2e0a:  lhu     a6,4(a0)
+    0.00 :   b2e0e:  lhu     a5,6(a0)
+    0.00 :   b2e12:  addiw   a4,a4,1
+    0.00 :   b2e14:  addiw   t4,t4,32
+    0.00 :   b2e18:  sraiw   t4,t4,0x6
+    0.00 :   b2e1c:  addw    t3,t3,t4
+    0.00 :   b2e20:  addiw   t3,t3,1
+    0.00 :   b2e22:  sraiw   t3,t3,0x1
+  100.00 :   b2e26:  sh      t3,0(a0)
+    0.00 :   b2e2a:  lhu     t3,2(a1)
+    0.00 :   b2e2e:  mulw    t3,t3,t1
+    0.00 :   b2e32:  addiw   t3,t3,32
+    0.00 :   b2e36:  sraiw   t3,t3,0x6
+    0.00 :   b2e3a:  addw    a7,a7,t3
+    0.00 :   b2e3e:  addiw   a7,a7,1
+    0.00 :   b2e40:  sraiw   a7,a7,0x1
+    0.00 :   b2e44:  sh      a7,2(a0)
+    0.00 :   b2e48:  lhu     a7,4(a1)
+    0.00 :   b2e4c:  mulw    a7,a7,t1
+    0.00 :   b2e50:  addiw   a7,a7,32
+    0.00 :   b2e54:  sraiw   a7,a7,0x6
+    0.00 :   b2e58:  addw    a6,a6,a7
+    0.00 :   b2e5c:  addiw   a6,a6,1
+    0.00 :   b2e5e:  sraiw   a6,a6,0x1
+    0.00 :   b2e62:  sh      a6,4(a0)
+    0.00 :   b2e66:  lhu     a6,6(a1)
+    0.00 :   b2e6a:  add     a1,a1,a2
+    0.00 :   b2e6c:  mulw    a6,a6,t1
+    0.00 :   b2e70:  addiw   a6,a6,32
+    0.00 :   b2e74:  sraiw   a6,a6,0x6
+    0.00 :   b2e78:  addw    a5,a5,a6
+    0.00 :   b2e7c:  addiw   a5,a5,1
+    0.00 :   b2e7e:  sraiw   a5,a5,0x1
+    0.00 :   b2e82:  sh      a5,6(a0)
+    0.00 :   b2e86:  add     a0,a0,a2
+    0.00 :   b2e88:  bne     a3,a4,b2dfa <avg_h264_chroma_mc4_16_c+0x168>
+    0.00 :   b2e8c:  ret
+    0.00 :   b2e8e:  mv      a6,t4
+    0.00 :   b2e90:  li      t3,1
+    0.00 :   b2e92:  bnez    a5,b2f62 <avg_h264_chroma_mc4_16_c+0x2d0>
+    0.00 :   b2e94:  blez    a3,b2f66 <avg_h264_chroma_mc4_16_c+0x2d4>
+    0.00 :   b2e98:  slli    t3,t3,0x1
+    0.00 :   b2e9a:  add     t3,t3,a1
+    0.00 :   b2e9c:  slli    a2,a2,0x1
+    0.00 :   b2e9e:  lhu     t0,0(a1)
+    0.00 :   b2ea2:  lhu     a5,0(t3)
+    0.00 :   b2ea6:  lhu     t6,0(a0)
+    0.00 :   b2eaa:  mulw    t0,t0,t1
+    0.00 :   b2eae:  lhu     t5,2(a0)
+    0.00 :   b2eb2:  lhu     t4,4(a0)
+    0.00 :   b2eb6:  lhu     a4,6(a0)
+    0.00 :   b2eba:  addiw   a6,a6,1
+    0.00 :   b2ebc:  mulw    a5,a5,a7
+    0.00 :   b2ec0:  addw    a5,a5,t0
+    0.00 :   b2ec4:  addiw   a5,a5,32
+    0.00 :   b2ec8:  sraiw   a5,a5,0x6
+    0.00 :   b2ecc:  addw    a5,t6,a5
+    0.00 :   b2ed0:  addiw   a5,a5,1
+    0.00 :   b2ed2:  sraiw   a5,a5,0x1
+    0.00 :   b2ed6:  sh      a5,0(a0)
+    0.00 :   b2eda:  lhu     t6,2(a1)
+    0.00 :   b2ede:  lhu     a5,2(t3)
+    0.00 :   b2ee2:  mulw    t6,t6,t1
+    0.00 :   b2ee6:  mulw    a5,a5,a7
+    0.00 :   b2eea:  addw    a5,a5,t6
+    0.00 :   b2eee:  addiw   a5,a5,32
+    0.00 :   b2ef2:  sraiw   a5,a5,0x6
+    0.00 :   b2ef6:  addw    a5,t5,a5
+    0.00 :   b2efa:  addiw   a5,a5,1
+    0.00 :   b2efc:  sraiw   a5,a5,0x1
+    0.00 :   b2f00:  sh      a5,2(a0)
+    0.00 :   b2f04:  lhu     t5,4(a1)
+    0.00 :   b2f08:  lhu     a5,4(t3)
+    0.00 :   b2f0c:  mulw    t5,t5,t1
+    0.00 :   b2f10:  mulw    a5,a5,a7
+    0.00 :   b2f14:  addw    a5,a5,t5
+    0.00 :   b2f18:  addiw   a5,a5,32
+    0.00 :   b2f1c:  sraiw   a5,a5,0x6
+    0.00 :   b2f20:  addw    a5,t4,a5
+    0.00 :   b2f24:  addiw   a5,a5,1
+    0.00 :   b2f26:  sraiw   a5,a5,0x1
+    0.00 :   b2f2a:  sh      a5,4(a0)
+    0.00 :   b2f2e:  lhu     t4,6(a1)
+    0.00 :   b2f32:  lhu     a5,6(t3)
+    0.00 :   b2f36:  add     a1,a1,a2
+    0.00 :   b2f38:  mulw    t4,t4,t1
+    0.00 :   b2f3c:  add     t3,t3,a2
+    0.00 :   b2f3e:  mulw    a5,a5,a7
+    0.00 :   b2f42:  addw    a5,a5,t4
+    0.00 :   b2f46:  addiw   a5,a5,32
+    0.00 :   b2f4a:  sraiw   a5,a5,0x6
+    0.00 :   b2f4e:  addw    a4,a4,a5
+    0.00 :   b2f50:  addiw   a4,a4,1
+    0.00 :   b2f52:  sraiw   a4,a4,0x1
+    0.00 :   b2f56:  sh      a4,6(a0)
+    0.00 :   b2f5a:  add     a0,a0,a2
+    0.00 :   b2f5c:  bne     a3,a6,b2e9e <avg_h264_chroma_mc4_16_c+0x20c>
+    0.00 :   b2f60:  ret
+    0.00 :   b2f62:  mv      t3,a2
+    0.00 :   b2f64:  j       b2e94 <avg_h264_chroma_mc4_16_c+0x202>
+    0.00 :   b2f66:  ret
+    0.00 :   b2f68:  ret

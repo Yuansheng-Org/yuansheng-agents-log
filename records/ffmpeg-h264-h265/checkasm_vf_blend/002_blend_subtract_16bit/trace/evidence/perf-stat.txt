@@ -1,0 +1,65 @@
+5-FFMPEG-CODEC-BENCHMARK checkasm_vf_blend RISC-V perf stat
+===========================================================
+
+Source CSV: /workspace/results/5-ffmpeg-codec-benchmark_results.csv
+TestName: checkasm_vf_blend
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 316,751,817 |
+| task_clock | 315.52 |
+| cpu_cycle | 693,966,441 |
+| instruction | 1,324,283,368 |
+| cache_references | NA |
+| cache_misses | NA |
+| branches | 110,067,030 |
+| branch_misses | 1,440,635 |
+| L1_dcache_loads | 182,938,404 |
+| L1_dcache_load_misses | 1,779,962 |
+| LLC_loads | NA |
+| LLC_load_misses | NA |
+| IPC | 1.908282 |
+| checkasm_functions | 31 |
+| checkasm_compared_functions | 0 |
+| checkasm_c_cycles_total | NA |
+| checkasm_opt_cycles_total | NA |
+| checkasm_speedup_total | NA |
+| checkasm_speedup_geomean | NA |
+| checkasm_bench_duration_us | 1,000 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 0.316752 |
+| branch_miss_rate | 1.309% |
+| L1_dcache_load_miss_rate | 0.973% |
+
+perf stat style summary
+-----------------------
+          316,751,817  duration_time
+               315.52  task_clock
+          693,966,441  cpu_cycle
+        1,324,283,368  instruction
+                   NA  cache_references
+                   NA  cache_misses
+          110,067,030  branches
+            1,440,635  branch_misses
+          182,938,404  L1_dcache_loads
+            1,779,962  L1_dcache_load_misses
+                   NA  LLC_loads
+                   NA  LLC_load_misses
+             1.908282  IPC
+                   31  checkasm_functions
+                    0  checkasm_compared_functions
+                   NA  checkasm_c_cycles_total
+                   NA  checkasm_opt_cycles_total
+                   NA  checkasm_speedup_total
+                   NA  checkasm_speedup_geomean
+                1,000  checkasm_bench_duration_us
+             0.316752  duration_s
+               1.309%  branch_miss_rate
+               0.973%  L1_dcache_load_miss_rate

@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-ffmpeg-checkasm_vf_blend-002",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T09:34:03.338Z",
+    "software": "ffmpeg",
+    "testcaseIds": [
+      "checkasm_vf_blend"
+    ],
+    "targetHardware": "SpacemiT K3 / spacemit-x100 (RVV 1.0, VLEN=256, vlenb=32)",
+    "repositoryUrl": "https://github.com/FFmpeg/FFmpeg.git",
+    "testBranch": "master",
+    "commitHash": "1d7b14f61d66fdf18f15204c613df9d65396c319",
+    "diagnosisId": "diag-20260908T093403338Z-681428fa"
+  },
+  "problem": {
+    "summary": "vf_blend subtract 混合算子（16-bit）的 C fallback（blend_subtract_16bit，libavfilter/vf_blend.c blend_expr_subtract 逐像素表达式宏）被 checkasm 采用执行：libavfilter/riscv/ 无 vf_blend 实现，blend 表达式逐像素 C 标量求值全量执行。样本：85f56 fcvt.wu.s 减法。",
+    "evidence": [
+      "perf stat: IPC=1.908, compared_functions=0（vf_blend 无任何 RVV 对照）",
+      "checkasm_bench.csv: 无 rvv 行（vf_blend 全 C）",
+      "libavfilter/riscv/: 无 vf_blend 实现",
+      "样本全在标量求值链: 85f56 fcvt.wu.s",
+      "构建 ISA: zvl128b1p0，硬件 VLEN=256"
+    ]
+  },
+  "rootCause": {
+    "summary": "vf_blend subtract 混合算子（16-bit）的 RISC-V 向量实现不存在：blend 表达式逐像素 C 标量求值全量执行。",
+    "candidateFiles": [
+      "libavfilter/riscv/vf_blend_init.c",
+      "libavfilter/vf_blend.c"
+    ],
+    "performanceFactors": [
+      "Policy-Backed Missing RISC-V Assembly Kernel"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "blend subtract 逐像素表达式语义与像素输出逐位一致",
+      "AVFilter 函数指针表布局不变",
+      "RVV_I32 gate 一致性"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "checkasm_vf_blend"
+    ],
+    "regressionCommand": "agent1 patch_regression --case checkasm_vf_blend"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.7,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "compared_functions=0 表明 vf_blend 全 C；需统一规划并按真实 workload 触发频率评估优先级后再自动转发",
+    "reasoning": "libavfilter/riscv/ 无 vf_blend 实现，blend_subtract_16bit C fallback 被 checkasm 采用（样本全在标量链）。policy 四证齐全，准入 gate（RVV_I32）成立。16-bit 场景小众。定性 probable + conditional。",
+    "rootCauseType": "arch_gap",
+    "alternativeExplanations": [
+      "vf_blend 全 C（compared=0），blend 算子族可共享逐像素向量化结构"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision；缺真实 workload 级贡献评估",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 blend 算子族在真实 workload 中的触发频率；统一规划优先级",
+    "affectedTarget": "RV + checkasm_vf_blend",
+    "recommendedFirstAction": "在 vf_blend 宏族增加 RVV 变体（SEW=16 逐像素表达式向量化 + clip），init 补齐 blend 算子槽；8-bit 算子优先",
+    "recommendedVerification": "运行 checkasm_vf_blend 对应槽位确认 bit-exact；K3 对比 C vs RVV cycles",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 1.908,
+        "anomalyNote": "中等"
+      },
+      {
+        "metric": "Branch Miss Rate(%)",
+        "rv": 1.309,
+        "anomalyNote": "低"
+      },
+      {
+        "metric": "L1 Dcache Load Miss Rate(%)",
+        "rv": 0.973,
+        "anomalyNote": "低"
+      },
+      {
+        "metric": "checkasm compared_functions",
+        "rv": 0,
+        "anomalyNote": "vf_blend 无任何 RVV 对照"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "blend_subtract_16bit",
+        "fileModule": "libavfilter/vf_blend.c",
+        "rvvPattern": "Policy-Backed Missing RISC-V Assembly Kernel",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.02,
+        "note": "16-bit subtract C fallback；样本全在标量链"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "libavfilter/vf_blend.c",
+      "relatedKnowledge": "https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/79adb692a2720647e9dbe57de33fd50b41db295c;https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/afb967b81e4169e9e563f6342f4f9f636627de5b",
+      "evidenceExplanation": "FFmpeg PR 23712 shape-first 实例与上游同类 .S 优化 commit 提供同构修复先例；libavfilter/riscv/ 已有 af_afir/vf_blackdetect 先例。"
+    }
+  }
+}

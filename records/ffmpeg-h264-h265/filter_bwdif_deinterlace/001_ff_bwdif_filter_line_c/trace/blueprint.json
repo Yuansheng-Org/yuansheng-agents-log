@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-ffmpeg-filter_bwdif_deinterlace-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T11:13:23.993Z",
+    "software": "ffmpeg",
+    "testcaseIds": [
+      "filter_bwdif_deinterlace"
+    ],
+    "targetHardware": "SpacemiT K3 / spacemit-x100 (RVV 1.0, VLEN=256, vlenb=32)",
+    "repositoryUrl": "https://github.com/FFmpeg/FFmpeg.git",
+    "testBranch": "master",
+    "commitHash": "1d7b14f61d66fdf18f15204c613df9d65396c319",
+    "diagnosisId": "diag-20260908T111323993Z-3a813c47"
+  },
+  "problem": {
+    "summary": "bwdif 反交错主滤波行（ff_bwdif_filter_line_c，libavfilter/vf_bwdif.c）被采样为全用例最高热点（~176 samples）：上下行时空插值 + 运动检测 C 标量链（lbu 加载 + 地址计算）全量执行。libavfilter/riscv/ 无 bwdif 实现。",
+    "evidence": [
+      "perf stat: IPC=2.519, branch_miss_rate=2.318%, L1D_load_miss_rate=0.245%, 131fps/240 帧",
+      "libavfilter/riscv/: 无 bwdif 实现",
+      "采样: 3dc9cc lbu 6.82%（像素加载）/ 3dc9c4 add 3.41%（地址计算）",
+      "bwdif 是通用反交错高频滤镜",
+      "构建 ISA: zvl128b1p0，硬件 VLEN=256"
+    ]
+  },
+  "rootCause": {
+    "summary": "bwdif 反交错主滤波行（filter_line）的 RISC-V 向量实现不存在：libavfilter/riscv/ 无 bwdif 实现，C 标量时空插值链全量执行。",
+    "candidateFiles": [
+      "libavfilter/riscv/vf_bwdif_init.c",
+      "libavfilter/riscv/vf_bwdif_rvv.S"
+    ],
+    "performanceFactors": [
+      "Policy-Backed Missing RISC-V Assembly Kernel"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "bwdif 时空插值语义（上下行加权 + 运动检测）与像素输出逐位一致",
+      "AVFilter 函数指针表布局不变",
+      "RVV_I32 gate 一致性"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "filter_bwdif_deinterlace"
+    ],
+    "regressionCommand": "agent1 patch_regression --case filter_bwdif_deinterlace"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "真实滤镜 workload 主热点；需统一规划并实测收益后自动转发",
+    "reasoning": "libavfilter/riscv/ 无 bwdif 实现，ff_bwdif_filter_line_c 时空插值主循环（lbu + 地址计算）为 C 标量链。policy 四证齐全，准入 gate（RVV_I32）成立。bwdif 是通用反交错高频滤镜。定性 probable + conditional。",
+    "rootCauseType": "arch_gap",
+    "alternativeExplanations": [
+      "bwdif 运动检测依赖相邻行，向量化需处理行间依赖"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision；缺真实 workload 级贡献评估",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 bwdif 时空插值的可向量化子集；与 bwdif 族统一规划",
+    "affectedTarget": "RV + filter_bwdif_deinterlace",
+    "recommendedFirstAction": "新增 vf_bwdif RVV kernel（SEW=8 时空插值 + 运动检测），init 补齐 filter_line/filter_edge 槽",
+    "recommendedVerification": "bwdif 反交错输出一致；K3 对比 C vs RVV 时间",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 2.519,
+        "anomalyNote": "较高"
+      },
+      {
+        "metric": "Branch Miss Rate(%)",
+        "rv": 2.318,
+        "anomalyNote": "中等"
+      },
+      {
+        "metric": "L1 Dcache Load Miss Rate(%)",
+        "rv": 0.245,
+        "anomalyNote": "极低"
+      },
+      {
+        "metric": "bwdif fps",
+        "rv": 131,
+        "anomalyNote": "反交错吞吐基准"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "ff_bwdif_filter_line_c",
+        "fileModule": "libavfilter/vf_bwdif.c",
+        "rvvPattern": "Policy-Backed Missing RISC-V Assembly Kernel",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.05,
+        "note": "bwdif 主滤波行 C fallback；176 samples 全用例最高"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "libavfilter/vf_bwdif.c",
+      "relatedKnowledge": "https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/79adb692a2720647e9dbe57de33fd50b41db295c;https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/afb967b81e4169e9e563f6342f4f9f636627de5b",
+      "evidenceExplanation": "FFmpeg PR 23712 shape-first 实例与上游同类 .S 优化 commit 提供同构修复先例；libavfilter/riscv/ 已有 af_afir/vf_blackdetect 先例。"
+    }
+  }
+}

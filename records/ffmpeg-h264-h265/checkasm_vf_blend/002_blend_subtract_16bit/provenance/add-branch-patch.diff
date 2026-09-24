@@ -1,0 +1,185 @@
+diff --git a/libavfilter/riscv/vf_blend_rvv.S b/libavfilter/riscv/vf_blend_rvv.S
+index d74dc482ec..82e13d3abf 100644
+--- a/libavfilter/riscv/vf_blend_rvv.S
++++ b/libavfilter/riscv/vf_blend_rvv.S
+@@ -64,9 +64,9 @@ func ff_blend_add_8_rvv, zve32x
+         vle8.v          v16, (a2)
+         vwaddu.vv       v24, v8, v16
+         vsetvli         zero, zero, e16, m2, ta, ma
+-        vminu.vx        v24, v24, t2
+-        vnsrl.wi        v24, v24, 0
++        vnclipu.wi      v8, v24, 0
+         vsetvli         zero, zero, e8, m1, ta, ma
++        vmv.v.v         v24, v8
+         blend8_epilogue
+ endfunc
+ 
+@@ -79,12 +79,13 @@ func ff_blend_sub_8_rvv, zve32x
+         vle8.v          v16, (a2)
+         vmv.v.i         v25, 1
+         vwmulu.vv       v26, v8, v25
+-        vwmulu.vv       v27, v16, v25
++        vwmulu.vv       v28, v16, v25
+         vsetvli         zero, zero, e16, m2, ta, ma
+-        vsub.vv         v24, v26, v27
++        vsub.vv         v24, v26, v28
+         vmax.vx         v24, v24, zero
+-        vnsrl.wi        v24, v24, 0
++        vnclipu.wi      v8, v24, 0
+         vsetvli         zero, zero, e8, m1, ta, ma
++        vmv.v.v         v24, v8
+         blend8_epilogue
+ endfunc
+ 
+@@ -152,13 +153,14 @@ func ff_blend_diff_8_rvv, zve32x
+         vle8.v          v16, (a2)
+         vmv.v.i         v25, 1
+         vwmulu.vv       v26, v8, v25
+-        vwmulu.vv       v27, v16, v25
++        vwmulu.vv       v28, v16, v25
+         vsetvli         zero, zero, e16, m2, ta, ma
+-        vsub.vv         v24, v26, v27
+-        vneg.v          v25, v24
+-        vmax.vv         v24, v24, v25
+-        vnsrl.wi        v24, v24, 0
++        vsub.vv         v24, v26, v28
++        vneg.v          v28, v24
++        vmax.vv         v24, v24, v28
++        vnclipu.wi      v8, v24, 0
+         vsetvli         zero, zero, e8, m1, ta, ma
++        vmv.v.v         v24, v8
+         blend8_epilogue
+ endfunc
+ 
+@@ -171,14 +173,15 @@ func ff_blend_extremity_8_rvv, zve32x
+         vle8.v          v16, (a2)
+         vmv.v.i         v25, 1
+         vwmulu.vv       v26, v8, v25
+-        vwmulu.vv       v27, v16, v25
++        vwmulu.vv       v28, v16, v25
+         vsetvli         zero, zero, e16, m2, ta, ma
+-        vadd.vv         v24, v26, v27
++        vadd.vv         v24, v26, v28
+         vrsub.vx        v24, v24, t2
+-        vneg.v          v25, v24
+-        vmax.vv         v24, v24, v25
+-        vnsrl.wi        v24, v24, 0
++        vneg.v          v28, v24
++        vmax.vv         v24, v24, v28
++        vnclipu.wi      v8, v24, 0
+         vsetvli         zero, zero, e8, m1, ta, ma
++        vmv.v.v         v24, v8
+         blend8_epilogue
+ endfunc
+ 
+@@ -191,14 +194,14 @@ func ff_blend_grainextract_8_rvv, zve32x
+         vle8.v          v16, (a2)
+         vmv.v.i         v25, 1
+         vwmulu.vv       v26, v8, v25
+-        vwmulu.vv       v27, v16, v25
++        vwmulu.vv       v28, v16, v25
+         vsetvli         zero, zero, e16, m2, ta, ma
+-        vsub.vv         v24, v26, v27
++        vsub.vv         v24, v26, v28
+         vadd.vx         v24, v24, t3
+         vmax.vx         v24, v24, zero
+-        vminu.vx        v24, v24, t2
+-        vnsrl.wi        v24, v24, 0
++        vnclipu.wi      v8, v24, 0
+         vsetvli         zero, zero, e8, m1, ta, ma
++        vmv.v.v         v24, v8
+         blend8_epilogue
+ endfunc
+ 
+@@ -213,9 +216,9 @@ func ff_blend_grainmerge_8_rvv, zve32x
+         vsetvli         zero, zero, e16, m2, ta, ma
+         vsub.vx         v24, v24, t3
+         vmax.vx         v24, v24, zero
+-        vminu.vx        v24, v24, t2
+-        vnsrl.wi        v24, v24, 0
++        vnclipu.wi      v8, v24, 0
+         vsetvli         zero, zero, e8, m1, ta, ma
++        vmv.v.v         v24, v8
+         blend8_epilogue
+ endfunc
+ 
+@@ -231,7 +234,8 @@ func ff_blend_hardmix_8_rvv, zve32x
+         vmsltu.vx       v0, v26, t2
+         li              t4, 255
+         vmv.v.x         v25, t4
+-        vmerge.vxm      v24, v25, zero, v0
++        vmv.v.i         v30, 0
++        vmerge.vvm      v24, v25, v30, v0
+         vsetvli         zero, zero, e8, m1, ta, ma
+         blend8_epilogue
+ endfunc
+@@ -246,8 +250,9 @@ func ff_blend_multiply_8_rvv, zve32x
+         vwmulu.vv       v24, v8, v16
+         vsetvli         zero, zero, e16, m2, ta, ma
+         vdivu.vx        v24, v24, t2
+-        vnsrl.wi        v24, v24, 0
++        vnclipu.wi      v8, v24, 0
+         vsetvli         zero, zero, e8, m1, ta, ma
++        vmv.v.v         v24, v8
+         blend8_epilogue
+ endfunc
+ 
+@@ -263,9 +268,9 @@ func ff_blend_screen_8_rvv, zve32x
+         vwmulu.vv       v26, v24, v25
+         vsetvli         zero, zero, e16, m2, ta, ma
+         vdivu.vx        v26, v26, t2
+-        vnsrl.wi        v24, v26, 0
++        vnclipu.wi      v8, v26, 0
+         vsetvli         zero, zero, e8, m1, ta, ma
+-        vrsub.vx        v24, v24, t2
++        vrsub.vx        v24, v8, t2
+         blend8_epilogue
+ endfunc
+ 
+@@ -305,9 +310,9 @@ func ff_blend_add_16_rvv, zve32x
+         vle16.v         v16, (a2)
+         vwaddu.vv       v24, v8, v16
+         vsetvli         zero, zero, e32, m4, ta, ma
+-        vminu.vx        v24, v24, t2
+-        vnsrl.wi        v24, v24, 0
++        vnclipu.wi      v8, v24, 0
+         vsetvli         zero, zero, e16, m2, ta, ma
++        vmv.v.v         v24, v8
+         blend16_epilogue
+ endfunc
+ 
+@@ -324,8 +329,9 @@ func ff_blend_sub_16_rvv, zve32x
+         vsetvli         zero, zero, e32, m4, ta, ma
+         vsub.vv         v24, v26, v28
+         vmax.vx         v24, v24, zero
+-        vnsrl.wi        v24, v24, 0
++        vnclipu.wi      v8, v24, 0
+         vsetvli         zero, zero, e16, m2, ta, ma
++        vmv.v.v         v24, v8
+         blend16_epilogue
+ endfunc
+ 
+@@ -354,9 +360,9 @@ func ff_blend_grainextract_16_rvv, zve32x
+         vsub.vv         v24, v26, v28
+         vadd.vx         v24, v24, t3
+         vmax.vx         v24, v24, zero
+-        vminu.vx        v24, v24, t2
+-        vnsrl.wi        v24, v24, 0
++        vnclipu.wi      v8, v24, 0
+         vsetvli         zero, zero, e16, m2, ta, ma
++        vmv.v.v         v24, v8
+         blend16_epilogue
+ endfunc
+ 
+@@ -371,9 +377,9 @@ func ff_blend_grainmerge_16_rvv, zve32x
+         vsetvli         zero, zero, e32, m4, ta, ma
+         vsub.vx         v24, v24, t3
+         vmax.vx         v24, v24, zero
+-        vminu.vx        v24, v24, t2
+-        vnsrl.wi        v24, v24, 0
++        vnclipu.wi      v8, v24, 0
+         vsetvli         zero, zero, e16, m2, ta, ma
++        vmv.v.v         v24, v8
+         blend16_epilogue
+ endfunc
+ 

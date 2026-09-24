@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-ffmpeg-vp8-lpf-003",
+  "patchCandidateId": "pc-ffmpeg-vp8-lpf-003",
+  "reviewedAt": "2026-09-13",
+  "reviewer": "opencode-ai-reviewer",
+  "reviewResult": "pass",
+  "archReview": {"status": "passed", "notes": "VP8 loop filters v/h x 16y/8uv x inner/normal (8 kernels) vectorized over 16/8 columns in e16: normal_limit mask (6 |diff|<=I + simple_limit) and hev mask computed with vmsleu/vmsgtu and AND/OR; filter_common (4tap/8tap) and filter_mbedge cores with arithmetic mask-select (mask?a:b = b^((a^b)&mask)) avoiding vmerge's v0-only constraint; unsigned widen via vwcvt, output via vnsrl pairs. arch-scan 0."},
+  "hallucinationCheck": [
+    {"dimension": "blueprint-anchor", "result": "PASS"},
+    {"dimension": "root-cause-boundary", "result": "PASS"},
+    {"dimension": "verification-evidence", "result": "PASS"},
+    {"dimension": "diff-anchor", "result": "PASS"}
+  ],
+  "findings": []
+}

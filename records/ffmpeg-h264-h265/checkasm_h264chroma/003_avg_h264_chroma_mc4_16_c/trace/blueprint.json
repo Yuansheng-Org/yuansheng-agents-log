@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-ffmpeg-checkasm_h264chroma-003",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T07:21:38.685Z",
+    "software": "ffmpeg",
+    "testcaseIds": [
+      "checkasm_h264chroma"
+    ],
+    "diagnosisId": "diag-20260908-152138",
+    "targetHardware": "SpacemiT K3 / spacemit-x100 (RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://github.com/FFmpeg/FFmpeg.git",
+    "testBranch": "master",
+    "commitHash": "1d7b14f61d66fdf18f15204c613df9d65396c319"
+  },
+  "problem": {
+    "summary": "16-bit（High bit depth）H.264 chroma MC 的 C fallback（avg_h264_chroma_mc4_16_c，h264chroma_template.c H264_CHROMA_MC 宏生成）被 checkasm 采用执行：RVV 的 h264_chroma_init_riscv.c 仅在 bit_depth==8 时注册 h264_mc_chroma.S（全为 vle8/vse8 8-bit 实现），16-bit 变体无 RVV 覆盖，长期执行标量 4-tap 加权链（lhu/mulw/sraiw/sh）；对比 aarch64 NEON、x86 mmxext/ssse3（含 10-bit）均有架构实现。1 个 sample 落在 avg 写回（b2e26 sh）。",
+    "evidence": [
+      "perf stat: IPC=2.046, branch_miss_rate=0.186%, L1D_load_miss_rate=0.021%",
+      "1 sample: b2e26 sh t3,0(a0) 100%（16-bit avg 写回——C fallback 标量链）",
+      "policy 四证：dispatch slot（avg_h264_chroma_pixels_tab）+ 16-bit C fallback 被采用 + RVV 16-bit 缺失（init bit_depth==8 gate）+ FFmpeg SIMD/DSP policy（同 slot 8-bit 已 .S 实现）",
+      "对比：aarch64 NEON（put/avg×mc8/mc4/mc2）、x86 mmxext/ssse3（含 10-bit）均有架构实现",
+      "构建 ISA: rv64i...v1p0...zvl128b1p0，硬件 VLEN=256 支持 zve16x"
+    ]
+  },
+  "rootCause": {
+    "summary": "16-bit H.264 chroma MC 的 RISC-V 向量实现缺失（init 仅 bit_depth==8 注册 8-bit RVV），16-bit 变体长期执行 C template 标量 4-tap 加权链；注意 High 10 profile 场景相对小众，样本仅 1 个，优先级需评估。",
+    "candidateFiles": [
+      "libavcodec/riscv/h264_chroma_init_riscv.c",
+      "libavcodec/riscv/h264_mc_chroma.S"
+    ],
+    "performanceFactors": [
+      "Policy-Backed Missing RISC-V Assembly Kernel"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "16-bit chroma MC 语义（4-tap 加权 + avg 舍入）与像素输出逐位一致",
+      "h264chroma DSP slot 函数指针表（put/avg × mc8/mc4/mc2）布局不变",
+      "zve16x 的 func 声明/runtime gate 一致性"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "checkasm_h264chroma"
+    ],
+    "regressionCommand": "agent1 patch_regression --case checkasm_h264chroma"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.7,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "16-bit（High 10 profile）场景相对小众且样本仅 1 个，需确认真实 workload 触发频率后再自动转发",
+    "reasoning": "avg_h264_chroma_mc4_16_c 的 _16 后缀表明是 16-bit 高 bit depth 变体。h264_chroma_init_riscv.c 仅在 bit_depth==8 时注册 RVV（h264_mc_chroma.S 全为 vle8/vse8），16-bit 无 RVV 覆盖 → C template fallback 被 checkasm 采用（1 sample 落在 avg 写回）。对比 aarch64 NEON、x86 mmxext/ssse3（含 10-bit）均有实现，证明框架支持 16-bit 架构专有实现。四证（dispatch slot / 16-bit fallback hot / RVV 16-bit 缺失 / FFmpeg policy）基本齐全，准入 gate（zve16x）成立。因 High 10 profile 场景相对小众且样本仅 1 个，定性 probable + conditional。",
+    "rootCauseType": "arch_gap",
+    "alternativeExplanations": [
+      "1 sample 可能接近噪声；16-bit 场景（High 10+ profile）在主流内容中占比低，实际收益可能有限",
+      "若后续 H.264 High 10 解码成为热点，16-bit chroma MC 的 RVV 实现价值会上升——需按真实 workload 评估"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision（无 precise_ip）；样本量过少（1）；16-bit H.264（High 10）真实 workload 触发频率未确认；16-bit 实现的收益需按 profile 分布评估",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 16-bit H.264（High 10）场景在目标 workload 中的触发频率，以决定是否值得投入 16-bit chroma MC RVV 实现",
+    "affectedTarget": "RV + checkasm_h264chroma",
+    "recommendedFirstAction": "评估在 libavcodec/riscv/h264_mc_chroma.S 增加 16-bit 变体（vle16/vse16 + e16 加权，4-tap 用 vwmulu/vwmaccu e16→e32 + vnclipu.wi 窄化）并在 h264_chroma_init_riscv.c 增加 bit_depth>8 注册分支；先按真实 H.264 High 10 workload 评估触发频率",
+    "recommendedVerification": "运行 checkasm_h264chroma 的 16-bit（bit_depth 16）用例确认 bit-exact；K3 上对比 16-bit C vs RVV cycles；确认 High 10 profile 真实 workload 的触发频率",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 2.046,
+        "anomalyNote": "IPC 2.05 总体正常；16-bit C fallback 标量链"
+      },
+      {
+        "metric": "Branch Miss Rate(%)",
+        "rv": 0.186,
+        "anomalyNote": "极低，排除 branch-bound"
+      },
+      {
+        "metric": "L1 Dcache Load Miss Rate(%)",
+        "rv": 0.021,
+        "anomalyNote": "极低，排除 memory-bound"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "avg_h264_chroma_mc4_16_c",
+        "fileModule": "libavcodec/h264chroma_template.c",
+        "rvvPattern": "Policy-Backed Missing RISC-V Assembly Kernel",
+        "patternConfidence": "MEDIUM",
+        "benefitUpperbound": 0,
+        "note": "16-bit H.264 chroma MC C fallback（High 10 profile）；RVV 仅覆盖 8-bit，16-bit 无向量实现"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "libavcodec/riscv/h264_chroma_init_riscv.c:20",
+      "relatedKnowledge": "https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/23712",
+      "evidenceExplanation": "policy_backed_missing_riscv_assembly_kernel.md 的 shape-first 实例（PR 23712 synth_filter_float）展示 FFmpeg 同类 DSP slot 补齐 .S 的标准路径；本函数 16-bit 四证齐全（除样本少），RVV 8-bit 已实现证明框架支持。"
+    }
+  }
+}

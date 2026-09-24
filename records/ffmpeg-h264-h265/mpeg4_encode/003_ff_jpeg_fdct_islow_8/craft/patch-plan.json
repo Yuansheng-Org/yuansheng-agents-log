@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-ffmpeg-mpeg4-encode-003",
+  "blueprintId": "bp-ffmpeg-mpeg4_encode-003",
+  "createdAt": "2026-09-14T02:51:44.908Z",
+  "objective": "JPEG FDCT（8x8 前向 DCT）为 C 标量实现：libavcodec/riscv/ 无 fdct kernel。与 MPEG-4 编码 RVV 覆盖缺口同根因。",
+  "changes": [
+    {
+      "filePath": "libavcodec/riscv/fdctdsp.c",
+      "action": "modify",
+      "rationale": "JPEG FDCT（8x8 前向 DCT）为 C 标量实现：libavcodec/riscv/ 无 fdct kernel。与 MPEG-4 编码 RVV 覆盖缺口同根因。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 libavcodec/riscv/fdctdsp.c 来解决 blueprint bp-ffmpeg-mpeg4_encode-003。"
+}

@@ -1,0 +1,101 @@
+{
+ "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+ "blueprintId": "bp-ffmpeg-vp9_decode-018",
+ "source": {
+  "agent": "trace",
+  "createdAt": "2026-09-08T14:06:56.642Z",
+  "software": "ffmpeg",
+  "testcaseIds": [
+   "vp9_decode"
+  ],
+  "targetHardware": "SpacemiT K3 / spacemit-x100 (RVV 1.0, VLEN=256, vlenb=32)",
+  "repositoryUrl": "https://github.com/FFmpeg/FFmpeg.git",
+  "testBranch": "master",
+  "commitHash": "1d7b14f61d66fdf18f15204c613df9d65396c319",
+  "diagnosisId": "diag-20260908T140656642Z-e6ac22a0"
+ },
+ "problem": {
+  "summary": "idct_idct_16x16_add_c.part.0（VP9 idct 16x16 反变换）被采样为 VP9 解码热点：C 标量蝶形链全量执行。证据：mulw 蝶形 / sd 栈保存。",
+  "evidence": [
+   "perf stat: IPC=2.228, branch_miss_rate=4.806%, 32fps/1200 帧",
+   "采样点: mulw 蝶形 / sd 栈保存",
+   "libavcodec/riscv/vp9dsp_init.c: 无 idct 注册",
+   "构建 ISA: zvl128b1p0，硬件 VLEN=256"
+  ]
+ },
+ "rootCause": {
+  "summary": "VP9 idct 16x16 反变换为 C 标量蝶形实现：vp9dsp_init.c 无 idct 注册。与 VP9 解码 RVV 覆盖缺口同根因。",
+  "candidateFiles": [
+   "libavcodec/riscv/vp9dsp_init.c",
+   "libavcodec/riscv/vp9dsp_rvv.S"
+  ],
+  "performanceFactors": [
+   "Policy-Backed Missing RISC-V Assembly Kernel"
+  ]
+ },
+ "constraints": {
+  "riskLevel": "medium",
+  "mustPreserve": [
+   "idct 16x16 语义与解码输出逐位一致",
+   "VP9DSPContext 状态/函数指针表布局不变",
+   "RVV_I32 gate 一致性"
+  ]
+ },
+ "validation": {
+  "requiredTests": [
+   "vp9_decode"
+  ],
+  "regressionCommand": "agent1 patch_regression --case vp9_decode"
+ },
+ "diagnosis": {
+  "overallStatus": "probable",
+  "finalStatus": "probable_root_cause",
+  "overallConfidence": 0.72,
+  "recommendToCraft": "conditional",
+  "allowAutoForwardToCraft": false,
+  "blockReason": "真实解码 workload 热点；idct 蝶形可向量化（hevc idct RVV 先例）；需统一规划并实测后自动转发",
+  "reasoning": "libavcodec/riscv/vp9dsp_init.c 无 idct 注册，idct_idct_16x16_add_c.part.0 为 C 标量蝶形。policy 四证齐全，准入 gate（RVV_I32）成立。定性 probable + conditional。",
+  "rootCauseType": "arch_gap",
+  "alternativeExplanations": [
+   "idct 蝶形可参考 hevc idct RVV 先例向量化"
+  ],
+  "currentGaps": "baseline_gap: sampling IP precision；样本分散",
+  "needsHumanReview": true,
+  "humanReviewFocus": "确认 idct 向量化方案；与 VP9 itxfm 族统一规划",
+  "affectedTarget": "RV + vp9_decode",
+  "recommendedFirstAction": "在 vp9dsp_rvv.S 增加 idct 蝶形 RVV kernel（SEW=32），init 补齐 idct 槽",
+  "recommendedVerification": "VP9 解码输出一致；K3 对比 C vs RVV 时间",
+  "metricEvidence": [
+   {
+    "metric": "IPC",
+    "rv": 2.228,
+    "anomalyNote": "中等"
+   },
+   {
+    "metric": "Branch Miss Rate(%)",
+    "rv": 4.806,
+    "anomalyNote": "高"
+   },
+   {
+    "metric": "VP9 fps",
+    "rv": 32,
+    "anomalyNote": "解码吞吐基准"
+   }
+  ],
+  "hotspotEvidence": [
+   {
+    "hotspotFunction": "idct_idct_16x16_add_c.part.0",
+    "fileModule": "libavcodec/vp9dsp.c",
+    "rvvPattern": "Policy-Backed Missing RISC-V Assembly Kernel",
+    "patternConfidence": "HIGH",
+    "benefitUpperbound": 0.03,
+    "note": "VP9 idct 16x16 C fallback"
+   }
+  ],
+  "codeKnowledgeEvidence": {
+   "relatedCodeLocation": "libavcodec/riscv/vp9dsp_rvv.S",
+   "relatedKnowledge": "https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/79adb692a2720647e9dbe57de33fd50b41db295c;https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/afb967b81e4169e9e563f6342f4f9f636627de5b",
+   "evidenceExplanation": "FFmpeg PR 23712 shape-first 实例与上游同类 .S 优化 commit 提供同构修复先例；hevc idct RVV 提供蝶形先例。"
+  }
+ }
+}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-ffmpeg-checkasm-vf-blend-002",
+  "patchCandidateId": "pc-bp-ffmpeg-checkasm-vf-blend-002",
+  "reviewedAt": "2026-09-10T06:00:00.000Z",
+  "reviewResult": "pass",
+  "reviewer": "opencode-ai-reviewer",
+  "findings": [
+    {
+      "id": "F-BLEND-001",
+      "file": "libavfilter/riscv/vf_blend_rvv.S",
+      "evidence": "+        vwmulu.vv       v24, v8, v16\n+        vdivu.vx        v24, v24, t2\n+        vnsrl.wi        v24, v24, 0",
+      "severity": "suggestion",
+      "category": "performance",
+      "suggestion": "multiply/screen 使用 vdivu（向量除法较慢），后续可考虑乘法定点近似优化；非必须，不影响正确性。"
+    }
+  ],
+  "archReview": {
+    "status": "passed",
+    "notes": "targetHardware: SpacemiT K3 (RVV 1.0, VLEN=256)。全部指令属 RVV 1.0 基础整数 e8/e16/e32 (zve32x)，binutils 2.42 汇编通过；vsetvl 序列与寄存器组经确定性穷举 3360 + 随机 6300 组合验证（含多 chunk/非对齐 stride）；dispatch 位于 ARCH_RISCV + RVV_I32 gate。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "technicalAccuracy", "result": "PASS" },
+    { "dimension": "claimTraceability", "result": "PASS" },
+    { "dimension": "explainability", "result": "PASS" },
+    { "dimension": "internalConsistency", "result": "PASS" },
+    { "dimension": "safety", "result": "PASS" }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-ffmpeg-checkasm-vf-blend-002",
+  "blueprintId": "bp-ffmpeg-checkasm_vf_blend-002",
+  "createdAt": "2026-09-10T11:21:29.268Z",
+  "objective": "vf_blend subtract 混合算子（16-bit）的 RISC-V 向量实现不存在：blend 表达式逐像素 C 标量求值全量执行。",
+  "changes": [
+    {
+      "filePath": "libavfilter/riscv/vf_blend_init.c",
+      "action": "modify",
+      "rationale": "vf_blend subtract 混合算子（16-bit）的 RISC-V 向量实现不存在：blend 表达式逐像素 C 标量求值全量执行。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "libavfilter/vf_blend.c",
+      "action": "modify",
+      "rationale": "vf_blend subtract 混合算子（16-bit）的 RISC-V 向量实现不存在：blend 表达式逐像素 C 标量求值全量执行。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 libavfilter/riscv/vf_blend_init.c, libavfilter/vf_blend.c 来解决 blueprint bp-ffmpeg-checkasm_vf_blend-002。"
+}

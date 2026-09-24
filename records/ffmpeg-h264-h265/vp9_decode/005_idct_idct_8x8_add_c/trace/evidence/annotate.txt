@@ -1,0 +1,711 @@
+ Percent |	Source code & Disassembly of ffmpeg for cpu-clock (244 samples, percent: local period)
+------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000b20ae6 <idct_idct_8x8_add_c>:
+         : 6      idct_idct_8x8_add_c():
+         : 1316   out[4] =   (dctint)((t2 - t3) * 11585U + (1 << 13)) >> 14;
+         : 1317   out[2] =   (dctint)((t6 + t7) * 11585U + (1 << 13)) >> 14;
+         : 1318   out[5] = -((dctint)((t6 - t7) * 11585U + (1 << 13)) >> 14);
+         : 1319   }
+         :
+         : 1321   itxfm_wrap(8, 5)
+    0.41 :   b20ae6: addi    sp,sp,-304
+    0.00 :   b20ae8: sd      s4,256(sp)
+    0.41 :   b20aea: slli    s4,a1,0x1
+    0.00 :   b20aee: add     a5,s4,a1
+    0.00 :   b20af2: sd      s0,288(sp)
+    0.00 :   b20af4: mv      s0,a1
+    0.00 :   b20af6: auipc   a1,0xa00
+    0.00 :   b20afa: ld      a1,802(a1) # 1520e18 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   b20afe: ld      a4,0(a1)
+    0.00 :   b20b00: sd      a4,184(sp)
+    0.00 :   b20b02: li      a4,0
+    0.00 :   b20b04: sd      ra,296(sp)
+    0.00 :   b20b06: li      a1,1
+    0.41 :   b20b08: mv      t5,a0
+    0.00 :   b20b0a: slli    a5,a5,0x1
+    0.00 :   b20b0c: slli    a4,s0,0x2
+    0.00 :   b20b10: beq     a3,a1,b20fd2 <idct_idct_8x8_add_c+0x4ec>
+    0.00 :   b20b14: addi    t1,sp,56
+    0.00 :   b20b18: sd      s1,280(sp)
+    0.00 :   b20b1a: sd      s2,272(sp)
+    0.00 :   b20b1c: sd      s3,264(sp)
+    0.00 :   b20b1e: sd      s5,248(sp)
+    0.00 :   b20b20: sd      s6,240(sp)
+    0.00 :   b20b22: sd      s7,232(sp)
+    0.82 :   b20b24: sd      s8,224(sp)
+    0.00 :   b20b26: sd      s9,216(sp)
+    0.41 :   b20b28: sd      s10,208(sp)
+         : 1327   idct8_1d():
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20b2a: lui     t2,0x3
+         : 1243   t2a = (IN(2) *  6270 - IN(6) * 15137 + (1 << 13)) >> 14;
+    0.00 :   b20b2c: lui     s3,0x2
+    0.00 :   b20b2e: lui     s10,0xffffc
+         : 1244   t3a = (IN(2) * 15137 + IN(6) *  6270 + (1 << 13)) >> 14;
+    0.00 :   b20b30: lui     s9,0x4
+         : 1245   t4a = (IN(1) *  3196 - IN(7) * 16069 + (1 << 13)) >> 14;
+    0.00 :   b20b32: lui     s2,0x1
+    0.00 :   b20b34: lui     s8,0xffffc
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    0.00 :   b20b36: lui     s1,0x3
+    0.00 :   b20b38: lui     s7,0xffffe
+         : 1247   t6a = (IN(5) *  9102 + IN(3) * 13623 + (1 << 13)) >> 14;
+    0.00 :   b20b3a: lui     s6,0x2
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.00 :   b20b3c: lui     s5,0x4
+    0.00 :   b20b3e: sd      s11,200(sp)
+         : 1251   idct_idct_8x8_add_c():
+         : 1316   itxfm_wrap(8, 5)
+    0.00 :   b20b40: mv      a6,t1
+         : 1318   idct8_1d():
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20b42: addiw   t2,t2,-703 # 2d41 <offset+0x2c41>
+         : 1243   t2a = (IN(2) *  6270 - IN(6) * 15137 + (1 << 13)) >> 14;
+    0.00 :   b20b46: addiw   s3,s3,-1922 # 187e <offset+0x177e>
+    0.00 :   b20b4a: addiw   s10,s10,1247 # ffffffffffffc4df <__BSS_END__+0xfffffffffe2e0c7f>
+         : 1244   t3a = (IN(2) * 15137 + IN(6) *  6270 + (1 << 13)) >> 14;
+    0.00 :   b20b4e: addiw   s9,s9,-1247 # 3b21 <offset+0x3a21>
+         : 1245   t4a = (IN(1) *  3196 - IN(7) * 16069 + (1 << 13)) >> 14;
+    0.00 :   b20b52: addiw   s2,s2,-900 # c7c <offset+0xb7c>
+    0.00 :   b20b56: addiw   s8,s8,315 # ffffffffffffc13b <__BSS_END__+0xfffffffffe2e08db>
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    0.00 :   b20b5a: addiw   s1,s1,1335 # 3537 <offset+0x3437>
+    0.00 :   b20b5e: addiw   s7,s7,-910 # ffffffffffffdc72 <__BSS_END__+0xfffffffffe2e2412>
+         : 1247   t6a = (IN(5) *  9102 + IN(3) * 13623 + (1 << 13)) >> 14;
+    0.00 :   b20b62: addiw   s6,s6,910 # 238e <offset+0x228e>
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.00 :   b20b66: addiw   s5,s5,-315 # 3ec5 <offset+0x3dc5>
+    0.00 :   b20b6a: mv      t3,a2
+    0.00 :   b20b6c: addi    s11,sp,184
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20b70: lui     a7,0x2
+    0.00 :   b20b72: sd      t1,8(sp)
+    0.00 :   b20b74: sd      s4,16(sp)
+    0.00 :   b20b76: sd      a4,24(sp)
+    0.82 :   b20b78: sd      a0,32(sp)
+    0.00 :   b20b7a: lh      t1,64(t3)
+         : 1245   t4a = (IN(1) *  3196 - IN(7) * 16069 + (1 << 13)) >> 14;
+    0.41 :   b20b7e: lh      a0,16(t3)
+    0.00 :   b20b82: lh      t5,112(t3)
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20b86: lh      a4,0(t3)
+         : 1245   t4a = (IN(1) *  3196 - IN(7) * 16069 + (1 << 13)) >> 14;
+    0.41 :   b20b8a: mulw    t6,a0,s2
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    0.00 :   b20b8e: lh      s4,80(t3)
+         : 1242   t1a = ((IN(0) - IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.82 :   b20b92: subw    a1,a4,t1
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20b96: addw    a4,a4,t1
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    3.28 :   b20b9a: lh      a3,48(t3)
+         : 1243   t2a = (IN(2) *  6270 - IN(6) * 15137 + (1 << 13)) >> 14;
+    0.41 :   b20b9e: lh      t0,32(t3)
+    1.23 :   b20ba2: lh      t4,96(t3)
+         : 1246   idct_idct_8x8_add_c():
+         : 1316   itxfm_wrap(8, 5)
+    0.41 :   b20ba6: addi    a6,a6,16
+    0.00 :   b20ba8: addi    t3,t3,2
+         : 1317   idct8_1d():
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.41 :   b20baa: mulw    a0,a0,s5
+         : 1245   t4a = (IN(1) *  3196 - IN(7) * 16069 + (1 << 13)) >> 14;
+    0.00 :   b20bae: mulw    t1,t5,s8
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.00 :   b20bb2: mulw    t5,t5,s2
+         : 1245   t4a = (IN(1) *  3196 - IN(7) * 16069 + (1 << 13)) >> 14;
+    0.00 :   b20bb6: addw    t1,t1,t6
+    0.00 :   b20bba: addw    t1,a7,t1
+    1.23 :   b20bbe: sraiw   t1,t1,0xe
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    1.64 :   b20bc2: mulw    t6,s4,s1
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.00 :   b20bc6: addw    t5,t5,a0
+    0.82 :   b20bca: addw    t5,a7,t5
+    0.00 :   b20bce: sraiw   t5,t5,0xe
+         : 1247   t6a = (IN(5) *  9102 + IN(3) * 13623 + (1 << 13)) >> 14;
+    0.00 :   b20bd2: mulw    s4,s4,s6
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    0.00 :   b20bd6: mulw    a0,a3,s7
+         : 1247   t6a = (IN(5) *  9102 + IN(3) * 13623 + (1 << 13)) >> 14;
+    0.00 :   b20bda: mulw    a3,a3,s1
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    0.00 :   b20bde: addw    a0,a0,t6
+    0.00 :   b20be2: addw    a0,a7,a0
+    0.41 :   b20be6: sraiw   a0,a0,0xe
+         : 1255   t5a = t4a - t5a;
+    0.41 :   b20bea: subw    t6,t1,a0
+         : 1265   out[3] = t3 + t4;
+    0.00 :   b20bee: addw    t1,t1,a0
+         : 1247   t6a = (IN(5) *  9102 + IN(3) * 13623 + (1 << 13)) >> 14;
+    0.41 :   b20bf2: addw    a3,a3,s4
+    0.82 :   b20bf6: addw    a3,a7,a3
+    0.00 :   b20bfa: sraiw   a3,a3,0xe
+         : 1257   t6a = t7a - t6a;
+    0.00 :   b20bfe: subw    a0,t5,a3
+         : 1243   t2a = (IN(2) *  6270 - IN(6) * 15137 + (1 << 13)) >> 14;
+    0.41 :   b20c02: mulw    s4,t0,s3
+         : 1262   out[0] = t0 + t7;
+    0.00 :   b20c06: addw    a3,a3,t5
+         : 1260   t6  = ((t6a + t5a) * 11585 + (1 << 13)) >> 14;
+    0.41 :   b20c0a: addw    t5,t6,a0
+         : 1259   t5  = ((t6a - t5a) * 11585 + (1 << 13)) >> 14;
+    0.82 :   b20c0e: subw    a0,a0,t6
+         : 1244   t3a = (IN(2) * 15137 + IN(6) *  6270 + (1 << 13)) >> 14;
+    1.23 :   b20c12: mulw    t0,t0,s9
+         : 1243   t2a = (IN(2) *  6270 - IN(6) * 15137 + (1 << 13)) >> 14;
+    0.41 :   b20c16: mulw    t6,t4,s10
+         : 1244   t3a = (IN(2) * 15137 + IN(6) *  6270 + (1 << 13)) >> 14;
+    0.00 :   b20c1a: mulw    t4,t4,s3
+         : 1243   t2a = (IN(2) *  6270 - IN(6) * 15137 + (1 << 13)) >> 14;
+    0.00 :   b20c1e: addw    t6,t6,s4
+    0.00 :   b20c22: addw    t6,a7,t6
+    1.23 :   b20c26: sraiw   t6,t6,0xe
+         : 1242   t1a = ((IN(0) - IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20c2a: mulw    a1,t2,a1
+         : 1244   t3a = (IN(2) * 15137 + IN(6) *  6270 + (1 << 13)) >> 14;
+    0.00 :   b20c2e: addw    t4,t4,t0
+    0.82 :   b20c32: addw    t4,a7,t4
+    1.23 :   b20c36: sraiw   t4,t4,0xe
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20c3a: mulw    a4,t2,a4
+         : 1242   t1a = ((IN(0) - IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20c3e: addw    a1,a7,a1
+    0.41 :   b20c42: sraiw   a1,a1,0xe
+         : 1263   out[1] = t1 + t6;
+    0.00 :   b20c46: addw    t0,a1,t6
+         : 1264   out[2] = t2 + t5;
+    0.00 :   b20c4a: subw    a1,a1,t6
+         : 1260   t6  = ((t6a + t5a) * 11585 + (1 << 13)) >> 14;
+    0.41 :   b20c4e: mulw    t5,t2,t5
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    2.05 :   b20c52: addw    a4,a7,a4
+    0.41 :   b20c56: sraiw   a4,a4,0xe
+         : 1262   out[0] = t0 + t7;
+    0.00 :   b20c5a: addw    t6,a4,t4
+         : 1265   out[3] = t3 + t4;
+    0.00 :   b20c5e: subw    a4,a4,t4
+         : 1262   out[0] = t0 + t7;
+    2.05 :   b20c62: addw    t4,t6,a3
+         : 1269   out[7] = t0 - t7;
+    0.82 :   b20c66: subw    t6,t6,a3
+         : 1265   out[3] = t3 + t4;
+    0.00 :   b20c6a: addw    a3,a4,t1
+         : 1266   out[4] = t3 - t4;
+    0.82 :   b20c6e: subw    a4,a4,t1
+    1.64 :   b20c72: sh      a4,-8(a6)
+         : 1259   t5  = ((t6a - t5a) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20c76: mulw    a0,t2,a0
+         : 1260   t6  = ((t6a + t5a) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20c7a: addw    t5,a7,t5
+         : 1263   out[1] = t1 + t6;
+    0.00 :   b20c7e: srai    t5,t5,0xe
+    0.00 :   b20c82: addw    t1,t0,t5
+         : 1268   out[6] = t1 - t6;
+    0.82 :   b20c86: subw    t0,t0,t5
+         : 1262   out[0] = t0 + t7;
+    0.41 :   b20c8a: sh      t4,-16(a6)
+         : 1263   out[1] = t1 + t6;
+    0.41 :   b20c8e: sh      t1,-14(a6)
+         : 1268   out[6] = t1 - t6;
+    0.00 :   b20c92: sh      t0,-4(a6)
+         : 1269   out[7] = t0 - t7;
+    0.82 :   b20c96: sh      t6,-2(a6)
+         : 1265   out[3] = t3 + t4;
+    0.41 :   b20c9a: sh      a3,-10(a6)
+         : 1259   t5  = ((t6a - t5a) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20c9e: addw    a0,a7,a0
+         : 1264   out[2] = t2 + t5;
+    0.00 :   b20ca2: srai    a0,a0,0xe
+    0.82 :   b20ca4: addw    a4,a1,a0
+         : 1267   out[5] = t2 - t5;
+    2.87 :   b20ca8: subw    a1,a1,a0
+         : 1264   out[2] = t2 + t5;
+    0.00 :   b20caa: sh      a4,-12(a6)
+         : 1267   out[5] = t2 - t5;
+    1.23 :   b20cae: sh      a1,-6(a6)
+         : 1269   idct_idct_8x8_add_c():
+         : 1316   itxfm_wrap(8, 5)
+    0.41 :   b20cb2: bne     s11,a6,b20b7a <idct_idct_8x8_add_c+0x94>
+    0.00 :   b20cb6: ld      t1,8(sp)
+    0.00 :   b20cb8: ld      t5,32(sp)
+    0.41 :   b20cba: mv      a0,a2
+    0.00 :   b20cbc: li      a1,0
+    0.00 :   b20cbe: li      a2,128
+    0.00 :   b20cc2: ld      s4,16(sp)
+    0.41 :   b20cc4: sd      t1,40(sp)
+    0.00 :   b20cc6: sd      t5,16(sp)
+    0.00 :   b20cc8: sd      a5,8(sp)
+    0.41 :   b20cca: auipc   ra,0xff605
+    0.00 :   b20cce: jalr    -1658(ra) # 125650 <memset@plt>
+    0.00 :   b20cd2: ld      t5,16(sp)
+    0.41 :   b20cd4: ld      a5,8(sp)
+    0.00 :   b20cd6: ld      a4,24(sp)
+    0.00 :   b20cd8: add     t6,t5,s4
+    0.00 :   b20cdc: add     t2,t5,a5
+    0.00 :   b20ce0: addi    a5,t5,8
+    0.00 :   b20ce4: sd      a5,32(sp)
+         : 1323   idct8_1d():
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    0.00 :   b20ce6: lui     a5,0xffffe
+    0.41 :   b20ce8: addiw   a5,a5,-910 # ffffffffffffdc72 <__BSS_END__+0xfffffffffe2e2412>
+    0.00 :   b20cec: sw      a5,8(sp)
+         : 1247   t6a = (IN(5) *  9102 + IN(3) * 13623 + (1 << 13)) >> 14;
+    0.00 :   b20cee: lui     a5,0x2
+    0.00 :   b20cf0: addiw   a5,a5,910 # 238e <offset+0x228e>
+    0.00 :   b20cf4: sw      a5,16(sp)
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.00 :   b20cf6: lui     a5,0x4
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20cf8: lui     s1,0x3
+         : 1243   t2a = (IN(2) *  6270 - IN(6) * 15137 + (1 << 13)) >> 14;
+    0.41 :   b20cfa: lui     s5,0x2
+    0.00 :   b20cfc: lui     s10,0xffffc
+         : 1244   t3a = (IN(2) * 15137 + IN(6) *  6270 + (1 << 13)) >> 14;
+    0.00 :   b20cfe: lui     s9,0x4
+         : 1245   t4a = (IN(1) *  3196 - IN(7) * 16069 + (1 << 13)) >> 14;
+    0.00 :   b20d00: lui     s4,0x1
+    0.00 :   b20d02: lui     s8,0xffffc
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    0.00 :   b20d04: lui     s3,0x3
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.00 :   b20d06: addiw   a5,a5,-315 # 3ec5 <offset+0x3dc5>
+         : 1250   av_clip_uint8_c():
+         : 212    * @param a value to clip
+         : 213    * @return clipped value
+         : 214    */
+         : 215    static av_always_inline av_const uint8_t av_clip_uint8_c(int a)
+         : 216    {
+         : 217    if (a&(~0xFF)) return (~a)>>31;
+    0.00 :   b20d0a: ld      t1,40(sp)
+    0.00 :   b20d0c: add     t0,t5,a4
+    0.00 :   b20d10: add     s2,t5,s0
+         : 221    idct8_1d():
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20d14: addiw   s1,s1,-703 # 2d41 <offset+0x2c41>
+         : 1243   t2a = (IN(2) *  6270 - IN(6) * 15137 + (1 << 13)) >> 14;
+    0.00 :   b20d18: addiw   s5,s5,-1922 # 187e <offset+0x177e>
+    0.00 :   b20d1c: addiw   s10,s10,1247 # ffffffffffffc4df <__BSS_END__+0xfffffffffe2e0c7f>
+         : 1244   t3a = (IN(2) * 15137 + IN(6) *  6270 + (1 << 13)) >> 14;
+    0.00 :   b20d20: addiw   s9,s9,-1247 # 3b21 <offset+0x3a21>
+         : 1245   t4a = (IN(1) *  3196 - IN(7) * 16069 + (1 << 13)) >> 14;
+    0.00 :   b20d24: addiw   s4,s4,-900 # c7c <offset+0xb7c>
+    0.00 :   b20d28: addiw   s8,s8,315 # ffffffffffffc13b <__BSS_END__+0xfffffffffe2e08db>
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    0.00 :   b20d2c: addiw   s3,s3,1335 # 3537 <offset+0x3437>
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.82 :   b20d30: sw      a5,24(sp)
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20d32: lui     a7,0x2
+         : 1243   av_clip_uint8_c():
+    0.00 :   b20d34: li      t4,255
+    0.00 :   b20d38: j       b20d58 <idct_idct_8x8_add_c+0x272>
+    0.00 :   b20d3a: not     a5,a5
+    0.00 :   b20d3e: sraiw   a5,a5,0x1f
+         : 216    idct_idct_8x8_add_c():
+         : 1316   itxfm_wrap(8, 5)
+    0.00 :   b20d42: sb      a5,0(a4)
+    0.00 :   b20d46: ld      a5,32(sp)
+    0.00 :   b20d48: addi    t5,t5,1
+    0.00 :   b20d4a: beq     t5,a5,b20fa0 <idct_idct_8x8_add_c+0x4ba>
+    0.41 :   b20d4e: addi    t1,t1,2
+    0.00 :   b20d50: addi    t2,t2,1
+    0.00 :   b20d52: addi    t0,t0,1
+    0.00 :   b20d54: addi    t6,t6,1
+    0.41 :   b20d56: addi    s2,s2,1
+         : 1321   idct8_1d():
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.82 :   b20d58: lh      a1,64(t1)
+    1.23 :   b20d5c: lh      a4,0(t1)
+         : 1245   t4a = (IN(1) *  3196 - IN(7) * 16069 + (1 << 13)) >> 14;
+    0.41 :   b20d60: lh      a2,16(t1)
+    0.00 :   b20d64: lh      a6,112(t1)
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    1.64 :   b20d68: addw    a5,a4,a1
+         : 1242   t1a = ((IN(0) - IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20d6c: subw    a4,a4,a1
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.41 :   b20d6e: lw      a1,24(sp)
+         : 1245   t4a = (IN(1) *  3196 - IN(7) * 16069 + (1 << 13)) >> 14;
+    0.00 :   b20d70: mulw    s11,a2,s4
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    0.41 :   b20d74: lh      s7,80(t1)
+    0.82 :   b20d78: lh      a3,48(t1)
+         : 1243   t2a = (IN(2) *  6270 - IN(6) * 15137 + (1 << 13)) >> 14;
+    0.00 :   b20d7c: lh      s6,32(t1)
+    0.41 :   b20d80: lh      a0,96(t1)
+         : 1246   idct_idct_8x8_add_c():
+         : 1316   itxfm_wrap(8, 5)
+    0.82 :   b20d84: lbu     t3,0(t5)
+         : 1318   idct8_1d():
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.00 :   b20d88: mulw    a2,a2,a1
+         : 1245   t4a = (IN(1) *  3196 - IN(7) * 16069 + (1 << 13)) >> 14;
+    0.00 :   b20d8c: mulw    a1,a6,s8
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.00 :   b20d90: mulw    a6,a6,s4
+         : 1245   t4a = (IN(1) *  3196 - IN(7) * 16069 + (1 << 13)) >> 14;
+    0.00 :   b20d94: addw    a1,a1,s11
+    0.41 :   b20d98: addw    a1,a7,a1
+    0.41 :   b20d9c: sraiw   a1,a1,0xe
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.00 :   b20da0: addw    a6,a6,a2
+         : 1247   t6a = (IN(5) *  9102 + IN(3) * 13623 + (1 << 13)) >> 14;
+    2.46 :   b20da4: lw      a2,16(sp)
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    0.00 :   b20da6: mulw    s11,s7,s3
+         : 1248   t7a = (IN(1) * 16069 + IN(7) *  3196 + (1 << 13)) >> 14;
+    0.00 :   b20daa: addw    a6,a7,a6
+    0.00 :   b20dae: sraiw   a6,a6,0xe
+         : 1247   t6a = (IN(5) *  9102 + IN(3) * 13623 + (1 << 13)) >> 14;
+    0.00 :   b20db2: mulw    s7,s7,a2
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    1.23 :   b20db6: lw      a2,8(sp)
+    0.00 :   b20db8: mulw    a2,a3,a2
+         : 1247   t6a = (IN(5) *  9102 + IN(3) * 13623 + (1 << 13)) >> 14;
+    0.00 :   b20dbc: mulw    a3,a3,s3
+         : 1246   t5a = (IN(5) * 13623 - IN(3) *  9102 + (1 << 13)) >> 14;
+    0.00 :   b20dc0: addw    a2,a2,s11
+    0.82 :   b20dc4: addw    a2,a7,a2
+    0.82 :   b20dc8: sraiw   a2,a2,0xe
+         : 1255   t5a = t4a - t5a;
+    0.00 :   b20dcc: subw    s11,a1,a2
+         : 1265   out[3] = t3 + t4;
+    0.00 :   b20dd0: addw    a1,a1,a2
+         : 1247   t6a = (IN(5) *  9102 + IN(3) * 13623 + (1 << 13)) >> 14;
+    3.28 :   b20dd2: addw    a3,a3,s7
+    0.00 :   b20dd6: addw    a3,a7,a3
+    0.00 :   b20dda: sraiw   a3,a3,0xe
+         : 1257   t6a = t7a - t6a;
+    0.00 :   b20dde: subw    a2,a6,a3
+         : 1244   t3a = (IN(2) * 15137 + IN(6) *  6270 + (1 << 13)) >> 14;
+    0.00 :   b20de2: mulw    s7,s6,s9
+         : 1262   out[0] = t0 + t7;
+    0.82 :   b20de6: addw    a3,a3,a6
+         : 1260   t6  = ((t6a + t5a) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20dea: addw    a6,s11,a2
+         : 1259   t5  = ((t6a - t5a) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20dee: subw    a2,a2,s11
+         : 1243   t2a = (IN(2) *  6270 - IN(6) * 15137 + (1 << 13)) >> 14;
+    1.23 :   b20df2: mulw    s11,s6,s5
+    0.00 :   b20df6: mulw    s6,a0,s10
+         : 1244   t3a = (IN(2) * 15137 + IN(6) *  6270 + (1 << 13)) >> 14;
+    0.00 :   b20dfa: mulw    a0,a0,s5
+         : 1243   t2a = (IN(2) *  6270 - IN(6) * 15137 + (1 << 13)) >> 14;
+    0.00 :   b20dfe: addw    s6,s6,s11
+    0.00 :   b20e02: addw    s6,a7,s6
+    0.00 :   b20e06: sraiw   s6,s6,0xe
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20e0a: mulw    a5,s1,a5
+         : 1244   t3a = (IN(2) * 15137 + IN(6) *  6270 + (1 << 13)) >> 14;
+    0.00 :   b20e0e: addw    s7,a0,s7
+    2.05 :   b20e12: addw    s7,a7,s7
+    0.00 :   b20e16: sraiw   s7,s7,0xe
+         : 1242   t1a = ((IN(0) - IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20e1a: mulw    a4,s1,a4
+         : 1241   t0a = ((IN(0) + IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20e1e: addw    a5,a7,a5
+    0.41 :   b20e22: sraiw   a5,a5,0xe
+         : 1262   out[0] = t0 + t7;
+    0.00 :   b20e26: addw    a0,a5,s7
+         : 1265   out[3] = t3 + t4;
+    0.00 :   b20e2a: subw    a5,a5,s7
+         : 1262   out[0] = t0 + t7;
+    0.00 :   b20e2e: addw    s7,a0,a3
+         : 1264   idct_idct_8x8_add_c():
+         : 1316   itxfm_wrap(8, 5)
+    0.41 :   b20e32: slliw   s7,s7,0x10
+         : 1318   idct8_1d():
+         : 1269   out[7] = t0 - t7;
+    1.23 :   b20e36: subw    a0,a0,a3
+         : 1271   idct_idct_8x8_add_c():
+         : 1316   itxfm_wrap(8, 5)
+    0.00 :   b20e38: sraiw   s7,s7,0x10
+    0.00 :   b20e3c: addiw   s7,s7,16
+         : 1319   idct8_1d():
+         : 1260   t6  = ((t6a + t5a) * 11585 + (1 << 13)) >> 14;
+    2.87 :   b20e3e: mulw    a6,s1,a6
+         : 1242   t1a = ((IN(0) - IN(4)) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20e42: addw    a4,a7,a4
+    0.00 :   b20e46: sraiw   a4,a4,0xe
+         : 1263   out[1] = t1 + t6;
+    0.00 :   b20e4a: addw    a3,a4,s6
+         : 1264   out[2] = t2 + t5;
+    0.00 :   b20e4e: subw    a4,a4,s6
+         : 1265   out[3] = t3 + t4;
+    0.41 :   b20e52: addw    s6,a5,a1
+         : 1266   out[4] = t3 - t4;
+    0.00 :   b20e56: subw    a5,a5,a1
+         : 1268   idct_idct_8x8_add_c():
+         : 1316   itxfm_wrap(8, 5)
+    0.00 :   b20e58: sraiw   s7,s7,0x5
+         : 1318   idct8_1d():
+         : 1269   out[7] = t0 - t7;
+    0.00 :   b20e5c: slliw   a0,a0,0x10
+         : 1265   out[3] = t3 + t4;
+    0.00 :   b20e60: slliw   s6,s6,0x10
+         : 1259   t5  = ((t6a - t5a) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20e64: mulw    a2,s1,a2
+         : 1260   t6  = ((t6a + t5a) * 11585 + (1 << 13)) >> 14;
+    0.00 :   b20e68: addw    a6,a7,a6
+         : 1263   out[1] = t1 + t6;
+    0.00 :   b20e6c: srai    a6,a6,0xe
+    1.23 :   b20e70: addw    a1,a3,a6
+         : 1268   out[6] = t1 - t6;
+    0.00 :   b20e74: subw    a3,a3,a6
+         : 1263   out[1] = t1 + t6;
+    0.00 :   b20e78: slliw   a1,a1,0x10
+         : 1268   out[6] = t1 - t6;
+    1.64 :   b20e7c: slliw   a3,a3,0x10
+         : 1266   out[4] = t3 - t4;
+    1.23 :   b20e80: slliw   a5,a5,0x10
+         : 1268   idct_idct_8x8_add_c():
+         : 1316   itxfm_wrap(8, 5)
+    0.00 :   b20e84: addw    t3,t3,s7
+         : 1318   idct8_1d():
+         : 1269   out[7] = t0 - t7;
+    0.00 :   b20e88: sraiw   a0,a0,0x10
+         : 1259   t5  = ((t6a - t5a) * 11585 + (1 << 13)) >> 14;
+    0.82 :   b20e8c: addw    a2,a7,a2
+         : 1264   out[2] = t2 + t5;
+    0.82 :   b20e90: srai    a6,a2,0xe
+    0.00 :   b20e94: addw    a2,a4,a6
+         : 1267   out[5] = t2 - t5;
+    0.00 :   b20e98: subw    a4,a4,a6
+         : 1264   out[2] = t2 + t5;
+    1.23 :   b20e9c: slliw   a2,a2,0x10
+         : 1267   out[5] = t2 - t5;
+    1.64 :   b20ea0: slliw   a4,a4,0x10
+         : 1263   out[1] = t1 + t6;
+    0.00 :   b20ea4: sraiw   a1,a1,0x10
+         : 1268   out[6] = t1 - t6;
+    0.00 :   b20ea8: sraiw   a3,a3,0x10
+         : 1265   out[3] = t3 + t4;
+    0.82 :   b20eac: sraiw   s6,s6,0x10
+         : 1266   out[4] = t3 - t4;
+    0.41 :   b20eb0: sraiw   a5,a5,0x10
+         : 1264   out[2] = t2 + t5;
+    0.00 :   b20eb4: sraiw   a2,a2,0x10
+         : 1267   out[5] = t2 - t5;
+    0.00 :   b20eb8: sraiw   a4,a4,0x10
+         : 1269   av_clip_uint8_c():
+    0.41 :   b20ebc: bgeu    t4,t3,b20ec8 <idct_idct_8x8_add_c+0x3e2>
+    0.00 :   b20ec0: not     t3,t3
+    0.00 :   b20ec4: sraiw   t3,t3,0x1f
+         : 215    idct_idct_8x8_add_c():
+         : 1316   itxfm_wrap(8, 5)
+    0.41 :   b20ec8: sb      t3,0(t5)
+    0.00 :   b20ecc: lbu     a6,0(s2)
+    0.00 :   b20ed0: addiw   a1,a1,16
+    0.00 :   b20ed2: sraiw   a1,a1,0x5
+    0.41 :   b20ed6: addw    a1,a6,a1
+         : 1322   av_clip_uint8_c():
+    0.82 :   b20eda: bgeu    t4,a1,b20ee6 <idct_idct_8x8_add_c+0x400>
+    0.00 :   b20ede: not     a1,a1
+    0.00 :   b20ee2: sraiw   a1,a1,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.41 :   b20ee6: sb      a1,0(s2)
+    0.00 :   b20eea: lbu     a1,0(t6)
+    0.82 :   b20eee: addiw   a2,a2,16
+    0.00 :   b20ef0: sraiw   a2,a2,0x5
+    0.00 :   b20ef4: addw    a2,a2,a1
+         : 1321   av_clip_uint8_c():
+    0.00 :   b20ef6: bgeu    t4,a2,b20f02 <idct_idct_8x8_add_c+0x41c>
+    0.00 :   b20efa: not     a2,a2
+    0.00 :   b20efe: sraiw   a2,a2,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.82 :   b20f02: sb      a2,0(t6)
+    0.41 :   b20f06: add     a1,t6,s0
+    0.00 :   b20f0a: lbu     a2,0(a1)
+    0.82 :   b20f0e: addiw   s6,s6,16
+    0.41 :   b20f10: sraiw   s6,s6,0x5
+    0.00 :   b20f14: addw    a2,a2,s6
+         : 1322   av_clip_uint8_c():
+    0.00 :   b20f18: bgeu    t4,a2,b20f24 <idct_idct_8x8_add_c+0x43e>
+    0.00 :   b20f1c: not     a2,a2
+    0.00 :   b20f20: sraiw   a2,a2,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.41 :   b20f24: sb      a2,0(a1)
+    0.82 :   b20f28: lbu     a2,0(t0)
+    0.00 :   b20f2c: addiw   a5,a5,16
+    0.00 :   b20f2e: sraiw   a5,a5,0x5
+    0.00 :   b20f32: addw    a5,a5,a2
+         : 1321   av_clip_uint8_c():
+    1.64 :   b20f34: bgeu    t4,a5,b20f40 <idct_idct_8x8_add_c+0x45a>
+    0.00 :   b20f38: not     a5,a5
+    0.00 :   b20f3c: sraiw   a5,a5,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.41 :   b20f40: sb      a5,0(t0)
+    0.00 :   b20f44: add     a2,t0,s0
+    0.00 :   b20f48: lbu     a5,0(a2)
+    0.82 :   b20f4c: addiw   a4,a4,16
+    0.00 :   b20f4e: sraiw   a4,a4,0x5
+    0.00 :   b20f52: addw    a5,a5,a4
+         : 1322   av_clip_uint8_c():
+    0.00 :   b20f54: bgeu    t4,a5,b20f60 <idct_idct_8x8_add_c+0x47a>
+    0.00 :   b20f58: not     a5,a5
+    0.00 :   b20f5c: sraiw   a5,a5,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.82 :   b20f60: sb      a5,0(a2)
+    0.41 :   b20f64: lbu     a5,0(t2)
+    0.00 :   b20f68: addiw   a3,a3,16
+    0.00 :   b20f6a: sraiw   a3,a3,0x5
+    0.00 :   b20f6e: addw    a5,a5,a3
+         : 1321   av_clip_uint8_c():
+    0.82 :   b20f70: bgeu    t4,a5,b20f7c <idct_idct_8x8_add_c+0x496>
+    0.00 :   b20f74: not     a5,a5
+    0.00 :   b20f78: sraiw   a5,a5,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.00 :   b20f7c: sb      a5,0(t2)
+    0.00 :   b20f80: add     a4,t2,s0
+    0.82 :   b20f84: lbu     a5,0(a4)
+    0.41 :   b20f88: addiw   a0,a0,16
+    0.00 :   b20f8a: sraiw   a0,a0,0x5
+    0.82 :   b20f8e: addw    a5,a5,a0
+         : 1322   av_clip_uint8_c():
+    0.00 :   b20f90: bltu    t4,a5,b20d3a <idct_idct_8x8_add_c+0x254>
+         : 213    idct_idct_8x8_add_c():
+    0.41 :   b20f94: sb      a5,0(a4)
+    0.41 :   b20f98: ld      a5,32(sp)
+    0.00 :   b20f9a: addi    t5,t5,1
+    0.82 :   b20f9c: bne     t5,a5,b20d4e <idct_idct_8x8_add_c+0x268>
+    0.00 :   b20fa0: ld      s1,280(sp)
+    0.00 :   b20fa2: ld      s2,272(sp)
+    0.00 :   b20fa4: ld      s3,264(sp)
+    0.00 :   b20fa6: ld      s5,248(sp)
+    0.00 :   b20fa8: ld      s6,240(sp)
+    0.00 :   b20faa: ld      s7,232(sp)
+    0.00 :   b20fac: ld      s8,224(sp)
+    0.00 :   b20fae: ld      s9,216(sp)
+    0.00 :   b20fb0: ld      s10,208(sp)
+    0.00 :   b20fb2: ld      s11,200(sp)
+    0.00 :   b20fb4: auipc   a5,0xa00
+    0.00 :   b20fb8: ld      a5,-412(a5) # 1520e18 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   b20fbc: ld      a4,184(sp)
+    0.00 :   b20fbe: ld      a5,0(a5)
+    0.00 :   b20fc0: xor     a5,a5,a4
+    0.00 :   b20fc2: li      a4,0
+    0.00 :   b20fc4: bnez    a5,b210ee <idct_idct_8x8_add_c+0x608>
+    0.00 :   b20fc8: ld      ra,296(sp)
+    0.41 :   b20fca: ld      s0,288(sp)
+    0.00 :   b20fcc: ld      s4,256(sp)
+    0.00 :   b20fce: addi    sp,sp,304
+    0.00 :   b20fd0: ret
+    0.00 :   b20fd2: lh      a3,0(a2)
+    0.00 :   b20fd6: lui     t3,0x3
+    0.00 :   b20fd8: addiw   t3,t3,-703 # 2d41 <offset+0x2c41>
+    0.00 :   b20fdc: mulw    t1,a3,t3
+    0.00 :   b20fe0: lui     a3,0x2
+    0.00 :   b20fe2: add     a0,a0,a5
+    0.00 :   b20fe4: sh      zero,0(a2)
+    0.00 :   b20fe8: add     a1,t5,a4
+    0.00 :   b20fec: add     a2,t5,s4
+    0.00 :   b20ff0: add     a6,t5,s0
+    0.00 :   b20ff4: addi    a7,t5,8
+         : 1326   av_clip_uint8_c():
+    0.00 :   b20ff8: li      a4,255
+         : 213    idct_idct_8x8_add_c():
+    0.00 :   b20ffc: addw    a5,a3,t1
+    0.00 :   b21000: sraiw   a5,a5,0xe
+    0.00 :   b21004: mulw    t3,t3,a5
+    0.00 :   b21008: addw    a5,a3,t3
+    0.00 :   b2100c: sraiw   a5,a5,0xe
+    0.00 :   b21010: addiw   a5,a5,16
+    0.00 :   b21012: sraiw   a5,a5,0x5
+    0.00 :   b21016: j       b21032 <idct_idct_8x8_add_c+0x54c>
+         : 1318   av_clip_uint8_c():
+    0.00 :   b21018: not     a3,a3
+    0.00 :   b2101c: sraiw   a3,a3,0x1f
+         : 214    idct_idct_8x8_add_c():
+    0.00 :   b21020: sb      a3,0(t1)
+    0.00 :   b21024: addi    t5,t5,1
+    0.00 :   b21026: beq     a7,t5,b20fb4 <idct_idct_8x8_add_c+0x4ce>
+    0.00 :   b2102a: addi    a0,a0,1
+    0.00 :   b2102c: addi    a1,a1,1
+    0.00 :   b2102e: addi    a2,a2,1
+    0.41 :   b21030: addi    a6,a6,1
+    0.00 :   b21032: lbu     a3,0(t5)
+    0.00 :   b21036: addw    a3,a3,a5
+         : 1318   av_clip_uint8_c():
+    0.00 :   b21038: bgeu    a4,a3,b21044 <idct_idct_8x8_add_c+0x55e>
+    0.00 :   b2103c: not     a3,a3
+    0.00 :   b21040: sraiw   a3,a3,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.82 :   b21044: sb      a3,0(t5)
+    0.00 :   b21048: lbu     a3,0(a6)
+    0.00 :   b2104c: addw    a3,a3,a5
+         : 1319   av_clip_uint8_c():
+    0.00 :   b2104e: bgeu    a4,a3,b2105a <idct_idct_8x8_add_c+0x574>
+    0.00 :   b21052: not     a3,a3
+    0.00 :   b21056: sraiw   a3,a3,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.00 :   b2105a: sb      a3,0(a6)
+    0.41 :   b2105e: lbu     a3,0(a2)
+    0.00 :   b21062: addw    a3,a3,a5
+         : 1319   av_clip_uint8_c():
+    0.00 :   b21064: bgeu    a4,a3,b21070 <idct_idct_8x8_add_c+0x58a>
+    0.00 :   b21068: not     a3,a3
+    0.00 :   b2106c: sraiw   a3,a3,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.00 :   b21070: sb      a3,0(a2)
+    0.41 :   b21074: add     t1,a2,s0
+    0.00 :   b21078: lbu     a3,0(t1)
+    0.00 :   b2107c: addw    a3,a3,a5
+         : 1320   av_clip_uint8_c():
+    0.00 :   b2107e: bgeu    a4,a3,b2108a <idct_idct_8x8_add_c+0x5a4>
+    0.00 :   b21082: not     a3,a3
+    0.00 :   b21086: sraiw   a3,a3,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.00 :   b2108a: sb      a3,0(t1)
+    0.82 :   b2108e: lbu     a3,0(a1)
+    0.00 :   b21092: addw    a3,a3,a5
+         : 1319   av_clip_uint8_c():
+    0.00 :   b21094: bgeu    a4,a3,b210a0 <idct_idct_8x8_add_c+0x5ba>
+    0.00 :   b21098: not     a3,a3
+    0.00 :   b2109c: sraiw   a3,a3,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.00 :   b210a0: sb      a3,0(a1)
+    0.00 :   b210a4: add     t1,a1,s0
+    0.00 :   b210a8: lbu     a3,0(t1)
+    0.00 :   b210ac: addw    a3,a3,a5
+         : 1320   av_clip_uint8_c():
+    0.00 :   b210ae: bgeu    a4,a3,b210ba <idct_idct_8x8_add_c+0x5d4>
+    0.00 :   b210b2: not     a3,a3
+    0.00 :   b210b6: sraiw   a3,a3,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.00 :   b210ba: sb      a3,0(t1)
+    0.41 :   b210be: lbu     a3,0(a0)
+    0.00 :   b210c2: addw    a3,a3,a5
+         : 1319   av_clip_uint8_c():
+    0.00 :   b210c4: bgeu    a4,a3,b210d0 <idct_idct_8x8_add_c+0x5ea>
+    0.00 :   b210c8: not     a3,a3
+    0.00 :   b210cc: sraiw   a3,a3,0x1f
+         : 215    idct_idct_8x8_add_c():
+    0.41 :   b210d0: sb      a3,0(a0)
+    0.00 :   b210d4: add     t1,a0,s0
+    0.00 :   b210d8: lbu     a3,0(t1)
+    0.00 :   b210dc: addw    a3,a3,a5
+         : 1320   av_clip_uint8_c():
+    0.00 :   b210de: bltu    a4,a3,b21018 <idct_idct_8x8_add_c+0x532>
+         : 213    idct_idct_8x8_add_c():
+    0.00 :   b210e2: sb      a3,0(t1)
+    0.82 :   b210e6: addi    t5,t5,1
+    0.00 :   b210e8: bne     t5,a7,b2102a <idct_idct_8x8_add_c+0x544>
+    0.00 :   b210ec: j       b20fb4 <idct_idct_8x8_add_c+0x4ce>
+    0.00 :   b210ee: sd      s1,280(sp)
+    0.00 :   b210f0: sd      s2,272(sp)
+    0.00 :   b210f2: sd      s3,264(sp)
+    0.00 :   b210f4: sd      s5,248(sp)
+    0.00 :   b210f6: sd      s6,240(sp)
+    0.00 :   b210f8: sd      s7,232(sp)
+    0.00 :   b210fa: sd      s8,224(sp)
+    0.00 :   b210fc: sd      s9,216(sp)
+    0.00 :   b210fe: sd      s10,208(sp)
+    0.00 :   b21100: sd      s11,200(sp)
+    0.00 :   b21102: auipc   ra,0xff604
+    0.00 :   b21106: jalr    1998(ra) # 1258d0 <__stack_chk_fail@plt>

@@ -1,0 +1,19 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rv-ffmpeg-filter-bwdif-001-006",
+ "patchCandidateId": "pc-bp-ffmpeg-filter-bwdif-deinterlace-001",
+ "reviewedAt": "2026-09-14",
+ "reviewer": "opencode-ai-reviewer",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "bwdif filter_line + filter_edge RVV kernels (libavfilter/riscv/vf_bwdif_rvv.S): FILTER1 (d, tdiff0/1/2, diff=max3) in e16; SPAT_CHECK (b,f,dc,de, max/min, diff=max3(diff,min,-max)); FILTER_LINE HF ((5570*(p2+n2)-3801*m2+1016*m4)>>2 + 4309*(c+e)-213*cm)>>13 / SP (5077*(c+e)-981*cm)>>13 computed in e32 via vwcvt.x.x.v widening; HF/SP select via vmerge.vvm with v0 mask (tdiff0<ce, computed in e16 before widening, same vl as e32); FILTER_EDGE interpol=(c+e)>>1 with spat-gated SPAT_CHECK (beqz t3 skip); FILTER2 clip [d-diff, d+diff] then [0,clip_max]; dst = nz ? interpol : d via vxor/vand/vxor mask select. Parity handled per C (prev2 = parity ? prev : cur; next2 = parity ? cur : next). Stack args read at sp+128+off after prologue; load/store loops honor VL=s2 (vsetvli with explicit s2, not zero). arch-scan 0 findings."
+ },
+ "hallucinationCheck": [
+  { "dimension": "blueprint-anchor", "result": "PASS" },
+  { "dimension": "root-cause-boundary", "result": "PASS" },
+  { "dimension": "verification-evidence", "result": "PASS" },
+  { "dimension": "diff-anchor", "result": "PASS" }
+ ],
+ "findings": []
+}

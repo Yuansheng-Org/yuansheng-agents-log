@@ -1,0 +1,51 @@
+ Percent |	Source code & Disassembly of checkasm for cpu-clock (2 samples, percent: local period)
+------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     0000000000085f04 <blend_subtract_16bit>:
+         : 6     blend_subtract_16bit():
+         : 147   fn(interpolate,LRINTF(MAX * (2 - cosf(A * M_PI / MAX) - cosf(B * M_PI / MAX)) * 0.25f))
+         : 148   fn(hardoverlay,A == MAX ? MAX : FFMIN(MAX, MAX * B / (2 * MAX - 2 * A) * (A > HALF) + 2 * A * B / MAX * (A <= HALF)))
+         :
+         : 150   #ifdef BUILD_TYPE_SPECIFIC_FUNCS
+         : 151   fn(average,    (A + B) / 2)
+         : 152   fn(subtract,   FFMAX(0, A - B))
+    0.00 :   85f04:  blez    a7,85f70 <blend_subtract_16bit+0x6c>
+    0.00 :   85f08:  blez    a6,85f70 <blend_subtract_16bit+0x6c>
+    0.00 :   85f0c:  ld      t1,0(sp)
+    0.00 :   85f0e:  slli    a6,a6,0x1
+    0.00 :   85f10:  add     t6,a0,a6
+    0.00 :   85f14:  fld     fa3,8(t1)
+    0.00 :   85f18:  sext.w  t2,a7
+    0.00 :   85f1c:  li      t0,0
+    0.00 :   85f1e:  fcvt.s.d        fa3,fa3
+    0.00 :   85f22:  mv      t1,a0
+    0.00 :   85f24:  mv      t5,a2
+    0.00 :   85f26:  mv      t4,a4
+    0.00 :   85f28:  lhu     t3,0(t1)
+    0.00 :   85f2c:  lhu     a6,0(t5)
+    0.00 :   85f30:  addi    t1,t1,2
+    0.00 :   85f32:  fcvt.s.w        fa4,t3
+    0.00 :   85f36:  subw    a6,t3,a6
+    0.00 :   85f3a:  mv      a7,a6
+    0.00 :   85f3c:  bgez    a6,85f42 <blend_subtract_16bit+0x3e>
+    0.00 :   85f40:  li      a7,0
+    0.00 :   85f42:  subw    a7,a7,t3
+    0.00 :   85f46:  fcvt.s.w        fa5,a7
+    0.00 :   85f4a:  addi    t5,t5,2
+    0.00 :   85f4c:  addi    t4,t4,2
+    0.00 :   85f4e:  fmul.s  fa5,fa5,fa3
+    0.00 :   85f52:  fadd.s  fa5,fa5,fa4
+  100.00 :   85f56:  fcvt.wu.s       a6,fa5,rtz
+    0.00 :   85f5a:  sh      a6,-2(t4)
+    0.00 :   85f5e:  bne     t6,t1,85f28 <blend_subtract_16bit+0x24>
+    0.00 :   85f62:  addiw   t0,t0,1
+    0.00 :   85f64:  add     a4,a4,a5
+    0.00 :   85f66:  add     a0,a0,a1
+    0.00 :   85f68:  add     a2,a2,a3
+    0.00 :   85f6a:  add     t6,t6,a1
+    0.00 :   85f6c:  bne     t0,t2,85f22 <blend_subtract_16bit+0x1e>
+    0.00 :   85f70:  ret

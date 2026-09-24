@@ -1,0 +1,318 @@
+ Percent |	Source code & Disassembly of checkasm for cpu-clock (138 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000170f58 <put_hevc_qpel_bi_w_hv_8>:
+         : 6      put_hevc_qpel_bi_w_hv_8():
+         :
+         : 587    static void FUNC(put_hevc_qpel_bi_w_hv)(uint8_t *_dst, ptrdiff_t _dststride,
+         : 588    const uint8_t *_src, ptrdiff_t _srcstride, const int16_t *src2,
+         : 589    int height, int denom, int wx0, int wx1,
+         : 590    int ox, intptr_t mx, intptr_t my, int width)
+         : 591    {
+    0.00 :   170f58: addi    sp,sp,-1120
+    0.00 :   170f5c: lui     t0,0xffffe
+    0.00 :   170f5e: sd      s0,1104(sp)
+    0.00 :   170f62: sd      s1,1096(sp)
+    0.00 :   170f66: lui     s0,0x2
+    0.00 :   170f68: sd      s9,1032(sp)
+    0.00 :   170f6c: sd      ra,1112(sp)
+    0.00 :   170f70: sd      s2,1088(sp)
+    0.00 :   170f74: sd      s3,1080(sp)
+    0.00 :   170f78: sd      s4,1072(sp)
+    0.00 :   170f7c: sd      s5,1064(sp)
+    0.00 :   170f80: sd      s6,1056(sp)
+    0.00 :   170f84: sd      s7,1048(sp)
+    0.00 :   170f88: sd      s8,1040(sp)
+    0.00 :   170f8c: sd      s10,1024(sp)
+    0.00 :   170f90: sd      s11,1016(sp)
+    0.00 :   170f94: add     sp,sp,t0
+    0.00 :   170f96: addi    s1,s0,904 # 2388 <offset+0x2288>
+    0.00 :   170f9a: addi    t1,sp,96
+    0.00 :   170f9e: auipc   s9,0x31d
+    0.00 :   170fa2: ld      s9,1362(s9) # 48e4f0 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   170fa6: add     s1,s1,t1
+    0.00 :   170fa8: ld      t1,0(s9)
+    0.00 :   170fac: sd      t1,0(s1)
+    0.00 :   170fb0: li      t1,0
+    0.00 :   170fb2: mv      t1,a4
+    0.00 :   170fb4: mv      t4,a1
+    0.00 :   170fb6: add     a4,s0,sp
+    0.00 :   170fba: mv      a1,a3
+    0.00 :   170fbc: mv      a3,s0
+    0.00 :   170fbe: addi    s0,sp,96
+    0.00 :   170fc0: mv      t3,a0
+    0.00 :   170fc2: lw      a0,1120(a4)
+    0.00 :   170fc6: add     a4,a3,s0
+    0.00 :   170fca: lw      t2,1032(a4)
+         : 600    int shift = 14 + 1 - BIT_DEPTH;
+         : 601    int log2Wd = denom + shift - 1;
+         :
+         : 603    src   -= QPEL_EXTRA_BEFORE * srcstride;
+         : 604    filter = ff_hevc_qpel_filters[mx];
+         : 605    for (y = 0; y < height + QPEL_EXTRA; y++) {
+    0.00 :   170fce: li      t0,-6
+         : 586    {
+    0.00 :   170fd0: add     a4,a3,s0
+    0.00 :   170fd4: lw      t5,1056(a4)
+         : 600    for (y = 0; y < height + QPEL_EXTRA; y++) {
+    0.00 :   170fd8: blt     a5,t0,171202 <put_hevc_qpel_bi_w_hv_8+0x2aa>
+    0.00 :   170fdc: blez    t5,171202 <put_hevc_qpel_bi_w_hv_8+0x2aa>
+         : 599    filter = ff_hevc_qpel_filters[mx];
+    0.00 :   170fe0: add     a3,a3,sp
+    0.00 :   170fe2: ld      a3,1136(a3)
+    0.00 :   170fe6: addiw   s0,a5,7
+    0.00 :   170fea: mv      t6,a6
+         : 598    src   -= QPEL_EXTRA_BEFORE * srcstride;
+    0.00 :   170fec: slli    a4,a1,0x1
+    0.00 :   170ff0: mv      a6,a7
+         : 599    filter = ff_hevc_qpel_filters[mx];
+    0.00 :   170ff2: slli    a3,a3,0x4
+    0.00 :   170ff4: slli    a7,s0,0x20
+    0.00 :   170ff8: auipc   s10,0x31e
+    0.00 :   170ffc: ld      s10,-1312(s10) # 48ead8 <_GLOBAL_OFFSET_TABLE_+0x728>
+    0.00 :   171000: add     a3,a3,s10
+    0.00 :   171002: slli    t0,t5,0x1
+    0.00 :   171006: srli    s0,a7,0x19
+    0.00 :   17100a: addi    t5,sp,104
+         : 598    src   -= QPEL_EXTRA_BEFORE * srcstride;
+    0.00 :   17100e: add     a4,a4,a1
+    0.00 :   171010: sub     a7,a2,a4
+         : 602    for (x = 0; x < width; x++)
+         : 603    tmp[x] = QPEL_FILTER(src, 1) >> (BIT_DEPTH - 8);
+    0.00 :   171014: lb      s7,0(a3)
+    0.00 :   171018: add     a2,t5,s0
+    0.00 :   17101c: lb      s6,1(a3)
+    0.00 :   171020: lb      s5,3(a3)
+    0.00 :   171024: lb      s4,2(a3)
+    0.00 :   171028: lb      s3,5(a3)
+    0.00 :   17102c: lb      s2,4(a3)
+    0.00 :   171030: lb      s1,7(a3)
+    0.00 :   171034: lb      s0,6(a3)
+    0.00 :   171038: sd      a2,24(sp)
+    0.00 :   17103a: add     a4,t0,t5
+         : 594    int16_t *tmp = tmp_array;
+    0.00 :   17103e: mv      s8,t5
+    0.00 :   171040: sd      t0,32(sp)
+    0.00 :   171042: sd      t5,40(sp)
+    0.00 :   171044: sd      t3,48(sp)
+    0.00 :   171046: sd      t1,56(sp)
+    0.00 :   171048: sd      a0,64(sp)
+    0.00 :   17104a: sd      t2,72(sp)
+    0.00 :   17104c: sd      t4,80(sp)
+    0.00 :   17104e: sd      a5,88(sp)
+    0.00 :   171050: mv      s11,t6
+    0.00 :   171052: mv      a2,a6
+         : 601    for (x = 0; x < width; x++)
+    0.00 :   171054: lbu     t2,-3(a7)
+    0.00 :   171058: lbu     t0,-2(a7)
+    0.00 :   17105c: lbu     t6,-1(a7)
+    0.00 :   171060: lbu     t5,0(a7)
+    0.00 :   171064: lbu     t4,1(a7)
+    0.00 :   171068: lbu     t3,2(a7)
+    0.00 :   17106c: lbu     t1,3(a7)
+    0.00 :   171070: addi    a6,a7,4
+    0.00 :   171074: mv      a3,s8
+    0.00 :   171076: sd      a7,8(sp)
+    0.00 :   171078: sd      s8,16(sp)
+         : 602    tmp[x] = QPEL_FILTER(src, 1) >> (BIT_DEPTH - 8);
+    1.45 :   17107a: mulw    a0,t0,s6
+    0.00 :   17107e: mv      a5,t1
+    2.90 :   171080: lbu     t1,0(a6)
+         : 601    for (x = 0; x < width; x++)
+    2.17 :   171084: addi    a3,a3,2
+    0.00 :   171086: addi    a6,a6,1
+         : 602    tmp[x] = QPEL_FILTER(src, 1) >> (BIT_DEPTH - 8);
+    1.45 :   171088: mulw    a7,t5,s5
+    0.00 :   17108c: addw    a7,a0,a7
+    0.00 :   171090: mulw    a0,t6,s4
+    1.45 :   171094: addw    a0,a7,a0
+    0.72 :   171098: mulw    a7,t3,s3
+    0.00 :   17109c: addw    a7,a0,a7
+    0.72 :   1710a0: mulw    a0,t4,s2
+    0.72 :   1710a4: mulw    s8,t2,s7
+    0.00 :   1710a8: mv      t2,t0
+    0.00 :   1710aa: mv      t0,t6
+    3.62 :   1710ac: mv      t6,t5
+    0.72 :   1710ae: mv      t5,t4
+    0.00 :   1710b0: mv      t4,t3
+    0.72 :   1710b2: mv      t3,a5
+    3.62 :   1710b4: addw    a0,a7,a0
+    1.45 :   1710b8: mulw    a5,a5,s0
+    0.00 :   1710bc: addw    a5,a5,a0
+    0.00 :   1710be: mulw    a0,t1,s1
+    1.45 :   1710c2: addw    a5,a5,a0
+    6.52 :   1710c4: addw    a5,a5,s8
+   12.32 :   1710c8: sh      a5,-2(a3)
+         : 601    for (x = 0; x < width; x++)
+    0.00 :   1710cc: bne     a4,a3,17107a <put_hevc_qpel_bi_w_hv_8+0x122>
+         : 604    src += srcstride;
+         : 605    tmp += MAX_PB_SIZE;
+    0.00 :   1710d0: ld      s8,16(sp)
+    0.00 :   1710d2: ld      a7,8(sp)
+         : 600    for (y = 0; y < height + QPEL_EXTRA; y++) {
+    0.00 :   1710d4: ld      a5,24(sp)
+         : 604    tmp += MAX_PB_SIZE;
+    0.00 :   1710d6: addi    s8,s8,128
+         : 603    src += srcstride;
+    0.00 :   1710da: add     a7,a7,a1
+         : 600    for (y = 0; y < height + QPEL_EXTRA; y++) {
+    0.00 :   1710dc: addi    a4,a4,128
+    0.00 :   1710e0: bne     s8,a5,171054 <put_hevc_qpel_bi_w_hv_8+0xfc>
+         :
+         : 612    tmp    = tmp_array + QPEL_EXTRA_BEFORE * MAX_PB_SIZE;
+         : 613    filter = ff_hevc_qpel_filters[my];
+         :
+         : 615    ox = ox * (1 << (BIT_DEPTH - 8)) + 1;
+         : 616    for (y = 0; y < height; y++) {
+    0.00 :   1710e4: ld      a5,88(sp)
+    0.00 :   1710e6: ld      t0,32(sp)
+    0.00 :   1710e8: ld      t5,40(sp)
+    0.00 :   1710ea: ld      t3,48(sp)
+    0.00 :   1710ec: ld      t1,56(sp)
+    0.00 :   1710ee: ld      a0,64(sp)
+    0.00 :   1710f0: ld      t2,72(sp)
+    0.00 :   1710f2: ld      t4,80(sp)
+    0.00 :   1710f4: mv      a6,a2
+    0.00 :   1710f6: blez    a5,171202 <put_hevc_qpel_bi_w_hv_8+0x2aa>
+         : 608    filter = ff_hevc_qpel_filters[my];
+    0.00 :   1710fa: lui     a3,0x2
+    0.00 :   1710fc: addi    a2,sp,96
+    0.00 :   1710fe: addi    a3,a3,1048 # 2418 <offset+0x2318>
+    0.00 :   171102: add     a3,a3,a2
+    0.00 :   171104: ld      a3,0(a3)
+         : 610    ox = ox * (1 << (BIT_DEPTH - 8)) + 1;
+    0.00 :   171106: addiw   a4,t2,1
+    0.00 :   17110a: addi    t5,t5,384
+    0.00 :   17110e: slli    a5,a5,0x7
+         : 596    int log2Wd = denom + shift - 1;
+    0.00 :   171110: addiw   a1,s11,6
+         : 608    filter = ff_hevc_qpel_filters[my];
+    0.00 :   171114: slli    a2,a3,0x4
+    0.00 :   171118: add     t5,t5,t0
+    0.00 :   17111a: add     s0,t1,a5
+         : 613    for (x = 0; x < width; x++)
+         : 614    dst[x] = av_clip_pixel(((QPEL_FILTER(tmp, MAX_PB_SIZE) >> 6) * wx1 + src2[x] * wx0 +
+    0.00 :   17111e: sllw    t0,a4,a1
+         : 596    int log2Wd = denom + shift - 1;
+    0.00 :   171122: addiw   t6,s11,7
+         : 607    tmp    = tmp_array + QPEL_EXTRA_BEFORE * MAX_PB_SIZE;
+    0.00 :   171126: addi    t2,sp,488
+         : 608    filter = ff_hevc_qpel_filters[my];
+    0.00 :   17112a: add     a2,a2,s10
+         : 610    av_clip_uint8_c():
+         : 212    * @param a value to clip
+         : 213    * @return clipped value
+         : 214    */
+         : 215    static av_always_inline av_const uint8_t av_clip_uint8_c(int a)
+         : 216    {
+         : 217    if (a&(~0xFF)) return (~a)>>31;
+    0.00 :   17112c: li      s1,255
+         : 219    put_hevc_qpel_bi_w_hv_8():
+         : 612    for (x = 0; x < width; x++)
+    0.00 :   171130: mv      a4,t2
+    0.00 :   171132: mv      a7,t1
+    0.00 :   171134: mv      a1,t3
+    0.72 :   171136: j       17114e <put_hevc_qpel_bi_w_hv_8+0x1f6>
+         : 617    av_clip_uint8_c():
+    5.07 :   171138: not     a5,a5
+    0.72 :   17113c: sraiw   a5,a5,0x1f
+         : 214    put_hevc_qpel_bi_w_hv_8():
+         : 613    dst[x] = av_clip_pixel(((QPEL_FILTER(tmp, MAX_PB_SIZE) >> 6) * wx1 + src2[x] * wx0 +
+    2.17 :   171140: sb      a5,0(a1)
+         : 612    for (x = 0; x < width; x++)
+    0.00 :   171144: addi    a4,a4,2
+    0.00 :   171146: beq     a4,t5,1711f0 <put_hevc_qpel_bi_w_hv_8+0x298>
+    0.00 :   17114a: addi    a7,a7,2
+    0.72 :   17114c: addi    a1,a1,1
+         : 613    dst[x] = av_clip_pixel(((QPEL_FILTER(tmp, MAX_PB_SIZE) >> 6) * wx1 + src2[x] * wx0 +
+    1.45 :   17114e: lh      s3,-384(a4)
+    0.00 :   171152: lh      s2,-256(a4)
+    0.72 :   171156: lb      a3,0(a2)
+    0.72 :   17115a: lb      a5,1(a2)
+    1.45 :   17115e: lh      s8,-128(a4)
+    0.72 :   171162: mulw    a3,a3,s3
+    1.45 :   171166: lb      s6,2(a2)
+    1.45 :   17116a: lh      s7,0(a4)
+    1.45 :   17116e: lb      s5,3(a2)
+    0.72 :   171172: lb      s11,4(a2)
+    0.00 :   171176: lh      s4,128(a4)
+    1.45 :   17117a: lb      s3,5(a2)
+    0.72 :   17117e: lh      s10,256(a4)
+    0.00 :   171182: mulw    a5,a5,s2
+    1.45 :   171186: lb      s2,6(a2)
+    2.90 :   17118a: mulw    s6,s6,s8
+    0.00 :   17118e: lh      s8,384(a4)
+    0.72 :   171192: addw    a5,a5,a3
+    2.90 :   171194: lb      a3,7(a2)
+    0.72 :   171198: mulw    s5,s5,s7
+    0.00 :   17119c: lh      s7,512(a4)
+    2.17 :   1711a0: addw    s6,s6,a5
+    0.00 :   1711a4: lh      a5,0(a7)
+    1.45 :   1711a8: mulw    s4,s11,s4
+    0.00 :   1711ac: addw    s5,s5,s6
+    0.72 :   1711b0: mulw    s3,s3,s10
+    1.45 :   1711b4: addw    s4,s4,s5
+    0.00 :   1711b8: mulw    s2,s2,s8
+    0.00 :   1711bc: addw    s3,s3,s4
+    0.00 :   1711c0: mulw    a3,a3,s7
+    0.72 :   1711c4: addw    s2,s2,s3
+    1.45 :   1711c8: addw    a3,a3,s2
+    1.45 :   1711cc: sraiw   a3,a3,0x6
+    2.90 :   1711d0: mulw    a3,a3,a0
+    0.00 :   1711d4: mulw    a5,a5,a6
+    0.72 :   1711d8: addw    a5,a5,a3
+    0.00 :   1711da: addw    a5,a5,t0
+    2.17 :   1711de: sraw    a5,a5,t6
+         : 652    av_clip_uint8_c():
+    9.42 :   1711e2: bltu    s1,a5,171138 <put_hevc_qpel_bi_w_hv_8+0x1e0>
+         : 213    put_hevc_qpel_bi_w_hv_8():
+    2.17 :   1711e6: sb      a5,0(a1)
+         : 612    for (x = 0; x < width; x++)
+    0.00 :   1711ea: addi    a4,a4,2
+    0.00 :   1711ec: bne     t5,a4,17114a <put_hevc_qpel_bi_w_hv_8+0x1f2>
+         : 617    ox * (1 << log2Wd)) >> (log2Wd + 1));
+         : 618    tmp  += MAX_PB_SIZE;
+         : 619    dst  += dststride;
+         : 620    src2 += MAX_PB_SIZE;
+    0.00 :   1711f0: addi    t1,t1,128
+         : 615    tmp  += MAX_PB_SIZE;
+    0.00 :   1711f4: addi    t2,t2,128
+         : 616    dst  += dststride;
+    0.00 :   1711f8: add     t3,t3,t4
+         : 611    for (y = 0; y < height; y++) {
+    0.72 :   1711fa: addi    t5,t5,128
+    0.00 :   1711fe: bne     t1,s0,171130 <put_hevc_qpel_bi_w_hv_8+0x1d8>
+         : 619    }
+         : 620    }
+    0.00 :   171202: lui     a5,0x2
+    0.00 :   171204: addi    a4,sp,96
+    0.00 :   171206: addi    a5,a5,904 # 2388 <offset+0x2288>
+    0.00 :   17120a: add     a5,a5,a4
+    0.00 :   17120c: ld      a4,0(a5)
+    0.00 :   17120e: ld      a5,0(s9)
+    0.00 :   171212: xor     a5,a5,a4
+    0.00 :   171214: li      a4,0
+    0.00 :   171216: bnez    a5,171256 <put_hevc_qpel_bi_w_hv_8+0x2fe>
+    0.00 :   171218: lui     t0,0x2
+    0.00 :   17121a: add     sp,sp,t0
+    0.00 :   17121c: ld      ra,1112(sp)
+    0.00 :   171220: ld      s0,1104(sp)
+    0.00 :   171224: ld      s1,1096(sp)
+    0.00 :   171228: ld      s2,1088(sp)
+    0.00 :   17122c: ld      s3,1080(sp)
+    0.00 :   171230: ld      s4,1072(sp)
+    0.00 :   171234: ld      s5,1064(sp)
+    0.00 :   171238: ld      s6,1056(sp)
+    0.00 :   17123c: ld      s7,1048(sp)
+    0.00 :   171240: ld      s8,1040(sp)
+    0.00 :   171244: ld      s9,1032(sp)
+    0.00 :   171248: ld      s10,1024(sp)
+    0.00 :   17124c: ld      s11,1016(sp)
+    0.00 :   171250: addi    sp,sp,1120
+    0.00 :   171254: ret
+    0.00 :   171256: auipc   ra,0xffea9
+    0.00 :   17125a: jalr    762(ra) # 1a550 <__stack_chk_fail@plt>

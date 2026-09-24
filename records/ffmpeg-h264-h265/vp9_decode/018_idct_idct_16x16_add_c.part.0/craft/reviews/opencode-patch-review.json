@@ -1,0 +1,19 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rv-ffmpeg-vp9-idct16-018",
+ "patchCandidateId": "pc-bp-ffmpeg-vp9_decode-018",
+ "reviewedAt": "2026-09-14",
+ "reviewer": "opencode-ai-reviewer",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "VP9 idct_idct 16x16 add RVV (libavcodec/riscv/vp9itxfm_rvv.S): processes the block in two 8-column halves with e32 m1 (8 lanes) lane-wise 16-point butterflies (stage1 t*a + stage2 t + stage3 rotations + stage4 + stage5 + outputs, verified against C dataflow). Pass 1 loads 16 row vectors per half (vle16, stride 32 bytes), runs vp9_idct16_1d (which applies the C COLUMN transform since IN(x)=block[x*16+i] spreads over lane i of the row vectors), narrows (vnsrl.wi in e32 mode), stores column-wise (vsse16, stride 32) into stack tmp[]; block zeroed via vl=16 stores (caller contract). Pass 2 reloads tmp[] rows, same butterfly, accumulates (out+(1<<(6-1)))>>6 with clip [0,255]. DC-only path (eob==1) via scalar t + splat accumulate. Sim: 20 cases x 3 eob (1/8/256) = 0/15360 byte-exact vs C (dst block region + zeroed block). arch-scan 0."
+ },
+ "hallucinationCheck": [
+  { "dimension": "blueprint-anchor", "result": "PASS" },
+  { "dimension": "root-cause-boundary", "result": "PASS" },
+  { "dimension": "verification-evidence", "result": "PASS" },
+  { "dimension": "diff-anchor", "result": "PASS" }
+ ],
+ "findings": []
+}

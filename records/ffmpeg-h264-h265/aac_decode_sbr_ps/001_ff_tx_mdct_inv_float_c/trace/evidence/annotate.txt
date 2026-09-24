@@ -1,0 +1,164 @@
+ Percent |	Source code & Disassembly of ffmpeg for cpu-clock (83 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000f5cadc <ff_tx_mdct_inv_float_c>:
+         : 6      ff_tx_mdct_inv_float_c():
+         : 1314   }
+         : 1315   }
+         :
+         : 1317   static void TX_NAME(ff_tx_mdct_inv)(AVTXContext *s, void *_dst, void *_src,
+         : 1318   ptrdiff_t stride)
+         : 1319   {
+    0.00 :   f5cadc: addi    sp,sp,-48
+    0.00 :   f5cade: sd      s0,32(sp)
+         : 1317   TXComplex *z = _dst, *exp = s->exp;
+         : 1318   const TXSample *src = _src, *in1, *in2;
+         : 1319   const int len2 = s->len >> 1;
+    0.00 :   f5cae0: lw      s0,0(a0)
+         : 1314   {
+    0.00 :   f5cae2: sd      s1,24(sp)
+    0.00 :   f5cae4: sd      s2,16(sp)
+    0.00 :   f5cae6: sd      ra,40(sp)
+         : 1317   const int len2 = s->len >> 1;
+    0.00 :   f5cae8: sraiw   s2,s0,0x1
+         : 1315   TXComplex *z = _dst, *exp = s->exp;
+    0.00 :   f5caec: ld      s1,16(a0)
+         : 1318   const int len4 = s->len >> 2;
+    0.00 :   f5caee: sraiw   s0,s0,0x2
+         :
+         : 1326   stride /= sizeof(*src);
+         : 1327   in1 = src;
+         : 1328   in2 = src + ((len2*2) - 1) * stride;
+         :
+         : 1330   for (int i = 0; i < len2; i++) {
+    0.00 :   f5caf2: blez    s2,f5cb68 <ff_tx_mdct_inv_float_c+0x8c>
+         : 1323   in2 = src + ((len2*2) - 1) * stride;
+    0.00 :   f5caf6: slli    t4,s2,0x1
+         : 1321   stride /= sizeof(*src);
+    0.00 :   f5cafa: srli    a3,a3,0x2
+         : 1323   in2 = src + ((len2*2) - 1) * stride;
+    0.00 :   f5cafc: addiw   t4,t4,-1
+    0.00 :   f5cafe: mul     t4,t4,a3
+    0.00 :   f5cb02: ld      t1,8(a0)
+    0.00 :   f5cb06: slli    t3,s2,0x3
+    0.00 :   f5cb0a: add     t3,t3,s1
+    0.00 :   f5cb0c: mv      a6,s1
+    0.00 :   f5cb0e: mv      a7,a1
+         : 1326   int k = sub_map[i];
+    0.00 :   f5cb10: lw      a4,0(t1)
+         : 1328   TXComplex tmp = { in2[-k*stride], in1[k*stride] };
+         : 1329   CMUL3(z[i], tmp, exp[i]);
+    0.00 :   f5cb14: flw     fa2,4(a6)
+    3.61 :   f5cb18: flw     fa4,0(a6)
+         : 1327   TXComplex tmp = { in2[-k*stride], in1[k*stride] };
+    1.20 :   f5cb1c: negw    a5,a4
+    0.00 :   f5cb20: mul     a5,a5,a3
+         : 1325   for (int i = 0; i < len2; i++) {
+    0.00 :   f5cb24: addi    a6,a6,8
+    0.00 :   f5cb26: addi    t1,t1,4
+    0.00 :   f5cb28: addi    a7,a7,8
+         : 1327   TXComplex tmp = { in2[-k*stride], in1[k*stride] };
+    8.43 :   f5cb2a: mul     a4,a4,a3
+    0.00 :   f5cb2e: add     a5,a5,t4
+    0.00 :   f5cb30: slli    a5,a5,0x2
+    0.00 :   f5cb32: add     a5,a5,a2
+    1.20 :   f5cb34: flw     fa5,0(a5)
+         : 1328   CMUL3(z[i], tmp, exp[i]);
+   12.05 :   f5cb38: fmul.s  fa3,fa5,fa2
+    0.00 :   f5cb3c: fmul.s  fa4,fa5,fa4
+         : 1327   TXComplex tmp = { in2[-k*stride], in1[k*stride] };
+    0.00 :   f5cb40: slli    a4,a4,0x2
+    3.61 :   f5cb42: add     a4,a4,a2
+    0.00 :   f5cb44: flw     fa5,0(a4)
+         : 1328   CMUL3(z[i], tmp, exp[i]);
+    4.82 :   f5cb48: fmul.s  fa2,fa5,fa2
+    0.00 :   f5cb4c: fsub.s  fa4,fa4,fa2
+   18.07 :   f5cb50: fsw     fa4,-8(a7)
+    0.00 :   f5cb54: flw     fa4,-8(a6)
+    0.00 :   f5cb58: fmul.s  fa5,fa5,fa4
+    0.00 :   f5cb5c: fadd.s  fa5,fa5,fa3
+    0.00 :   f5cb60: fsw     fa5,-4(a7)
+         : 1325   for (int i = 0; i < len2; i++) {
+    3.61 :   f5cb64: bne     t3,a6,f5cb10 <ff_tx_mdct_inv_float_c+0x34>
+         : 1331   }
+         :
+         : 1333   s->fn[0](&s->sub[0], z, z, sizeof(TXComplex));
+    0.00 :   f5cb68: ld      a5,40(a0)
+    0.00 :   f5cb6a: ld      a0,32(a0)
+    1.20 :   f5cb6c: li      a3,8
+    0.00 :   f5cb6e: mv      a2,a1
+    0.00 :   f5cb70: sd      a1,8(sp)
+    1.20 :   f5cb72: jalr    a5
+         :
+         : 1335   exp += len2;
+         : 1336   for (int i = 0; i < len4; i++) {
+    0.00 :   f5cb74: blez    s0,f5cc00 <ff_tx_mdct_inv_float_c+0x124>
+    0.00 :   f5cb78: ld      a1,8(sp)
+         : 1333   exp += len2;
+    0.00 :   f5cb7a: slli    s2,s2,0x3
+    0.00 :   f5cb7c: slli    a5,s0,0x3
+    0.00 :   f5cb80: add     a3,s1,s2
+    0.00 :   f5cb84: add     a3,a3,a5
+    0.00 :   f5cb86: add     a5,a5,a1
+    0.00 :   f5cb88: mv      a2,a3
+    0.00 :   f5cb8a: mv      a4,a5
+         : 1339   const int i0 = len4 + i, i1 = len4 - i - 1;
+         : 1340   TXComplex src1 = { z[i1].im, z[i1].re };
+         : 1341   TXComplex src0 = { z[i0].im, z[i0].re };
+         :
+         : 1343   CMUL(z[i1].re, z[i0].im, src1.re, src1.im, exp[i1].im, exp[i1].re);
+    0.00 :   f5cb8c: flw     ft0,-4(a3)
+         : 1336   TXComplex src1 = { z[i1].im, z[i1].re };
+    1.20 :   f5cb90: flw     fa4,-4(a5)
+    3.61 :   f5cb94: flw     fa2,-8(a5)
+         : 1339   CMUL(z[i1].re, z[i0].im, src1.re, src1.im, exp[i1].im, exp[i1].re);
+    0.00 :   f5cb98: flw     fa0,-8(a3)
+    1.20 :   f5cb9c: fmul.s  fa1,fa4,ft0
+         : 1337   TXComplex src0 = { z[i0].im, z[i0].re };
+    1.20 :   f5cba0: flw     fa5,4(a4)
+         : 1339   CMUL(z[i1].re, z[i0].im, src1.re, src1.im, exp[i1].im, exp[i1].re);
+    0.00 :   f5cba4: fmul.s  fa0,fa2,fa0
+         : 1337   TXComplex src0 = { z[i0].im, z[i0].re };
+    0.00 :   f5cba8: flw     fa3,0(a4)
+         : 1339   CMUL(z[i1].re, z[i0].im, src1.re, src1.im, exp[i1].im, exp[i1].re);
+    2.41 :   f5cbac: fmul.s  fa2,fa2,ft0
+         : 1334   for (int i = 0; i < len4; i++) {
+    0.00 :   f5cbb0: addi    a5,a5,-8
+    0.00 :   f5cbb2: addi    a3,a3,-8
+         : 1339   CMUL(z[i1].re, z[i0].im, src1.re, src1.im, exp[i1].im, exp[i1].re);
+    0.00 :   f5cbb4: fsub.s  fa1,fa1,fa0
+         : 1334   for (int i = 0; i < len4; i++) {
+   10.84 :   f5cbb8: addi    a4,a4,8
+    0.00 :   f5cbba: addi    a2,a2,8
+         : 1339   CMUL(z[i1].re, z[i0].im, src1.re, src1.im, exp[i1].im, exp[i1].re);
+    0.00 :   f5cbbc: fsw     fa1,0(a5)
+    0.00 :   f5cbc0: flw     fa1,0(a3)
+    0.00 :   f5cbc4: fmul.s  fa4,fa4,fa1
+    0.00 :   f5cbc8: fadd.s  fa4,fa4,fa2
+    6.02 :   f5cbcc: fsw     fa4,-4(a4)
+         : 1340   CMUL(z[i0].re, z[i1].im, src0.re, src0.im, exp[i0].im, exp[i0].re);
+    0.00 :   f5cbd0: flw     fa1,-4(a2)
+    0.00 :   f5cbd4: flw     fa2,-8(a2)
+    1.20 :   f5cbd8: fmul.s  fa4,fa5,fa1
+    0.00 :   f5cbdc: fmul.s  fa2,fa3,fa2
+    1.20 :   f5cbe0: fmul.s  fa3,fa3,fa1
+    0.00 :   f5cbe4: fsub.s  fa4,fa4,fa2
+    0.00 :   f5cbe8: fsw     fa4,-8(a4)
+    1.20 :   f5cbec: flw     fa4,-8(a2)
+    0.00 :   f5cbf0: fmul.s  fa5,fa5,fa4
+    0.00 :   f5cbf4: fadd.s  fa5,fa5,fa3
+    8.43 :   f5cbf8: fsw     fa5,4(a5)
+         : 1334   for (int i = 0; i < len4; i++) {
+    1.20 :   f5cbfc: bne     a1,a5,f5cb8c <ff_tx_mdct_inv_float_c+0xb0>
+         : 1342   }
+         : 1343   }
+    0.00 :   f5cc00: ld      ra,40(sp)
+    0.00 :   f5cc02: ld      s0,32(sp)
+    0.00 :   f5cc04: ld      s1,24(sp)
+    0.00 :   f5cc06: ld      s2,16(sp)
+    1.20 :   f5cc08: addi    sp,sp,48
+    0.00 :   f5cc0a: ret

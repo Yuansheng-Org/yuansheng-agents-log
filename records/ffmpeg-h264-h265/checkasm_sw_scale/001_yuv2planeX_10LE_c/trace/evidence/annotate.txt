@@ -1,0 +1,96 @@
+ Percent |	Source code & Disassembly of checkasm for cpu-clock (12 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000306ba8 <yuv2planeX_10LE_c>:
+         : 6      yuv2planeX_10_c_template():
+         : 348    int big_endian, int output_bits)
+         : 349    {
+         : 350    int i;
+         : 351    int shift = 11 + 16 - output_bits;
+         :
+         : 353    for (i = 0; i < dstW; i++) {
+    0.00 :   306ba8: blez    a4,306bc8 <yuv2planeX_10LE_c+0x20>
+    0.00 :   306bac: slli    t4,a4,0x1
+    0.00 :   306bb0: li      t1,0
+         : 355    int j;
+         :
+         : 357    for (j = 0; j < filterSize; j++)
+         : 358    val += src[j][i] * filter[j];
+         :
+         : 360    output_pixel(&dest[i], val);
+    0.00 :   306bb2: add     a5,a3,t1
+         : 352    for (j = 0; j < filterSize; j++)
+    0.00 :   306bb6: bgtz    a1,306bca <yuv2planeX_10LE_c+0x22>
+         : 355    output_pixel(&dest[i], val);
+    0.00 :   306bba: sb      zero,0(a5)
+    0.00 :   306bbe: sb      zero,1(a5)
+         : 348    for (i = 0; i < dstW; i++) {
+    0.00 :   306bc2: addi    t1,t1,2
+    0.00 :   306bc4: bne     t4,t1,306bb2 <yuv2planeX_10LE_c+0xa>
+         : 349    yuv2planeX_10LE_c():
+         : 381    }
+         :
+         : 383    yuv2NBPS( 9, BE, 1, 10, int16_t)
+         : 384    yuv2NBPS( 9, LE, 0, 10, int16_t)
+         : 385    yuv2NBPS(10, BE, 1, 10, int16_t)
+         : 386    yuv2NBPS(10, LE, 0, 10, int16_t)
+    0.00 :   306bc8: ret
+    0.00 :   306bca: slli    a1,a1,0x3
+    0.00 :   306bcc: add     t3,a2,a1
+         : 390    av_clip_uintp2_c():
+         : 282    * @param  p bit position to clip at
+         : 283    * @return clipped value
+         : 284    */
+         : 285    static av_always_inline av_const unsigned av_clip_uintp2_c(int a, int p)
+         : 286    {
+         : 287    if (a & ~((1U<<p) - 1)) return (~a) >> 31 & ((1U<<p) - 1);
+    0.00 :   306bd0: li      t5,1023
+    0.00 :   306bd4: mv      a1,a0
+         : 290    yuv2planeX_10LE_c():
+    0.00 :   306bd6: mv      a5,a2
+         : 382    yuv2planeX_10_c_template():
+         : 349    int val = 1 << (shift - 1);
+    0.00 :   306bd8: lui     a6,0x10
+         : 353    val += src[j][i] * filter[j];
+    8.33 :   306bda: ld      a4,0(a5)
+   16.67 :   306bdc: lh      a7,0(a1)
+         : 352    for (j = 0; j < filterSize; j++)
+    8.33 :   306be0: addi    a5,a5,8
+         : 353    val += src[j][i] * filter[j];
+    0.00 :   306be2: add     a4,a4,t1
+   16.67 :   306be4: lh      a4,0(a4)
+         : 352    for (j = 0; j < filterSize; j++)
+    8.33 :   306be8: addi    a1,a1,2
+         : 353    val += src[j][i] * filter[j];
+    0.00 :   306bea: mulw    a4,a4,a7
+    0.00 :   306bee: addw    a6,a4,a6
+         : 352    for (j = 0; j < filterSize; j++)
+   16.67 :   306bf2: bne     t3,a5,306bda <yuv2planeX_10LE_c+0x32>
+         : 355    output_pixel(&dest[i], val);
+    0.00 :   306bf6: sraiw   a6,a6,0x11
+         : 357    av_clip_uintp2_c():
+    0.00 :   306bfa: bgeu    t5,a6,306c1e <yuv2planeX_10LE_c+0x76>
+   16.67 :   306bfe: not     a6,a6
+    0.00 :   306c02: sraiw   a6,a6,0x1f
+         : 285    yuv2planeX_10_c_template():
+    0.00 :   306c06: add     a5,a3,t1
+    8.33 :   306c0a: srli    a4,a6,0x3e
+    0.00 :   306c0e: sb      a4,1(a5)
+    0.00 :   306c12: sb      a6,0(a5)
+         : 348    for (i = 0; i < dstW; i++) {
+    0.00 :   306c16: addi    t1,t1,2
+    0.00 :   306c18: bne     t4,t1,306bd4 <yuv2planeX_10LE_c+0x2c>
+    0.00 :   306c1c: ret
+         : 355    output_pixel(&dest[i], val);
+    0.00 :   306c1e: add     a5,a3,t1
+    0.00 :   306c22: srliw   a4,a6,0x8
+    0.00 :   306c26: sb      a6,0(a5)
+    0.00 :   306c2a: sb      a4,1(a5)
+         : 348    for (i = 0; i < dstW; i++) {
+    0.00 :   306c2e: addi    t1,t1,2
+    0.00 :   306c30: bne     t1,t4,306bd4 <yuv2planeX_10LE_c+0x2c>
+    0.00 :   306c34: ret

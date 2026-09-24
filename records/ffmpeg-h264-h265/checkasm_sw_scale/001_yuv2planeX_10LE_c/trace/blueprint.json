@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-ffmpeg-checkasm_sw_scale-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T09:19:50.985Z",
+    "software": "ffmpeg",
+    "testcaseIds": [
+      "checkasm_sw_scale"
+    ],
+    "targetHardware": "SpacemiT K3 / spacemit-x100 (RVV 1.0, VLEN=256, vlenb=32)",
+    "repositoryUrl": "https://github.com/FFmpeg/FFmpeg.git",
+    "testBranch": "master",
+    "commitHash": "1d7b14f61d66fdf18f15204c613df9d65396c319",
+    "diagnosisId": "diag-20260908T091950985Z-a82a134d"
+  },
+  "problem": {
+    "summary": "swscale yuv2planeX（10LE 平面缩放/转换）的 C fallback 被 checkasm 采用执行：libswscale/riscv/swscale.c 无 yuv2planeX/hScale/yuv2nv12cX 注册（RVV 仅覆盖 input/range/rgb2rgb 部分 kernel），C 标量乘加链全量执行。样本：306bdc lh 16.67% / 306be4 lh 16.67% / 306bda ld。",
+    "evidence": [
+      "perf stat: IPC=2.45, branch_miss_rate=2.547%, compared_functions=0（sw_scale 无任何 RVV 对照）",
+      "checkasm_bench.csv: 无 rvv 行（sw_scale 全 C）",
+      "libswscale/riscv/swscale.c: 无 yuv2planeX/hScale/nv12cX 注册",
+      "样本12个全在标量 C 链: 306bdc lh 16.67% / 306be4 lh 16.67% / 306bda ld",
+      "构建 ISA: zvl128b1p0，硬件 VLEN=256"
+    ]
+  },
+  "rootCause": {
+    "summary": "swscale yuv2planeX（10LE）的 RISC-V 向量实现不存在：yuv2planeX/hScale 系列全部执行 C 标量乘加链。与 swscale RVV 覆盖缺口同根因。",
+    "candidateFiles": [
+      "libswscale/riscv/swscale.c",
+      "libswscale/swscale_template.c"
+    ],
+    "performanceFactors": [
+      "Policy-Backed Missing RISC-V Assembly Kernel"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "swscale 10LE 缩放/转换语义与像素输出逐位一致",
+      "SwsContext 函数指针表布局不变",
+      "RVV_I32 gate 一致性"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "checkasm_sw_scale"
+    ],
+    "regressionCommand": "agent1 patch_regression --case checkasm_sw_scale"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.7,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "compared_functions=0 表明 sw_scale 全 C；需统一规划并按真实 workload 触发频率评估优先级后再自动转发",
+    "reasoning": "libswscale/riscv/swscale.c 无 yuv2planeX_10LE 注册，C fallback 被 checkasm 采用（12 样本全在标量链）。policy 四证齐全，准入 gate（RVV_I32）成立。高比特变体优先级需按实际占比调整。定性 probable + conditional。",
+    "rootCauseType": "arch_gap",
+    "alternativeExplanations": [
+      "sw_scale 全 C（compared=0），yuv2planeX/hScale 各族可共享向量滤波结构"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision；缺真实 workload 级贡献评估",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 swscale 各转换路径在真实 workload 中的触发频率；统一规划优先级",
+    "affectedTarget": "RV + checkasm_sw_scale",
+    "recommendedFirstAction": "在 swscale 宏族增加 RVV 变体（SEW=16 乘加 + clip + 端序处理），init 补齐 yuv2planeX/hScale/yuv2nv12cX 槽；8-bit/NV12 优先",
+    "recommendedVerification": "运行 checkasm_sw_scale 对应槽位确认 bit-exact；K3 对比 C vs RVV cycles",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 2.45,
+        "anomalyNote": "较高"
+      },
+      {
+        "metric": "Branch Miss Rate(%)",
+        "rv": 2.547,
+        "anomalyNote": "相对偏高——标量循环控制分支密集"
+      },
+      {
+        "metric": "L1 Dcache Load Miss Rate(%)",
+        "rv": 0.02,
+        "anomalyNote": "极低"
+      },
+      {
+        "metric": "checkasm compared_functions",
+        "rv": 0,
+        "anomalyNote": "sw_scale 无任何 RVV 对照——全 C fallback"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "yuv2planeX_10LE_c",
+        "fileModule": "libswscale/swscale_template.c",
+        "rvvPattern": "Policy-Backed Missing RISC-V Assembly Kernel",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.03,
+        "note": "10LE C fallback；样本 12 全在标量链"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "libswscale/riscv/swscale.c;libswscale/riscv/input_rvv.S",
+      "relatedKnowledge": "https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/79adb692a2720647e9dbe57de33fd50b41db295c;https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/afb967b81e4169e9e563f6342f4f9f636627de5b",
+      "evidenceExplanation": "FFmpeg PR 23712 shape-first 实例与上游同类 .S 优化 commit 提供同构修复先例；input/range/rgb2rgb 已有 RVV 覆盖，yuv2planeX/hScale 族需新增。"
+    }
+  }
+}

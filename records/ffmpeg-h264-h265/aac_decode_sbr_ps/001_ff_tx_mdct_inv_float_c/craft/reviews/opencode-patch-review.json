@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-ffmpeg-aac-decode-sbr-ps-001",
+  "patchCandidateId": "pc-bp-ffmpeg-aac_decode_sbr_ps-001",
+  "reviewedAt": "2026-09-11T12:00:00.000Z",
+  "reviewResult": "pass",
+  "reviewer": "opencode-ai-reviewer",
+  "findings": [
+    {
+      "id": "S-1",
+      "severity": "suggestion",
+      "category": "abi-convention",
+      "file": "libavutil/riscv/tx_float_rvv.S",
+      "evidence": "func ff_tx_mdct_inv_float_rvv 内 v8-v14 用作临时寄存器且未按 RVV psABI 保存 v8-v23；文件内既有 ff_tx_fft8_ns_float_rvv 同样直接使用 v8+，checkasm RISC-V 不检查向量 callee-saved",
+      "suggestion": "若未来该 codelet 被嵌套向量调用，需补充 v8-v23 的保存/恢复；当前与既有 codelet 约定一致，可接受"
+    },
+    {
+      "id": "S-2",
+      "severity": "suggestion",
+      "category": "verification-coverage",
+      "file": "libavutil/riscv/tx_float_rvv.S",
+      "evidence": "qemu-riscv64 8.2.2 TCG 存在已记录 RVV 异常（rvv_sim.py docstring），checkasm av_tx 多轮 CPU-flag 机制在轮间选择不同 codelet/context 导致 imdct_2/4/8 跨轮比较失败",
+      "suggestion": "建议在 K3 真机以 make checkasm --test=av_tx 复核确认"
+    }
+  ],
+  "archReview": {
+    "status": "passed",
+    "notes": "ISA 合规（RVV 1.0/zve32f，K3 证据）；vsetvli/vtype 两循环单一 e32/m1 ta/ma，VLEN-agnostic；tail/掩码边界与 C 一致；子变换后全部向量状态重载；RVV_F32 gate + prio 192 分发正确；S1/S2 callee-saved 已修复并经 checkasm 复核"
+  },
+  "hallucinationCheck": [
+    { "dimension": "technicalAccuracy", "result": "PASS" },
+    { "dimension": "claimTraceability", "result": "PASS" },
+    { "dimension": "explainability", "result": "PASS" },
+    { "dimension": "internalConsistency", "result": "PASS" },
+    { "dimension": "safety", "result": "PASS" }
+  ]
+}

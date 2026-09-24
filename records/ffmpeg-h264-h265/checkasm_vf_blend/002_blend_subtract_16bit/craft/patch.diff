@@ -1,0 +1,623 @@
+diff --git a/libavfilter/blend.h b/libavfilter/blend.h
+index e6636839db..50459e7592 100644
+--- a/libavfilter/blend.h
++++ b/libavfilter/blend.h
+@@ -88,5 +88,6 @@ typedef struct FilterParams {
+ } FilterParams;
+ 
+ void ff_blend_init_x86(FilterParams *param, int depth);
++void ff_blend_init_riscv(FilterParams *param, int depth);
+ 
+ #endif /* AVFILTER_BLEND_H */
+diff --git a/libavfilter/riscv/Makefile b/libavfilter/riscv/Makefile
+index 5d31725be9..b489acd48b 100644
+--- a/libavfilter/riscv/Makefile
++++ b/libavfilter/riscv/Makefile
+@@ -4,5 +4,7 @@ OBJS-$(CONFIG_BLACKDETECT_FILTER) += riscv/vf_blackdetect_init.o
+ RVV-OBJS-$(CONFIG_BLACKDETECT_FILTER) += riscv/vf_blackdetect_rvv.o
+ 
+ SHLIBOBJS += riscv/cpu_common.o
++OBJS-$(CONFIG_BLEND_FILTER) += riscv/vf_blend_init.o
++RVV-OBJS-$(CONFIG_BLEND_FILTER) += riscv/vf_blend_rvv.o
+ OBJS-$(CONFIG_GBLUR_FILTER) += riscv/vf_gblur_init.o
+ RVV-OBJS-$(CONFIG_GBLUR_FILTER) += riscv/vf_gblur_rvv.o
+diff --git a/libavfilter/riscv/vf_blend_init.c b/libavfilter/riscv/vf_blend_init.c
+new file mode 100644
+index 0000000000..bdfa909a55
+--- /dev/null
++++ b/libavfilter/riscv/vf_blend_init.c
+@@ -0,0 +1,172 @@
++/*
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "config.h"
++#include "libavutil/attributes.h"
++#include "libavutil/cpu.h"
++#include "libavutil/riscv/cpu.h"
++#include "libavfilter/blend.h"
++
++void ff_blend_add_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                        const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                        uint8_t *dst, ptrdiff_t dst_linesize,
++                        ptrdiff_t width, ptrdiff_t height,
++                        FilterParams *param, SliceParams *sliceparam);
++void ff_blend_sub_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                        const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                        uint8_t *dst, ptrdiff_t dst_linesize,
++                        ptrdiff_t width, ptrdiff_t height,
++                        FilterParams *param, SliceParams *sliceparam);
++void ff_blend_and_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                        const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                        uint8_t *dst, ptrdiff_t dst_linesize,
++                        ptrdiff_t width, ptrdiff_t height,
++                        FilterParams *param, SliceParams *sliceparam);
++void ff_blend_or_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                       const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                       uint8_t *dst, ptrdiff_t dst_linesize,
++                       ptrdiff_t width, ptrdiff_t height,
++                       FilterParams *param, SliceParams *sliceparam);
++void ff_blend_xor_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                        const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                        uint8_t *dst, ptrdiff_t dst_linesize,
++                        ptrdiff_t width, ptrdiff_t height,
++                        FilterParams *param, SliceParams *sliceparam);
++void ff_blend_darken_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                           const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                           uint8_t *dst, ptrdiff_t dst_linesize,
++                           ptrdiff_t width, ptrdiff_t height,
++                           FilterParams *param, SliceParams *sliceparam);
++void ff_blend_lighten_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                            const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                            uint8_t *dst, ptrdiff_t dst_linesize,
++                            ptrdiff_t width, ptrdiff_t height,
++                            FilterParams *param, SliceParams *sliceparam);
++void ff_blend_diff_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                         const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                         uint8_t *dst, ptrdiff_t dst_linesize,
++                         ptrdiff_t width, ptrdiff_t height,
++                         FilterParams *param, SliceParams *sliceparam);
++void ff_blend_extremity_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                              const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                              uint8_t *dst, ptrdiff_t dst_linesize,
++                              ptrdiff_t width, ptrdiff_t height,
++                              FilterParams *param, SliceParams *sliceparam);
++void ff_blend_grainextract_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                                 const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                                 uint8_t *dst, ptrdiff_t dst_linesize,
++                                 ptrdiff_t width, ptrdiff_t height,
++                                 FilterParams *param, SliceParams *sliceparam);
++void ff_blend_grainmerge_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                               const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                               uint8_t *dst, ptrdiff_t dst_linesize,
++                               ptrdiff_t width, ptrdiff_t height,
++                               FilterParams *param, SliceParams *sliceparam);
++void ff_blend_hardmix_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                            const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                            uint8_t *dst, ptrdiff_t dst_linesize,
++                            ptrdiff_t width, ptrdiff_t height,
++                            FilterParams *param, SliceParams *sliceparam);
++void ff_blend_multiply_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                             const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                             uint8_t *dst, ptrdiff_t dst_linesize,
++                             ptrdiff_t width, ptrdiff_t height,
++                             FilterParams *param, SliceParams *sliceparam);
++void ff_blend_screen_8_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                           const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                           uint8_t *dst, ptrdiff_t dst_linesize,
++                           ptrdiff_t width, ptrdiff_t height,
++                           FilterParams *param, SliceParams *sliceparam);
++
++void ff_blend_add_16_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                         const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                         uint8_t *dst, ptrdiff_t dst_linesize,
++                         ptrdiff_t width, ptrdiff_t height,
++                         FilterParams *param, SliceParams *sliceparam);
++void ff_blend_sub_16_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                         const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                         uint8_t *dst, ptrdiff_t dst_linesize,
++                         ptrdiff_t width, ptrdiff_t height,
++                         FilterParams *param, SliceParams *sliceparam);
++void ff_blend_and_16_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                         const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                         uint8_t *dst, ptrdiff_t dst_linesize,
++                         ptrdiff_t width, ptrdiff_t height,
++                         FilterParams *param, SliceParams *sliceparam);
++void ff_blend_grainextract_16_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                                  const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                                  uint8_t *dst, ptrdiff_t dst_linesize,
++                                  ptrdiff_t width, ptrdiff_t height,
++                                  FilterParams *param, SliceParams *sliceparam);
++void ff_blend_grainmerge_16_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                                const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                                uint8_t *dst, ptrdiff_t dst_linesize,
++                                ptrdiff_t width, ptrdiff_t height,
++                                FilterParams *param, SliceParams *sliceparam);
++void ff_blend_lighten_16_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                             const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                             uint8_t *dst, ptrdiff_t dst_linesize,
++                             ptrdiff_t width, ptrdiff_t height,
++                             FilterParams *param, SliceParams *sliceparam);
++void ff_blend_phoenix_16_rvv(const uint8_t *top, ptrdiff_t top_linesize,
++                             const uint8_t *bottom, ptrdiff_t bottom_linesize,
++                             uint8_t *dst, ptrdiff_t dst_linesize,
++                             ptrdiff_t width, ptrdiff_t height,
++                             FilterParams *param, SliceParams *sliceparam);
++
++#define init_blend8(name, m)                                     \
++    if (param->mode == m && param->opacity == 1.f)               \
++        param->blend = ff_blend_##name##_8_rvv
++
++#define init_blend16(name, m)                                    \
++    if (param->mode == m && param->opacity == 1.f)               \
++        param->blend = ff_blend_##name##_16_rvv
++
++av_cold void ff_blend_init_riscv(FilterParams *param, int depth)
++{
++#if HAVE_RVV
++    int flags = av_get_cpu_flags();
++
++    if (flags & AV_CPU_FLAG_RVV_I32) {
++        if (depth == 8) {
++            init_blend8(add, BLEND_ADDITION);
++            init_blend8(sub, BLEND_SUBTRACT);
++            init_blend8(and, BLEND_AND);
++            init_blend8(or, BLEND_OR);
++            init_blend8(xor, BLEND_XOR);
++            init_blend8(darken, BLEND_DARKEN);
++            init_blend8(lighten, BLEND_LIGHTEN);
++            init_blend8(diff, BLEND_DIFFERENCE);
++            init_blend8(extremity, BLEND_EXTREMITY);
++            init_blend8(grainextract, BLEND_GRAINEXTRACT);
++            init_blend8(grainmerge, BLEND_GRAINMERGE);
++            init_blend8(hardmix, BLEND_HARDMIX);
++            init_blend8(multiply, BLEND_MULTIPLY);
++            init_blend8(screen, BLEND_SCREEN);
++        } else if (depth == 16) {
++            init_blend16(add, BLEND_ADDITION);
++            init_blend16(sub, BLEND_SUBTRACT);
++            init_blend16(and, BLEND_AND);
++            init_blend16(grainextract, BLEND_GRAINEXTRACT);
++            init_blend16(grainmerge, BLEND_GRAINMERGE);
++            init_blend16(lighten, BLEND_LIGHTEN);
++            init_blend16(phoenix, BLEND_PHOENIX);
++        }
++    }
++#endif
++}
+diff --git a/libavfilter/riscv/vf_blend_rvv.S b/libavfilter/riscv/vf_blend_rvv.S
+new file mode 100644
+index 0000000000..d74dc482ec
+--- /dev/null
++++ b/libavfilter/riscv/vf_blend_rvv.S
+@@ -0,0 +1,403 @@
++/*
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "libavutil/riscv/asm.S"
++
++// Blend kernels for the opacity == 1 case (dst = blend_mode(top, bottom)),
++// matching the C reference in libavfilter/blend_modes.c.
++// Signature (same as the C blend_* functions):
++//   void (const uint8_t *top, ptrdiff_t top_linesize,
++//         const uint8_t *bottom, ptrdiff_t bottom_linesize,
++//         uint8_t *dst, ptrdiff_t dst_linesize,
++//         ptrdiff_t width, ptrdiff_t height,
++//         FilterParams *param, SliceParams *sliceparam)
++// a0=top a1=top_linesize a2=bottom a3=bottom_linesize
++// a4=dst a5=dst_linesize a6=width a7=height
++// t0 = remaining, t1 = vl, t2 = MAX, t3 = HALF, t4 = scratch
++
++// 8-bit kernels (MAX = 255, HALF = 128)
++.macro blend8_prologue
++        lpad    0
++        li      t2, 255
++        li      t3, 128
++.endm
++
++.macro blend8_epilogue
++        vse8.v          v24, (a4)
++        sub             t0, t0, t1
++        add             a0, a0, t1
++        add             a2, a2, t1
++        add             a4, a4, t1
++        bnez            t0, 2b
++        sub             a0, a0, a6
++        sub             a2, a2, a6
++        sub             a4, a4, a6
++        add             a0, a0, a1
++        add             a2, a2, a3
++        add             a4, a4, a5
++        addi            a7, a7, -1
++        bnez            a7, 1b
++        ret
++.endm
++
++// add: min(255, a+b)  (e16 to avoid wrap)
++func ff_blend_add_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vwaddu.vv       v24, v8, v16
++        vsetvli         zero, zero, e16, m2, ta, ma
++        vminu.vx        v24, v24, t2
++        vnsrl.wi        v24, v24, 0
++        vsetvli         zero, zero, e8, m1, ta, ma
++        blend8_epilogue
++endfunc
++
++// sub: max(0, a-b)  (e16 signed; unsigned widen first)
++func ff_blend_sub_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vmv.v.i         v25, 1
++        vwmulu.vv       v26, v8, v25
++        vwmulu.vv       v27, v16, v25
++        vsetvli         zero, zero, e16, m2, ta, ma
++        vsub.vv         v24, v26, v27
++        vmax.vx         v24, v24, zero
++        vnsrl.wi        v24, v24, 0
++        vsetvli         zero, zero, e8, m1, ta, ma
++        blend8_epilogue
++endfunc
++
++// and
++func ff_blend_and_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vand.vv         v24, v8, v16
++        blend8_epilogue
++endfunc
++
++// or
++func ff_blend_or_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vor.vv          v24, v8, v16
++        blend8_epilogue
++endfunc
++
++// xor
++func ff_blend_xor_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vxor.vv         v24, v8, v16
++        blend8_epilogue
++endfunc
++
++// darken: min(a,b)
++func ff_blend_darken_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vminu.vv        v24, v8, v16
++        blend8_epilogue
++endfunc
++
++// lighten: max(a,b)
++func ff_blend_lighten_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vmaxu.vv        v24, v8, v16
++        blend8_epilogue
++endfunc
++
++// difference: |a-b|  (e16 signed; unsigned widen first)
++func ff_blend_diff_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vmv.v.i         v25, 1
++        vwmulu.vv       v26, v8, v25
++        vwmulu.vv       v27, v16, v25
++        vsetvli         zero, zero, e16, m2, ta, ma
++        vsub.vv         v24, v26, v27
++        vneg.v          v25, v24
++        vmax.vv         v24, v24, v25
++        vnsrl.wi        v24, v24, 0
++        vsetvli         zero, zero, e8, m1, ta, ma
++        blend8_epilogue
++endfunc
++
++// extremity: |255 - a - b|  (e16 signed; unsigned widen first)
++func ff_blend_extremity_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vmv.v.i         v25, 1
++        vwmulu.vv       v26, v8, v25
++        vwmulu.vv       v27, v16, v25
++        vsetvli         zero, zero, e16, m2, ta, ma
++        vadd.vv         v24, v26, v27
++        vrsub.vx        v24, v24, t2
++        vneg.v          v25, v24
++        vmax.vv         v24, v24, v25
++        vnsrl.wi        v24, v24, 0
++        vsetvli         zero, zero, e8, m1, ta, ma
++        blend8_epilogue
++endfunc
++
++// grainextract: clip(128 + a - b, 0, 255)  (e16 signed; unsigned widen first)
++func ff_blend_grainextract_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vmv.v.i         v25, 1
++        vwmulu.vv       v26, v8, v25
++        vwmulu.vv       v27, v16, v25
++        vsetvli         zero, zero, e16, m2, ta, ma
++        vsub.vv         v24, v26, v27
++        vadd.vx         v24, v24, t3
++        vmax.vx         v24, v24, zero
++        vminu.vx        v24, v24, t2
++        vnsrl.wi        v24, v24, 0
++        vsetvli         zero, zero, e8, m1, ta, ma
++        blend8_epilogue
++endfunc
++
++// grainmerge: clip(a + b - 128, 0, 255)  (e16)
++func ff_blend_grainmerge_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vwaddu.vv       v24, v8, v16
++        vsetvli         zero, zero, e16, m2, ta, ma
++        vsub.vx         v24, v24, t3
++        vmax.vx         v24, v24, zero
++        vminu.vx        v24, v24, t2
++        vnsrl.wi        v24, v24, 0
++        vsetvli         zero, zero, e8, m1, ta, ma
++        blend8_epilogue
++endfunc
++
++// hardmix: (a + b < 255) ? 0 : 255
++func ff_blend_hardmix_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vwaddu.vv       v26, v8, v16
++        vsetvli         zero, zero, e16, m2, ta, ma
++        vmsltu.vx       v0, v26, t2
++        li              t4, 255
++        vmv.v.x         v25, t4
++        vmerge.vxm      v24, v25, zero, v0
++        vsetvli         zero, zero, e8, m1, ta, ma
++        blend8_epilogue
++endfunc
++
++// multiply: a * b / 255  (e16 product)
++func ff_blend_multiply_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vwmulu.vv       v24, v8, v16
++        vsetvli         zero, zero, e16, m2, ta, ma
++        vdivu.vx        v24, v24, t2
++        vnsrl.wi        v24, v24, 0
++        vsetvli         zero, zero, e8, m1, ta, ma
++        blend8_epilogue
++endfunc
++
++// screen: 255 - (255 - a) * (255 - b) / 255
++func ff_blend_screen_8_rvv, zve32x
++        blend8_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e8, m1, ta, ma
++        vle8.v          v8, (a0)
++        vle8.v          v16, (a2)
++        vrsub.vx        v24, v8, t2
++        vrsub.vx        v25, v16, t2
++        vwmulu.vv       v26, v24, v25
++        vsetvli         zero, zero, e16, m2, ta, ma
++        vdivu.vx        v26, v26, t2
++        vnsrl.wi        v24, v26, 0
++        vsetvli         zero, zero, e8, m1, ta, ma
++        vrsub.vx        v24, v24, t2
++        blend8_epilogue
++endfunc
++
++// 16-bit kernels (MAX = 65535, HALF = 32768); samples are uint16_t.
++.macro blend16_prologue
++        lpad    0
++        li      t2, 65535
++        li      t3, 32768
++.endm
++
++.macro blend16_epilogue
++        vse16.v         v24, (a4)
++        sub             t0, t0, t1
++        slli            t1, t1, 1
++        add             a0, a0, t1
++        add             a2, a2, t1
++        add             a4, a4, t1
++        bnez            t0, 2b
++        slli            t4, a6, 1
++        sub             a0, a0, t4
++        sub             a2, a2, t4
++        sub             a4, a4, t4
++        add             a0, a0, a1
++        add             a2, a2, a3
++        add             a4, a4, a5
++        addi            a7, a7, -1
++        bnez            a7, 1b
++        ret
++.endm
++
++// add_16: min(65535, a+b)  (e32 to avoid wrap)
++func ff_blend_add_16_rvv, zve32x
++        blend16_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e16, m2, ta, ma
++        vle16.v         v8, (a0)
++        vle16.v         v16, (a2)
++        vwaddu.vv       v24, v8, v16
++        vsetvli         zero, zero, e32, m4, ta, ma
++        vminu.vx        v24, v24, t2
++        vnsrl.wi        v24, v24, 0
++        vsetvli         zero, zero, e16, m2, ta, ma
++        blend16_epilogue
++endfunc
++
++// sub_16: max(0, a-b)  (e32 signed; unsigned widen first)
++func ff_blend_sub_16_rvv, zve32x
++        blend16_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e16, m2, ta, ma
++        vle16.v         v8, (a0)
++        vle16.v         v16, (a2)
++        vmv.v.i         v24, 1
++        vwmulu.vv       v26, v8, v24
++        vwmulu.vv       v28, v16, v24
++        vsetvli         zero, zero, e32, m4, ta, ma
++        vsub.vv         v24, v26, v28
++        vmax.vx         v24, v24, zero
++        vnsrl.wi        v24, v24, 0
++        vsetvli         zero, zero, e16, m2, ta, ma
++        blend16_epilogue
++endfunc
++
++// and_16
++func ff_blend_and_16_rvv, zve32x
++        blend16_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e16, m1, ta, ma
++        vle16.v         v8, (a0)
++        vle16.v         v16, (a2)
++        vand.vv         v24, v8, v16
++        blend16_epilogue
++endfunc
++
++// grainextract_16: clip(32768 + a - b, 0, 65535)  (e32 signed; unsigned widen first)
++func ff_blend_grainextract_16_rvv, zve32x
++        blend16_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e16, m2, ta, ma
++        vle16.v         v8, (a0)
++        vle16.v         v16, (a2)
++        vmv.v.i         v24, 1
++        vwmulu.vv       v26, v8, v24
++        vwmulu.vv       v28, v16, v24
++        vsetvli         zero, zero, e32, m4, ta, ma
++        vsub.vv         v24, v26, v28
++        vadd.vx         v24, v24, t3
++        vmax.vx         v24, v24, zero
++        vminu.vx        v24, v24, t2
++        vnsrl.wi        v24, v24, 0
++        vsetvli         zero, zero, e16, m2, ta, ma
++        blend16_epilogue
++endfunc
++
++// grainmerge_16: clip(a + b - 32768, 0, 65535)
++func ff_blend_grainmerge_16_rvv, zve32x
++        blend16_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e16, m2, ta, ma
++        vle16.v         v8, (a0)
++        vle16.v         v16, (a2)
++        vwaddu.vv       v24, v8, v16
++        vsetvli         zero, zero, e32, m4, ta, ma
++        vsub.vx         v24, v24, t3
++        vmax.vx         v24, v24, zero
++        vminu.vx        v24, v24, t2
++        vnsrl.wi        v24, v24, 0
++        vsetvli         zero, zero, e16, m2, ta, ma
++        blend16_epilogue
++endfunc
++
++// lighten_16: max(a,b)
++func ff_blend_lighten_16_rvv, zve32x
++        blend16_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e16, m1, ta, ma
++        vle16.v         v8, (a0)
++        vle16.v         v16, (a2)
++        vmaxu.vv        v24, v8, v16
++        blend16_epilogue
++endfunc
++
++// phoenix_16: min(a,b) - max(a,b) + 65535 = MAX - (max(a,b) - min(a,b))
++func ff_blend_phoenix_16_rvv, zve32x
++        blend16_prologue
++1:      mv      t0, a6
++2:      vsetvli         t1, t0, e16, m1, ta, ma
++        vle16.v         v8, (a0)
++        vle16.v         v16, (a2)
++        vminu.vv        v18, v8, v16
++        vmaxu.vv        v20, v8, v16
++        vsub.vv         v24, v20, v18
++        vrsub.vx        v24, v24, t2
++        blend16_epilogue
++endfunc
+diff --git a/libavfilter/vf_blend_init.h b/libavfilter/vf_blend_init.h
+index 4ee0b94ba5..f80ad8adff 100644
+--- a/libavfilter/vf_blend_init.h
++++ b/libavfilter/vf_blend_init.h
+@@ -192,6 +192,8 @@ av_unused static void ff_blend_init(FilterParams *param, int depth)
+ 
+ #if ARCH_X86 && HAVE_X86ASM
+     ff_blend_init_x86(param, depth);
++#elif ARCH_RISCV
++    ff_blend_init_riscv(param, depth);
+ #endif
+ }
+ 

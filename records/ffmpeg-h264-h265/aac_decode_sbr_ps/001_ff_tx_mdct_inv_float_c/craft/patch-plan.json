@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-ffmpeg-aac-decode-sbr-ps-001",
+  "blueprintId": "bp-ffmpeg-aac_decode_sbr_ps-001",
+  "createdAt": "2026-09-11T09:36:56.647Z",
+  "objective": "MDCT 逆变换以标量逐蝶形实现（交织 AoS 复数按 [re,im] 逐点 flw/fmul/fsw 取用），在 RVV 1.0 硬件上零 v* 指令；FFmpeg AV_TX 框架在 RISC-V 侧缺少向量 codelet，导致整级同构蝶形未沿元素轴向量化，VLEN=256 宽度完全闲置。",
+  "changes": [
+    {
+      "filePath": "libavutil/tx_template.c",
+      "action": "modify",
+      "rationale": "MDCT 逆变换以标量逐蝶形实现（交织 AoS 复数按 [re,im] 逐点 flw/fmul/fsw 取用），在 RVV 1.0 硬件上零 v* 指令；FFmpeg AV_TX 框架在 RISC-V 侧缺少向量 codelet，导致整级同构蝶形未沿元素轴向量化，VLEN=256 宽度完全闲置。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 libavutil/tx_template.c 来解决 blueprint bp-ffmpeg-aac_decode_sbr_ps-001。"
+}

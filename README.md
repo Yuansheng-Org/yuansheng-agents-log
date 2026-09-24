@@ -7,7 +7,7 @@
 ## 1. 当前资料概述
 
 - 资料登记日期：2026-09-08至2026-09-24。
-- 当前尚未归档实际用例名称、函数符号、Trace 日志、Craft 文件、开源专家复核后补丁和上游提交链接。
+- 总表尚未逐项关联实际用例、函数和上游链接；FFmpeg 已筛选产物见 [FFmpeg 记录](records/ffmpeg-h264-h265/README.md)。
 
 19款软件的测试原始记录为：测试用例 **545**、分析热点函数 **2229**、Craft成功生成补丁 **534**。
 
@@ -146,11 +146,10 @@
 
 ```text
 README.md                              # 本说明及19软件历史汇总索引
-records/<software>/README.md           # 用例、热点和逐补丁追踪表
-records/<software>/patches/            # 待实际归档时创建
-  environment.md                       # 环境、版本、模型与完整命令
-  input/                               # perf、metadata、基线
-  trace/                               # 原始目录结构、日志和Blueprint
-  craft/                               # Plan、Candidate、Diff和AI review
-  review/                              # 开源专家复核、调整后的补丁
+records/<software>/README.md           # 软件级索引和统计口径
+records/<software>/<testcase>/<function>/
+  trace/                               # Blueprint、诊断及原始证据
+  craft/                               # Craft 原始补丁、交付候选及协议产物
+  review/                              # 已筛选的专家复核补丁
+  provenance/                          # 源分支与归档版本不同时的原文件
 ```

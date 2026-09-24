@@ -1,0 +1,224 @@
+ Percent |	Source code & Disassembly of ffmpeg for cpu-clock (116 samples, percent: local period)
+------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000acd9dc <vp8_v_loop_filter16_inner_c>:
+         : 6      vp8_v_loop_filter16_inner_c():
+         : 722    #endif
+         : 723    }
+         : 724    #endif /* CONFIG_VP7_DECODER */
+         :
+         : 726    #if CONFIG_VP8_DECODER
+         : 727    LOOP_FILTERS(vp8)
+    0.00 :   acd9dc: addi    sp,sp,-48
+    0.00 :   acd9de: sd      s0,40(sp)
+         : 730    vp8_normal_limit():
+         : 342    NORMAL_LIMIT(8)
+    0.00 :   acd9e0: neg     s0,a1
+         : 344    vp8_v_loop_filter16_inner_c():
+         : 722    LOOP_FILTERS(vp8)
+    0.00 :   acd9e4: sd      s1,32(sp)
+         : 724    vp8_normal_limit():
+         : 342    NORMAL_LIMIT(8)
+    0.00 :   acd9e6: slli    s0,s0,0x1
+    0.00 :   acd9e8: slli    s1,a1,0x1
+    0.00 :   acd9ec: slli    a5,a1,0x2
+         : 346    vp8_v_loop_filter16_inner_c():
+         : 722    LOOP_FILTERS(vp8)
+    0.00 :   acd9f0: sd      s4,8(sp)
+    0.86 :   acd9f2: sd      s2,24(sp)
+    0.00 :   acd9f4: mv      s4,a4
+    0.00 :   acd9f6: sd      s3,16(sp)
+    0.00 :   acd9f8: add     a6,a0,s0
+    0.00 :   acd9fc: sub     a7,a0,a1
+    0.00 :   acda00: add     t1,a0,a1
+    0.00 :   acda04: addi    t2,a0,16
+         : 731    vp8_normal_limit():
+         : 342    NORMAL_LIMIT(8)
+    0.00 :   acda08: add     s1,s1,a1
+    0.00 :   acda0a: sub     a4,a1,a5
+    0.86 :   acda0e: lbu     t4,0(a6)
+    3.45 :   acda12: lbu     t6,0(t1)
+    1.72 :   acda16: lbu     t5,0(a7)
+    0.00 :   acda1a: lbu     t0,0(a0)
+         : 349    vp8_simple_limit():
+         : 322    return 2 * FFABS(p0 - q0) + (FFABS(p1 - q1) >> 1) <= flim;
+    0.00 :   acda1e: subw    t3,t4,t6
+    0.00 :   acda22: sraiw   s3,t3,0x1f
+    1.72 :   acda26: subw    a5,t5,t0
+    0.00 :   acda2a: sraiw   s2,a5,0x1f
+    0.00 :   acda2e: xor     a1,t3,s3
+    0.00 :   acda32: xor     a5,a5,s2
+    0.00 :   acda36: subw    a1,a1,s3
+    0.00 :   acda3a: subw    a5,a5,s2
+    0.86 :   acda3e: sraiw   a1,a1,0x1
+    0.86 :   acda42: slliw   a5,a5,0x1
+    2.59 :   acda46: addw    a5,a5,a1
+         : 334    vp8_normal_limit():
+         : 342    NORMAL_LIMIT(8)
+    0.86 :   acda48: blt     a2,a5,acdb52 <vp8_v_loop_filter16_inner_c+0x176>
+    3.45 :   acda4c: add     a1,a0,a4
+    0.00 :   acda50: add     a5,a6,s0
+    0.00 :   acda54: lbu     a1,0(a1)
+    0.00 :   acda58: lbu     a5,0(a5)
+    1.72 :   acda5c: subw    a5,a5,a1
+    0.00 :   acda5e: sraiw   s2,a5,0x1f
+    1.72 :   acda62: xor     a5,a5,s2
+    0.00 :   acda66: subw    a5,a5,s2
+    0.00 :   acda6a: blt     a3,a5,acdb52 <vp8_v_loop_filter16_inner_c+0x176>
+    0.86 :   acda6e: subw    a1,a1,t4
+    1.72 :   acda72: sraiw   a5,a1,0x1f
+    0.00 :   acda76: xor     a1,a1,a5
+    0.86 :   acda78: subw    a1,a1,a5
+    0.00 :   acda7a: blt     a3,a1,acdb52 <vp8_v_loop_filter16_inner_c+0x176>
+    1.72 :   acda7e: subw    a5,t4,t5
+    0.00 :   acda82: sraiw   a1,a5,0x1f
+    0.00 :   acda86: xor     a5,a5,a1
+    0.00 :   acda88: subw    a5,a5,a1
+    0.00 :   acda8a: blt     a3,a5,acdb52 <vp8_v_loop_filter16_inner_c+0x176>
+    0.00 :   acda8e: sub     s2,a0,s0
+    0.00 :   acda92: add     a1,a0,s1
+    0.86 :   acda96: lbu     s2,0(s2)
+    0.00 :   acda9a: lbu     a1,0(a1)
+    0.86 :   acda9e: subw    a1,a1,s2
+    0.00 :   acdaa2: sraiw   s3,a1,0x1f
+    1.72 :   acdaa6: xor     a1,a1,s3
+    0.86 :   acdaaa: subw    a1,a1,s3
+    2.59 :   acdaae: blt     a3,a1,acdb52 <vp8_v_loop_filter16_inner_c+0x176>
+    2.59 :   acdab2: subw    s2,s2,t6
+    0.00 :   acdab6: sraiw   a1,s2,0x1f
+    0.86 :   acdaba: xor     s2,s2,a1
+    0.86 :   acdabe: subw    s2,s2,a1
+    0.00 :   acdac2: blt     a3,s2,acdb52 <vp8_v_loop_filter16_inner_c+0x176>
+    0.00 :   acdac6: subw    a1,t6,t0
+    1.72 :   acdaca: sraiw   s2,a1,0x1f
+    0.86 :   acdace: xor     a1,a1,s2
+    0.86 :   acdad2: subw    a1,a1,s2
+    0.00 :   acdad6: blt     a3,a1,acdb52 <vp8_v_loop_filter16_inner_c+0x176>
+         : 347    filter_common():
+         : 270    a = 3 * (q0 - p0);
+    0.00 :   acdada: subw    s3,t0,t5
+    0.00 :   acdade: slliw   s2,s3,0x1
+    0.00 :   acdae2: addw    s2,s2,s3
+         : 274    hev():
+         : 348    return FFABS(p1 - p0) > thresh || FFABS(q1 - q0) > thresh;
+    2.59 :   acdae6: sext.w  s3,a5
+    0.00 :   acdaea: bge     a5,a1,acdaf2 <vp8_v_loop_filter16_inner_c+0x116>
+    0.00 :   acdaee: sext.w  s3,a1
+    2.59 :   acdaf2: bge     s4,s3,acdb74 <vp8_v_loop_filter16_inner_c+0x198>
+         : 353    filter_common():
+         : 273    a += clip_int8(p1 - q1);
+    0.00 :   acdaf6: addiw   a5,t3,128
+    2.59 :   acdafa: auipc   a1,0x632
+    0.00 :   acdafe: addi    a1,a1,1982 # 11002b8 <ff_crop_tab+0x400>
+    0.00 :   acdb02: add     a5,a5,a1
+    3.45 :   acdb04: lbu     a5,0(a5)
+         : 284    f2 = FFMIN(a + 3, 127) >> 3;
+    3.45 :   acdb08: li      t4,124
+         : 275    a = clip_int8(a);
+    0.00 :   acdb0c: addw    a5,a5,s2
+    0.00 :   acdb10: add     a5,a5,a1
+    0.00 :   acdb12: lbu     t3,0(a5)
+    3.45 :   acdb16: addiw   t3,t3,-128
+         : 284    f2 = FFMIN(a + 3, 127) >> 3;
+    0.00 :   acdb1a: mv      a5,t3
+    0.86 :   acdb1c: blt     t4,t3,acdb70 <vp8_v_loop_filter16_inner_c+0x194>
+    1.72 :   acdb20: addiw   a5,a5,3
+    0.00 :   acdb22: sraiw   a5,a5,0x3
+         : 288    p[-1 * stride] = cm[p0 + f2];
+    0.00 :   acdb26: addw    a5,t5,a5
+    0.86 :   acdb2a: add     a5,a5,a1
+    4.31 :   acdb2c: lbu     t5,0(a5)
+         : 279    f1 = FFMIN(a + 4, 127) >> 3;
+    8.62 :   acdb30: li      t4,123
+    0.00 :   acdb34: mv      a5,t3
+         : 288    p[-1 * stride] = cm[p0 + f2];
+    0.00 :   acdb36: sb      t5,0(a7)
+         : 279    f1 = FFMIN(a + 4, 127) >> 3;
+    0.00 :   acdb3a: blt     t4,t3,acdb6c <vp8_v_loop_filter16_inner_c+0x190>
+    0.86 :   acdb3e: addiw   a5,a5,4
+    0.00 :   acdb40: sraiw   a5,a5,0x3
+         : 289    p[ 0 * stride] = cm[q0 - f1];
+    0.00 :   acdb44: subw    a5,t0,a5
+    0.00 :   acdb48: add     a5,a5,a1
+    0.00 :   acdb4a: lbu     a5,0(a5)
+    0.86 :   acdb4e: sb      a5,0(a0)
+         : 294    vp8_v_loop_filter16_inner_c():
+         : 722    LOOP_FILTERS(vp8)
+    0.86 :   acdb52: addi    a0,a0,1
+    0.00 :   acdb54: addi    a6,a6,1
+    0.86 :   acdb56: addi    a7,a7,1
+    0.86 :   acdb58: addi    t1,t1,1
+    0.00 :   acdb5a: bne     t2,a0,acda0e <vp8_v_loop_filter16_inner_c+0x32>
+    0.00 :   acdb5e: ld      s0,40(sp)
+    1.72 :   acdb60: ld      s1,32(sp)
+    0.00 :   acdb62: ld      s2,24(sp)
+    0.00 :   acdb64: ld      s3,16(sp)
+    0.86 :   acdb66: ld      s4,8(sp)
+    0.00 :   acdb68: addi    sp,sp,48
+    0.00 :   acdb6a: ret
+         : 732    filter_common():
+         : 279    f1 = FFMIN(a + 4, 127) >> 3;
+    0.00 :   acdb6c: mv      a5,t4
+    0.00 :   acdb6e: j       acdb3e <vp8_v_loop_filter16_inner_c+0x162>
+         : 284    f2 = FFMIN(a + 3, 127) >> 3;
+    0.00 :   acdb70: mv      a5,t4
+    0.00 :   acdb72: j       acdb20 <vp8_v_loop_filter16_inner_c+0x144>
+         : 275    a = clip_int8(a);
+    2.59 :   acdb74: addiw   s2,s2,128
+    0.00 :   acdb78: auipc   a1,0x632
+    0.00 :   acdb7c: addi    a1,a1,1856 # 11002b8 <ff_crop_tab+0x400>
+    0.86 :   acdb80: add     a5,a1,s2
+    0.00 :   acdb84: lbu     s2,0(a5)
+         : 279    f1 = FFMIN(a + 4, 127) >> 3;
+    0.86 :   acdb88: li      t3,123
+         : 275    a = clip_int8(a);
+    0.00 :   acdb8c: addiw   s2,s2,-128
+         : 279    f1 = FFMIN(a + 4, 127) >> 3;
+    0.00 :   acdb90: mv      a5,s2
+    0.00 :   acdb92: bge     t3,s2,acdb98 <vp8_v_loop_filter16_inner_c+0x1bc>
+    0.00 :   acdb96: mv      a5,t3
+    1.72 :   acdb98: addiw   a5,a5,4
+         : 284    f2 = FFMIN(a + 3, 127) >> 3;
+    0.00 :   acdb9a: li      s3,124
+         : 279    f1 = FFMIN(a + 4, 127) >> 3;
+    0.00 :   acdb9e: sraiw   t3,a5,0x3
+         : 284    f2 = FFMIN(a + 3, 127) >> 3;
+    0.00 :   acdba2: mv      a5,s2
+    0.00 :   acdba4: bge     s3,s2,acdbaa <vp8_v_loop_filter16_inner_c+0x1ce>
+    0.00 :   acdba8: mv      a5,s3
+    0.86 :   acdbaa: addiw   a5,a5,3
+    0.00 :   acdbac: sraiw   a5,a5,0x3
+         : 288    p[-1 * stride] = cm[p0 + f2];
+    0.00 :   acdbb0: addw    a5,t5,a5
+    0.00 :   acdbb4: add     a5,a5,a1
+    1.72 :   acdbb6: lbu     t5,0(a5)
+         : 289    p[ 0 * stride] = cm[q0 - f1];
+    6.03 :   acdbba: subw    a5,t0,t3
+    0.00 :   acdbbe: add     a5,a5,a1
+         : 288    p[-1 * stride] = cm[p0 + f2];
+    0.00 :   acdbc0: sb      t5,0(a7)
+         : 289    p[ 0 * stride] = cm[q0 - f1];
+    0.00 :   acdbc4: lbu     t5,0(a5)
+         : 293    a              = (f1 + 1) >> 1;
+    1.72 :   acdbc8: addiw   t3,t3,1
+    0.00 :   acdbca: sraiw   t3,t3,0x1
+         : 294    p[-2 * stride] = cm[p1 + a];
+    0.00 :   acdbce: addw    a5,t4,t3
+         : 289    p[ 0 * stride] = cm[q0 - f1];
+    0.00 :   acdbd2: sb      t5,0(a0)
+         : 294    p[-2 * stride] = cm[p1 + a];
+    0.86 :   acdbd6: add     a5,a5,a1
+    0.00 :   acdbd8: lbu     a5,0(a5)
+         : 295    p[ 1 * stride] = cm[q1 - a];
+    0.00 :   acdbdc: subw    t6,t6,t3
+    0.00 :   acdbe0: add     a1,a1,t6
+         : 294    p[-2 * stride] = cm[p1 + a];
+    0.00 :   acdbe2: sb      a5,0(a6)
+         : 295    p[ 1 * stride] = cm[q1 - a];
+    0.00 :   acdbe6: lbu     a5,0(a1)
+    0.00 :   acdbea: sb      a5,0(t1)
+    0.86 :   acdbee: j       acdb52 <vp8_v_loop_filter16_inner_c+0x176>
