@@ -1,0 +1,217 @@
+diff --git a/3rdparty/mshadow/mshadow/extension/reduce_with_axis.h b/3rdparty/mshadow/mshadow/extension/reduce_with_axis.h
+index 01e880d18..2b11e1472 100644
+--- a/3rdparty/mshadow/mshadow/extension/reduce_with_axis.h
++++ b/3rdparty/mshadow/mshadow/extension/reduce_with_axis.h
+@@ -27,9 +27,122 @@
+ 
+ #include "../extension.h"
+ 
++#if defined(__riscv) && defined(__riscv_v)
++#include <riscv_vector.h>
++#endif
++
+ namespace mshadow {
+ namespace expr {
+ 
++/*!
++ * \brief reduction step for the axis reducer.
++ *  red::sum::Reduce takes a `volatile DType&` accumulator, which forces the
++ *  partial sum to be stored to and reloaded from memory on every reduction
++ *  step.  For the additive reducer a plain register accumulation performs the
++ *  identical `dst += src` sequence (same order, same result) without the
++ *  volatile memory round-trip.  Every other reducer keeps the existing
++ *  Reducer::Reduce contract.
++ */
++template<typename DType>
++MSHADOW_XINLINE void ReduceWithAxisStep(red::sum, DType &acc, DType val) {  // NOLINT(*)
++  acc += val;
++}
++template<typename Reducer, typename DType>
++MSHADOW_XINLINE void ReduceWithAxisStep(Reducer, DType &acc, DType val) {  // NOLINT(*)
++  Reducer::Reduce(acc, val);
++}
++
++/*! \brief compile-time predicate: is this the additive reducer? */
++template<typename Reducer>
++struct ReduceWithAxisIsSum {
++  static const bool value = false;
++};
++template<>
++struct ReduceWithAxisIsSum<red::sum> {
++  static const bool value = true;
++};
++
++/*!
++ * \brief traits describing the source expression of a ReduceWithAxisExp.
++ *  The generic version reports the expression as ineligible for the raw
++ *  unit-stride vectorized path and hands out null pointers.
++ */
++template<typename SrcExp>
++struct ReduceWithAxisSrcTraits {
++  static const bool kUnitStrideF32 = false;
++  MSHADOW_XINLINE static const float *Lhs(const SrcExp &) { return NULL; }
++  MSHADOW_XINLINE static const float *Rhs(const SrcExp &) { return NULL; }
++  MSHADOW_XINLINE static index_t LhsStride(const SrcExp &) { return 0; }
++  MSHADOW_XINLINE static index_t RhsStride(const SrcExp &) { return 0; }
++};
++
++/*!
++ * \brief specialization for `tensor * tensor` over cpu 3D float, the only
++ *  shape whose source elements are directly addressable.
++ */
++template<int etype>
++struct ReduceWithAxisSrcTraits<
++    BinaryMapExp<op::mul, Tensor<cpu, 3, float>, Tensor<cpu, 3, float>, float, etype> > {
++  typedef BinaryMapExp<op::mul, Tensor<cpu, 3, float>, Tensor<cpu, 3, float>,
++                       float, etype> SrcT;
++  static const bool kUnitStrideF32 = true;
++  MSHADOW_XINLINE static const float *Lhs(const SrcT &e) { return e.lhs_.dptr_; }
++  MSHADOW_XINLINE static const float *Rhs(const SrcT &e) { return e.rhs_.dptr_; }
++  MSHADOW_XINLINE static index_t LhsStride(const SrcT &e) { return e.lhs_.stride_; }
++  MSHADOW_XINLINE static index_t RhsStride(const SrcT &e) { return e.rhs_.stride_; }
++};
++
++#if defined(__riscv) && defined(__riscv_v)
++/*!
++ * \brief RVV unit-stride sum-of-products for float32.
++ *  Two independent vector accumulators shorten the loop-carried FP dependency
++ *  chain; the horizontal combine is a single vfredusum seeded with zero.
++ *  Returns false when the vector path is not applicable so that the caller
++ *  falls back to the scalar path.  Note: vfredusum is unordered, so callers
++ *  relying on the strict scalar addition order must validate the tolerance.
++ */
++template<typename DType>
++struct ReduceWithAxisRvv {
++  MSHADOW_XINLINE static bool Run(const float *, const float *, index_t, DType *) {
++    return false;
++  }
++};
++
++template<>
++struct ReduceWithAxisRvv<float> {
++  MSHADOW_XINLINE static bool Run(const float *lhs, const float *rhs,
++                                  index_t n, float *out) {
++    if (lhs == NULL || rhs == NULL || n <= 0) return false;
++    const size_t len = static_cast<size_t>(n);
++    const size_t vlmax = __riscv_vsetvl_e32m2(len);
++    vfloat32m2_t acc0 = __riscv_vfmv_v_f_f32m2(0.0f, vlmax);
++    vfloat32m2_t acc1 = __riscv_vfmv_v_f_f32m2(0.0f, vlmax);
++    size_t k = 0;
++    while (k + 2 * vlmax <= len) {
++      vfloat32m2_t a0 = __riscv_vle32_v_f32m2(lhs + k, vlmax);
++      vfloat32m2_t b0 = __riscv_vle32_v_f32m2(rhs + k, vlmax);
++      vfloat32m2_t a1 = __riscv_vle32_v_f32m2(lhs + k + vlmax, vlmax);
++      vfloat32m2_t b1 = __riscv_vle32_v_f32m2(rhs + k + vlmax, vlmax);
++      acc0 = __riscv_vfmacc_vv_f32m2(acc0, a0, b0, vlmax);
++      acc1 = __riscv_vfmacc_vv_f32m2(acc1, a1, b1, vlmax);
++      k += 2 * vlmax;
++    }
++    while (k < len) {
++      const size_t vl = __riscv_vsetvl_e32m2(len - k);
++      vfloat32m2_t a = __riscv_vle32_v_f32m2(lhs + k, vl);
++      vfloat32m2_t b = __riscv_vle32_v_f32m2(rhs + k, vl);
++      acc0 = __riscv_vfmacc_vv_f32m2(acc0, a, b, vl);
++      k += vl;
++    }
++    vfloat32m2_t vsum = __riscv_vfadd_vv_f32m2(acc0, acc1, vlmax);
++    vfloat32m1_t seed = __riscv_vfmv_s_f_f32m1(0.0f, vlmax);
++    vfloat32m1_t red = __riscv_vfredusum_vs_f32m2_f32m1(vsum, seed, vlmax);
++    *out = __riscv_vfmv_f_s_f32m1_f32(red);
++    return true;
++  }
++};
++#endif  // defined(__riscv) && defined(__riscv_v)
++
+ /*! \brief reduce out the dimension of src labeled by axis.
+  *  \tparam Reducer type of reducer
+  *  \tparam SrcExp type of source expression
+@@ -117,29 +230,74 @@ template<typename Reducer, typename SrcExp, typename DType, int dimsrc, bool mas
+ struct Plan<ReduceWithAxisExp<Reducer, SrcExp, DType, dimsrc, mask, dimdst>, DType> {
+  public:
+   explicit Plan(const ReduceWithAxisExp<Reducer, SrcExp, DType, dimsrc, mask, dimdst> &e)
+-      : src_(MakePlan(e.src_)), last_dst_dim_(e.last_dst_dim_), trailing_(e.trailing_),
+-        size_(e.size_), last_(e.last_) {}
++      : src_(MakePlan(e.src_)), src_expr_(&e.src_), last_dst_dim_(e.last_dst_dim_),
++        trailing_(e.trailing_), size_(e.size_), last_(e.last_) {}
+   MSHADOW_XINLINE DType Eval(index_t i, index_t j) const {
+     index_t x = (i*last_dst_dim_ + j)/trailing_;
+     index_t y = (i*last_dst_dim_ + j)%trailing_;
+ 
++    // Empty reduction: keep the original early-exit semantics (init value for
++    // the value path, 0 for the masked index path) and avoid the pre-loop
++    // decode division when last_ == 0.
++    if (size_ == 0) {
++      if (mask) return static_cast<DType>(0);
++      DType empty_res; Reducer::SetInitValue(empty_res);
++      return empty_res;
++    }
++
++    // Strength-reduced index decode: z = base_z + k*trailing_ with
++    // base_z = x*size_*trailing_ + y, so z/last_ and z%last_ advance by the
++    // constant (q, r) = (trailing_/last_, trailing_%last_) plus a single
++    // carry.  This is integer-equivalent to the original per-element
++    // z/last_, z%last_ decode without any division inside the k loop.
++    const index_t q = trailing_ / last_;
++    const index_t r = trailing_ % last_;
++    index_t zdiv = (x*size_*trailing_ + y) / last_;
++    index_t zmod = (x*size_*trailing_ + y) % last_;
++
+     if (mask) {
+       index_t idx = 0;
+       DType res; Reducer::SetInitValue(res);
+       for (index_t k = 0; k < size_; ++k) {
+-        index_t z = (x*size_+k)*trailing_+y;
+         DType tmp = res;
+-        Reducer::Reduce(res, src_.Eval(z/last_, z%last_));
++        ReduceWithAxisStep(Reducer(), res, src_.Eval(zdiv, zmod));
+         if (tmp != res && !isnan_typed::IsNan(tmp)) {
+           idx = k;
+         }
++        zdiv += q; zmod += r;
++        if (zmod >= last_) { zmod -= last_; ++zdiv; }
+       }
+       return static_cast<DType>(static_cast<int>(idx));
+     } else {
++#if defined(__riscv) && defined(__riscv_v)
++      // Unit-stride float32 sum-of-products fast path.  Guarded on the
++      // additive reducer so other reducers keep their scalar semantics.  With
++      // trailing_ == 1 the reduction index is z = x*size_ + k, and
++      // src_.Eval(z/last_, z%last_) maps to
++      // dptr_[(z/last_)*stride_ + z%last_]; stride_ == last_ makes that exactly
++      // dptr_[z], so the k loop is a contiguous sum of products.
++      if (ReduceWithAxisIsSum<Reducer>::value && trailing_ == 1 &&
++          ReduceWithAxisSrcTraits<SrcExp>::kUnitStrideF32) {
++        const SrcExp &se = *src_expr_;
++        if (ReduceWithAxisSrcTraits<SrcExp>::LhsStride(se) == last_ &&
++            ReduceWithAxisSrcTraits<SrcExp>::RhsStride(se) == last_) {
++          const float *lhs = ReduceWithAxisSrcTraits<SrcExp>::Lhs(se);
++          const float *rhs = ReduceWithAxisSrcTraits<SrcExp>::Rhs(se);
++          if (lhs != NULL && rhs != NULL) {
++            DType acc;
++            if (ReduceWithAxisRvv<DType>::Run(lhs + x*size_, rhs + x*size_,
++                                              size_, &acc)) {
++              return acc;
++            }
++          }
++        }
++      }
++#endif
+       DType res; Reducer::SetInitValue(res);
+       for (index_t k = 0; k < size_; ++k) {
+-        index_t z = (x*size_+k)*trailing_+y;
+-        Reducer::Reduce(res, src_.Eval(z/last_, z%last_));
++        ReduceWithAxisStep(Reducer(), res, src_.Eval(zdiv, zmod));
++        zdiv += q; zmod += r;
++        if (zmod >= last_) { zmod -= last_; ++zdiv; }
+       }
+       return res;
+     }
+@@ -147,6 +305,8 @@ struct Plan<ReduceWithAxisExp<Reducer, SrcExp, DType, dimsrc, mask, dimdst>, DTy
+ 
+  private:
+   Plan<SrcExp, DType> src_;
++  /*! \brief source expression, used by the raw unit-stride fast path */
++  const SrcExp *src_expr_;
+   const index_t last_dst_dim_, trailing_, size_, last_;
+ };
+ }  // namespace expr
