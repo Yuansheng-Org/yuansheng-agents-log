@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-redis-incr-015",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-10T11:11:46.264Z",
+    "software": "redis",
+    "testcaseIds": [
+      "incr"
+    ],
+    "diagnosisId": "diag-20260910T111146264Z-c5364d8b",
+    "targetHardware": "XuanTie C920v2 (SOPHGO SG2044)",
+    "repositoryUrl": "https://github.com/redis/redis.git",
+    "testBranch": "unstable",
+    "commitHash": "de9f40ad48475bc754ea4af6c177286d0b4d1587"
+  },
+  "problem": {
+    "summary": "redis-server 的单调时钟读取落入 POSIX 回退：monotonicInit() 选中 getMonotonicUs_posix，因为 RISC-V mtime 快速路径（getMonotonicUs_riscv，csrr time 读用户态 time CSR）被 USE_PROCESSOR_CLOCK 宏门控且该宏在源码注释块内未定义、构建未传 -DUSE_PROCESSOR_CLOCK。结果 ae 事件循环每迭代多次调用的时间读取每次执行完整 clock_gettime syscall（50-150+ cycles），而 hardware（zicntr）支持用户态 csrr time（数 cycles）。getMonotonicUs_posix.lto_priv.0 以 4 个样本位列 rank 015。",
+    "evidence": [
+      "Latency(ms): RV avg=1.146, p50=1.015, p95=1.631, p99=4.503, max=14.351 — 仅 RISC-V 侧绝对指标，无 ARM 对照",
+      "Requests/sec: RV=24,740.23",
+      "热点函数 getMonotonicUs_posix.lto_priv.0（rank 015，cpu-clock:u，4 samples）：50% `2001cc: sd s0,48(sp)`、25% `2001ce: sd s1,40(sp)`、25% `200224: ld a2,0(s1)`——全部聚集在 clock_gettime syscall 周围 prologue/epilogue（skid）",
+      "函数体含每次调用的 `2001ea: auipc ra,0xffe99`/`2001ee: jalr -1514(ra) # 98c00 <clock_gettime@plt>` syscall",
+      "源码门控：monotonic.c:26-30 中 USE_PROCESSOR_CLOCK 宏位于注释块内未定义；monotonic.c:141-194 RISC-V mtime 路径（read_mtime=csrr %0, time）未编译；dispatch（monotonic.c:230-234）落入 posix 回退",
+      "hardware isa 含 zicntr（用户态 time CSR）；build 含 zicsr2p0（csrr 可用）"
+    ]
+  },
+  "rootCause": {
+    "summary": "USE_PROCESSOR_CLOCK 宏未在构建中定义，RISC-V mtime 快速路径（csrr time，数周期）未编译，dispatch 落入 POSIX 回退——ae 事件循环每迭代多次的单调时钟读取每次付一次完整 clock_gettime syscall。",
+    "candidateFiles": [
+      "src/monotonic.c",
+      "src/Makefile"
+    ],
+    "performanceFactors": [
+      "Runtime CPU Feature Dispatch for ISA-Specific Intrinsics and VDSO"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "low",
+    "mustPreserve": [
+      "getMonotonicUs 的 monotime 语义（微秒、单调不回退）",
+      "mono_ticksPerMicrosecond 校准必须 >0 否则保持回退（monotonicInit_riscv 自身语义）",
+      "mtime 单调性由 Zicntr 架构保证；VDSO/posix 路径的时间域换算各自独立",
+      "x86 构建下 USE_PROCESSOR_CLOCK 激活 TSC 路径的行为与现状一致"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "incr"
+    ],
+    "regressionCommand": "agent1 patch_regression --case incr"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.68,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "impact evidence 不足：仅 4 个 cpu-clock 样本、无 sampling IP precision、无 bound type、syscall 频率与函数级 share 未量化；修复为构建宏变更，需人工确认 -DUSE_PROCESSOR_CLOCK 对 x86/RISC-V 全二进制的影响与 timebase-frequency DT 文件可用性。",
+    "reasoning": "指标层：incr 场景 RV 侧吞吐 24,740 req/s、avg latency 1.146ms，perf stat 无 counter，bound type 未知。热点层：getMonotonicUs_posix.lto_priv.0 以 4 个样本位列 rank 015，函数体为 stack canary + clock_gettime@plt syscall + 换算 + canary 检查，4/4 样本聚集 syscall 周围 prologue/epilogue（skid）；源码证实单调时钟 dispatch（monotonicInit）落入 posix 回退，因为 USE_PROCESSOR_CLOCK 宏在注释块内未定义、RISC-V mtime 路径（monotonic.c:141-194，csrr time）未编译。调用点层：ae.c:228/279/291/313/338 与 server.c:2141/2192 显示该函数在每事件循环迭代被多次调用。知识层：runtime-ISA-dispatch pattern 的 §Why this is slow #2（rdtime/csrr time 数周期 vs syscall 50-150 周期）与 Related PRs（Go/Linux/QEMU/OpenJDK）证明硬件能力未接入函数入口的同类问题在 RISC-V 生态中是标准修复对象。三层证据共同指向编译期宏 gate 使 RISC-V 快速路径不可达这一根因，但动态收益受样本与 bound 数据限制未量化。",
+    "rootCauseType": "config_mismatch",
+    "alternativeExplanations": [
+      "样本噪声：仅 4 个样本且全为 syscall 周围 skid，getMonotonicUs 的实际 per-iteration 频率未直接测量",
+      "timebase-frequency DT 文件缺失：即使放开宏，get_timebase_frequency 返回 0 时 monotonicInit_riscv 自身回退，根因可能部分是运行时 DT 数据而非仅构建宏",
+      "内核 VDSO 时钟路径：若内核提供 __vdso_clock_gettime，POSIX 回退的实际成本低于纯 syscall（部分时间由 VDSO 承担），需实测 syscall 计数"
+    ],
+    "currentGaps": "缺 perf stat 的 cycles/instructions 与 syscall 计数（bound type 未知）；缺 precise_ip/Exact-IP 证据；getMonotonicUs 在 incr 路径上的调用频率与 workload 级 share 未量化；未验证 /proc/device-tree/cpus/timebase-frequency 是否存在。",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认构建是否可传 -DUSE_PROCESSOR_CLOCK（及其对 x86 构建的副作用）；确认目标环境 /proc/device-tree/cpus/timebase-frequency 存在性（否则需 get_timebase_frequency 的 hwprobe 兜底）；确认 incr 路径每迭代 getMonotonicUs 调用次数以量化收益。",
+    "affectedTarget": "RV + incr",
+    "recommendedFirstAction": "在 src/Makefile 的构建 CFLAGS 中为 riscv64 目标加入 -DUSE_PROCESSOR_CLOCK（或在 src/monotonic.c:26-30 放开注释）使 monotonicInit_riscv 编译并被 dispatch 选中；同时在 src/monotonic.c:152-178 get_timebase_frequency 增加 riscv_hwprobe/auxv 兜底以应对 DT 文件缺失",
+    "recommendedVerification": "重新运行 incr benchmark：perf annotate 确认 getMonotonicUs_posix 从热点消失、时间读取转为 csrr time 用户态序列；strace -c -e trace=clock_gettime 对比 syscall 计数；perf stat -e cycles,instructions 对比 IPC",
+    "metricEvidence": [
+      {
+        "metric": "requests_per_second",
+        "rv": 24740.23,
+        "anomalyNote": "RISC-V 侧绝对吞吐；无 ARM 对照，无法计算 ratio 异常判定"
+      },
+      {
+        "metric": "avg_latency_ms",
+        "rv": 1.146,
+        "anomalyNote": "RISC-V 侧平均延迟；p99(4.503) 约为 p50(1.015) 的 4.4 倍，尾部偏长；无 ARM 对照"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "getMonotonicUs_posix.lto_priv.0",
+        "fileModule": "src/monotonic.c",
+        "rvvPattern": "Runtime CPU Feature Dispatch for ISA-Specific Intrinsics and VDSO",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 1,
+        "note": "POSIX 单调时钟回退（clock_gettime syscall wrapper，每事件循环迭代多次调用）；4/4 样本聚集 syscall 周围，RISC-V mtime 快速路径因宏门控未编译而不可达"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/monotonic.c:26-30（USE_PROCESSOR_CLOCK 注释块）；src/monotonic.c:141-194（RISC-V mtime 路径 read_mtime=csrr time）；src/monotonic.c:196-204（posix 回退）；src/monotonic.c:221-237（dispatch）；src/ae.c:228/279/291/313/338 与 src/server.c:2141/2192（每迭代调用点）",
+      "relatedKnowledge": "https://github.com/golang/go/commit/4d10d4ad849467f12a1a16a5ade26cc03d8f1a1f; https://github.com/golang/go/commit/b70244ff7a043786c211775b68259de6104ff91c; https://github.com/golang/go/pull/53466; https://github.com/torvalds/linux/commit/c51c26e687a649df9a792f71759105e12e5d082f; https://github.com/torvalds/linux/commit/93b63f68d00a0483b450b446e2ea5386a1b94213; https://github.com/torvalds/linux/commit/4c0b5a451675e9a95be98a16ddb889bb0486d2ad; https://github.com/torvalds/linux/commit/55ca8d7aa2af3ebdb6f85cccf1b0703d031c1678; https://github.com/qemu/qemu/commit/ae4a37f57818e47e212272821a5a86ad54620eb8; https://github.com/qemu/qemu/commit/93cb52b7a3ccc64e8d28813324818edae07e21d5; https://github.com/openjdk/jdk/commit/34412da52b41e9374168e67e3b6129576c8e4402; https://github.com/openjdk/jdk/commit/538a722c2e9123cc575355879ff230444cf2dadc; https://github.com/openjdk/jdk/pull/27512",
+      "evidenceExplanation": "dispatch 源码（monotonic.c:221-237）与宏门控（monotonic.c:26-30）直接证明 RISC-V 快速路径因构建宏未定义而不可达；hardware zicntr + build zicsr 证明 csrr time 用户态可用；runtime-ISA-dispatch pattern 的 rdtime/csrr time 机制描述与 Go/Linux/QEMU/OpenJDK 关联提交证明用户态时间读取应接入硬件能力而非 syscall 回退"
+    }
+  }
+}

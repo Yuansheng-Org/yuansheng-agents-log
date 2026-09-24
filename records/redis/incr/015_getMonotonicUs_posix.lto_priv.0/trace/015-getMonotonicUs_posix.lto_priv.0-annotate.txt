@@ -1,0 +1,71 @@
+ Percent |	Source code & Disassembly of redis-server for cpu-clock:u (4 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000002001ca <getMonotonicUs_posix.lto_priv.0>:
+         : 6      getMonotonicUs_posix.lto_priv.0():
+    0.00 :   2001ca: addi    sp,sp,-64
+         : 8      getMonotonicUs_posix():
+         : 356    "RISC-V mtime @ %ld ticks/us", mono_ticksPerMicrosecond);
+         : 357    getMonotonicUs = getMonotonicUs_riscv;
+         : 358    }
+         : 359    #endif
+         :
+         : 361    static monotime getMonotonicUs_posix(void) {
+   50.00 :   2001cc: sd      s0,48(sp)
+   25.00 :   2001ce: sd      s1,40(sp)
+    0.00 :   2001d0: addi    s0,sp,64
+    0.00 :   2001d2: sd      ra,56(sp)
+    0.00 :   2001d4: auipc   s1,0x1ad
+    0.00 :   2001d8: ld      s1,-1364(s1) # 3acc80 <__stack_chk_guard@GLIBC_2.27>
+         : 362    /* clock_gettime() is specified in POSIX.1b (1993).  Even so, some systems
+         : 363    * did not support this until much later.  CLOCK_MONOTONIC is technically
+         : 364    * optional and may not be supported - but it appears to be universal.
+         : 365    * If this is not supported, provide a system-specific alternate version.  */
+         : 366    struct timespec ts;
+         : 367    clock_gettime(CLOCK_MONOTONIC, &ts);
+    0.00 :   2001dc: addi    a1,s0,-56
+    0.00 :   2001e0: li      a0,1
+         : 356    static monotime getMonotonicUs_posix(void) {
+    0.00 :   2001e2: ld      a5,0(s1)
+    0.00 :   2001e4: sd      a5,-40(s0)
+    0.00 :   2001e8: li      a5,0
+         : 362    clock_gettime(CLOCK_MONOTONIC, &ts);
+    0.00 :   2001ea: auipc   ra,0xffe99
+    0.00 :   2001ee: jalr    -1514(ra) # 98c00 <clock_gettime@plt>
+         : 363    return ((uint64_t)ts.tv_sec) * 1000000 + ts.tv_nsec / 1000;
+    0.00 :   2001f2: lui     a5,0x10625
+    0.00 :   2001f6: addi    a5,a5,-557 # 10624dd3 <__BSS_END__+0x100ea9c3>
+    0.00 :   2001fa: slli    a5,a5,0xf
+    0.00 :   2001fc: addi    a5,a5,-1835
+    0.00 :   200200: ld      a4,-48(s0)
+    0.00 :   200204: slli    a5,a5,0x12
+    0.00 :   200206: addi    a5,a5,-2048
+    0.00 :   20020a: ld      a0,-56(s0)
+    0.00 :   20020e: addi    a5,a5,-49
+    0.00 :   200212: mulh    a5,a4,a5
+    0.00 :   200216: lui     a3,0xf4
+    0.00 :   20021a: addi    a3,a3,576 # f4240 <scanGenericCommand+0xc28>
+    0.00 :   20021e: srai    a4,a4,0x3f
+         : 364    }
+    0.00 :   200220: ld      a1,-40(s0)
+   25.00 :   200224: ld      a2,0(s1)
+    0.00 :   200226: xor     a2,a2,a1
+    0.00 :   200228: li      a1,0
+         : 363    return ((uint64_t)ts.tv_sec) * 1000000 + ts.tv_nsec / 1000;
+    0.00 :   20022a: mul     a0,a0,a3
+    0.00 :   20022e: srai    a5,a5,0x7
+    0.00 :   200230: sub     a5,a5,a4
+    0.00 :   200232: add     a0,a0,a5
+         : 364    }
+    0.00 :   200234: bnez    a2,200240 <getMonotonicUs_posix.lto_priv.0+0x76>
+    0.00 :   200236: ld      ra,56(sp)
+    0.00 :   200238: ld      s0,48(sp)
+    0.00 :   20023a: ld      s1,40(sp)
+    0.00 :   20023c: addi    sp,sp,64
+    0.00 :   20023e: ret
+    0.00 :   200240: auipc   ra,0xffe99
+    0.00 :   200244: jalr    1536(ra) # 99840 <__stack_chk_fail@plt>

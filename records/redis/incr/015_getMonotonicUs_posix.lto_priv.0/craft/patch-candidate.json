@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-redis-incr-015",
+  "patchPlanId": "pp-bp-redis-incr-015",
+  "createdAt": "2026-09-11T05:45:08.202Z",
+  "changedFiles": [
+    "src/Makefile"
+  ],
+  "gitDiff": "diff --git a/src/Makefile b/src/Makefile\nindex 5cb4f673b..4bb4433ec 100644\n--- a/src/Makefile\n+++ b/src/Makefile\n@@ -89,6 +89,14 @@ ifneq (,$(filter aarch64 armv%,$(uname_M)))\n         CFLAGS+=-funwind-tables\n endif\n \n+# RISC-V: use the mtime CSR (csrr time) for monotonic clock reads instead of the\n+# clock_gettime syscall. The RISC-V fast path in monotonic.c is gated behind\n+# USE_PROCESSOR_CLOCK; enabling it only for RISC-V keeps the x86 TSC path and\n+# the aarch64 CNTVCT path behavior unchanged.\n+ifneq (,$(findstring riscv,$(uname_M)))\n+        REDIS_CFLAGS+=-DUSE_PROCESSOR_CLOCK\n+endif\n+\n # Backwards compatibility for selecting an allocator\n ifeq ($(USE_TCMALLOC),yes)\n \tMALLOC=tcmalloc\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

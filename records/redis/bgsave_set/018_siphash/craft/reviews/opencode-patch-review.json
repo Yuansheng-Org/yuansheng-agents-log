@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-bp-redis-bgsave-set-018-r1",
+  "patchCandidateId": "pc-bp-redis-bgsave-set-018",
+  "reviewedAt": "2026-09-23T16:10:00.000Z",
+  "reviewer": "comet-review (独立只读)",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "rol 为 Zbb 指令（目标 ISA 含 zbb，qemu 实测通过）；hwprobe 分派与内核 UAPI 一致，缺头文件回退块补齐 struct；无向量代码；无 x86/ARM 混入；严格 -std 编译无警告。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "S-001",
+      "file": "src/siphash.c",
+      "evidence": "patch.diff 原文：#define SIPHASH_FUNC(name, rotl, load64, in_byte) 与 4 处 SIPHASH_FUNC 实例化（siphash_base/siphash_zbb/siphash_nocase_base/siphash_nocase_zbb）",
+      "severity": "suggestion",
+      "category": "maintainability",
+      "suggestion": "模板化产生 4 个静态变体，核心体通过宏参数复用；建议后续如扩展变体（如 RVV）继续沿用同一模板，避免手写复制。"
+    },
+    {
+      "id": "S-002",
+      "file": "src/siphash.c",
+      "evidence": "patch.diff 原文：+    __asm__ volatile(\".insn r 0x33, 0x1, 0x30, %0, %1, %2\"",
+      "severity": "suggestion",
+      "category": "cross-function-observation",
+      "suggestion": "src/crcspeed.c（rank-001 已交付）的同类 hwprobe 段在严格 -std=c11 下同样需要 _DEFAULT_SOURCE；已在 PatchCandidate notes 记录，留待后续函数统一处理。"
+    }
+  ]
+}

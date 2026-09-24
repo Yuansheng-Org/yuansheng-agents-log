@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-redis-incr-015",
+  "patchCandidateId": "pc-bp-redis-incr-015",
+  "reviewedAt": "2026-09-11T05:45:44.403Z",
+  "reviewer": "opencode-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "补丁为编译期宏变更（-DUSE_PROCESSOR_CLOCK，仅 riscv64），启用 monotonic.c 中已存在的 RISC-V mtime 快速路径（csrr time）。csrr time 依赖 Zicntr，blueprint evidence 明确记录 'hardware isa 含 zicntr（用户态 time CSR）；build 含 zicsr2p0（csrr 可用）'，故指令在目标硬件 ISA 内；无 vsetvl/vtype 向量边界、无 ifunc/hwprobe 运行时分发、无 x86/ARM 专属指令混入（-D 仅在 riscv64 条件分支下追加）。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "sugg-monotonic-dt-fallback",
+      "file": "src/monotonic.c",
+      "severity": "suggestion",
+      "category": "增强建议",
+      "evidence": "blueprint diagnosis.recommendedFirstAction 提到 '同时在 src/monotonic.c:152-178 get_timebase_frequency 增加 riscv_hwprobe/auxv 兜底以应对 DT 文件缺失'，但本补丁未实现该兜底。",
+      "suggestion": "get_timebase_frequency 的 DT 缺失兜底未实现是有意为之：RISC-V riscv_hwprobe 无 timebase-frequency key，无法用 hwprobe/auxv 获取时钟频率；且 monotonicInit_riscv 已具备 mono_ticksPerMicrosecond==0 时回退 POSIX 的语义（满足 mustPreserve '校准必须 >0 否则保持回退'）。故保持最小修改，未引入不可行的 hwprobe 兜底。"
+    }
+  ]
+}

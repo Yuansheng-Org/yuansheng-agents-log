@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-redis-bgsave-set-001",
+  "blueprintId": "bp-redis-bgsave_set-001",
+  "createdAt": "2026-09-23T13:58:16.055Z",
+  "objective": "CRC-64（反射序，Jones 多项式）是 GF(2^64) 二元域多项式运算，当前以预计算查表模拟该无进位乘法，而硬件原生 clmul/clmulh（Zbc）存在却因 build 缺 zb* 且无派发而从未使用，热循环被 16 次/迭代的依赖表 load 与 shift/xor 索引链主导。",
+  "changes": [
+    {
+      "filePath": "CRC-64/GO-ISO",
+      "action": "modify",
+      "rationale": "CRC-64（反射序，Jones 多项式）是 GF(2^64) 二元域多项式运算，当前以预计算查表模拟该无进位乘法，而硬件原生 clmul/clmulh（Zbc）存在却因 build 缺 zb* 且无派发而从未使用，热循环被 16 次/迭代的依赖表 load 与 shift/xor 索引链主导。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "load+shift/xor",
+      "action": "modify",
+      "rationale": "CRC-64（反射序，Jones 多项式）是 GF(2^64) 二元域多项式运算，当前以预计算查表模拟该无进位乘法，而硬件原生 clmul/clmulh（Zbc）存在却因 build 缺 zb* 且无派发而从未使用，热循环被 16 次/迭代的依赖表 load 与 shift/xor 索引链主导。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "clmul/clmulh",
+      "action": "modify",
+      "rationale": "CRC-64（反射序，Jones 多项式）是 GF(2^64) 二元域多项式运算，当前以预计算查表模拟该无进位乘法，而硬件原生 clmul/clmulh（Zbc）存在却因 build 缺 zb* 且无派发而从未使用，热循环被 16 次/迭代的依赖表 load 与 shift/xor 索引链主导。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "shift/xor",
+      "action": "modify",
+      "rationale": "CRC-64（反射序，Jones 多项式）是 GF(2^64) 二元域多项式运算，当前以预计算查表模拟该无进位乘法，而硬件原生 clmul/clmulh（Zbc）存在却因 build 缺 zb* 且无派发而从未使用，热循环被 16 次/迭代的依赖表 load 与 shift/xor 索引链主导。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/crcspeed.c",
+      "action": "modify",
+      "rationale": "CRC-64（反射序，Jones 多项式）是 GF(2^64) 二元域多项式运算，当前以预计算查表模拟该无进位乘法，而硬件原生 clmul/clmulh（Zbc）存在却因 build 缺 zb* 且无派发而从未使用，热循环被 16 次/迭代的依赖表 load 与 shift/xor 索引链主导。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/crc64.c",
+      "action": "modify",
+      "rationale": "CRC-64（反射序，Jones 多项式）是 GF(2^64) 二元域多项式运算，当前以预计算查表模拟该无进位乘法，而硬件原生 clmul/clmulh（Zbc）存在却因 build 缺 zb* 且无派发而从未使用，热循环被 16 次/迭代的依赖表 load 与 shift/xor 索引链主导。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "cycles/instructions/IPC/cache",
+      "action": "modify",
+      "rationale": "CRC-64（反射序，Jones 多项式）是 GF(2^64) 二元域多项式运算，当前以预计算查表模拟该无进位乘法，而硬件原生 clmul/clmulh（Zbc）存在却因 build 缺 zb* 且无派发而从未使用，热循环被 16 次/迭代的依赖表 load 与 shift/xor 索引链主导。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "patterns/carry_less_multiplication_for_binary_field_arithmetic.md",
+      "action": "modify",
+      "rationale": "CRC-64（反射序，Jones 多项式）是 GF(2^64) 二元域多项式运算，当前以预计算查表模拟该无进位乘法，而硬件原生 clmul/clmulh（Zbc）存在却因 build 缺 zb* 且无派发而从未使用，热循环被 16 次/迭代的依赖表 load 与 shift/xor 索引链主导。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应围绕 CRC-64/GO-ISO, load+shift/xor, clmul/clmulh, shift/xor, src/crcspeed.c, src/crc64.c, cycles/instructions/IPC/cache, patterns/carry_less_multiplication_for_binary_field_arithmetic.md 解决 blueprint bp-redis-bgsave_set-001 指出的根因。允许涉及 构建系统、平台适配、构建参数、注册入口；源码实现、汇编/kernel/intrinsic/SIMD/vector 后端、分发表。"
+}
