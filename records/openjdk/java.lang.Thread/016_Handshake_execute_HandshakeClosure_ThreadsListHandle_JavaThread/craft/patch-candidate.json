@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-openjdk-java-lang-thread-016",
+  "patchPlanId": "pp-bp-openjdk-java-lang-thread-016",
+  "createdAt": "2026-09-16T11:59:01.378Z",
+  "changedFiles": [
+    "make/autoconf/flags-cflags.m4"
+  ],
+  "gitDiff": "diff --git a/make/autoconf/flags-cflags.m4 b/make/autoconf/flags-cflags.m4\nindex 8f8a7af47fc..0300f444598 100644\n--- a/make/autoconf/flags-cflags.m4\n+++ b/make/autoconf/flags-cflags.m4\n@@ -754,6 +754,14 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_CPU_DEP],\n       fi\n     elif test \"x$FLAGS_CPU\" = xs390x; then\n       $1_CFLAGS_CPU=\"-mbackchain -march=z10\"\n+    elif test \"x$FLAGS_CPU\" = xriscv64; then\n+      # The target hardware exposes the ratified RISC-V bit-manipulation\n+      # extensions (Zba/Zbb/Zbs), conditional-move (Zicond) and the spin-wait\n+      # hint (Zihintpause). rv64gcv keeps the V extension required by the port.\n+      # Enabling them lets the backend emit zext.w/sh1add/sh2add/ctz and pause\n+      # hints instead of multi-instruction synthesis in scaled-address chains\n+      # and spin loops.\n+      $1_CFLAGS_CPU=\"-march=rv64gcv_zba_zbb_zbs_zicond_zihintpause\"\n     fi\n \n     if test \"x$FLAGS_CPU_ARCH\" != xarm &&  test \"x$FLAGS_CPU_ARCH\" != xppc; then\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

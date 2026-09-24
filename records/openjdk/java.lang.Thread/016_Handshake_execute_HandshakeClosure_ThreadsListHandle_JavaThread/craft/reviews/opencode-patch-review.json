@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-openjdk-java-lang-thread-016",
+  "patchCandidateId": "pc-bp-openjdk-java-lang-thread-016",
+  "reviewedAt": "2026-09-16T11:59:12Z",
+  "reviewer": "opencode-ai-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "补丁被 arch-scan 判定为架构相关，已执行 RISC-V 架构专项审核（指令/ISA、vsetvl/vtype、tail/mask、寄存器组、ISA 分发）；未发现架构语义问题。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": []
+}

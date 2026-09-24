@@ -1,0 +1,806 @@
+ Percent |	Source code & Disassembly of libjvm.so for cpu-clock (109 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      000000000082b5a0 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)>:
+         : 6      Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 7      make/hotspot/src/hotspot/share/runtime/handshake.cpp:394
+    0.00 :   82b5a0: addi    sp,sp,-432
+    0.00 :   82b5a2: sd      s3,392(sp)
+    0.00 :   82b5a4: mv      s3,a0
+         : 11     Thread::current_or_null():
+         : 12     make/hotspot/src/hotspot/share/runtime/thread.hpp:660
+    0.00 :   82b5a6: auipc   a0,0xc76
+    0.00 :   82b5aa: addi    a0,a0,-1518 # 14a0fb8 <_GLOBAL_OFFSET_TABLE_+0x8568>
+         : 15     Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 16     make/hotspot/src/hotspot/share/runtime/handshake.cpp:394
+    0.00 :   82b5ae: sd      s0,416(sp)
+    0.00 :   82b5b0: sd      s1,408(sp)
+    0.00 :   82b5b2: addi    s0,sp,432
+    0.00 :   82b5b4: sd      s2,400(sp)
+    0.00 :   82b5b6: sd      s4,384(sp)
+    0.00 :   82b5b8: sd      ra,424(sp)
+    0.92 :   82b5ba: auipc   a4,0xc75
+    0.00 :   82b5be: ld      a4,798(a4) # 14a08d8 <__stack_chk_guard@GLIBC_2.27>
+    0.92 :   82b5c2: ld      a5,0(a4)
+    0.00 :   82b5c4: sd      a5,-120(s0)
+    0.00 :   82b5c8: li      a5,0
+    0.00 :   82b5ca: mv      s4,a2
+    0.00 :   82b5cc: mv      s1,a1
+    0.00 :   82b5ce: sd      a2,-408(s0)
+         : 31     Thread::current_or_null():
+         : 32     make/hotspot/src/hotspot/share/runtime/thread.hpp:660
+    0.00 :   82b5d2: auipc   ra,0xffa4b
+    0.00 :   82b5d6: jalr    -1586(ra) # 275fa0 <__tls_get_addr@plt>
+    0.00 :   82b5da: ld      s2,0(a0)
+         : 36     HandshakeOperation::HandshakeOperation(HandshakeClosure*, JavaThread*, Thread*):
+         : 37     make/hotspot/src/hotspot/share/runtime/handshake.cpp:73
+    0.00 :   82b5de: auipc   a4,0xbba
+    0.00 :   82b5e2: addi    a4,a4,1154 # 13e5a60 <vtable for HandshakeOperation+0x10>
+         : 40     make/hotspot/src/hotspot/share/runtime/handshake.cpp:71
+    0.00 :   82b5e6: li      a5,1
+         : 42     make/hotspot/src/hotspot/share/runtime/handshake.cpp:70
+    0.00 :   82b5e8: sd      s3,-352(s0)
+         : 44     make/hotspot/src/hotspot/share/runtime/handshake.cpp:72
+    0.00 :   82b5ec: sd      s4,-336(s0)
+         : 46     make/hotspot/src/hotspot/share/runtime/handshake.cpp:73
+    0.00 :   82b5f0: sd      s2,-328(s0)
+    0.92 :   82b5f4: sd      a4,-360(s0)
+         : 49     make/hotspot/src/hotspot/share/runtime/handshake.cpp:71
+    0.00 :   82b5f8: sw      a5,-344(s0)
+         : 51     Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 52     make/hotspot/src/hotspot/share/runtime/handshake.cpp:398
+    0.00 :   82b5fc: auipc   ra,0x3bc
+    0.00 :   82b600: jalr    1638(ra) # be7c62 <os::javaTimeNanos()>
+         : 55     make/hotspot/src/hotspot/share/runtime/handshake.cpp:400
+    0.00 :   82b604: beqz    s4,82bbba <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x61a>
+    0.00 :   82b608: sd      s10,336(sp)
+    0.00 :   82b60a: mv      s10,a0
+         : 59     make/hotspot/src/hotspot/share/runtime/handshake.cpp:401
+    0.00 :   82b60c: beqz    s1,82bae0 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x540>
+         : 61     ThreadsListHandle::includes(JavaThread*):
+         : 62     make/hotspot/src/hotspot/share/runtime/threadSMR.hpp:313 (discriminator 1)
+    0.00 :   82b610: ld      a0,16(s1)
+         : 64     make/hotspot/src/hotspot/share/runtime/threadSMR.hpp:313
+    0.00 :   82b612: ld      a1,-408(s0)
+    0.00 :   82b616: auipc   ra,0x659
+    0.00 :   82b61a: jalr    -1426(ra) # e84084 <ThreadsList::includes(JavaThread const*) const>
+         : 68     Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 69     make/hotspot/src/hotspot/share/runtime/handshake.cpp:405
+    0.00 :   82b61e: beqz    a0,82b934 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x394>
+         : 71     JavaThread::handshake_state():
+         : 72     make/hotspot/src/hotspot/share/runtime/javaThread.hpp:651
+    0.00 :   82b622: ld      a5,-408(s0)
+    0.00 :   82b626: sd      s8,352(sp)
+    0.00 :   82b628: addi    a0,a5,1512
+         : 76     Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 77     make/hotspot/src/hotspot/share/runtime/handshake.cpp:404 (discriminator 1)
+    0.00 :   82b62c: addi    a5,s0,-360
+    0.00 :   82b630: mv      a1,a5
+    0.00 :   82b632: sd      a5,-376(s0)
+         : 81     JavaThread::handshake_state():
+         : 82     make/hotspot/src/hotspot/share/runtime/javaThread.hpp:651
+    0.00 :   82b636: sd      a0,-384(s0)
+         : 84     Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 85     make/hotspot/src/hotspot/share/runtime/handshake.cpp:404 (discriminator 1)
+    0.00 :   82b63a: jal     82a502 <HandshakeState::add_operation(HandshakeOperation*)>
+         : 87     make/hotspot/src/hotspot/share/runtime/handshake.cpp:416
+    0.00 :   82b63e: auipc   a5,0xc6e
+    0.00 :   82b642: ld      a5,-1878(a5) # 1498ee8 <_GLOBAL_OFFSET_TABLE_+0x498>
+    0.00 :   82b646: lbu     a5,0(a5)
+    0.00 :   82b64a: bnez    a5,82b92a <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x38a>
+         : 92     OrderAccess::fence():
+         : 93     make/hotspot/src/hotspot/os_cpu/linux_riscv/orderAccess_linux_riscv.hpp:66
+    0.00 :   82b64e: fence   rw,rw
+         : 95     HandshakeSpinYield::HandshakeSpinYield(long):
+         : 96     make/hotspot/src/hotspot/share/runtime/handshake.cpp:154
+    0.00 :   82b652: li      a2,40
+    0.00 :   82b656: li      a1,0
+    0.00 :   82b658: addi    a0,s0,-296
+    0.00 :   82b65c: auipc   ra,0xffa4b
+    0.00 :   82b660: jalr    660(ra) # 2768f0 <memset@plt>
+         : 102    make/hotspot/src/hotspot/share/runtime/handshake.cpp:157
+    0.00 :   82b664: auipc   ra,0x3b2
+    0.00 :   82b668: jalr    -256(ra) # bdd564 <os::active_processor_count()>
+         : 105    int AtomicAccess::PlatformLoad<4ul>::operator()<int>(int const volatile*) const:
+         : 106    make/hotspot/src/hotspot/share/runtime/atomicAccess.hpp:552
+    0.00 :   82b66c: lw      a5,-344(s0)
+    0.00 :   82b670: sext.w  s8,a5
+         : 109    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 110    make/hotspot/src/hotspot/share/runtime/handshake.cpp:426 (discriminator 1)
+    0.00 :   82b674: beqz    a5,82b9fa <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x45a>
+         : 112    HandshakeSpinYield::HandshakeSpinYield(long):
+         : 113    make/hotspot/src/hotspot/share/runtime/handshake.cpp:158
+    0.00 :   82b678: lui     a5,0x1
+         : 115    make/hotspot/src/hotspot/share/runtime/handshake.cpp:157 (discriminator 1)
+    0.00 :   82b67a: addiw   a0,a0,-1
+         : 117    make/hotspot/src/hotspot/share/runtime/handshake.cpp:158
+    0.00 :   82b67c: addiw   a5,a5,904 # 1388 <(anonymous namespace)::get_global()::global+0x1348>
+    0.00 :   82b680: mulw    a5,a5,a0
+         : 120    make/hotspot/src/hotspot/share/runtime/handshake.cpp:159
+    0.00 :   82b684: lui     a4,0x18
+    0.00 :   82b686: sd      s5,376(sp)
+    0.00 :   82b688: sd      s6,368(sp)
+    0.00 :   82b68a: sd      s7,360(sp)
+    0.00 :   82b68c: sd      s9,344(sp)
+    0.00 :   82b68e: sd      s11,328(sp)
+    0.00 :   82b690: addi    a4,a4,1696 # 186a0 <(anonymous namespace)::get_global()::global+0x18660>
+         : 128    make/hotspot/src/hotspot/share/runtime/handshake.cpp:158
+    0.00 :   82b694: mv      a3,a5
+         : 130    make/hotspot/src/hotspot/share/runtime/handshake.cpp:159
+    0.00 :   82b696: bge     a4,a5,82b69c <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0xfc>
+    0.00 :   82b69a: mv      a3,a4
+         : 133    millis_to_nanos(long):
+         : 134    make/hotspot/src/hotspot/share/utilities/globalDefinitions.hpp:334
+    0.00 :   82b69c: lui     a5,0xf4
+    0.00 :   82b6a0: addi    a5,a5,576 # f4240 <(anonymous namespace)::get_global()::global+0xf4200>
+    0.00 :   82b6a4: sd      a5,-416(s0)
+         : 138    JavaThread::frame_anchor():
+         : 139    make/hotspot/src/hotspot/share/runtime/javaThread.hpp:560
+    0.00 :   82b6a8: addi    a5,s2,1120
+    0.00 :   82b6ac: sd      a5,-400(s0)
+         : 142    Thread::current_or_null():
+         : 143    make/hotspot/src/hotspot/share/runtime/thread.hpp:660
+    0.00 :   82b6b0: auipc   a5,0xc76
+    0.00 :   82b6b4: addi    a5,a5,-1784 # 14a0fb8 <_GLOBAL_OFFSET_TABLE_+0x8568>
+         : 146    HandshakeSpinYield::HandshakeSpinYield(long):
+         : 147    make/hotspot/src/hotspot/share/runtime/handshake.cpp:159
+    0.00 :   82b6b8: sext.w  a4,a3
+    0.92 :   82b6bc: sd      a4,-392(s0)
+         : 150    make/hotspot/src/hotspot/share/runtime/handshake.cpp:153
+    0.00 :   82b6c0: mv      s4,s10
+         : 152    make/hotspot/src/hotspot/share/runtime/handshake.cpp:154
+    0.00 :   82b6c2: li      s1,0
+         : 154    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 155    make/hotspot/src/hotspot/share/runtime/handshake.cpp:424
+    0.00 :   82b6c4: li      s8,0
+         : 157    make/hotspot/src/hotspot/share/runtime/handshake.cpp:428
+    0.00 :   82b6c6: li      s5,4
+         : 159    make/hotspot/src/hotspot/share/runtime/handshake.cpp:225
+    0.00 :   82b6c8: auipc   s7,0xc70
+         : 161    check_handshake_timeout():
+         : 162    make/hotspot/src/hotspot/share/runtime/handshake.cpp:225
+    0.00 :   82b6cc: ld      s7,1832(s7) # 149bdf0 <_GLOBAL_OFFSET_TABLE_+0x33a0>
+         : 164    HandshakeSpinYield::add_result(HandshakeState::ProcessResult):
+         : 165    make/hotspot/src/hotspot/share/runtime/handshake.cpp:163 (discriminator 1)
+    0.00 :   82b6d0: addi    s6,s0,-312
+         : 167    SafepointMechanism::global_poll():
+         : 168    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:59
+    0.92 :   82b6d4: auipc   s9,0xc6f
+    0.00 :   82b6d8: ld      s9,1796(s9) # 149add8 <_GLOBAL_OFFSET_TABLE_+0x2388>
+         : 171    Thread::current_or_null():
+         : 172    make/hotspot/src/hotspot/share/runtime/thread.hpp:660
+    0.00 :   82b6dc: sd      a5,-424(s0)
+    0.00 :   82b6e0: j       82b8de <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x33e>
+         : 175    HandshakeSpinYield::current_result_pos():
+         : 176    make/hotspot/src/hotspot/share/runtime/handshake.cpp:118
+    0.00 :   82b6e2: addiw   s3,s1,1
+    0.92 :   82b6e6: andi    a4,s3,1
+         : 179    HandshakeSpinYield::add_result(HandshakeState::ProcessResult):
+         : 180    make/hotspot/src/hotspot/share/runtime/handshake.cpp:163 (discriminator 1)
+    0.00 :   82b6ea: slli    a5,a4,0x2
+    0.92 :   82b6ee: add     a5,a5,a4
+    0.00 :   82b6f0: add     a5,a5,s11
+    0.00 :   82b6f2: slli    a5,a5,0x2
+    0.00 :   82b6f4: add     a5,a5,s6
+    3.67 :   82b6f6: lw      a4,16(a5)
+   10.09 :   82b6f8: addiw   a4,a4,1
+    0.00 :   82b6fa: sw      a4,16(a5)
+         : 189    unsigned long AtomicAccess::PlatformOrderedLoad<8ul, (ScopedFenceType)0>::operator()<unsigned long>(unsigned long const volatile*) const:
+         : 190    make/hotspot/src/hotspot/os_cpu/linux_riscv/atomicAccess_linux_riscv.hpp:214
+    0.00 :   82b6fc: addi    a5,s2,40
+    0.00 :   82b700: ld      a5,0(a5)
+    1.83 :   82b702: fence   r,rw
+         : 194    SafepointMechanism::should_process(JavaThread*, bool):
+         : 195    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:67 (discriminator 1)
+   24.77 :   82b706: andi    a5,a5,1
+         : 197    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:67
+    0.00 :   82b708: beqz    a5,82b798 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x1f8>
+         : 199    SafepointMechanism::global_poll():
+         : 200    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:59
+    0.00 :   82b70a: lw      a5,0(s9)
+         : 202    SafepointMechanism::should_process(JavaThread*, bool):
+         : 203    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:72
+    0.00 :   82b70e: bnez    a5,82b728 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x188>
+         : 205    HandshakeState::has_operation(bool, bool):
+         : 206    make/hotspot/src/hotspot/share/runtime/handshake.cpp:557
+    0.00 :   82b710: addi    a5,s2,1512
+    0.00 :   82b714: addi    a0,s2,1528
+    0.00 :   82b718: sd      a5,-432(s0)
+    0.00 :   82b71c: auipc   ra,0x362
+    0.00 :   82b720: jalr    -124(ra) # b8d6a0 <Mutex::try_lock()>
+         : 212    make/hotspot/src/hotspot/share/runtime/handshake.cpp:557 (discriminator 1)
+    0.00 :   82b724: bnez    a0,82ba70 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x4d0>
+         : 214    ThreadStateTransition::transition_from_vm(JavaThread*, JavaThreadState, bool):
+         : 215    make/hotspot/src/hotspot/share/runtime/interfaceSupport.inline.hpp:121 (discriminator 1)
+    0.00 :   82b728: ld      a0,-400(s0)
+    0.00 :   82b72c: auipc   ra,0xffeed
+    0.00 :   82b730: jalr    -456(ra) # 718564 <JavaFrameAnchor::make_walkable()>
+         : 219    OrderAccess::release():
+         : 220    make/hotspot/src/hotspot/os_cpu/linux_riscv/orderAccess_linux_riscv.hpp:58
+    0.00 :   82b734: auipc   a5,0xc76
+    0.00 :   82b738: ld      a5,-1940(a5) # 14a0fa0 <_GLOBAL_OFFSET_TABLE_+0x8550>
+    0.00 :   82b73c: lbu     a5,0(a5)
+    0.00 :   82b740: beqz    a5,82ba6a <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x4ca>
+         : 225    void AtomicAccess::PlatformOrderedStore<4ul, (ScopedFenceType)1>::operator()<unsigned int>(unsigned int volatile*, unsigned int) const:
+         : 226    make/hotspot/src/hotspot/os_cpu/linux_riscv/atomicAccess_linux_riscv.hpp:221
+    0.00 :   82b744: li      a5,10
+    0.00 :   82b746: addi    a4,s2,1280
+    0.00 :   82b74a: fence   rw,w
+    0.00 :   82b74e: sw      a5,0(a4)
+    0.00 :   82b750: li      a5,6
+    0.00 :   82b752: fence   rw,w
+    0.00 :   82b756: sw      a5,0(a4)
+         : 234    OrderAccess::fence():
+         : 235    make/hotspot/src/hotspot/os_cpu/linux_riscv/orderAccess_linux_riscv.hpp:66
+    0.00 :   82b758: fence   rw,rw
+         : 237    unsigned long AtomicAccess::PlatformOrderedLoad<8ul, (ScopedFenceType)0>::operator()<unsigned long>(unsigned long const volatile*) const:
+         : 238    make/hotspot/src/hotspot/os_cpu/linux_riscv/atomicAccess_linux_riscv.hpp:214
+    0.00 :   82b75c: addi    a5,s2,40
+    0.00 :   82b760: ld      a5,0(a5)
+    0.00 :   82b762: fence   r,rw
+         : 242    SafepointMechanism::should_process(JavaThread*, bool):
+         : 243    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:67 (discriminator 1)
+    0.00 :   82b766: andi    a5,a5,1
+         : 245    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:67
+    0.00 :   82b768: beqz    a5,82b798 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x1f8>
+         : 247    SafepointMechanism::global_poll():
+         : 248    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:59
+    0.00 :   82b76a: lw      a5,0(s9)
+         : 250    SafepointMechanism::should_process(JavaThread*, bool):
+         : 251    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:72
+    0.00 :   82b76e: bnez    a5,82b788 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x1e8>
+         : 253    HandshakeState::has_operation(bool, bool):
+         : 254    make/hotspot/src/hotspot/share/runtime/handshake.cpp:557
+    0.00 :   82b770: addi    a5,s2,1512
+    0.00 :   82b774: addi    a0,s2,1528
+    0.00 :   82b778: sd      a5,-432(s0)
+    0.00 :   82b77c: auipc   ra,0x362
+    0.00 :   82b780: jalr    -220(ra) # b8d6a0 <Mutex::try_lock()>
+         : 260    make/hotspot/src/hotspot/share/runtime/handshake.cpp:557 (discriminator 1)
+    0.00 :   82b784: bnez    a0,82bb38 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x598>
+         : 262    unsigned long AtomicAccess::PlatformOrderedLoad<8ul, (ScopedFenceType)0>::operator()<unsigned long>(unsigned long const volatile*) const:
+         : 263    make/hotspot/src/hotspot/os_cpu/linux_riscv/atomicAccess_linux_riscv.hpp:214
+    0.00 :   82b788: addi    a5,s2,40
+    0.00 :   82b78c: ld      a5,0(a5)
+    0.00 :   82b78e: fence   r,rw
+         : 267    SafepointMechanism::process_if_requested(JavaThread*, bool, bool):
+         : 268    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:89 (discriminator 1)
+    0.00 :   82b792: andi    a5,a5,1
+         : 270    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:89
+    0.00 :   82b794: bnez    a5,82baca <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x52a>
+         : 272    HandshakeSpinYield::process():
+         : 273    make/hotspot/src/hotspot/share/runtime/handshake.cpp:167
+    0.00 :   82b798: auipc   ra,0x3bc
+    0.00 :   82b79c: jalr    1226(ra) # be7c62 <os::javaTimeNanos()>
+         : 276    HandshakeSpinYield::state_changed():
+         : 277    make/hotspot/src/hotspot/share/runtime/handshake.cpp:137
+    0.00 :   82b7a0: lw      a4,-296(s0)
+    3.67 :   82b7a4: lw      a5,-276(s0)
+         : 280    HandshakeSpinYield::process():
+         : 281    make/hotspot/src/hotspot/share/runtime/handshake.cpp:167
+    0.00 :   82b7a8: mv      s11,a0
+         : 283    HandshakeSpinYield::state_changed():
+         : 284    make/hotspot/src/hotspot/share/runtime/handshake.cpp:137
+    0.00 :   82b7aa: bne     a4,a5,82b9ba <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x41a>
+    0.00 :   82b7ae: lw      a4,-292(s0)
+    0.00 :   82b7b2: lw      a5,-272(s0)
+    0.00 :   82b7b6: bne     a4,a5,82b9ba <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x41a>
+    5.50 :   82b7ba: lw      a4,-288(s0)
+    0.00 :   82b7be: lw      a5,-268(s0)
+    0.00 :   82b7c2: bne     a4,a5,82b9ba <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x41a>
+    6.42 :   82b7c6: lw      a4,-284(s0)
+    0.00 :   82b7ca: lw      a5,-264(s0)
+    0.00 :   82b7ce: bne     a4,a5,82b9ba <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x41a>
+    4.59 :   82b7d2: lw      a4,-280(s0)
+    0.00 :   82b7d6: lw      a5,-260(s0)
+    0.00 :   82b7da: bne     a4,a5,82b9ba <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x41a>
+         : 298    HandshakeSpinYield::process():
+         : 299    make/hotspot/src/hotspot/share/runtime/handshake.cpp:174
+    4.59 :   82b7de: ld      a5,-392(s0)
+    0.00 :   82b7e2: add     a5,a5,s4
+         : 302    make/hotspot/src/hotspot/share/runtime/handshake.cpp:175
+    2.75 :   82b7e4: bge     a5,a0,82b8a8 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x308>
+         : 304    Thread::current_or_null():
+         : 305    make/hotspot/src/hotspot/share/runtime/thread.hpp:660
+    0.00 :   82b7e8: ld      a0,-424(s0)
+         : 307    HandshakeSpinYield::wait_raw(long):
+         : 308    make/hotspot/src/hotspot/share/runtime/handshake.cpp:123
+    0.00 :   82b7ec: sub     s11,s11,s10
+         : 310    Thread::current_or_null():
+         : 311    make/hotspot/src/hotspot/share/runtime/thread.hpp:660
+    0.00 :   82b7f0: auipc   ra,0xffa4a
+    0.00 :   82b7f4: jalr    1968(ra) # 275fa0 <__tls_get_addr@plt>
+    0.00 :   82b7f8: ld      s4,0(a0)
+         : 315    HandshakeSpinYield::process():
+         : 316    make/hotspot/src/hotspot/share/runtime/handshake.cpp:178
+    0.00 :   82b7fc: ld      a4,0(s4)
+    0.00 :   82b800: mv      a0,s4
+    0.00 :   82b802: ld      a4,56(a4)
+    0.00 :   82b804: jalr    a4
+         : 321    make/hotspot/src/hotspot/share/runtime/handshake.cpp:178 (discriminator 1)
+    0.00 :   82b806: beqz    a0,82ba4e <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x4ae>
+         : 323    ThreadStateTransition::transition_from_vm(JavaThread*, JavaThreadState, bool):
+         : 324    make/hotspot/src/hotspot/share/runtime/interfaceSupport.inline.hpp:121 (discriminator 1)
+    0.00 :   82b80a: addi    a0,s4,1120
+    0.00 :   82b80e: auipc   ra,0xffeed
+    0.00 :   82b812: jalr    -682(ra) # 718564 <JavaFrameAnchor::make_walkable()>
+         : 328    OrderAccess::release():
+         : 329    make/hotspot/src/hotspot/os_cpu/linux_riscv/orderAccess_linux_riscv.hpp:58
+    0.00 :   82b816: auipc   a4,0xc75
+    0.00 :   82b81a: ld      a4,1930(a4) # 14a0fa0 <_GLOBAL_OFFSET_TABLE_+0x8550>
+    0.00 :   82b81e: lbu     a4,0(a4)
+    0.00 :   82b822: beqz    a4,82bada <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x53a>
+         : 334    void AtomicAccess::PlatformOrderedStore<4ul, (ScopedFenceType)1>::operator()<unsigned int>(unsigned int volatile*, unsigned int) const:
+         : 335    make/hotspot/src/hotspot/os_cpu/linux_riscv/atomicAccess_linux_riscv.hpp:221
+    0.00 :   82b826: li      a4,10
+    0.00 :   82b828: addi    a5,s4,1280
+    0.00 :   82b82c: fence   rw,w
+    0.00 :   82b830: sw      a4,0(a5)
+         : 340    HandshakeSpinYield::wait_raw(long):
+         : 341    make/hotspot/src/hotspot/share/runtime/handshake.cpp:123
+    0.00 :   82b832: lui     a4,0xf4
+    0.00 :   82b836: addi    a4,a4,575 # f423f <(anonymous namespace)::get_global()::global+0xf41ff>
+    0.00 :   82b83a: blt     a4,s11,82baae <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x50e>
+         : 345    make/hotspot/src/hotspot/share/runtime/handshake.cpp:124
+    0.00 :   82b83e: lui     a0,0x2
+    0.00 :   82b840: addi    a0,a0,1808 # 2710 <(anonymous namespace)::get_global()::global+0x26d0>
+    0.00 :   82b844: auipc   ra,0x3bb
+    0.00 :   82b848: jalr    1932(ra) # be6fd0 <os::naked_short_nanosleep(long)>
+         : 350    void AtomicAccess::PlatformOrderedStore<4ul, (ScopedFenceType)1>::operator()<unsigned int>(unsigned int volatile*, unsigned int) const:
+         : 351    make/hotspot/src/hotspot/os_cpu/linux_riscv/atomicAccess_linux_riscv.hpp:221
+    0.00 :   82b84c: li      a4,6
+    0.00 :   82b84e: addi    a5,s4,1280
+    0.00 :   82b852: fence   rw,w
+    0.00 :   82b856: sw      a4,0(a5)
+         : 356    OrderAccess::fence():
+         : 357    make/hotspot/src/hotspot/os_cpu/linux_riscv/orderAccess_linux_riscv.hpp:66
+    0.00 :   82b858: fence   rw,rw
+         : 359    unsigned long AtomicAccess::PlatformOrderedLoad<8ul, (ScopedFenceType)0>::operator()<unsigned long>(unsigned long const volatile*) const:
+         : 360    make/hotspot/src/hotspot/os_cpu/linux_riscv/atomicAccess_linux_riscv.hpp:214
+    0.00 :   82b85c: addi    a5,s4,40
+    0.00 :   82b860: ld      a4,0(a5)
+    0.00 :   82b862: fence   r,rw
+         : 364    SafepointMechanism::should_process(JavaThread*, bool):
+         : 365    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:67 (discriminator 1)
+    0.00 :   82b866: andi    a4,a4,1
+         : 367    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:67
+    0.00 :   82b868: beqz    a4,82b89e <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x2fe>
+         : 369    SafepointMechanism::global_poll():
+         : 370    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:59
+    0.00 :   82b86a: auipc   a4,0xc6f
+    0.00 :   82b86e: ld      a4,1390(a4) # 149add8 <_GLOBAL_OFFSET_TABLE_+0x2388>
+    0.00 :   82b872: lw      a4,0(a4)
+         : 374    SafepointMechanism::should_process(JavaThread*, bool):
+         : 375    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:72
+    0.00 :   82b874: bnez    a4,82b88e <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x2ee>
+         : 377    HandshakeState::has_operation(bool, bool):
+         : 378    make/hotspot/src/hotspot/share/runtime/handshake.cpp:557
+    0.00 :   82b876: addi    a5,s4,1512
+    0.00 :   82b87a: addi    a0,s4,1528
+    0.00 :   82b87e: sd      a5,-432(s0)
+    0.00 :   82b882: auipc   ra,0x362
+    0.00 :   82b886: jalr    -482(ra) # b8d6a0 <Mutex::try_lock()>
+         : 384    make/hotspot/src/hotspot/share/runtime/handshake.cpp:557 (discriminator 1)
+    0.00 :   82b88a: bnez    a0,82bb7c <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x5dc>
+         : 386    unsigned long AtomicAccess::PlatformOrderedLoad<8ul, (ScopedFenceType)0>::operator()<unsigned long>(unsigned long const volatile*) const:
+         : 387    make/hotspot/src/hotspot/os_cpu/linux_riscv/atomicAccess_linux_riscv.hpp:214
+    0.00 :   82b88e: addi    a5,s4,40
+    0.00 :   82b892: ld      a4,0(a5)
+    0.00 :   82b894: fence   r,rw
+         : 391    SafepointMechanism::process_if_requested(JavaThread*, bool, bool):
+         : 392    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:89 (discriminator 1)
+    0.00 :   82b898: andi    a4,a4,1
+         : 394    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:89
+    0.00 :   82b89a: bnez    a4,82bb6c <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x5cc>
+         : 396    HandshakeSpinYield::process():
+         : 397    make/hotspot/src/hotspot/share/runtime/handshake.cpp:183
+    0.00 :   82b89e: auipc   ra,0x3bc
+    0.00 :   82b8a2: jalr    964(ra) # be7c62 <os::javaTimeNanos()>
+    0.00 :   82b8a6: mv      s4,a0
+         : 401    HandshakeSpinYield::reset_state():
+         : 402    make/hotspot/src/hotspot/share/runtime/handshake.cpp:147
+    3.67 :   82b8a8: andi    s1,s1,1
+         : 404    make/hotspot/src/hotspot/share/runtime/handshake.cpp:147 (discriminator 1)
+    0.00 :   82b8aa: neg     a5,s1
+    0.92 :   82b8ae: vsetivli        zero,4,e32,m1,ta,ma
+    0.00 :   82b8b2: andi    a5,a5,20
+    0.92 :   82b8b4: vmv.v.i v1,0
+    0.00 :   82b8b8: addi    a5,a5,-112
+    0.00 :   82b8bc: add     a5,a5,s0
+    0.00 :   82b8be: addi    a5,a5,-184
+    0.92 :   82b8c2: vse32.v v1,(a5)
+    4.59 :   82b8c6: slli    a5,s1,0x2
+    0.00 :   82b8ca: add     a5,a5,s1
+    0.00 :   82b8cc: slli    a5,a5,0x2
+    0.00 :   82b8ce: add     a5,a5,s0
+    0.00 :   82b8d0: sw      zero,-280(a5)
+         : 418    int AtomicAccess::PlatformLoad<4ul>::operator()<int>(int const volatile*) const:
+         : 419    make/hotspot/src/hotspot/share/runtime/atomicAccess.hpp:552
+    0.00 :   82b8d4: lw      a5,-344(s0)
+         : 421    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 422    make/hotspot/src/hotspot/share/runtime/handshake.cpp:426 (discriminator 1)
+    4.59 :   82b8d8: beqz    a5,82b9f0 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x450>
+         : 424    make/hotspot/src/hotspot/share/runtime/handshake.cpp:426
+    0.00 :   82b8dc: mv      s1,s3
+         : 426    make/hotspot/src/hotspot/share/runtime/handshake.cpp:427 (discriminator 1)
+    0.00 :   82b8de: ld      a1,-376(s0)
+    1.83 :   82b8e2: ld      a0,-384(s0)
+    0.00 :   82b8e6: jal     82b330 <HandshakeState::try_process(HandshakeOperation*)>
+    0.00 :   82b8ea: mv      s11,a0
+         : 431    make/hotspot/src/hotspot/share/runtime/handshake.cpp:428
+    1.83 :   82b8ec: bne     a0,s5,82b8f2 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x352>
+         : 433    make/hotspot/src/hotspot/share/runtime/handshake.cpp:429
+    0.00 :   82b8f0: addiw   s8,s8,1
+         : 435    int AtomicAccess::PlatformLoad<4ul>::operator()<int>(int const volatile*) const:
+         : 436    make/hotspot/src/hotspot/share/runtime/atomicAccess.hpp:552
+    0.00 :   82b8f2: lw      a5,-344(s0)
+         : 438    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 439    make/hotspot/src/hotspot/share/runtime/handshake.cpp:431 (discriminator 1)
+    0.92 :   82b8f6: beqz    a5,82b9f0 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x450>
+         : 441    check_handshake_timeout():
+         : 442    make/hotspot/src/hotspot/share/runtime/handshake.cpp:225
+    1.83 :   82b8fa: lw      s3,0(s7)
+         : 444    make/hotspot/src/hotspot/share/runtime/handshake.cpp:226
+    0.00 :   82b8fe: beqz    s3,82b6e2 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x142>
+         : 446    make/hotspot/src/hotspot/share/runtime/handshake.cpp:227
+    0.00 :   82b902: auipc   ra,0x3bc
+    0.00 :   82b906: jalr    864(ra) # be7c62 <os::javaTimeNanos()>
+         : 449    millis_to_nanos(long):
+         : 450    make/hotspot/src/hotspot/share/utilities/globalDefinitions.hpp:334
+    0.00 :   82b90a: ld      a5,-416(s0)
+         : 452    check_handshake_timeout():
+         : 453    make/hotspot/src/hotspot/share/runtime/handshake.cpp:225
+    0.00 :   82b90e: slli    s3,s3,0x20
+    0.00 :   82b910: srli    s3,s3,0x20
+         : 456    millis_to_nanos(long):
+         : 457    make/hotspot/src/hotspot/share/utilities/globalDefinitions.hpp:334
+    0.00 :   82b914: mul     s3,s3,a5
+         : 459    check_handshake_timeout():
+         : 460    make/hotspot/src/hotspot/share/runtime/handshake.cpp:227 (discriminator 1)
+    0.00 :   82b918: add     s3,s3,s10
+         : 462    make/hotspot/src/hotspot/share/runtime/handshake.cpp:227
+    0.00 :   82b91a: blt     a0,s3,82b6e2 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x142>
+         : 464    make/hotspot/src/hotspot/share/runtime/handshake.cpp:228
+    0.00 :   82b91e: ld      a1,-408(s0)
+    0.00 :   82b922: ld      a0,-376(s0)
+    0.00 :   82b926: jal     82ac9a <handle_timeout(HandshakeOperation*, JavaThread*)>
+         : 468    SystemMemoryBarrierType<LinuxSystemMemoryBarrier>::emit():
+         : 469    make/hotspot/src/hotspot/share/utilities/systemMemoryBarrier.hpp:66
+    0.00 :   82b92a: auipc   ra,0x626
+    0.00 :   82b92e: jalr    -1858(ra) # e511e8 <LinuxSystemMemoryBarrier::emit()>
+    0.00 :   82b932: j       82b652 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0xb2>
+         : 473    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 474    make/hotspot/src/hotspot/share/runtime/handshake.cpp:409 (discriminator 1)
+    0.00 :   82b934: ld      a3,-408(s0)
+    0.00 :   82b938: addi    a0,s0,-248
+    0.00 :   82b93c: auipc   a2,0x806
+    0.00 :   82b940: addi    a2,a2,-268 # 1031830 <std::hardware_destructive_interference_size+0x42668>
+    0.00 :   82b944: li      a1,128
+    0.00 :   82b948: auipc   ra,0xffa4a
+    0.00 :   82b94c: jalr    248(ra) # 275a40 <jio_snprintf@plt>
+         : 482    LogOutputList::is_level(LogLevel::type) const:
+         : 483    make/hotspot/src/hotspot/share/logging/logOutputList.hpp:77
+    0.00 :   82b950: auipc   s1,0xcaf
+    0.00 :   82b954: addi    s1,s1,-1184 # 14da4b0 <LogTagSetMapping<(LogTag::type)53, (LogTag::type)0, (LogTag::type)0, (LogTag::type)0, (LogTag::type)0, (LogTag::type)0>::_tagset>
+    0.00 :   82b958: ld      a5,64(s1)
+         : 487    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 488    make/hotspot/src/hotspot/share/runtime/handshake.cpp:234 (discriminator 1)
+    0.00 :   82b95a: beqz    a5,82b992 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x3f2>
+         : 490    HandshakeClosure::name() const:
+         : 491    make/hotspot/src/hotspot/share/runtime/handshake.hpp:51
+    0.00 :   82b95c: ld      a5,-352(s0)
+    0.00 :   82b960: ld      s3,8(a5)
+         : 494    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 495    make/hotspot/src/hotspot/share/runtime/handshake.cpp:235
+    0.00 :   82b964: auipc   ra,0x3bc
+         : 497    log_handshake_info():
+         : 498    make/hotspot/src/hotspot/share/runtime/handshake.cpp:235
+    0.00 :   82b968: jalr    766(ra) # be7c62 <os::javaTimeNanos()>
+         : 500    LogOutputList::is_level(LogLevel::type) const:
+         : 501    make/hotspot/src/hotspot/share/logging/logOutputList.hpp:77
+    0.00 :   82b96c: ld      a5,64(s1)
+         : 503    log_handshake_info():
+         : 504    make/hotspot/src/hotspot/share/runtime/handshake.cpp:236 (discriminator 1)
+    0.00 :   82b96e: beqz    a5,82b992 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x3f2>
+         : 506    make/hotspot/src/hotspot/share/runtime/handshake.cpp:236 (discriminator 10)
+    0.00 :   82b970: sub     a4,a0,s10
+         : 508    make/hotspot/src/hotspot/share/runtime/handshake.cpp:236
+    0.00 :   82b974: addi    a6,s0,-248
+    0.00 :   82b978: mv      a1,s3
+    0.00 :   82b97a: auipc   a5,0x7fa
+    0.00 :   82b97e: addi    a5,a5,686 # 1025c28 <std::hardware_destructive_interference_size+0x36a60>
+    0.00 :   82b982: li      a3,0
+    0.00 :   82b984: li      a2,0
+    0.00 :   82b986: auipc   a0,0x806
+    0.00 :   82b98a: addi    a0,a0,-654 # 10316f8 <std::hardware_destructive_interference_size+0x42530>
+    0.00 :   82b98e: jal     82bee2 <void LogImpl<(LogTag::type)53, (LogTag::type)0, (LogTag::type)0, (LogTag::type)0, (LogTag::type)0, (LogTag::type)0>::write<(LogLevel::type)3>(char const*, ...)>
+         : 518    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 519    make/hotspot/src/hotspot/share/runtime/handshake.cpp:455
+    0.00 :   82b992: auipc   a5,0xc75
+    0.00 :   82b996: ld      a5,-186(a5) # 14a08d8 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   82b99a: ld      a4,-120(s0)
+    0.00 :   82b99e: ld      a5,0(a5)
+    0.92 :   82b9a0: xor     a5,a5,a4
+    0.00 :   82b9a2: li      a4,0
+    0.00 :   82b9a4: bnez    a5,82bbfe <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x65e>
+    0.00 :   82b9a8: ld      ra,424(sp)
+    0.00 :   82b9aa: ld      s0,416(sp)
+    0.00 :   82b9ac: ld      s10,336(sp)
+    0.00 :   82b9ae: ld      s1,408(sp)
+    0.00 :   82b9b0: ld      s2,400(sp)
+    0.00 :   82b9b2: ld      s3,392(sp)
+    0.00 :   82b9b4: ld      s4,384(sp)
+    0.00 :   82b9b6: addi    sp,sp,432
+    0.00 :   82b9b8: ret
+         : 536    HandshakeSpinYield::reset_state():
+         : 537    make/hotspot/src/hotspot/share/runtime/handshake.cpp:147
+    0.00 :   82b9ba: andi    s1,s1,1
+         : 539    make/hotspot/src/hotspot/share/runtime/handshake.cpp:147 (discriminator 1)
+    0.00 :   82b9bc: neg     a5,s1
+    0.00 :   82b9c0: vsetivli        zero,4,e32,m1,ta,ma
+    0.00 :   82b9c4: andi    a5,a5,20
+    0.00 :   82b9c6: vmv.v.i v1,0
+    0.00 :   82b9ca: addi    a5,a5,-112
+    0.00 :   82b9ce: add     a5,a5,s0
+    0.00 :   82b9d0: addi    a5,a5,-184
+    0.00 :   82b9d4: vse32.v v1,(a5)
+    0.00 :   82b9d8: slli    a5,s1,0x2
+    0.00 :   82b9dc: add     a5,a5,s1
+    0.00 :   82b9de: slli    a5,a5,0x2
+    0.00 :   82b9e0: add     a5,a5,s0
+    0.00 :   82b9e2: sw      zero,-280(a5)
+         : 553    int AtomicAccess::PlatformLoad<4ul>::operator()<int>(int const volatile*) const:
+         : 554    make/hotspot/src/hotspot/share/runtime/atomicAccess.hpp:552
+    0.00 :   82b9e6: lw      a5,-344(s0)
+         : 556    HandshakeSpinYield::process():
+         : 557    make/hotspot/src/hotspot/share/runtime/handshake.cpp:171
+    0.00 :   82b9ea: mv      s4,s11
+         : 559    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 560    make/hotspot/src/hotspot/share/runtime/handshake.cpp:426 (discriminator 1)
+    0.00 :   82b9ec: bnez    a5,82b8dc <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x33c>
+         : 562    make/hotspot/src/hotspot/share/runtime/handshake.cpp:426
+    2.75 :   82b9f0: ld      s5,376(sp)
+    0.00 :   82b9f2: ld      s6,368(sp)
+    0.00 :   82b9f4: ld      s7,360(sp)
+    0.00 :   82b9f6: ld      s9,344(sp)
+    0.00 :   82b9f8: ld      s11,328(sp)
+         : 568    OrderAccess::acquire():
+         : 569    make/hotspot/src/hotspot/os_cpu/linux_riscv/orderAccess_linux_riscv.hpp:50
+    0.00 :   82b9fa: auipc   a5,0xc75
+    0.00 :   82b9fe: ld      a5,1446(a5) # 14a0fa0 <_GLOBAL_OFFSET_TABLE_+0x8550>
+    0.00 :   82ba02: lbu     a5,0(a5)
+    0.00 :   82ba06: beqz    a5,82bb32 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x592>
+         : 574    LogOutputList::is_level(LogLevel::type) const:
+         : 575    make/hotspot/src/hotspot/share/logging/logOutputList.hpp:77
+    0.00 :   82ba0a: auipc   s1,0xcaf
+    0.00 :   82ba0e: addi    s1,s1,-1370 # 14da4b0 <LogTagSetMapping<(LogTag::type)53, (LogTag::type)0, (LogTag::type)0, (LogTag::type)0, (LogTag::type)0, (LogTag::type)0>::_tagset>
+    0.00 :   82ba12: ld      a5,64(s1)
+         : 579    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 580    make/hotspot/src/hotspot/share/runtime/handshake.cpp:234 (discriminator 1)
+    0.00 :   82ba14: beqz    a5,82bac6 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x526>
+         : 582    HandshakeClosure::name() const:
+         : 583    make/hotspot/src/hotspot/share/runtime/handshake.hpp:51
+    0.00 :   82ba16: ld      a5,-352(s0)
+    0.00 :   82ba1a: ld      s2,8(a5)
+         : 586    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 587    make/hotspot/src/hotspot/share/runtime/handshake.cpp:235
+    0.00 :   82ba1e: auipc   ra,0x3bc
+         : 589    log_handshake_info():
+         : 590    make/hotspot/src/hotspot/share/runtime/handshake.cpp:235
+    0.00 :   82ba22: jalr    580(ra) # be7c62 <os::javaTimeNanos()>
+         : 592    LogOutputList::is_level(LogLevel::type) const:
+         : 593    make/hotspot/src/hotspot/share/logging/logOutputList.hpp:77
+    0.00 :   82ba26: ld      a5,64(s1)
+         : 595    log_handshake_info():
+         : 596    make/hotspot/src/hotspot/share/runtime/handshake.cpp:236 (discriminator 1)
+    0.00 :   82ba28: beqz    a5,82bac6 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x526>
+         : 598    make/hotspot/src/hotspot/share/runtime/handshake.cpp:236 (discriminator 10)
+    0.00 :   82ba2a: auipc   a6,0x852
+    0.00 :   82ba2e: addi    a6,a6,-594 # 107d7d8 <std::hardware_destructive_interference_size+0x8e610>
+    0.00 :   82ba32: sub     a4,a0,s10
+         : 602    make/hotspot/src/hotspot/share/runtime/handshake.cpp:236
+    0.00 :   82ba36: mv      a3,s8
+    0.00 :   82ba38: mv      a1,s2
+    0.00 :   82ba3a: mv      a5,a6
+    0.00 :   82ba3c: li      a2,1
+    0.00 :   82ba3e: auipc   a0,0x806
+    0.00 :   82ba42: addi    a0,a0,-838 # 10316f8 <std::hardware_destructive_interference_size+0x42530>
+    0.00 :   82ba46: jal     82bee2 <void LogImpl<(LogTag::type)53, (LogTag::type)0, (LogTag::type)0, (LogTag::type)0, (LogTag::type)0, (LogTag::type)0>::write<(LogLevel::type)3>(char const*, ...)>
+         : 610    make/hotspot/src/hotspot/share/runtime/handshake.cpp:236 (discriminator 10)
+    0.00 :   82ba4a: ld      s8,352(sp)
+         : 612    make/hotspot/src/hotspot/share/runtime/handshake.cpp:236
+    0.00 :   82ba4c: j       82b992 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x3f2>
+         : 614    HandshakeSpinYield::wait_raw(long):
+         : 615    make/hotspot/src/hotspot/share/runtime/handshake.cpp:123
+    0.00 :   82ba4e: lui     a5,0xf4
+    0.00 :   82ba52: addi    a5,a5,575 # f423f <(anonymous namespace)::get_global()::global+0xf41ff>
+    0.00 :   82ba56: blt     a5,s11,82baba <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x51a>
+         : 619    make/hotspot/src/hotspot/share/runtime/handshake.cpp:124
+    0.00 :   82ba5a: lui     a0,0x2
+    0.00 :   82ba5c: addi    a0,a0,1808 # 2710 <(anonymous namespace)::get_global()::global+0x26d0>
+    0.00 :   82ba60: auipc   ra,0x3bb
+    0.00 :   82ba64: jalr    1392(ra) # be6fd0 <os::naked_short_nanosleep(long)>
+    0.00 :   82ba68: j       82b89e <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x2fe>
+         : 625    OrderAccess::release():
+         : 626    make/hotspot/src/hotspot/os_cpu/linux_riscv/orderAccess_linux_riscv.hpp:61
+    0.00 :   82ba6a: fence   rw,w
+    0.00 :   82ba6e: j       82b744 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x1a4>
+         : 629    HandshakeState::has_operation(bool, bool):
+         : 630    make/hotspot/src/hotspot/share/runtime/handshake.cpp:558
+    0.00 :   82ba70: li      a2,0
+    0.00 :   82ba72: li      a1,1
+    0.00 :   82ba74: addi    a0,s2,1512
+    0.00 :   82ba78: jal     82a732 <HandshakeState::get_op_for_self(bool, bool)>
+    0.00 :   82ba7c: sd      a0,-432(s0)
+         : 636    make/hotspot/src/hotspot/share/runtime/handshake.cpp:559
+    0.00 :   82ba80: addi    a0,s2,1528
+    0.00 :   82ba84: auipc   ra,0x362
+    0.00 :   82ba88: jalr    -796(ra) # b8d768 <Mutex::unlock()>
+         : 640    SafepointMechanism::should_process(JavaThread*, bool):
+         : 641    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:71
+    0.00 :   82ba8c: ld      a5,-432(s0)
+    0.00 :   82ba90: bnez    a5,82b728 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x188>
+         : 644    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:73
+    0.00 :   82ba94: mv      a0,s2
+    0.00 :   82ba96: auipc   ra,0x5ad
+    0.00 :   82ba9a: jalr    -1614(ra) # dd8448 <StackWatermarkSet::processing_started(JavaThread*)>
+         : 648    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:72 (discriminator 5)
+    0.00 :   82ba9e: beqz    a0,82b728 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x188>
+         : 650    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:81
+    0.00 :   82baa2: mv      a0,s2
+    0.00 :   82baa4: auipc   ra,0x472
+    0.00 :   82baa8: jalr    -1324(ra) # c9d578 <SafepointMechanism::update_poll_values(JavaThread*)>
+         : 654    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:82
+    0.00 :   82baac: j       82b798 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x1f8>
+         : 656    HandshakeSpinYield::wait_raw(long):
+         : 657    make/hotspot/src/hotspot/share/runtime/handshake.cpp:126
+    0.00 :   82baae: li      a0,1
+    0.00 :   82bab0: auipc   ra,0x3bb
+    0.00 :   82bab4: jalr    1350(ra) # be6ff6 <os::naked_short_sleep(long)>
+    0.00 :   82bab8: j       82b84c <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x2ac>
+    0.00 :   82baba: li      a0,1
+    0.00 :   82babc: auipc   ra,0x3bb
+    0.00 :   82bac0: jalr    1338(ra) # be6ff6 <os::naked_short_sleep(long)>
+    0.00 :   82bac4: j       82b89e <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x2fe>
+    0.00 :   82bac6: ld      s8,352(sp)
+    0.00 :   82bac8: j       82b992 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x3f2>
+         : 668    SafepointMechanism::process_if_requested(JavaThread*, bool, bool):
+         : 669    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:90
+    0.00 :   82baca: li      a2,0
+    0.00 :   82bacc: li      a1,0
+    0.00 :   82bace: mv      a0,s2
+    0.00 :   82bad0: auipc   ra,0x472
+    0.00 :   82bad4: jalr    -816(ra) # c9d7a0 <SafepointMechanism::process(JavaThread*, bool, bool)>
+    0.00 :   82bad8: j       82b798 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x1f8>
+         : 676    OrderAccess::release():
+         : 677    make/hotspot/src/hotspot/os_cpu/linux_riscv/orderAccess_linux_riscv.hpp:61
+    0.00 :   82bada: fence   rw,w
+    0.00 :   82bade: j       82b826 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x286>
+         : 680    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 681    make/hotspot/src/hotspot/share/runtime/handshake.cpp:402
+    0.00 :   82bae0: ld      a0,-408(s0)
+    0.00 :   82bae4: auipc   ra,0x654
+    0.00 :   82bae8: jalr    1472(ra) # e800a4 <Thread::is_JavaThread_protected_by_TLH(JavaThread const*)>
+         : 685    make/hotspot/src/hotspot/share/runtime/handshake.cpp:402 (discriminator 1)
+    0.00 :   82baec: bnez    a0,82b622 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x82>
+    0.00 :   82baf0: sd      s5,376(sp)
+    0.00 :   82baf2: sd      s6,368(sp)
+    0.00 :   82baf4: sd      s7,360(sp)
+    0.00 :   82baf6: sd      s8,352(sp)
+    0.00 :   82baf8: sd      s9,344(sp)
+    0.00 :   82bafa: sd      s11,328(sp)
+         : 693    make/hotspot/src/hotspot/share/runtime/handshake.cpp:402 (discriminator 2)
+    0.00 :   82bafc: auipc   a5,0xc75
+    0.00 :   82bb00: ld      a5,-1740(a5) # 14a0430 <_GLOBAL_OFFSET_TABLE_+0x79e0>
+    0.00 :   82bb04: ld      a5,0(a5)
+    0.00 :   82bb06: li      a4,88
+    0.00 :   82bb0a: auipc   a3,0x806
+    0.00 :   82bb0e: addi    a3,a3,-1762 # 1031428 <std::hardware_destructive_interference_size+0x42260>
+    0.00 :   82bb12: sb      a4,0(a5)
+    0.00 :   82bb16: auipc   a2,0x806
+    0.00 :   82bb1a: addi    a2,a2,-1726 # 1031458 <std::hardware_destructive_interference_size+0x42290>
+    0.00 :   82bb1e: li      a1,402
+    0.00 :   82bb22: auipc   a0,0x806
+    0.00 :   82bb26: addi    a0,a0,-1866 # 10313d8 <std::hardware_destructive_interference_size+0x42210>
+    0.00 :   82bb2a: auipc   ra,0xffe01
+    0.00 :   82bb2e: jalr    -558(ra) # 62c8fc <report_vm_error(char const*, int, char const*, char const*, ...)>
+         : 708    OrderAccess::acquire():
+         : 709    make/hotspot/src/hotspot/os_cpu/linux_riscv/orderAccess_linux_riscv.hpp:53
+    0.00 :   82bb32: fence   r,rw
+    0.00 :   82bb36: j       82ba0a <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x46a>
+         : 712    HandshakeState::has_operation(bool, bool):
+         : 713    make/hotspot/src/hotspot/share/runtime/handshake.cpp:558
+    0.00 :   82bb38: li      a2,0
+    0.00 :   82bb3a: li      a1,0
+    0.00 :   82bb3c: addi    a0,s2,1512
+    0.00 :   82bb40: jal     82a732 <HandshakeState::get_op_for_self(bool, bool)>
+    0.00 :   82bb44: sd      a0,-432(s0)
+         : 719    make/hotspot/src/hotspot/share/runtime/handshake.cpp:559
+    0.00 :   82bb48: addi    a0,s2,1528
+    0.00 :   82bb4c: auipc   ra,0x362
+    0.00 :   82bb50: jalr    -996(ra) # b8d768 <Mutex::unlock()>
+         : 723    SafepointMechanism::should_process(JavaThread*, bool):
+         : 724    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:71
+    0.00 :   82bb54: ld      a5,-432(s0)
+    0.00 :   82bb58: bnez    a5,82b788 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x1e8>
+         : 727    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:73
+    0.00 :   82bb5c: mv      a0,s2
+    0.00 :   82bb5e: auipc   ra,0x5ad
+    0.00 :   82bb62: jalr    -1814(ra) # dd8448 <StackWatermarkSet::processing_started(JavaThread*)>
+         : 731    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:72 (discriminator 5)
+    0.00 :   82bb66: beqz    a0,82b788 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x1e8>
+    0.00 :   82bb6a: j       82baa2 <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x502>
+         : 734    SafepointMechanism::process_if_requested(JavaThread*, bool, bool):
+         : 735    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:90
+    0.00 :   82bb6c: mv      a0,s4
+    0.00 :   82bb6e: li      a2,0
+    0.00 :   82bb70: li      a1,0
+    0.00 :   82bb72: auipc   ra,0x472
+    0.00 :   82bb76: jalr    -978(ra) # c9d7a0 <SafepointMechanism::process(JavaThread*, bool, bool)>
+         : 741    HandshakeSpinYield::wait_blocked(JavaThread*, long):
+         : 742    make/hotspot/src/hotspot/share/runtime/handshake.cpp:133
+    0.00 :   82bb7a: j       82b89e <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x2fe>
+         : 744    HandshakeState::has_operation(bool, bool):
+         : 745    make/hotspot/src/hotspot/share/runtime/handshake.cpp:558
+    0.00 :   82bb7c: li      a2,0
+    0.00 :   82bb7e: li      a1,0
+    0.00 :   82bb80: addi    a0,s4,1512
+    0.00 :   82bb84: jal     82a732 <HandshakeState::get_op_for_self(bool, bool)>
+    0.00 :   82bb88: sd      a0,-432(s0)
+         : 751    make/hotspot/src/hotspot/share/runtime/handshake.cpp:559
+    0.00 :   82bb8c: addi    a0,s4,1528
+    0.00 :   82bb90: auipc   ra,0x362
+    0.00 :   82bb94: jalr    -1064(ra) # b8d768 <Mutex::unlock()>
+         : 755    SafepointMechanism::should_process(JavaThread*, bool):
+         : 756    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:71
+    0.00 :   82bb98: ld      a5,-432(s0)
+    0.00 :   82bb9c: bnez    a5,82b88e <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x2ee>
+         : 759    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:73
+    0.00 :   82bba0: mv      a0,s4
+    0.00 :   82bba2: auipc   ra,0x5ad
+    0.00 :   82bba6: jalr    -1882(ra) # dd8448 <StackWatermarkSet::processing_started(JavaThread*)>
+         : 763    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:72 (discriminator 5)
+    0.00 :   82bbaa: beqz    a0,82b88e <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x2ee>
+         : 765    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:81
+    0.00 :   82bbae: mv      a0,s4
+    0.00 :   82bbb0: auipc   ra,0x472
+    0.00 :   82bbb4: jalr    -1592(ra) # c9d578 <SafepointMechanism::update_poll_values(JavaThread*)>
+         : 769    make/hotspot/src/hotspot/share/runtime/safepointMechanism.inline.hpp:82
+    0.00 :   82bbb8: j       82b89e <Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)+0x2fe>
+    0.00 :   82bbba: sd      s5,376(sp)
+    0.00 :   82bbbc: sd      s6,368(sp)
+    0.00 :   82bbbe: sd      s7,360(sp)
+    0.00 :   82bbc0: sd      s8,352(sp)
+    0.00 :   82bbc2: sd      s9,344(sp)
+    0.00 :   82bbc4: sd      s10,336(sp)
+    0.00 :   82bbc6: sd      s11,328(sp)
+         : 778    Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*):
+         : 779    make/hotspot/src/hotspot/share/runtime/handshake.cpp:400 (discriminator 1)
+    0.00 :   82bbc8: auipc   a5,0xc75
+    0.00 :   82bbcc: ld      a5,-1944(a5) # 14a0430 <_GLOBAL_OFFSET_TABLE_+0x79e0>
+    0.00 :   82bbd0: ld      a5,0(a5)
+    0.00 :   82bbd2: li      a4,88
+    0.00 :   82bbd6: auipc   a3,0x7ce
+    0.00 :   82bbda: addi    a3,a3,1258 # ffa0c0 <std::hardware_destructive_interference_size+0xaef8>
+    0.00 :   82bbde: sb      a4,0(a5)
+    0.00 :   82bbe2: auipc   a2,0x806
+    0.00 :   82bbe6: addi    a2,a2,-2018 # 1031400 <std::hardware_destructive_interference_size+0x42238>
+    0.00 :   82bbea: li      a1,400
+    0.00 :   82bbee: auipc   a0,0x805
+    0.00 :   82bbf2: addi    a0,a0,2026 # 10313d8 <std::hardware_destructive_interference_size+0x42210>
+         : 792    make/hotspot/src/hotspot/share/runtime/handshake.cpp:400
+    0.00 :   82bbf6: auipc   ra,0xffe01
+    0.00 :   82bbfa: jalr    -762(ra) # 62c8fc <report_vm_error(char const*, int, char const*, char const*, ...)>
+    0.00 :   82bbfe: sd      s5,376(sp)
+    0.00 :   82bc00: sd      s6,368(sp)
+    0.00 :   82bc02: sd      s7,360(sp)
+    0.00 :   82bc04: sd      s8,352(sp)
+    0.00 :   82bc06: sd      s9,344(sp)
+    0.00 :   82bc08: sd      s11,328(sp)
+         : 801    make/hotspot/src/hotspot/share/runtime/handshake.cpp:455
+    0.00 :   82bc0a: auipc   ra,0xffa4a
+    0.00 :   82bc0e: jalr    662(ra) # 275ea0 <__stack_chk_fail@plt>

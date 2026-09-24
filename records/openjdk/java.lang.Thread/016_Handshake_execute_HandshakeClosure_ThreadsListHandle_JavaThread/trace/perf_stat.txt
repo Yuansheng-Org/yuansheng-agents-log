@@ -1,0 +1,111 @@
+3-OPENJDK-BENCHMARK java.lang.Thread RISC-V perf stat
+=====================================================
+
+Source CSV: /workspace/results/3-openjdk-benchmark_results.csv
+TestName: java.lang.Thread
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 280,168,358,171 |
+| task_clock | 304,587.7900000000 |
+| cpu_cycle | 779,187,142,802 |
+| instructions | 351,792,975,375 |
+| cache_references | 26,641,739,767 |
+| cache_misses | 26,642,002,988 |
+| branches | 42,125,803,972 |
+| branch_misses | 1,571,213,802 |
+| L1_dcache_loads | 102,501,594,712 |
+| L1_dcache_load_misses | 3,772,444,315 |
+| LLC_load_misses | 1,255,215,455 |
+| LLC_loads | 26,643,351,125 |
+| IPC | 0.4514870000 |
+| java.lang.ThreadGetStackTraceWhenParked.testGetStackTrace.ops_s | 12.1771890676 |
+| java.lang.ThreadGetStackTraceWhenSpinning.testGetStackTrace.ops_s | 23.7984335328 |
+| java.lang.ThreadOnSpinWait.testOnSpinWait.ops_s | 5.8216063017 |
+| java.lang.ThreadOnSpinWaitProducerConsumer.trial@checkSpinCondAfterIters=10/dataBitLength=256/maxNum=100/spinNum=125.ops_s | 12,938.8101150478 |
+| java.lang.ThreadOnSpinWaitSharedCounter.trial@maxNum=1000000/threadCount=4.ops_s | 96.4814231190 |
+| java.lang.ThreadSleep.millis@sleep=0.ops_s | 1,310.6591905827 |
+| java.lang.ThreadSleep.millis@sleep=1.ops_s | 1,754.7321283943 |
+| java.lang.ThreadSleep.millis@sleep=10.ops_s | 1,211.6082873364 |
+| java.lang.ThreadSleep.millis@sleep=100.ops_s | 1,168.4718448492 |
+| java.lang.ThreadSleep.millis@sleep=1000.ops_s | 1,249.9763707052 |
+| java.lang.ThreadSleep.millis@sleep=10000.ops_s | 1,353.7166480116 |
+| java.lang.ThreadSleep.millis@sleep=100000.ops_s | 1,266.9460260147 |
+| java.lang.ThreadSleep.millis@sleep=1000000.ops_s | 1,159,945.4771099216 |
+| java.lang.ThreadSleep.millis@sleep=10000000.ops_s | 10,339,878.8461804166 |
+| java.lang.ThreadSleep.millis@sleep=100000000.ops_s | 100,338,575.7249999940 |
+| java.lang.ThreadSleep.millis@sleep=1000000000.ops_s | 1,000,227,045.7500000000 |
+| java.lang.ThreadSleep.millisNanos@sleep=0.ops_s | 1,193.7187017359 |
+| java.lang.ThreadSleep.millisNanos@sleep=1.ops_s | 98,811.4127813428 |
+| java.lang.ThreadSleep.millisNanos@sleep=10.ops_s | 99,213.8108732192 |
+| java.lang.ThreadSleep.millisNanos@sleep=100.ops_s | 99,147.5482354689 |
+| java.lang.ThreadSleep.millisNanos@sleep=1000.ops_s | 100,165.7194816851 |
+| java.lang.ThreadSleep.millisNanos@sleep=10000.ops_s | 110,943.6691442583 |
+| java.lang.ThreadSleep.millisNanos@sleep=100000.ops_s | 224,416.8412091712 |
+| java.lang.ThreadSleep.millisNanos@sleep=1000000.ops_s | 1,165,146.8588495576 |
+| java.lang.ThreadSleep.millisNanos@sleep=10000000.ops_s | 10,330,294.5490368009 |
+| java.lang.ThreadSleep.millisNanos@sleep=100000000.ops_s | 100,669,636.7999999970 |
+| java.lang.ThreadSleep.millisNanos@sleep=1000000000.ops_s | 1,000,293,324.3333332539 |
+| java.lang.ThreadStartJoin.test.ops_s | 63,829.8927245098 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 280.168358 |
+| cache_miss_rate | 100.001% |
+| branch_miss_rate | 3.730% |
+| L1_dcache_load_miss_rate | 3.680% |
+| LLC_load_miss_rate | 4.711% |
+
+perf stat style summary
+-----------------------
+                 280,168,358,171  duration_time
+              304,587.7900000000  task_clock
+                 779,187,142,802  cpu_cycle
+                 351,792,975,375  instructions
+                  26,641,739,767  cache_references
+                  26,642,002,988  cache_misses
+                  42,125,803,972  branches
+                   1,571,213,802  branch_misses
+                 102,501,594,712  L1_dcache_loads
+                   3,772,444,315  L1_dcache_load_misses
+                   1,255,215,455  LLC_load_misses
+                  26,643,351,125  LLC_loads
+                    0.4514870000  IPC
+                   12.1771890676  java.lang.ThreadGetStackTraceWhenParked.testGetStackTrace.ops_s
+                   23.7984335328  java.lang.ThreadGetStackTraceWhenSpinning.testGetStackTrace.ops_s
+                    5.8216063017  java.lang.ThreadOnSpinWait.testOnSpinWait.ops_s
+               12,938.8101150478  java.lang.ThreadOnSpinWaitProducerConsumer.trial@checkSpinCondAfterIters=10/dataBitLength=256/maxNum=100/spinNum=125.ops_s
+                   96.4814231190  java.lang.ThreadOnSpinWaitSharedCounter.trial@maxNum=1000000/threadCount=4.ops_s
+                1,310.6591905827  java.lang.ThreadSleep.millis@sleep=0.ops_s
+                1,754.7321283943  java.lang.ThreadSleep.millis@sleep=1.ops_s
+                1,211.6082873364  java.lang.ThreadSleep.millis@sleep=10.ops_s
+                1,168.4718448492  java.lang.ThreadSleep.millis@sleep=100.ops_s
+                1,249.9763707052  java.lang.ThreadSleep.millis@sleep=1000.ops_s
+                1,353.7166480116  java.lang.ThreadSleep.millis@sleep=10000.ops_s
+                1,266.9460260147  java.lang.ThreadSleep.millis@sleep=100000.ops_s
+            1,159,945.4771099216  java.lang.ThreadSleep.millis@sleep=1000000.ops_s
+           10,339,878.8461804166  java.lang.ThreadSleep.millis@sleep=10000000.ops_s
+          100,338,575.7249999940  java.lang.ThreadSleep.millis@sleep=100000000.ops_s
+        1,000,227,045.7500000000  java.lang.ThreadSleep.millis@sleep=1000000000.ops_s
+                1,193.7187017359  java.lang.ThreadSleep.millisNanos@sleep=0.ops_s
+               98,811.4127813428  java.lang.ThreadSleep.millisNanos@sleep=1.ops_s
+               99,213.8108732192  java.lang.ThreadSleep.millisNanos@sleep=10.ops_s
+               99,147.5482354689  java.lang.ThreadSleep.millisNanos@sleep=100.ops_s
+              100,165.7194816851  java.lang.ThreadSleep.millisNanos@sleep=1000.ops_s
+              110,943.6691442583  java.lang.ThreadSleep.millisNanos@sleep=10000.ops_s
+              224,416.8412091712  java.lang.ThreadSleep.millisNanos@sleep=100000.ops_s
+            1,165,146.8588495576  java.lang.ThreadSleep.millisNanos@sleep=1000000.ops_s
+           10,330,294.5490368009  java.lang.ThreadSleep.millisNanos@sleep=10000000.ops_s
+          100,669,636.7999999970  java.lang.ThreadSleep.millisNanos@sleep=100000000.ops_s
+        1,000,293,324.3333332539  java.lang.ThreadSleep.millisNanos@sleep=1000000000.ops_s
+               63,829.8927245098  java.lang.ThreadStartJoin.test.ops_s
+                      280.168358  duration_s
+                        100.001%  cache_miss_rate
+                          3.730%  branch_miss_rate
+                          3.680%  L1_dcache_load_miss_rate
+                          4.711%  LLC_load_miss_rate

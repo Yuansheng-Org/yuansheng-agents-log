@@ -1,0 +1,136 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-openjdk-java-lang-thread-016",
+  "blueprintId": "bp-openjdk-java.lang.Thread-016",
+  "createdAt": "2026-09-16T11:58:44.299Z",
+  "objective": "libjvm 构建 -march 未启用硬件已具备的 Zba/Zbb/Zbs/Zicond/Zihintpause 扩展（config_mismatch）：自旋循环的 slot 索引计算被迫使用 slli+add 多指令 scaled-address 链（add_result 5 条、reset_state 4 条，Zba sh2add 可收敛为 3 条/2 条），HandshakeSpinYield 忙等待无 pause hint；叠加 poll acquire（fence 序列化）与快照比较（10 lw+5 bne）的每迭代固定开销，构成该函数成本主体",
+  "changes": [
+    {
+      "filePath": "Zba/Zbb/Zbs/Zicond/Zihintpause",
+      "action": "modify",
+      "rationale": "libjvm 构建 -march 未启用硬件已具备的 Zba/Zbb/Zbs/Zicond/Zihintpause 扩展（config_mismatch）：自旋循环的 slot 索引计算被迫使用 slli+add 多指令 scaled-address 链（add_result 5 条、reset_state 4 条，Zba sh2add 可收敛为 3 条/2 条），HandshakeSpinYield 忙等待无 pause hint；叠加 poll acquire（fence 序列化）与快照比较（10 lw+5 bne）的每迭代固定开销，构成该函数成本主体",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "zba/zbb/zbc/zbs/zicond/zihintpause",
+      "action": "modify",
+      "rationale": "libjvm 构建 -march 未启用硬件已具备的 Zba/Zbb/Zbs/Zicond/Zihintpause 扩展（config_mismatch）：自旋循环的 slot 索引计算被迫使用 slli+add 多指令 scaled-address 链（add_result 5 条、reset_state 4 条，Zba sh2add 可收敛为 3 条/2 条），HandshakeSpinYield 忙等待无 pause hint；叠加 poll acquire（fence 序列化）与快照比较（10 lw+5 bne）的每迭代固定开销，构成该函数成本主体",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "latency/spin-bound",
+      "action": "modify",
+      "rationale": "libjvm 构建 -march 未启用硬件已具备的 Zba/Zbb/Zbs/Zicond/Zihintpause 扩展（config_mismatch）：自旋循环的 slot 索引计算被迫使用 slli+add 多指令 scaled-address 链（add_result 5 条、reset_state 4 条，Zba sh2add 可收敛为 3 条/2 条），HandshakeSpinYield 忙等待无 pause hint；叠加 poll acquire（fence 序列化）与快照比较（10 lw+5 bne）的每迭代固定开销，构成该函数成本主体",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "make/autoconf/flags-cflags.mk",
+      "action": "modify",
+      "rationale": "libjvm 构建 -march 未启用硬件已具备的 Zba/Zbb/Zbs/Zicond/Zihintpause 扩展（config_mismatch）：自旋循环的 slot 索引计算被迫使用 slli+add 多指令 scaled-address 链（add_result 5 条、reset_state 4 条，Zba sh2add 可收敛为 3 条/2 条），HandshakeSpinYield 忙等待无 pause hint；叠加 poll acquire（fence 序列化）与快照比较（10 lw+5 bne）的每迭代固定开销，构成该函数成本主体",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "src/hotspot/cpu/riscv/macroAssembler_riscv.cpp",
+      "action": "modify",
+      "rationale": "libjvm 构建 -march 未启用硬件已具备的 Zba/Zbb/Zbs/Zicond/Zihintpause 扩展（config_mismatch）：自旋循环的 slot 索引计算被迫使用 slli+add 多指令 scaled-address 链（add_result 5 条、reset_state 4 条，Zba sh2add 可收敛为 3 条/2 条），HandshakeSpinYield 忙等待无 pause hint；叠加 poll acquire（fence 序列化）与快照比较（10 lw+5 bne）的每迭代固定开销，构成该函数成本主体",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "Zbb/Zihintpause",
+      "action": "modify",
+      "rationale": "libjvm 构建 -march 未启用硬件已具备的 Zba/Zbb/Zbs/Zicond/Zihintpause 扩展（config_mismatch）：自旋循环的 slot 索引计算被迫使用 slli+add 多指令 scaled-address 链（add_result 5 条、reset_state 4 条，Zba sh2add 可收敛为 3 条/2 条），HandshakeSpinYield 忙等待无 pause hint；叠加 poll acquire（fence 序列化）与快照比较（10 lw+5 bne）的每迭代固定开销，构成该函数成本主体",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "precise_ip/Exact-IP/skid",
+      "action": "modify",
+      "rationale": "libjvm 构建 -march 未启用硬件已具备的 Zba/Zbb/Zbs/Zicond/Zihintpause 扩展（config_mismatch）：自旋循环的 slot 索引计算被迫使用 slli+add 多指令 scaled-address 链（add_result 5 条、reset_state 4 条，Zba sh2add 可收敛为 3 条/2 条），HandshakeSpinYield 忙等待无 pause hint；叠加 poll acquire（fence 序列化）与快照比较（10 lw+5 bne）的每迭代固定开销，构成该函数成本主体",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "src/hotspot/share/runtime/handshake.cpp",
+      "action": "modify",
+      "rationale": "libjvm 构建 -march 未启用硬件已具备的 Zba/Zbb/Zbs/Zicond/Zihintpause 扩展（config_mismatch）：自旋循环的 slot 索引计算被迫使用 slli+add 多指令 scaled-address 链（add_result 5 条、reset_state 4 条，Zba sh2add 可收敛为 3 条/2 条），HandshakeSpinYield 忙等待无 pause hint；叠加 poll acquire（fence 序列化）与快照比较（10 lw+5 bne）的每迭代固定开销，构成该函数成本主体",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "82b6ea-82b6f4/82b8c6-82b8ce",
+      "action": "modify",
+      "rationale": "libjvm 构建 -march 未启用硬件已具备的 Zba/Zbb/Zbs/Zicond/Zihintpause 扩展（config_mismatch）：自旋循环的 slot 索引计算被迫使用 slli+add 多指令 scaled-address 链（add_result 5 条、reset_state 4 条，Zba sh2add 可收敛为 3 条/2 条），HandshakeSpinYield 忙等待无 pause hint；叠加 poll acquire（fence 序列化）与快照比较（10 lw+5 bne）的每迭代固定开销，构成该函数成本主体",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应围绕 Zba/Zbb/Zbs/Zicond/Zihintpause, zba/zbb/zbc/zbs/zicond/zihintpause, latency/spin-bound, make/autoconf/flags-cflags.mk, src/hotspot/cpu/riscv/macroAssembler_riscv.cpp, Zbb/Zihintpause, precise_ip/Exact-IP/skid, src/hotspot/share/runtime/handshake.cpp, 82b6ea-82b6f4/82b8c6-82b8ce 解决 blueprint bp-openjdk-java.lang.Thread-016 指出的根因。允许涉及 构建系统、平台适配、构建参数、注册入口；源码实现、汇编/kernel/intrinsic/SIMD/vector 后端、分发表。"
+}

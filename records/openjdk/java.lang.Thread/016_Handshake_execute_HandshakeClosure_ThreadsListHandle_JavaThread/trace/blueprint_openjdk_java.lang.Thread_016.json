@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-openjdk-java.lang.Thread-016",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T10:34:59.882Z",
+    "software": "openjdk",
+    "testcaseIds": [
+      "java.lang.Thread"
+    ],
+    "diagnosisId": "diag-20260908T103459882Z-62590dbe",
+    "targetHardware": "SOPHGO SG2044 / XuanTie C920v2 (rv64imafdcv, RVV 1.0, VLEN=128, Zba/Zbb/Zbc/Zbs/Zicond/Zihintpause)",
+    "repositoryUrl": "https://github.com/openjdk/jdk.git",
+    "testBranch": "master",
+    "commitHash": "d1562ff2d8303d32a6603c85039b99ff798affdb"
+  },
+  "problem": {
+    "summary": "java.lang.Thread benchmark 中 Handshake::execute 为 rank 016 热点（自旋等待目标线程处理 handshake 操作）。libjvm.so 构建 ISA（Tag_RISCV_arch）未包含硬件已具备的 Zba/Zbb/Zbs/Zicond/Zihintpause 扩展，导致自旋循环中 results 数组 slot 索引计算退化为 5 条/4 条 slli+add 多指令链（本可用 Zba sh2add 收敛为 3 条/2 条），且忙等待无 pause hint。函数局部样本约 26.6% 集中在 safepoint poll 检查区间、约 20.2% 集中在 spin-state 快照比较区间。",
+    "evidence": [
+      "热点函数局部样本 109（event=cpu-clock，percent-type=local period）",
+      "L0 扩展 mismatch：hardware isa 含 zba/zbb/zbc/zbs/zicond/zihintpause，build Tag_RISCV_arch 全部缺失",
+      "索引链证据：`0.00 : 82b6ea: slli a5,a4,0x2`/`82b6ee: add a5,a5,a4`/`82b6f2: slli a5,a5,0x2`/`82b6f4: add a5,a5,s6`（5 条链）；`4.59 : 82b8c6: slli a5,s1,0x2`（reset_state 4 条链）",
+      "全局 perf stat：IPC 0.451、L1_dcache_load_miss_rate 3.68%、branch_miss_rate 3.73% → latency/spin-bound"
+    ]
+  },
+  "rootCause": {
+    "summary": "libjvm 构建 -march 未启用硬件已具备的 Zba/Zbb/Zbs/Zicond/Zihintpause 扩展（config_mismatch）：自旋循环的 slot 索引计算被迫使用 slli+add 多指令 scaled-address 链（add_result 5 条、reset_state 4 条，Zba sh2add 可收敛为 3 条/2 条），HandshakeSpinYield 忙等待无 pause hint；叠加 poll acquire（fence 序列化）与快照比较（10 lw+5 bne）的每迭代固定开销，构成该函数成本主体",
+    "candidateFiles": [
+      "make/autoconf/flags-cflags.mk",
+      "src/hotspot/cpu/riscv/macroAssembler_riscv.cpp"
+    ],
+    "performanceFactors": [
+      "RISC-V ISA Extension-Specific Instruction Substitution"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "low",
+    "mustPreserve": [
+      "Handshake::execute 的自旋/退避/超时语义与 ProcessResult 判定",
+      "safepoint poll 检查的 acquire 语义与 poll word 读取正确性",
+      "sh2add 替换后的地址算术结果逐位一致（rs1+(rs2<<2)）",
+      "Zihintpause pause 为纯 hint，不改变锁/内存序/同步语义"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "java.lang.Thread"
+    ],
+    "regressionCommand": "agent1 patch_regression --case java.lang.Thread"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.8,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示全局 IPC 0.451（latency/spin-bound）；annotate 显示 Handshake::execute 自旋循环的 slot 索引计算为 5 条/4 条 slli+add 多指令链（82b6ea-82b6f4、82b8c6-82b8ce），而冻结快照中 hardware ISA 含 zba/zbb/zbs/zicond/zihintpause、build Tag_RISCV_arch 全部缺失，命中 rows-codegen.md 的 RISC-V ISA Extension-Specific Instruction Substitution（route High：build/hardware ISA 对比 + 反汇编多指令序列直接可见；impact Medium：索引链局部样本份额约 10%，IP precision 未知）。OpenJDK 仓库已有 Zbb 位操作（6b89954c6534）与 Zihintpause（8cb9b479c529）合入记录，证明同一修复方向在目标项目内有 provenance。",
+    "rootCauseType": "config_mismatch",
+    "alternativeExplanations": [
+      "poll 检查区间（约 26.6%）与 state_changed 快照比较区间（约 20.2%）为自旋 yield 机制的结构性每迭代固定开销，其成本可能大于 ISA 替换收益；缺 precise_ip 时这些区间与索引链的样本归属存在 skid 混叠",
+      "函数成本可能主要由 os::javaTimeNanos()/__tls_get_addr/虚拟调用等 out-of-line 调用的目标端（未在本函数 annotate 内采样）贡献，需调用链级验证"
+    ],
+    "currentGaps": "批次快照未含 precise_ip/Exact-IP/skid 能力（baseline_gap: sampling IP precision）；无函数级 workload 贡献占比（baseline_gap: sampling metadata）；索引链样本仅锚定区间级；单架构 RV profile，无 ARM 对比数据",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + java.lang.Thread（单架构分析，无 ARM 对比）",
+    "recommendedFirstAction": "在 make/autoconf/flags-cflags.mk 中为 riscv64 libjvm 构建启用包含 zba/zbb/zbs（及 zicond/zihintpause）的 -march 配置；同时在 src/hotspot/cpu/riscv/macroAssembler_riscv.cpp 确认自旋路径按 feature gate 发出 sh2add 与 pause（参照已合入的 Zbb/Zihintpause 提交 6b89954c6534/8cb9b479c529），并核对 reset_state 的 vsetivli 清零序列",
+    "recommendedVerification": "以含 zba/zbb/zbs/zicond/zihintpause 的 -march 重建 libjvm 后重跑 java.lang.Thread benchmark perf annotate：016 函数索引链（82b6ea-82b6f4、82b8c6-82b8ce）的 slli/add 应消失、sh2add 出现，readelf -A 的 Tag_RISCV_arch 应出现 zbb/zba；运行 handshake/ThreadStartJoin 回归测试确认无功能回归",
+    "metricEvidence": [
+      {
+        "metric": "duration_time(ns)",
+        "rv": 280168358171,
+        "anomalyNote": "java.lang.Thread 全量 benchmark 总耗时（单架构 RV，无 ARM 对比基线）"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.451487,
+        "anomalyNote": "全局 IPC 0.451 显著偏低，指示 latency/spin-bound"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 3.68,
+        "anomalyNote": "L1 缺失率 3.68%，非纯 memory-bound"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 3.73,
+        "anomalyNote": "分支缺失率 3.73%"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "Handshake::execute(HandshakeClosure*, ThreadsListHandle*, JavaThread*)",
+        "fileModule": "src/hotspot/share/runtime/handshake.cpp:394",
+        "rvvPattern": "RISC-V ISA Extension-Specific Instruction Substitution",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.1,
+        "note": "JVM handshake 自旋等待循环（并发同步类热点）；成本为每迭代 poll acquire + spin-state 快照比较 + 结果计数/重置，其中索引计算链因 build 缺 B 扩展而放大"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/hotspot/share/runtime/handshake.cpp:154-236（HandshakeSpinYield）；src/hotspot/cpu/riscv/macroAssembler_riscv.cpp",
+      "relatedKnowledge": "https://github.com/openjdk/jdk/commit/6b89954c65342bc601633d24075dab4f4b248f4b ; https://github.com/openjdk/jdk/commit/a7631ccf18e468d6ecba121865f7fed29cbf2186 ; https://github.com/openjdk/jdk/pull/22752 ; https://github.com/openjdk/jdk/commit/8cb9b479c529c058aee50f83920db650b0c18045 ; https://github.com/openjdk/jdk/pull/11921 ; https://github.com/openjdk/jdk/commit/08d563ba15047020fd5f5fea80547e18898bbab2 ; https://github.com/openjdk/jdk/commit/b1a21b563e3ae13fa5c409a4f0c04686c3f5b34a ; https://github.com/openjdk/jdk/pull/22410 ; https://github.com/openjdk/jdk/commit/9f582e56baee0e7f5af20da0f395cd935bf5a962 ; https://github.com/openjdk/jdk/pull/24096 ; https://github.com/openjdk/jdk/commit/1a4bbb0027ae9e6df3b668454fa155861d531f72 ; https://github.com/openjdk/jdk/commit/2ed7ad4b5c7d2344ae6571c186f8a2903770aa57 ; https://github.com/openjdk/jdk/commit/edfe28541a6ed94357f873aa69778c7eba707cbb ; https://github.com/openjdk/jdk/commit/b891bfa7e67c21478475642e2bfa2cdc65a3bffe ; https://github.com/openjdk/jdk/commit/3d3b7820371058b40f2e694536c98aa3900abb5f ; https://github.com/openjdk/jdk/commit/a7a09f69abc6c4730599d3de9067c2fde75c5172 ; https://github.com/openjdk/jdk/commit/bcc33d5ef3bdbfaee51c45014851c54028da03f1 ; https://github.com/openjdk/jdk/pull/22386 ; https://github.com/openjdk/jdk/commit/5866b16dbca3f63770c8792d204dabdf49b59839 ; https://github.com/golang/go/commit/3659b8756a2b81766e589e34d4fe9613b5917de0 ; https://github.com/golang/go/commit/a6ecdf29e34ddc82b6ed2315aaedf4c4d522b96c ; https://github.com/golang/go/pull/59488 ; https://github.com/opencv/opencv/commit/a00818047ff5671586c7b296cac6175b250f85d3 ; https://github.com/opencv/opencv/commit/7e2c8cc9f4c49a3afeee084a2f01f7bac1d9a2dc ; https://github.com/opencv/opencv/commit/f0d29cd33c5d2b8f6c9c5c3177cbb3a359ee6b33 ; https://github.com/opencv/opencv/pull/21351 ; https://github.com/openssl/openssl/commit/03ce37e117 ; https://github.com/openssl/openssl/commit/ca6286c382 ; https://github.com/openssl/openssl/commit/48b6776678 ; https://github.com/openssl/openssl/commit/6136408e6a ; https://github.com/openssl/openssl/commit/e4fd3fc379 ; https://github.com/openssl/openssl/commit/80c664db43 ; https://github.com/openssl/openssl/commit/08c8dd6b8cede3cdbe5b1866c1a7544e0fe7a378 ; https://github.com/openssl/openssl/commit/49a3e7adc3 ; https://github.com/openssl/openssl/commit/a41f9135f0 ; https://github.com/openssl/openssl/commit/4dbb537bd1 ; https://github.com/openssl/openssl/commit/608cadfbdb ; https://github.com/openssl/openssl/commit/b1b889d1b3 ; https://github.com/openssl/openssl/commit/657d1927c6 ; https://github.com/openssl/openssl/commit/611685adc0 ; https://github.com/openssl/openssl/commit/7ae2bc9df6 ; https://github.com/torvalds/linux/commit/e8620bd7e5e07c025a5e317ebc8c7df95dc63712 ; https://github.com/torvalds/linux/commit/5ba15d419fab848a3813eb56bbcad00e291fbc49 ; https://github.com/torvalds/linux/commit/cc2294d3f9c99c216ef563b83b08d2c0604f9b92 ; https://github.com/torvalds/linux/commit/36e22416872114cae812cdcdd84a5b99ef30b3de ; https://github.com/torvalds/linux/commit/e11e367e9fe57164ea609807ed27184c85263355 ; https://github.com/torvalds/linux/commit/75ab93a244a516d1d3c03c4e27d5d0deff76ebfb ; https://github.com/torvalds/linux/commit/c640868491105d53899f9f8e613acd4aa06cef68 ; https://github.com/ggml-org/llama.cpp/pull/17784 ; https://github.com/v8/v8/commit/6f100865663fb99df2628144fc65977e55ab7e68 ; https://github.com/v8/v8/commit/e62c1e307d207e1e56219c172929289a1b474530 ; https://github.com/v8/v8/commit/200b5212ae4752f6345dbcc6ecf23f651434bbf8 ; https://github.com/v8/v8/commit/5136fb5200c1f3a33939419fed9de32e8d85bc1e ; https://github.com/v8/v8/commit/e02d2238f6ea6f920a6ac31f888b4727bb0b0f80 ; https://github.com/v8/v8/commit/94a3c420e2a4f76d42e367e7d3b3f85ecd1b0a3f ; https://github.com/v8/v8/commit/1818e36d54d12540080dd58dbfb924155a920cba ; https://github.com/v8/v8/commit/5f433dd5024a566fa051317dd0c9c1d9921a9162 ; https://github.com/v8/v8/commit/9bbbde26bb90bd493afe33777d7b6be0c4f2afb4 ; https://github.com/v8/v8/commit/758956654f28861ba0d5e94f03fff6016b3a2998 ; https://github.com/v8/v8/commit/32c5d22333c14a9d6bb645af3ea4d3fb28b541fe ; https://github.com/v8/v8/commit/89719bc239f48735bbffe83e0803fd504b3c485a ; https://github.com/v8/v8/commit/223d7fb26b12145bdd335d51da2fa2ed1c58ce3a ; https://github.com/v8/v8/commit/b2852080c401cb0980f332918531597967de36c1 ; https://github.com/v8/v8/commit/8b842dbb9f6d7ea03990d80dc945ef8c6c6ca144 ; https://github.com/v8/v8/commit/e855c14cab2c6522a2a2d9b6be51e886fd3aae74 ; https://github.com/v8/v8/commit/8033cc56e2afb7b19214aa9a6f776a59fc509d2c ; https://github.com/v8/v8/commit/a654e27b50feb457a99ad27582dd555316eab587 ; https://github.com/v8/v8/commit/21289aa92c80a4161cc5f0d9915a0002a644d8b4 ; https://github.com/v8/v8/commit/19a0f69f4c4b1257b567290412acda411568d565 ; https://github.com/qemu/qemu/commit/3de1fb712a072992d72bc99c2b70978132ee44d0 ; https://github.com/qemu/qemu/commit/6ef5843182382f6a84995590ad91047b0f2bc1fa ; https://github.com/llvm/llvm-project/pull/170824 ; https://github.com/llvm/llvm-project/commit/4c1e1e05cb901a2ed9055e5d6ac6ce60b826a288 ; https://github.com/llvm/llvm-project/pull/92926 ; https://github.com/llvm/llvm-project/pull/152744 ; https://github.com/llvm/llvm-project/pull/122698 ; https://github.com/llvm/llvm-project/commit/13e32a8a3c95b23af51f081865db1bd259d269a4 ; https://github.com/llvm/llvm-project/commit/787eeb8597fac22decb366a42176b11f52ec1bf0 ; https://github.com/llvm/llvm-project/commit/c705b7b04dba467a67871a1bbb77907d0ed7fc19",
+      "evidenceExplanation": "命中 pattern isa_extension_specific_instruction_substitution.md 的 Related PRs 显示 OpenJDK 已合入 RISC-V Zbb 位操作（6b89954c6534，含 perf 数据）、Zihintpause spin hint（8cb9b479c529）等提交，证明在同一项目（openjdk/jdk）上以扩展启用+feature gate 方式修复本类问题有官方 provenance；本函数 82b6ea-82b6f4/82b8c6-82b8ce 的 slli+add 链与 pattern §The fix #3 的 CRC table 形态（shadd 收敛）一致"
+    }
+  }
+}
