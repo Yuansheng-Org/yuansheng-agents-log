@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-caffe-bvlc-alexnet-011",
+  "blueprintId": "bp-caffe-bvlc-alexnet-011",
+  "createdAt": "2026-09-21T06:55:00.000Z",
+  "objective": "为 caffe::vPowx<float> 增加 RVV 1.0 向量路径，以 exp2(b*log2(x)) 的 f64 向量中间精度流水线替代逐元素 libm powf PLT 调用，消除标量超越函数调用循环（含 bvlc_alexnet LRN 的 b=-0.75）；在域不安全或指数超出 |b|<=1 时逐位回退原 libm powf，保持 IEEE 特殊值语义。",
+  "changes": [
+    {
+      "filePath": "include/caffe/util/mkl_alternate.hpp",
+      "action": "modify",
+      "rationale": "蓝图 bp-caffe-bvlc-alexnet-011 确认根因为：DEFINE_VSL_UNARY_FUNC_WITH_PARAM(Powx, y[i] = pow(a[i], b)) 生成的 vPowx<float> 是纯标量逐元素 powf 调用循环（每元素一次 libm PLT 调用，annotate 6/6 采样全落该循环），build ISA 含 v1p0、硬件 RVV 1.0 VLEN=256 却全程 zero v*。bvlc_alexnet 的 LRN 使用 beta=0.75，即调用 caffe_powx(..., -beta_, ...) 的 b=-0.75，属热点指数。",
+      "instructions": [
+        "把 Powx 从宏展开改为显式定义，使 float 显式特化能声明在 vsPowx/vdPowx 之前，从而被包装函数选中。",
+        "以 #if defined(__riscv_v) 提供 vPowx<float> 特化：域检查通过时走 RVV 向量路径，否则走原 libm powf 标量循环。",
+        "向量路径用 f64 中间精度：vfwcvt 提升到 e64，按位提取指数/尾数，atanh 级数求 log2(m)，乘以 b 后用 exp2 多项式与 2^k 位构造还原，再 vfncvt 回 f32。纯 f32 多项式实测误差可达 ~100 ULP，f64 流水线实测 <=1 ULP。",
+        "安全域：全部输入为正规格化浮点（指数域 1..254、符号位 0）且 |b|<=1；否则整体回退 libm powf，保证 NaN/±Inf/±0/次正规/负数/大指数语义逐位不变。",
+        "b==1 用精确恒等向量拷贝，b==0 用常数 1 向量填充，均只在安全域内启用。",
+        "SEW/LMUL：f32 m2 -> f64 m4（VLEN=256 下 16 lane/轮），无向量寄存器溢出；保留 CHECK 守卫与公共 API；不改 vdPowx 与其余 VSL 函数。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "仅修改 include/caffe/util/mkl_alternate.hpp：新增 __riscv_v 保护的 rvv_map_f32 / rvv_powx_domain_ok / rvv_powx_pos_chunk（f64 向量 log2+exp2 管线）与 vPowx<float> 显式特化（安全域走向量、b=1/0 精确快路径，其余回退 libm powf）；Powx 由宏展开改为显式定义以便特化先于 vsPowx/vdPowx。"
+}

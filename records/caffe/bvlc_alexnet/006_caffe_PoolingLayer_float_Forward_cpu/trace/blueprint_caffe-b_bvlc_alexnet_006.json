@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-caffe-bvlc_alexnet-006",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T03:49:41.802Z",
+    "software": "caffe",
+    "testcaseIds": [
+      "bvlc_alexnet"
+    ],
+    "diagnosisId": "diag-20260921T034941802Z-c7e99739",
+    "targetHardware": "SpacemiT X100 (K3 SoC, riscv64, RVV 1.0, VLEN=256, OoO)",
+    "repositoryUrl": "https://github.com/BVLC/caffe.git",
+    "testBranch": "master",
+    "commitHash": "9b891540183ddc834a02b2bd81b31afae71b2153"
+  },
+  "problem": {
+    "summary": "caffe bvlc_alexnet 的 MAX pooling 前向（caffe::PoolingLayer<float>::Forward_cpu）在 RISC-V 上以纯标量固定邻域归约执行，RVV 1.0 向量单元闲置。",
+    "evidence": [
+      "perf annotate（libcaffe.so.1.0.0，event=cpu-clock，14 samples）：13/14 samples 集中在 MAX pooling 第二拷贝的 w-loop interval 0x19df80-0x19dfaa（use_top_mask==false / mask=max_idx_ 路径），最高行 42.86% @ 19dfa8: addiw a4,a4,1",
+      "hot interval 全 scalar：19df82: lw a5,760(s1)（width_ 重载）、19df8a: mulw a5,a5,a1（h*width_ 重算）、19df94: add a3,a3,s11、19df96: flw fa5,0(a3)、19df9a: flt.s a3,fa4,fa5、19dfa0: fsw fa5,0(a2)、19dfa4: sw a5,0(a6)；零 v*/th.v*",
+      "全 workload perf stat：IPC≈2.30（129543036792/56413930048）、branch_miss_rate 0.160%、L1_dcache_load_miss_rate 0.281% → compute-bound",
+      "hardware ISA 含 v（RVV 1.0），build Tag_RISCV_arch 含 v1p0/zvl128b → 无 build/hardware mismatch，hot loop 仍零向量执行"
+    ]
+  },
+  "rootCause": {
+    "summary": "MAX 池化以标量逐元素执行固定 stencil 邻域归约：每个 tap 用 flw+flt.s+条件 fsw/sw 串行比较，每轮用 mulw/addw/slli/add 重建 index=h*width_+w 并重载 width_，窗口重叠但零 tap 复用、零 RVV 执行，VLEN=256 向量单元完全闲置。",
+    "candidateFiles": [
+      "src/caffe/layers/pooling_layer.cpp"
+    ],
+    "performanceFactors": [
+      "rvv_spatial_convolution_and_pooling_kernels",
+      "no-vectorization",
+      "loop_induction_variable_strength_reduction"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "MAX/AVE pooling 数值输出与首胜 tie 语义（严格大于才更新）",
+      "NCHW 布局与 bottom/top offset(0,1) 通道步进",
+      "use_top_mask / max_idx_ 选择与公共 API 签名",
+      "NaN 语义（NaN 不触发更新）与 AVG divisor/rounding 合同"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "bvlc_alexnet"
+    ],
+    "regressionCommand": "agent1 patch_regression --case bvlc_alexnet"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "全 workload perf stat 显示 compute-bound（IPC≈2.30、branch miss 0.160%、L1 dcache miss 0.281%），排除 memory/branch 主导，指向本地计算形态问题；annotate 显示 13/14 samples 集中于 MAX pooling 第二拷贝的标量 w-loop interval（0x19df80-0x19dfaa），逐 tap 执行 flw/flt.s/条件 fsw/sw 且每轮 mulw 重算索引；hardware 与 build 均含 v1p0 而该区间零 v*，命中 rvv_spatial_convolution_and_pooling_kernels（primary，route High），no-vectorization 与 loop_induction_variable_strength_reduction 为 supporting；模式与源码 pooling_layer.cpp MAX 分支语义一一对应，结论一致指向标量邻域归约未向量化。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "14 samples 样本量小，热点区间归属存在统计噪声（但 13/14 集中于同一区间且与源码语义一致，噪声不影响主归属）",
+      "编译器 autovec legality 限制导致该带条件更新/argmax 的循环未被自动向量化，而非单纯实现缺失",
+      "该函数为 rank 006、全 workload 仅 14 samples，即使完美向量化对整体耗时收益有限"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision（无 precise_ip/Exact-IP，单行占比仅锚定 loop interval）；baseline_gap: sampling metadata（函数级 workload 贡献与函数级 bound counter 未知）；样本量仅 14；无 ARM 侧对比数据。",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV / bvlc_alexnet",
+    "recommendedFirstAction": "在 src/caffe/layers/pooling_layer.cpp 的 PoolingLayer<float>::Forward_cpu MAX 分支（对应反汇编 0x19df80-0x19dfaa 标量 w-loop）实现 RVV interior fast path：沿输出宽度 ow 向量化，用 vlse32（stride_w=2，字节步长 8）或 vle32 加载 3x3 窗口 9 个 tap 向量，vfmax.vv 归约，vmerge 同步维护 max_idx_/top_mask 整数索引；interior 与 border/tail 分离，border/tail 保留标量 fallback；标量路径将 h*width_ 与 width_ 提出 w-loop（指针递增 + end-pointer），并保留严格大于首胜 tie 与 NaN 语义。",
+    "recommendedVerification": "重跑 caffe bvlc_alexnet benchmark 并对本函数重新 perf annotate（提高采样频率），确认 19df80-19dfaa 标量区间 sample share 显著下降、hot interval 出现 vsetvli/vle32/vlse32/vfmax.vv/vse32；与标量 reference 对 AlexNet pooled 尺寸（27x27/13x13/6x6）逐元素等价比对（含 border、NaN、首胜 tie、AVG divisor）。",
+    "metricEvidence": [
+      {
+        "metric": "cycles",
+        "rv": 56413930048,
+        "anomalyNote": "全 workload 总周期，IPC≈2.30 推导来源；无函数级 counter"
+      },
+      {
+        "metric": "instructions",
+        "rv": 129543036792,
+        "anomalyNote": "全 workload 总指令数，IPC≈2.30 推导来源"
+      },
+      {
+        "metric": "branch_miss_rate",
+        "rv": 0.0016,
+        "anomalyNote": "0.160%，非 branch-bound"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate",
+        "rv": 0.00281,
+        "anomalyNote": "0.281%，非 memory-bound；无 ARM 对比"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "caffe::PoolingLayer<float>::Forward_cpu",
+        "fileModule": "src/caffe/layers/pooling_layer.cpp",
+        "rvvPattern": "rvv_spatial_convolution_and_pooling_kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.929,
+        "note": "固定 stencil MAX pooling 标量邻域归约（compute-bound）；supporting: no-vectorization、loop_induction_variable_strength_reduction；函数内局部样本份额 13/14，函数级 workload 贡献未知"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/caffe/layers/pooling_layer.cpp（PoolingLayer<float>::Forward_cpu MAX 分支；反汇编 0x19df80-0x19dfaa 标量 w-loop，0x19ded0 处 caffe_set(-FLT_MAX) 初始化）",
+      "relatedKnowledge": "https://github.com/uxlfoundation/oneDNN/pull/5506; https://github.com/uxlfoundation/oneDNN/commit/8208c6a731edff86af37b1ede3208775cd46aaef; https://github.com/uxlfoundation/oneDNN/commit/4f915a57ce2fd600b9ca04bf5a312c365a4b1830; https://github.com/uxlfoundation/oneDNN/commit/563c5fcfcf8ad591b43d3dc7e0bc9292102eeba0; https://github.com/uxlfoundation/oneDNN/commit/56a75b311f2e9fdb176b3ca30a007c7fcdc641de; https://github.com/uxlfoundation/oneDNN/commit/a4c4855a9f4c478177e7fc799f64ac1457553ad7; https://github.com/uxlfoundation/oneDNN/pull/4323; https://github.com/uxlfoundation/oneDNN/commit/ce942914cb9d51c84ee0fc7f3ae253d6cd0121f6; https://github.com/uxlfoundation/oneDNN/commit/dd1dff668fe9194d9a955333461e299d19aefb1c; https://github.com/uxlfoundation/oneDNN/pull/4735; https://github.com/uxlfoundation/oneDNN/pull/5345; https://github.com/alibaba/MNN/pull/4042; https://github.com/alibaba/MNN/commit/672c5862392393c171f1513bf7994d3b95e2a6a1; https://github.com/alibaba/MNN/pull/4359; https://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5",
+      "evidenceExplanation": "pooling_layer.cpp 的 MAX 分支是唯一承载 0x19df80-0x19dfaa 标量邻域归约的源码位置，annotate 源行与其一一对应；命中 pattern rvv_spatial_convolution_and_pooling_kernels 的 Related PRs（oneDNN/MNN/OpenCV 的 RVV pooling kernel 实现）证明固定 stencil 池化沿输出位置向量化是成熟修复方向，代码与知识共同指向同一根因"
+    }
+  }
+}

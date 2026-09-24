@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-caffe-bvlc-alexnet-006",
+  "blueprintId": "bp-caffe-bvlc_alexnet-006",
+  "createdAt": "2026-09-21T06:20:00.000Z",
+  "objective": "为 caffe::PoolingLayer<float>::Forward_cpu 的 MAX 分支引入 RVV 1.0 向量化 interior fast path：沿输出宽度 pw 用 vlse32 跨步加载窗口 tap、vmfgt + vmerge 同时维护最大值与 max_idx_/top_mask 索引，边界与尾部保留标量回退，严格保持首胜 tie、NaN 与 -FLT_MAX 初始化语义。",
+  "changes": [
+    {
+      "filePath": "src/caffe/layers/pooling_layer.cpp",
+      "action": "modify",
+      "rationale": "蓝图 bp-caffe-bvlc_alexnet-006 确认根因为：MAX pooling 前向在 RISC-V 上以纯标量逐元素固定邻域归约执行（每 tap flw+flt.s+条件 fsw/sw，每轮 mulw 重算 h*width_+w），VLEN=256 向量单元完全闲置；热点为 use_top_mask==false / mask=max_idx_ 的 w-loop interval 0x19df80-0x19dfaa。该归约可沿输出位置向量化，且是 compute-bound（IPC≈2.30、L1 miss 0.281%）。",
+      "instructions": [
+        "把 MAX 分支的逐 (n,c) 平面归约抽为文件内静态函数 max_pool_forward_plane，泛型模板保持原标量语义（供 double 与非 RVV 构建使用）。",
+        "以 #if defined(__riscv_v) 提供 float 重载：先解析行 interior（hstart_raw>=0 且 hstart_raw+kernel_h<=height_）与列 interior 区间 [pwl, pwr)（窗口完全落在 [0,width_)），interior 之外一律走原标量路径。",
+        "interior 段沿 pw 向量化：vlse32.v 以 byte stride = stride_w_*4 加载 tap，vmfgt.vv + vmerge.vvm 同时更新 vmax 与 vindex（index = h*width_ + wstart + t，用 vid.v*stride_w_ 构造 lane 索引），vse32.v 写回 top_data 与 max_idx_/top_mask。",
+        "严格保持语义：vmax 初值 -FLT_MAX、vindex 初值 -1（对应 caffe_set 初始化与未更新时 mask=-1）；仅在 tap > vmax 时 merge（严格大于 → 首胜 tie）；NaN 比较为假故不更新。",
+        "SEW=e32、LMUL=m4、动态 vsetvl（不硬编码 lane 数）；LMUL/SEW 与 float 数据流一致，live set 约 5 组寄存器无 spill。",
+        "不改动 AVE 分支、公共 API、层接口与 max_idx_/top_mask 的存储语义。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "仅修改 src/caffe/layers/pooling_layer.cpp：新增 __riscv_v 保护的 float MAX pooling interior 向量化辅助函数（vlse32 跨步加载 + vmfgt/vmerge 维护 max 与 index + vse32 写回），将 MAX 分支的平面归约抽为 max_pool_forward_plane 并按 Dtype 重载分派（float 走 RVV，double/非 RVV 走原标量）。不改公共 API 与 AVE 分支。"
+}

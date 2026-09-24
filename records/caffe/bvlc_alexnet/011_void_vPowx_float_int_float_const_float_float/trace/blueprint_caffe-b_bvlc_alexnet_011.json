@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-caffe-bvlc_alexnet-011",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T04:01:58.588Z",
+    "software": "caffe",
+    "testcaseIds": [
+      "bvlc_alexnet"
+    ],
+    "diagnosisId": "diag-20260921T040158588Z-2ea82b60",
+    "targetHardware": "SpacemiT X100 (K3 SoC), RVV 1.0, VLEN=256, OoO",
+    "repositoryUrl": "https://github.com/BVLC/caffe.git",
+    "testBranch": "master",
+    "commitHash": "9b891540183ddc834a02b2bd81b31afae71b2153"
+  },
+  "problem": {
+    "summary": "bvlc_alexnet 基准中 caffe 的 vPowx<float> 逐元素 pow 循环为纯标量实现，每元素调用一次 libm powf（PLT 调用），在具备 RVV 1.0（VLEN=256）的 SpacemiT X100 上向量单元完全闲置。函数内 6/6（100%）采样点全部落在该标量调用循环区间 [0x231bbc,0x231bd8]；整机 perf stat 显示 compute-bound（IPC≈2.30），本地 RVV vector-math 改写是第一杠杆，但样本量小（6）且无函数级 workload 份额，收益幅度需实机验证。",
+    "evidence": [
+      "perf stat（RV 侧整机）：duration_time=25,749,410,063 ns；cycles=56,413,930,048；instructions=129,543,036,792",
+      "IPC≈2.30（compute-bound），L1_dcache_load_miss_rate=0.281%，branch_miss_rate=0.160%（非 memory/branch bound）",
+      "annotate（cpu-clock, local period, 6 samples）：50.00% @ 231bbc: flw fa0,0(s1)；33.33% @ 231bc6: auipc ra,0xffeb2（→ 231bca: jalr powf@plt）；16.67% @ 231bce: fsw fa0,0(s2)；6/6 采样全在标量逐元素 powf 调用循环",
+      "source 直证：include/caffe/util/mkl_alternate.hpp:47-62 DEFINE_VSL_UNARY_FUNC_WITH_PARAM(Powx, y[i] = pow(a[i], b))；build ISA 含 v1p0 但本函数 zero v* 指令"
+    ]
+  },
+  "rootCause": {
+    "summary": "vPowx<float> 热点为编译器生成的标量逐元素 powf 调用循环（y[i]=pow(a[i],b)），每元素一次 libm PLT 调用、无 RVV 向量化，向量单元闲置；命中 pattern：RVV Elementwise Activation Kernels（primary，route High/impact Medium）+ No vectorization（supporting）。",
+    "candidateFiles": [
+      "include/caffe/util/mkl_alternate.hpp"
+    ],
+    "performanceFactors": [
+      "RVV Elementwise Activation Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "y[i]=pow(a[i],b) 的 IEEE powf 数值语义（ULP/domain/NaN/±Inf/±0/subnormal）及 Caffe 数值重现性",
+      "CHECK_GT(n,0); CHECK(a); CHECK(y) 前置检查与 caffe_powx<float>/vsPowx 公共 API 语义",
+      "in-place alias（y==a）安全性；非 V 目标回退标量路径"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "bvlc_alexnet"
+    ],
+    "regressionCommand": "agent1 patch_regression --case bvlc_alexnet"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "annotate 样本仅 6 个且采样元数据为 local period，函数级 workload 贡献未知，收益上界只能以函数内局部份额表述；需人工确认 vPowx 在 bvlc_alexnet 中的实际调用量及数值合同（ULP 容差）后再放行自动转发。",
+    "reasoning": "perf stat 显示整机 compute-bound（IPC≈2.30、L1D miss 0.281%、branch miss 0.160%），本地计算改写是第一杠杆；annotate 中 vPowx<float> 的 6/6（100%）函数内采样全落在 [0x231bbc,0x231bd8] 的标量 load→powf@plt→store 循环（flw 50%、auipc 33%、fsw 17%），source（mkl_alternate.hpp:47-62）直证 y[i]=pow(a[i],b) 逐元素调用 libm powf；build ISA 含 v1p0、硬件 VLEN=256 却 zero v* 指令，命中 RVV Elementwise Activation Kernels（route High），no-vectorization 为 supporting；知识侧 OpenCV/MNN/llama.cpp/oneDNN 的 RVV 逐元素数学/激活 kernel 案例证明该模式可向量化改写。因采样元数据为 local period、样本仅 6、无函数级 workload 份额，收益上界仅能以函数内局部份额（100%）表述。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "powf 调用内部（glibc libm）本身的实现质量：本次 annotate 仅覆盖 caffe 侧循环，未分析 powf 内部；若 powf 内部才是主成本，向量化改写收益需在真实 workload 上重测",
+      "vPowx 在 bvlc_alexnet 中的调用量可能很小（rank 011/6、仅 6 样本），workload 级收益有限",
+      "Sampling IP precision（precise_ip）未知，auipc 行 33.33% 采样可能含 skid，单指令归因不成立（区间级结论不受影响）"
+    ],
+    "currentGaps": "无 ARM 侧对照与 latency ratio 数据（仅 RV 侧 perf stat）；无函数级 workload 样本份额（percent=local period）→ 无法给出 workload 级 Amdahl 上界；annotate 样本仅 6 个；Sampling IP precision（precise_ip）未知；glibc powf 内部实现不在本 annotate 覆盖范围",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 vPowx 在 bvlc_alexnet 中的实际调用量与数值合同（允许 ULP 误差还是 bit-exact），并复核 6 个样本的低采样置信度后再决定是否放行向量化改写",
+    "affectedTarget": "RV (SpacemiT X100) + bvlc_alexnet",
+    "recommendedFirstAction": "在 include/caffe/util/mkl_alternate.hpp:47-62 的 DEFINE_VSL_UNARY_FUNC_WITH_PARAM(Powx, y[i] = pow(a[i], b)) 循环加入带 __riscv_v_intrinsic/__riscv_v 扩展保护的 RVV vector-math 路径（SEW=32、scalable vsetvlmax、fixed-VL main loop + runtime-VL tail、LMUL 按 live-vector budget 选型），并在循环外对 b 做 1.0/2.0/0.5 特殊值 dispatch 快速通道",
+    "recommendedVerification": "重新运行 bvlc_alexnet 基准并重采 vPowx 的 perf annotate：确认 [0x231bbc,0x231bd8] 的 flw/auipc/jalr powf@plt/fsw 采样显著下降且出现 vsetvli/vle32/vse32 向量序列；同时以标量 reference 做全 domain 数值合同扫描（ULP/NaN/±Inf/±0/subnormal、n=0/小 n/main-loop 整倍数/tail 长度），确认 ratio 与正确性均达标",
+    "metricEvidence": [
+      {
+        "metric": "duration_time (ns)",
+        "rv": 25749410063,
+        "anomalyNote": "整机 bvlc_alexnet 基准运行时长（RV 侧实测）；无 ARM 对照"
+      },
+      {
+        "metric": "IPC",
+        "rv": 2.3,
+        "anomalyNote": "IPC≈129.54G/56.41G≈2.30，compute-bound；无 ARM 侧 perf stat"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate (%)",
+        "rv": 0.281,
+        "anomalyNote": "极低，非 memory-bound"
+      },
+      {
+        "metric": "branch_miss_rate (%)",
+        "rv": 0.16,
+        "anomalyNote": "极低，分支预测健康"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void vPowx<float>(int, float const*, float, float*)",
+        "fileModule": "include/caffe/util/mkl_alternate.hpp",
+        "rvvPattern": "RVV Elementwise Activation Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 1,
+        "note": "逐元素超越函数（pow）标量调用循环，数学 helper（powf@plt）主导；6/6（100%）函数内采样点全在 [0x231bbc,0x231bd8]，局部样本份额上界 1.0；supporting：No vectorization（同循环 zero v*）"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "include/caffe/util/mkl_alternate.hpp:47-62（DEFINE_VSL_UNARY_FUNC_WITH_PARAM(Powx, y[i] = pow(a[i], b))）；调用链 src/caffe/util/math_functions.cpp:178-181 (caffe_powx<float>)",
+      "relatedKnowledge": "https://github.com/opencv/opencv/commit/524d8ae01c6336c6d3cc7420ca71055246a61843, https://github.com/opencv/opencv/commit/86241653a7815dac1525639544cc3c44bab1277e, https://github.com/opencv/opencv/pull/27072, https://github.com/uxlfoundation/oneDNN/commit/aa23ab5573918d442c30a277ad615db36ed786ce, https://github.com/uxlfoundation/oneDNN/commit/d5ae4488090377e04c4f9d7d55bbd41e6bad7c4a, https://github.com/ggml-org/llama.cpp/pull/17227, https://github.com/ggml-org/llama.cpp/pull/15057, https://github.com/alibaba/MNN/pull/4508, https://github.com/alibaba/MNN/pull/4484, https://github.com/alibaba/MNN/pull/4044, https://github.com/alibaba/MNN/commit/b7268aa3dab754190ed7d86dc16b9bab02e73d12, https://github.com/alibaba/MNN/pull/4359, https://github.com/opencv/opencv/pull/22179, https://github.com/opencv/opencv/pull/22520, https://github.com/opencv/opencv/pull/23980, https://github.com/opencv/opencv/pull/24058, https://github.com/opencv/opencv/pull/24132, https://github.com/opencv/opencv/pull/24166, https://github.com/opencv/opencv/pull/24301, https://github.com/opencv/opencv/pull/24325, https://github.com/opencv/opencv/pull/27160, https://github.com/opencv/opencv/pull/27119, https://github.com/opencv/opencv/pull/27097, https://github.com/opencv/opencv/pull/27007, https://github.com/opencv/opencv/pull/26958, https://github.com/opencv/opencv/pull/26865, https://github.com/opencv/opencv/commit/b902a8e792e1702b40f19dbd48dff0bfdca8b36d, https://github.com/opencv/opencv/commit/2c16f3b7d2b28f6cac444046b8f95b40d9266a6a, https://github.com/opencv/opencv/commit/e06502a254f79f9d3184de2803d087c6914b7706, https://github.com/opencv/opencv/commit/a2d784b6f53aa1fdfde21ab8e3787a93b59af24f, https://github.com/opencv/opencv/commit/83104bed32093ff0c5c935e8920c72b6b74ae07a",
+      "evidenceExplanation": "相关代码（mkl_alternate.hpp 宏生成标量循环）与热点 annotate 指向同一根因：lane-independent 逐元素 pow 以标量数学 helper 调用执行；OpenCV/MNN/llama.cpp/oneDNN 的 RVV 逐元素数学/激活 kernel 案例证明在 RVV 1.0 目标上该形态可改写为 vector-math 管线，支撑 RVV Elementwise Activation Kernels 的修复方向。"
+    }
+  }
+}

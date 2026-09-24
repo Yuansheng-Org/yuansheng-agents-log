@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-caffe-bvlc-alexnet-004",
+  "blueprintId": "bp-caffe-bvlc_alexnet-004",
+  "createdAt": "2026-09-21T06:03:16.801Z",
+  "objective": "为 caffe::im2col_cpu<float> 的固定 stride gather 内层循环引入 RVV 1.0 向量访存路径（vle32/vlse32 + vse32），消除每元素 addw+slli+add 地址重建、单元素 flw/fsw 与 in-bounds 分支，保留纯数据搬运的 bit-preserving 语义与非 RVV 构建的标量 fallback。",
+  "changes": [
+    {
+      "filePath": "src/caffe/util/im2col.cpp",
+      "action": "modify",
+      "rationale": "蓝图 bp-caffe-bvlc_alexnet-004 确认根因为：im2col_cpu<float> 内层 output_col 循环（input_col += stride_w 固定 stride gather）被编译为全标量实现（约 8 条指令/元素），而 build ISA 含 v1p0、硬件为 RVV 1.0 VLEN=256，函数全程 zero v*。该循环是纯数据搬运（bit-preserving），无 FP 归约顺序依赖，最适合以向量访存替代逐元素地址计算。",
+      "instructions": [
+        "在文件顶部以 #if defined(__riscv_v) 引入 <riscv_vector.h> 并置内部宏，非 RVV 构建完全不编译向量代码。",
+        "新增 float 专用的单输出行 gather 辅助函数：对固定 (channel,kernel_row,kernel_col,output_row)，先按 0 <= base_col + oc*stride_w < width 解析出 in-bounds 连续区间 [lclip, rclip)，三段处理——头部/尾部以 vse32(vzero) 写 +0.0f，主段向量 gather（stride_w==1 用 vle32.v unit-stride，stride_w>1 用 vlse32.v 且 byte stride = stride_w*4）+ vse32.v 连续写出。",
+        "主循环 SEW=e32、动态 vsetvl、LMUL 取 m4（峰值 live vector 仅 1 组，m4 无 spill 合法；为 A/B 选型保留常量位置）。",
+        "以重载分派保留泛型标量模板：float 命中非模板 RVV 重载，double 与其它 Dtype 继续走原标量循环，语义不变。",
+        "保持 im2col_cpu 模板签名、12 参数调用约定与显式实例化不变；padding 行零填路径保持原样。"
+      ],
+      "risk": "low"
+    }
+  ],
+  "expectedDiffSummary": "仅修改 src/caffe/util/im2col.cpp：新增 __riscv_v 保护的 RVV 头与 float gather 辅助函数（vse32 零填 + vle32/vlse32 主段 + vse32 写出），并将 im2col_cpu 内层 output_col 标量循环改为按 Dtype 重载分派（float 走 RVV、其余走原标量）。不改变公共 API、模板签名、显式实例化与非 RVV 行为。"
+}

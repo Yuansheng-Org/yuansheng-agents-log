@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-caffe-bvlc-alexnet-011-002",
+  "patchCandidateId": "pc-bp-caffe-bvlc-alexnet-011",
+  "reviewedAt": "2026-09-21T06:56:31.000Z",
+  "reviewer": "opencode independent read-only AI patch reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 判定 archSpecific=true（riscv-macro: '+#if defined(__riscv_v) && defined(__riscv_v_intrinsic)'；vlenb: '+  const size_t vlmax = __riscv_vsetvlmax_e32m4();'）。RVV 1.0 架构审核通过：SEW/LMUL 一致——f32 e32m2 经 vfwcvt_f_f_v_f64m4 加宽为 f64 e64m4（元素数一致：e32m2=2*VLEN/32，e64m4=4*VLEN/64），再经 vfncvt_f_f_w_f32m2 收窄回 f32m2；精确快路径 rvv_map_f32 用 e32m4。vsetvl 均为运行时动态（vsetvlmax_e32m4/vsetvl_e32m2/vsetvl_e32m4），硬件 VLEN=256 下取满，不受 build Tag_RISCV_arch 的 zvl128b 下限约束（metadata.json Tag_RISCV_arch 含 v1p0/zve32f/zve64d/zve64f，f64 向量加宽所需 zve64d 存在）。无 mask，尾块用运行时 VL 只写回有效 lane，无越界写；未出现 x86/ARM 指令；编译期门为 '#if defined(__riscv_v) && defined(__riscv_v_intrinsic)'，非 V 目标回退标量。implementer 上下文称无向量寄存器溢出，本只读审核无法独立复现反汇编，标记 cannot verify（见 F-001），不据此下结论。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "证据锚点真实性（findings evidence 均可溯源到 patch.diff hunk 原文或 blueprint/patch-plan 字段）",
+      "result": "PASS"
+    },
+    {
+      "dimension": "无臆造事实（未把无法从证据验证的结论写成既成事实；无法验证项已标注 cannot verify）",
+      "result": "PASS"
+    },
+    {
+      "dimension": "约束边界合规（对照 blueprint.constraints.mustPreserve 逐项核验 diff 行为）",
+      "result": "PASS"
+    },
+    {
+      "dimension": "RISC-V 事实准确（ISA/VLEN/LMUL/扩展均以 metadata.json Tag_RISCV_arch 与 blueprint/diaglog 为准）",
+      "result": "PASS"
+    },
+    {
+      "dimension": "逻辑一致性（数值域/回退/别名/快路径声明与 diff 逻辑逐行一致；F-001/F-002/F-005 修订经原文比对确认）",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-001",
+      "file": "include/caffe/util/mkl_alternate.hpp",
+      "severity": "suggestion",
+      "category": "verification-limits",
+      "evidence": "patch.diff hunk2 注释 '+// up to ~100 ULP vs libm powf), while the f64 pipeline yields a result within\\n+// 1 ULP of libm powf on the target riscv64 libm (measured over the whole\\n+// normal positive domain for |b| <= 1, including the bvlc_alexnet LRN'；实现 '+  const size_t vlmax = __riscv_vsetvlmax_e32m4();' 所在的 e64m4 流水线。blueprint diagnosis.currentGaps 亦记录函数级 workload 份额与 glibc powf 内部未覆盖。",
+      "suggestion": "read-only 审核不能执行数值扫描或反汇编，'1 ULP' 与 '无 vector spill' 标记 cannot verify。建议以标量 libm powf 为 reference 做全正规格化域 ULP 扫描（含结果落次正规/下溢边界、n=0/小 n/main-loop 整倍数/各 tail 长度），并对目标 -march 反汇编确认无 vector spill；另在注释中补充输出进入次正规（如 b=-1、x→f32 max 时结果≈2^-128）时的行为界定。"
+    },
+    {
+      "id": "F-002",
+      "file": "include/caffe/util/mkl_alternate.hpp",
+      "severity": "suggestion",
+      "category": "numeric-contract",
+      "evidence": "patch.diff hunk2 '+  const vint64m4_t ki = __riscv_vfcvt_x_f_v_i64m4(yy, vl);' 与 '+  __riscv_vse32_v_f32m2(y + i, __riscv_vfncvt_f_f_w_f32m2(res, vl), vl);' 使用动态舍入模式（FRM，默认 RNE）；blueprint diagnosis.recommendedVerification 将 'FRM/FCSR 状态核对' 列为验证项。",
+      "suggestion": "在注释中显式声明该路径假定 FRM=round-to-nearest-even，或在入口读取/校验 frm，非默认舍入模式下回退标量 libm powf；并在验证中覆盖 FRM≠RNE 的情形（当前证据未覆盖，cannot verify）。"
+    },
+    {
+      "id": "F-003",
+      "file": "include/caffe/util/mkl_alternate.hpp",
+      "severity": "suggestion",
+      "category": "performance",
+      "evidence": "patch.diff hunk2 rvv_powx_domain_ok 完整标量预扫 '+  for (int i = 0; i < n; ++i) {\\n+    uint32_t u;\\n+    std::memcpy(&u, &a[i], sizeof(u));'，随后向量路径再次读取 a；且 '+  if (rvv_powx_domain_ok(a, n, b)) {\\n+    if (b == 1.0f) {' 使精确快路径也被迫先扫描。",
+      "suggestion": "b==1（恒等拷贝）与 b==0（常量填充，-0.0f 亦命中）对所有输入均精确成立，可不做逐元素域扫描直接执行；一般路径可考虑将域判定融合进向量分块或按块提前退出，避免对大数组重复读取一遍输入。"
+    },
+    {
+      "id": "F-004",
+      "file": "include/caffe/util/mkl_alternate.hpp",
+      "severity": "suggestion",
+      "category": "maintainability",
+      "evidence": "patch.diff hunk2 删除行 '-DEFINE_VSL_UNARY_FUNC_WITH_PARAM(Powx, y[i] = pow(a[i], b))'；仓库内该宏仅剩定义处 '#define DEFINE_VSL_UNARY_FUNC_WITH_PARAM(name, operation) \\' 与说明注释，已无实例化点。",
+      "suggestion": "删除该未使用宏，或保留并注明其已无实例化点，避免后续误用。"
+    },
+    {
+      "id": "F-005",
+      "file": "include/caffe/util/mkl_alternate.hpp",
+      "severity": "suggestion",
+      "category": "robustness",
+      "evidence": "patch.diff hunk2 '+  for (; i + static_cast<int>(vlmax) <= n; i += static_cast<int>(vlmax)) {'；对照被替换的原始标量循环 'for (int i = 0; i < n; ++i)'（无加法溢出路径）。",
+      "suggestion": "改为 'n - i >= static_cast<int>(vlmax)' 或使用 size_t 计数，规避 n 接近 INT_MAX 时 i + vlmax 的有符号溢出（理论边界，正常 Caffe blob 尺寸不触发）。"
+    }
+  ]
+}

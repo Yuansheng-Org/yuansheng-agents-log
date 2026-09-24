@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-caffe-bvlc_alexnet-004",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T03:43:51.699Z",
+    "software": "caffe",
+    "testcaseIds": [
+      "bvlc_alexnet"
+    ],
+    "diagnosisId": "diag-20260921T034351699Z-57718da8",
+    "targetHardware": "SpacemiT X100 (K3), RVV 1.0, VLEN=256, vlenb=32, out-of-order",
+    "repositoryUrl": "https://github.com/BVLC/caffe.git",
+    "testBranch": "master",
+    "commitHash": "9b891540183ddc834a02b2bd81b31afae71b2153"
+  },
+  "problem": {
+    "summary": "在 bvlc_alexnet 基准（RISC-V SpacemiT X100）上，caffe::im2col_cpu<float>（rank 004）是纯数据搬运的固定 stride 布局变换 gather 循环，却被编译为全标量实现：每元素执行地址重建（addw+slli+add）、单元素 flw/fsw、in-bounds 分支与两个归纳变量更新（约 8 条指令/元素）。尽管 build ISA 含 v1p0 且硬件支持 RVV 1.0（VLEN=256），本函数 zero v* 指令，两个标量 gather 循环合计 45/49（91.8%）函数内局部样本份额，热点成本来自标量指令发射/循环控制而非 cache 或分支。",
+    "evidence": [
+      "im2col_cpu<float> 两标量 gather 循环合计 45/49 = 91.8% 函数内局部样本份额（cpu-clock / local period）",
+      "Loop A（stride_w==1 路径）：33/49 = 67.3%，anchor 行 `34.69 : 2287ca: addiw a4,a4,1`、`24.49 : 2287c0: addi a3,a3,4`",
+      "Loop B（stride_w!=1 路径，AlexNet conv1 stride 4 实际走此路径）：12/49 = 24.5%，anchor 行 `8.16 : 228ac0: addw a4,s10,a4`、`6.12 : 228ab6: addi t1,t1,4`",
+      "workload perf stat：IPC≈2.30、L1_dcache_load_miss_rate=0.281%、branch_miss_rate=0.160% → 非 cache-memory/branch-bound，热循环为 issue/loop-control 主导",
+      "build ISA Tag_RISCV_arch 含 v1p0（rv64i..._v1p0_..._zvl128b）、hardware 为 RVV 1.0 VLEN=256，但本函数 annotate 全程 zero v*（autovectorization gap / RVV kernel 未构建）"
+    ]
+  },
+  "rootCause": {
+    "summary": "纯数据搬运的 im2col 布局变换 gather 循环（input_col += stride_w 的固定 stride 访问）被编译为全标量实现：每元素重复 index scaling 地址重建、单元素 flw/fsw、in-bounds 分支与归纳变量更新（约 8 条指令/元素），未使用硬件与 build 均支持的 RVV 向量访存（vle32/vlse32/vse32），指令发射与循环控制成为主要开销。",
+    "candidateFiles": [
+      "src/caffe/util/im2col.cpp"
+    ],
+    "performanceFactors": [
+      "RVV Strided Memory Access for Layout Transforms",
+      "No vectorization (autovec gap / RVV kernel not built)",
+      "Loop Induction Variable Strength Reduction"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "low",
+    "mustPreserve": [
+      "im2col 输出列缓冲布局：同一 (channel, kernel_row, kernel_col, output_row, output_col) 索引映射与标量版本逐位一致",
+      "纯数据搬运算术语义：bit-preserving（NaN payload / signed zero 不变），padding 零填为精确 +0.0f",
+      "函数签名与调用约定（caffe::im2col_cpu<float> 模板显式实例化，12 参数 + data_col）不变",
+      "非 RVV 构建 / 不支持 v 的运行环境保留原标量 fallback 行为"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "bvlc_alexnet"
+    ],
+    "regressionCommand": "agent1 patch_regression --case bvlc_alexnet"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.85,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "workload perf stat 显示 IPC≈2.30、L1 miss 0.281%、branch miss 0.160%，将 bound type 归为指令发射/循环控制主导而非 cache/branch 瓶颈；perf annotate 显示 im2col_cpu<float> 两个热 gather 循环（Loop A 67.3% + Loop B 24.5%，合计 91.8% 函数内局部样本份额）每元素执行 addw+slli+add 地址重建、单元素 flw/fsw、bgeu 边界分支与两个归纳变量更新（约 8 条指令/元素），且全程 zero v*，而 build ISA 含 v1p0、硬件为 RVV 1.0 VLEN=256。命中 rows-operator-rvv 的 RVV Strided Memory Access for Layout Transforms 行（route High / impact High 函数内局部），叠加 supporting 的 No vectorization 与 Loop Induction Variable Strength Reduction；MNN/OpenBLAS/vLLM 的同类 RVV 布局变换与跨步访存 PR（codeKnowledgeEvidence）证明固定 stride 搬运在 RVV 上以 vle32/vlse32/vse32 替代标量逐元素地址计算是已验证收益路径。三层证据共同指向同一根因：v-enabled 构建下的纯数据搬运循环未向量化。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "precise_ip 未知（baseline_gap: sampling IP precision），单行样本占比可能含 skid，但两热区间合计 91.8% 且 Loop A/B 指令形态一致，区间级结论不受影响",
+      "im2col 数据膨胀（conv1：3×55×55×121≈1.1M floats 写出）带来的写带宽压力可能限制向量化后的实际收益上限，需实测确认，不影响根因定性",
+      "compiler autovectorization profitability 判断（如 in-bounds 分支、非单位 stride、别名）可能使编译器主动拒绝向量化而非实现缺失，修复方向同为引入显式 RVV 路径"
+    ],
+    "currentGaps": "Sampling IP precision（precise_ip）未知，热行只锚定 loop interval；无函数级 perf stat（现有为 workload 级）；本批次为 RISC-V 单侧 profile，无 RISC-V vs ARM duration ratio（无 ys-trace-execution-summary 输入）；构建优化级别（-O2/-O3）未从构建文件确认；无矩阵引擎证据，matrix-engine 卸载路径未评估。",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + bvlc_alexnet",
+    "recommendedFirstAction": "src/caffe/util/im2col.cpp：为 im2col_cpu<float> 内层 output_col 循环加入 RVV 路径——按 (kernel_row, kernel_col, output_row) 一次仿射裁剪 in-bounds 区间 [lclip, rclip)，三段处理（头部/尾部零填 vse32(vzero) + 主段向量 gather），stride_w==1 用 vle32.v+vse32.v（unit-stride），stride_w>1 用 vlse32.v（byte stride = stride_w*4）+vse32.v，SEW=e32、动态 vsetvl、LMUL m1/m2/m4 按 live-register 预算 A/B 选型，以 __riscv_v / __riscv_v_intrinsic 宏做 RVV build gate 并保留标量 fallback",
+    "recommendedVerification": "重新运行 caffe benchmark bvlc_alexnet 与 perf annotate：确认 im2col_cpu<float> 的 annotate 出现 vsetvli/vsetvl、vle32.v、vlse32.v、vse32.v，原标量热行（0x2287b8-0x2287cc、0x228aae-0x228ac8）样本消失/骤降；函数内 instructions 下降约 6-8 倍；conv1（stride 4 / pad 0）与 conv2-5（stride 1 / pad 2）输出与标量 reference 逐位一致（bit-preserving + 零填 +0.0f），ratio/耗时下降",
+    "metricEvidence": [
+      {
+        "metric": "IPC (cycles/instructions)",
+        "rv": 2.3,
+        "anomalyNote": "workload 级 IPC≈2.30（129,543,036,792 instructions / 56,413,930,048 cycles）；热函数为纯数据搬运却以标量逐元素指令流执行，指令发射为热点成本来源"
+      },
+      {
+        "metric": "L1 D-cache load miss rate (%)",
+        "rv": 0.281,
+        "anomalyNote": "L1_dcache_load_miss_rate=0.281%（150,729,109 / 53,701,921,459），极低，排除 cache-memory-bound，确认热循环是 issue/loop-control 主导而非访存延迟主导"
+      },
+      {
+        "metric": "branch miss rate (%)",
+        "rv": 0.16,
+        "anomalyNote": "branch_miss_rate=0.160%（7,963,448 / 4,984,941,186），极低，排除 branch-bound"
+      },
+      {
+        "metric": "函数内热循环 sample share (cpu-clock, local period)",
+        "rv": 0.918,
+        "anomalyNote": "两标量 gather 循环合计 45/49=91.8% 函数内局部样本份额（Loop A 33/49=67.3% + Loop B 12/49=24.5%），为函数内收益上界"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "caffe::im2col_cpu<float>",
+        "fileModule": "src/caffe/util/im2col.cpp",
+        "rvvPattern": "RVV Strided Memory Access for Layout Transforms",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.918,
+        "note": "纯数据搬运的布局变换（im2col image→column 固定 stride gather），内存密集但非 cache-miss 主导；scalar 每元素约 8 条指令（地址重建+flw/fsw+边界分支+归纳变量更新），build 含 v1p0 而函数 zero v*"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/caffe/util/im2col.cpp:41-49",
+      "relatedKnowledge": "https://github.com/alibaba/MNN/pull/4023; https://github.com/alibaba/MNN/pull/4026; https://github.com/alibaba/MNN/commit/aaf5b231cf9bc44361ad2c129100bdbcc444df05; https://github.com/alibaba/MNN/commit/89f47a28769596c3e2240c2cf53c509a134d3ce5; https://github.com/OpenMathLib/OpenBLAS/commit/98a8230dee44d98d143f6dff1d944d38bba115f5; https://github.com/OpenMathLib/OpenBLAS/commit/aa967ef6ba7cfce9710eee0857686915c0db1c86; https://github.com/OpenMathLib/OpenBLAS/commit/bd45b82ed012279b2c59034311f53d45fc4b0e06; https://github.com/vllm-project/vllm/pull/40119",
+      "evidenceExplanation": "im2col_cpu 内层固定 stride gather（input_col += stride_w）与 patterns/rvv_strided_layout_transform_kernels.md 的 vlse32/vse32 结构（§The fix 第 4 节 strided load + contiguous store、第 10 节 unit-stride/non-unit-stride 分派）完全对应；MNN/OpenBLAS/vLLM 的 RVV 布局变换与跨步访存 PR 证明同类固定 stride 数据搬运以向量访存替代标量逐元素地址计算的收益路径，与本次 profile 证据（标量地址重建 + 窄粒度 flw/fsw 主导）指向同一根因：该函数在 v-enabled 构建下未向量化"
+    }
+  }
+}

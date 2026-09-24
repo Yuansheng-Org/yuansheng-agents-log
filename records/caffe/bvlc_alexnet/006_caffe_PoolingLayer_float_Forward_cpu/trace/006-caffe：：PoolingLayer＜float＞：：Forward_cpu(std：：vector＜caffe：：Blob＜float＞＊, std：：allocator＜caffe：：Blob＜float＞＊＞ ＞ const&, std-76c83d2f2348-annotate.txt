@@ -1,0 +1,816 @@
+ Percent |	Source code & Disassembly of libcaffe.so.1.0.0 for cpu-clock (14 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      000000000019da72 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)>:
+         : 6      caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 141    }
+         :
+         : 143    // TODO(Yangqing): Is there a faster way to do pooling in the channel-first
+         : 144    // case?
+         : 145    template <typename Dtype>
+         : 146    void PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+    0.00 :   19da72: addi    sp,sp,-320
+    0.00 :   19da74: sd      ra,312(sp)
+    0.00 :   19da76: sd      s0,304(sp)
+    0.00 :   19da78: sd      s1,296(sp)
+    0.00 :   19da7a: addi    s0,sp,320
+    0.00 :   19da7c: sd      s2,288(sp)
+    0.00 :   19da7e: sd      s4,272(sp)
+    0.00 :   19da80: sd      s6,256(sp)
+    0.00 :   19da82: sd      s7,248(sp)
+    0.00 :   19da84: sd      s8,240(sp)
+    0.00 :   19da86: sd      s11,216(sp)
+         : 143    const vector<Blob<Dtype>*>& top) {
+         : 144    const Dtype* bottom_data = bottom[0]->cpu_data();
+    0.00 :   19da88: ld      a5,0(a1)
+         : 141    void PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+    0.00 :   19da8a: mv      s1,a0
+    0.00 :   19da8c: auipc   s6,0x168
+    0.00 :   19da90: ld      s6,-228(s6) # 3059a8 <__stack_chk_guard@GLIBC_2.27>
+         : 143    const Dtype* bottom_data = bottom[0]->cpu_data();
+    0.00 :   19da94: ld      a0,0(a5)
+         : 141    void PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+    0.00 :   19da96: ld      a5,0(s6)
+    0.00 :   19da9a: sd      a5,-120(s0)
+    0.00 :   19da9e: li      a5,0
+    0.00 :   19daa0: mv      s2,a2
+    0.00 :   19daa2: mv      s8,a1
+         : 143    const Dtype* bottom_data = bottom[0]->cpu_data();
+    0.00 :   19daa4: jal     e3310 <caffe::Blob<float>::cpu_data() const@plt>
+         : 144    Dtype* top_data = top[0]->mutable_cpu_data();
+    0.00 :   19daa8: ld      a5,0(s2)
+         : 143    const Dtype* bottom_data = bottom[0]->cpu_data();
+    0.00 :   19daac: mv      s11,a0
+         : 144    Dtype* top_data = top[0]->mutable_cpu_data();
+    0.00 :   19daae: ld      a0,0(a5)
+    0.00 :   19dab0: jal     e20e0 <caffe::Blob<float>::mutable_cpu_data()@plt>
+         : 145    std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> >::operator[](unsigned long) const:
+         : 1283   _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
+         : 1284   const_reference
+         : 1285   operator[](size_type __n) const _GLIBCXX_NOEXCEPT
+         : 1286   {
+         : 1287   __glibcxx_requires_subscript(__n);
+         : 1288   return *(this->_M_impl._M_start + __n);
+    0.00 :   19dab4: ld      a5,0(s2)
+         : 1290   caffe::LayerParameter::_internal_pooling_param() const:
+         : 26454  if (_impl_.pooling_param_ != nullptr) _impl_.pooling_param_->Clear();
+         : 26455  _impl_._has_bits_[0] &= ~0x00800000u;
+         : 26456  }
+         : 26457  inline const ::caffe::PoolingParameter& LayerParameter::_internal_pooling_param() const {
+         : 26458  PROTOBUF_TSAN_READ(&_impl_._tsan_detect_race);
+         : 26459  const ::caffe::PoolingParameter* p = _impl_.pooling_param_;
+    0.00 :   19dab8: ld      a4,400(s1)
+         : 26461  caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+    0.00 :   19dabc: mv      s7,a0
+         : 145    caffe::Blob<float>::count() const:
+         : 75     */
+         : 76     inline int shape(int index) const {
+         : 77     return shape_[CanonicalAxisIndex(index)];
+         : 78     }
+         : 79     inline int num_axes() const { return shape_.size(); }
+         : 80     inline int count() const { return count_; }
+    0.00 :   19dabe: ld      a3,0(a5)
+    0.00 :   19dac0: lw      s4,72(a3)
+         : 83     caffe::LayerParameter::_internal_pooling_param() const:
+         : 26455  return p != nullptr ? *p : reinterpret_cast<const ::caffe::PoolingParameter&>(::caffe::_PoolingParameter_default_instance_);
+    0.00 :   19dac4: beqz    a4,19dc96 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x224>
+         : 26457  caffe::PoolingParameter::_internal_pool() const:
+         : 32921  _internal_set_pool(value);
+         : 32922  // @@protoc_insertion_point(field_set:caffe.PoolingParameter.pool)
+         : 32923  }
+         : 32924  inline ::caffe::PoolingParameter_PoolMethod PoolingParameter::_internal_pool() const {
+         : 32925  PROTOBUF_TSAN_READ(&_impl_._tsan_detect_race);
+         : 32926  return static_cast<::caffe::PoolingParameter_PoolMethod>(_impl_.pool_);
+    0.00 :   19dac8: lw      a4,24(a4)
+         : 32928  caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 152    const bool use_top_mask = top.size() > 1;
+         : 153    int* mask = NULL;  // suppress warnings about uninitialized variables
+         : 154    Dtype* top_mask = NULL;
+         : 155    // Different pooling methods. We explicitly do the switch outside the for
+         : 156    // loop to save time, although this results in more code.
+         : 157    switch (this->layer_param_.pooling_param().pool()) {
+    0.00 :   19daca: li      a3,1
+    0.00 :   19dacc: beq     a4,a3,19dca6 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x234>
+    0.00 :   19dad0: li      a3,2
+    0.00 :   19dad2: beq     a4,a3,19e01a <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x5a8>
+    0.00 :   19dad6: bnez    a4,19e060 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x5ee>
+         : 163    std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> >::size() const:
+         : 1119   ptrdiff_t __dif = this->_M_impl._M_finish - this->_M_impl._M_start;
+    0.00 :   19dada: ld      a4,8(s2)
+    0.00 :   19dade: sd      s3,280(sp)
+         : 1122   caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 155    case PoolingParameter_PoolMethod_MAX:
+         : 156    // Initialize
+         : 157    if (use_top_mask) {
+    0.00 :   19dae0: li      a3,8
+         : 159    std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> >::size() const:
+    0.00 :   19dae2: sub     a4,a4,a5
+         : 1120   caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+    0.00 :   19dae4: bge     a3,a4,19debc <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x44a>
+         : 156    top_mask = top[1]->mutable_cpu_data();
+    0.00 :   19dae8: ld      a0,8(a5)
+    0.00 :   19daea: jal     e20e0 <caffe::Blob<float>::mutable_cpu_data()@plt>
+         : 157    caffe_set(top_count, Dtype(-1), top_mask);
+    0.00 :   19daee: auipc   a5,0xdc
+    0.00 :   19daf2: flw     fa0,1342(a5) # 27a02c <typeinfo name for boost::detail::sp_counted_impl_p<caffe::SyncedMemory>+0x3c>
+    0.00 :   19daf6: mv      a1,a0
+         : 156    top_mask = top[1]->mutable_cpu_data();
+    0.00 :   19daf8: mv      s3,a0
+         : 157    caffe_set(top_count, Dtype(-1), top_mask);
+    0.00 :   19dafa: mv      a0,s4
+    0.00 :   19dafc: jal     e39d0 <void caffe::caffe_set<float>(int, float, float*)@plt>
+         : 162    } else {
+         : 163    mask = max_idx_.mutable_cpu_data();
+         : 164    caffe_set(top_count, -1, mask);
+         : 165    }
+         : 166    caffe_set(top_count, Dtype(-FLT_MAX), top_data);
+    0.00 :   19db00: auipc   a5,0xdc
+    0.00 :   19db04: flw     fa0,1352(a5) # 27a048 <typeinfo name for boost::detail::sp_counted_impl_p<caffe::SyncedMemory>+0x58>
+    0.00 :   19db08: mv      a0,s4
+    0.00 :   19db0a: mv      a1,s7
+    0.00 :   19db0c: jal     e39d0 <void caffe::caffe_set<float>(int, float, float*)@plt>
+         : 164    // The main loop
+         : 165    for (int n = 0; n < bottom[0]->num(); ++n) {
+    0.00 :   19db10: ld      a5,0(s8)
+         : 162    caffe_set(top_count, Dtype(-FLT_MAX), top_data);
+    0.00 :   19db14: li      s4,0
+         : 164    caffe::Blob<float>::num() const:
+         : 132    }
+         : 133    return axis_index;
+         : 134    }
+         :
+         : 136    /// @brief Deprecated legacy shape accessor num: use shape(0) instead.
+         : 137    inline int num() const { return LegacyShape(0); }
+    0.00 :   19db16: ld      a0,0(a5)
+    0.00 :   19db18: jal     19cb46 <caffe::Blob<float>::LegacyShape(int) const [clone .constprop.0]>
+         : 140    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 164    for (int n = 0; n < bottom[0]->num(); ++n) {
+    0.00 :   19db1c: bge     s4,a0,19dc6e <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x1fc>
+         : 165    for (int c = 0; c < channels_; ++c) {
+    0.00 :   19db20: lw      a5,752(s1)
+    0.00 :   19db24: sd      s5,264(sp)
+    0.00 :   19db26: li      s5,0
+    0.00 :   19db28: blez    a5,19dc5c <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x1ea>
+    0.00 :   19db2c: sd      s9,232(sp)
+    0.00 :   19db2e: sd      s10,224(sp)
+         : 166    for (int ph = 0; ph < pooled_height_; ++ph) {
+    0.00 :   19db30: lw      a3,764(s1)
+    0.00 :   19db34: blez    a3,19dc1e <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x1ac>
+         : 167    for (int pw = 0; pw < pooled_width_; ++pw) {
+    0.00 :   19db38: lw      t6,768(s1)
+         : 166    for (int ph = 0; ph < pooled_height_; ++ph) {
+    0.00 :   19db3c: li      a4,0
+    0.00 :   19db3e: sd      s4,-232(s0)
+         : 167    for (int pw = 0; pw < pooled_width_; ++pw) {
+    0.00 :   19db42: blez    t6,19dc1a <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x1a8>
+         : 168    int hstart = ph * stride_h_ - pad_h_;
+    0.00 :   19db46: lw      a5,736(s1)
+    0.00 :   19db4a: lw      a6,744(s1)
+         : 170    int wstart = pw * stride_w_ - pad_w_;
+         : 171    int hend = min(hstart + kernel_h_, height_);
+    0.00 :   19db4e: lw      a1,728(s1)
+         : 168    int hstart = ph * stride_h_ - pad_h_;
+    0.00 :   19db52: mulw    a5,a5,a4
+         : 170    int const& std::min<int>(int const&, int const&):
+         : 239    min(const _Tp& __a, const _Tp& __b)
+         : 240    {
+         : 241    // concept requirements
+         : 242    __glibcxx_function_requires(_LessThanComparableConcept<_Tp>)
+         : 243    //return __b < __a ? __b : __a;
+         : 244    if (__b < __a)
+    0.00 :   19db56: lw      a0,756(s1)
+         : 246    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+    0.00 :   19db5a: subw    a5,a5,a6
+         : 170    int hend = min(hstart + kernel_h_, height_);
+    0.00 :   19db5e: addw    a1,a1,a5
+         : 172    int const& std::min<int>(int const&, int const&):
+    0.00 :   19db60: sext.w  t5,a1
+    0.00 :   19db64: bge     a0,a1,19db6c <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0xfa>
+    0.00 :   19db68: sext.w  t5,a0
+         : 242    int const& std::max<int>(int const&, int const&):
+         : 263    max(const _Tp& __a, const _Tp& __b)
+         : 264    {
+         : 265    // concept requirements
+         : 266    __glibcxx_function_requires(_LessThanComparableConcept<_Tp>)
+         : 267    //return  __a < __b ? __b : __a;
+         : 268    if (__a < __b)
+    0.00 :   19db6c: sext.w  a6,a5
+    0.00 :   19db70: bgez    a5,19db76 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x104>
+    0.00 :   19db74: li      a6,0
+         : 272    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 174    int wend = min(wstart + kernel_w_, width_);
+         : 175    hstart = max(hstart, 0);
+         : 176    wstart = max(wstart, 0);
+         : 177    const int pool_index = ph * pooled_width_ + pw;
+    0.00 :   19db76: mulw    s4,a4,t6
+         : 167    for (int pw = 0; pw < pooled_width_; ++pw) {
+    0.00 :   19db7a: li      a5,0
+         : 175    for (int h = hstart; h < hend; ++h) {
+    0.00 :   19db7c: bge     a6,t5,19dc0e <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x19c>
+         : 169    int wstart = pw * stride_w_ - pad_w_;
+    0.00 :   19db80: lw      a0,740(s1)
+    0.00 :   19db84: lw      a7,748(s1)
+         : 171    int wend = min(wstart + kernel_w_, width_);
+    0.00 :   19db88: lw      a1,732(s1)
+         : 173    int const& std::min<int>(int const&, int const&):
+         : 239    if (__b < __a)
+    0.00 :   19db8c: lw      t2,760(s1)
+         : 241    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 169    int wstart = pw * stride_w_ - pad_w_;
+    0.00 :   19db90: mulw    a0,a0,a5
+    0.00 :   19db94: subw    a0,a0,a7
+         : 171    int wend = min(wstart + kernel_w_, width_);
+    0.00 :   19db98: addw    a1,a1,a0
+         : 173    int const& std::min<int>(int const&, int const&):
+    0.00 :   19db9a: sext.w  t1,a1
+    0.00 :   19db9e: bge     t2,a1,19dba6 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x134>
+    0.00 :   19dba2: sext.w  t1,t2
+         : 242    int const& std::max<int>(int const&, int const&):
+         : 263    if (__a < __b)
+    0.00 :   19dba6: sext.w  a1,a0
+    0.00 :   19dbaa: bltz    a0,19deb8 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x446>
+    0.00 :   19dbae: bge     a1,t1,19dc0e <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x19c>
+    0.00 :   19dbb2: mulw    a7,a6,t2
+         : 268    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 174    const int pool_index = ph * pooled_width_ + pw;
+    0.00 :   19dbb6: addw    t3,s4,a5
+         : 178    for (int w = wstart; w < wend; ++w) {
+         : 179    const int index = h * width_ + w;
+         : 180    if (bottom_data[index] > top_data[pool_index]) {
+    0.00 :   19dbba: slli    t3,t3,0x2
+    0.00 :   19dbbc: add     a0,s7,t3
+    0.00 :   19dbc0: subw    s10,a1,t1
+         : 181    top_data[pool_index] = bottom_data[index];
+         : 182    if (use_top_mask) {
+         : 183    top_mask[pool_index] = static_cast<Dtype>(index);
+    0.00 :   19dbc4: add     t3,t3,s3
+    0.00 :   19dbc6: slli    s9,t2,0x2
+         : 175    for (int h = hstart; h < hend; ++h) {
+    0.00 :   19dbca: mv      t0,a6
+    0.00 :   19dbcc: add     t4,a7,a1
+    0.00 :   19dbd0: slli    t4,t4,0x2
+    0.00 :   19dbd2: add     t4,t4,s11
+    0.00 :   19dbd4: addw    a7,a7,t1
+         : 176    for (int w = wstart; w < wend; ++w) {
+    0.00 :   19dbd8: addw    a2,s10,a7
+         : 167    for (int pw = 0; pw < pooled_width_; ++pw) {
+    0.00 :   19dbdc: mv      a1,t4
+         : 178    if (bottom_data[index] > top_data[pool_index]) {
+    0.00 :   19dbde: flw     fa5,0(a1)
+    0.00 :   19dbe2: flw     fa4,0(a0)
+    0.00 :   19dbe6: flt.s   t1,fa4,fa5
+    0.00 :   19dbea: beqz    t1,19dbfa <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x188>
+         : 181    top_mask[pool_index] = static_cast<Dtype>(index);
+    0.00 :   19dbee: fcvt.s.w        fa4,a2
+         : 179    top_data[pool_index] = bottom_data[index];
+    0.00 :   19dbf2: fsw     fa5,0(a0)
+         : 181    top_mask[pool_index] = static_cast<Dtype>(index);
+    0.00 :   19dbf6: fsw     fa4,0(t3)
+         : 176    for (int w = wstart; w < wend; ++w) {
+    0.00 :   19dbfa: addiw   a2,a2,1
+    0.00 :   19dbfc: addi    a1,a1,4
+    0.00 :   19dbfe: bne     a2,a7,19dbde <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x16c>
+         : 175    for (int h = hstart; h < hend; ++h) {
+    0.00 :   19dc02: addiw   t0,t0,1
+    0.00 :   19dc04: addw    a7,t2,a7
+    0.00 :   19dc08: add     t4,t4,s9
+    0.00 :   19dc0a: bne     t5,t0,19dbd8 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x166>
+         : 167    for (int pw = 0; pw < pooled_width_; ++pw) {
+    0.00 :   19dc0e: addiw   a5,a5,1
+    0.00 :   19dc10: blt     a5,t6,19db7c <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x10a>
+         : 166    for (int ph = 0; ph < pooled_height_; ++ph) {
+    0.00 :   19dc14: addiw   a4,a4,1
+    0.00 :   19dc16: blt     a4,a3,19db42 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0xd0>
+    0.00 :   19dc1a: ld      s4,-232(s0)
+         : 191    }
+         : 192    }
+         : 193    }
+         : 194    }
+         : 195    // compute offset
+         : 196    bottom_data += bottom[0]->offset(0, 1);
+    0.00 :   19dc1e: ld      a5,0(s8)
+         : 165    for (int c = 0; c < channels_; ++c) {
+    0.00 :   19dc22: addiw   s5,s5,1
+         : 191    bottom_data += bottom[0]->offset(0, 1);
+    0.00 :   19dc24: ld      a0,0(a5)
+    0.00 :   19dc26: jal     19cc1e <caffe::Blob<float>::offset(int, int, int, int) const [clone .constprop.0]>
+         : 192    top_data += top[0]->offset(0, 1);
+    0.00 :   19dc2a: ld      a4,0(s2)
+         : 191    bottom_data += bottom[0]->offset(0, 1);
+    0.00 :   19dc2e: slli    a5,a0,0x2
+    0.00 :   19dc32: add     s11,s11,a5
+         : 192    top_data += top[0]->offset(0, 1);
+    0.00 :   19dc34: ld      a0,0(a4)
+    0.00 :   19dc36: jal     19cc1e <caffe::Blob<float>::offset(int, int, int, int) const [clone .constprop.0]>
+         : 194    if (use_top_mask) {
+         : 195    top_mask += top[0]->offset(0, 1);
+    0.00 :   19dc3a: ld      a4,0(s2)
+         : 192    top_data += top[0]->offset(0, 1);
+    0.00 :   19dc3e: slli    a5,a0,0x2
+    0.00 :   19dc42: add     s7,s7,a5
+         : 194    top_mask += top[0]->offset(0, 1);
+    0.00 :   19dc44: ld      a0,0(a4)
+    0.00 :   19dc46: jal     19cc1e <caffe::Blob<float>::offset(int, int, int, int) const [clone .constprop.0]>
+         : 165    for (int c = 0; c < channels_; ++c) {
+    0.00 :   19dc4a: lw      a4,752(s1)
+         : 194    top_mask += top[0]->offset(0, 1);
+    0.00 :   19dc4e: slli    a5,a0,0x2
+    0.00 :   19dc52: add     s3,s3,a5
+         : 165    for (int c = 0; c < channels_; ++c) {
+    0.00 :   19dc54: blt     s5,a4,19db30 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0xbe>
+    0.00 :   19dc58: ld      s9,232(sp)
+    0.00 :   19dc5a: ld      s10,224(sp)
+         : 164    for (int n = 0; n < bottom[0]->num(); ++n) {
+    0.00 :   19dc5c: ld      a5,0(s8)
+    0.00 :   19dc60: ld      s5,264(sp)
+    0.00 :   19dc62: addiw   s4,s4,1
+         : 166    caffe::Blob<float>::num() const:
+    0.00 :   19dc64: ld      a0,0(a5)
+    0.00 :   19dc66: jal     19cb46 <caffe::Blob<float>::LegacyShape(int) const [clone .constprop.0]>
+         : 134    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+    0.00 :   19dc6a: blt     s4,a0,19db20 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0xae>
+         : 240    NOT_IMPLEMENTED;
+         : 241    break;
+         : 242    default:
+         : 243    LOG(FATAL) << "Unknown pooling method.";
+         : 244    }
+         : 245    }
+    0.00 :   19dc6e: ld      a4,-120(s0)
+    0.00 :   19dc72: ld      a5,0(s6)
+    0.00 :   19dc76: xor     a5,a5,a4
+    0.00 :   19dc78: li      a4,0
+    0.00 :   19dc7a: bnez    a5,19e010 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x59e>
+    0.00 :   19dc7e: ld      ra,312(sp)
+    0.00 :   19dc80: ld      s0,304(sp)
+    0.00 :   19dc82: ld      s3,280(sp)
+    0.00 :   19dc84: ld      s1,296(sp)
+    0.00 :   19dc86: ld      s2,288(sp)
+    0.00 :   19dc88: ld      s4,272(sp)
+    0.00 :   19dc8a: ld      s6,256(sp)
+    0.00 :   19dc8c: ld      s7,248(sp)
+    0.00 :   19dc8e: ld      s8,240(sp)
+    0.00 :   19dc90: ld      s11,216(sp)
+    0.00 :   19dc92: addi    sp,sp,320
+    0.00 :   19dc94: ret
+         : 263    caffe::LayerParameter::_internal_pooling_param() const:
+         : 26455  return p != nullptr ? *p : reinterpret_cast<const ::caffe::PoolingParameter&>(::caffe::_PoolingParameter_default_instance_);
+    0.00 :   19dc96: auipc   a4,0x167
+    0.00 :   19dc9a: ld      a4,250(a4) # 304d90 <caffe::_PoolingParameter_default_instance_@@Base-0x8d98>
+         : 26458  caffe::PoolingParameter::_internal_pool() const:
+         : 32921  return static_cast<::caffe::PoolingParameter_PoolMethod>(_impl_.pool_);
+    0.00 :   19dc9e: lw      a4,24(a4)
+         : 32923  caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 152    switch (this->layer_param_.pooling_param().pool()) {
+    0.00 :   19dca0: li      a3,1
+    0.00 :   19dca2: bne     a4,a3,19dad0 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x5e>
+    0.00 :   19dca6: sd      s3,280(sp)
+    0.00 :   19dca8: sd      s9,232(sp)
+         : 202    for (int i = 0; i < top_count; ++i) {
+    0.00 :   19dcaa: blez    s4,19dcbe <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x24c>
+         : 203    top_data[i] = 0;
+    0.00 :   19dcae: slli    a5,s4,0x20
+    0.00 :   19dcb2: srli    a2,a5,0x1e
+    0.00 :   19dcb6: li      a1,0
+    0.00 :   19dcb8: mv      a0,s7
+    0.00 :   19dcba: jal     e54b0 <memset@plt>
+    0.00 :   19dcbe: mv      s4,s8
+         : 206    for (int n = 0; n < bottom[0]->num(); ++n) {
+    0.00 :   19dcc0: ld      a5,0(s4)
+    0.00 :   19dcc4: li      s3,0
+    0.00 :   19dcc6: mv      s8,s11
+         : 208    caffe::Blob<float>::num() const:
+    0.00 :   19dcc8: ld      a0,0(a5)
+    0.00 :   19dcca: mv      s11,s7
+    0.00 :   19dccc: mv      s9,s2
+    0.00 :   19dcce: jal     19cb46 <caffe::Blob<float>::LegacyShape(int) const [clone .constprop.0]>
+         : 136    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+    0.00 :   19dcd2: bge     s3,a0,19deb4 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x442>
+         : 207    for (int c = 0; c < channels_; ++c) {
+    0.00 :   19dcd6: lw      a5,752(s1)
+    0.00 :   19dcda: blez    a5,19dea4 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x432>
+    0.00 :   19dcde: sd      s10,224(sp)
+    0.00 :   19dce0: sd      s5,264(sp)
+    0.00 :   19dce2: li      s10,0
+         : 208    for (int ph = 0; ph < pooled_height_; ++ph) {
+    0.00 :   19dce4: lw      a3,764(s1)
+    0.00 :   19dce8: blez    a3,19de76 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x404>
+         : 209    for (int pw = 0; pw < pooled_width_; ++pw) {
+    0.00 :   19dcec: lw      a4,768(s1)
+    0.00 :   19dcf0: blez    a4,19de76 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x404>
+         : 210    int hstart = ph * stride_h_ - pad_h_;
+    0.00 :   19dcf4: lw      t4,744(s1)
+         : 212    int hend = min(hstart + kernel_h_, height_ + pad_h_);
+    0.00 :   19dcf8: lw      a2,756(s1)
+         : 211    int wstart = pw * stride_w_ - pad_w_;
+    0.00 :   19dcfc: lw      t2,748(s1)
+         : 213    int wend = min(wstart + kernel_w_, width_ + pad_w_);
+    0.00 :   19dd00: lw      t6,760(s1)
+         : 212    int hend = min(hstart + kernel_h_, height_ + pad_h_);
+    0.00 :   19dd04: addw    a5,t4,a2
+    0.00 :   19dd08: sd      a5,-256(s0)
+    0.00 :   19dd0c: negw    a5,t2
+    0.00 :   19dd10: sd      a5,-264(s0)
+    0.00 :   19dd14: slli    a5,a4,0x2
+    0.00 :   19dd18: sd      a5,-248(s0)
+         : 210    int hstart = ph * stride_h_ - pad_h_;
+    0.00 :   19dd1c: lw      a5,736(s1)
+         : 213    int wend = min(wstart + kernel_w_, width_ + pad_w_);
+    0.00 :   19dd20: lw      s7,732(s1)
+    0.00 :   19dd24: lw      s5,740(s1)
+         : 210    int hstart = ph * stride_h_ - pad_h_;
+    0.00 :   19dd28: sd      a5,-232(s0)
+         : 212    int hend = min(hstart + kernel_h_, height_ + pad_h_);
+    0.00 :   19dd2c: lw      a5,728(s1)
+         : 213    int wend = min(wstart + kernel_w_, width_ + pad_w_);
+    0.00 :   19dd30: addw    t2,t2,t6
+    0.00 :   19dd34: slli    a6,t6,0x2
+         : 212    int hend = min(hstart + kernel_h_, height_ + pad_h_);
+    0.00 :   19dd38: sd      a5,-240(s0)
+    0.00 :   19dd3c: mv      a1,s11
+         : 213    int wend = min(wstart + kernel_w_, width_ + pad_w_);
+    0.00 :   19dd3e: li      s2,0
+         : 208    for (int ph = 0; ph < pooled_height_; ++ph) {
+    0.00 :   19dd40: li      a5,0
+    0.00 :   19dd42: mv      t1,t4
+    0.00 :   19dd44: sd      s3,-272(s0)
+    0.00 :   19dd48: sd      s10,-280(s0)
+    0.00 :   19dd4c: mv      a7,s1
+    0.00 :   19dd4e: mv      t3,s4
+    0.00 :   19dd50: mv      a0,s9
+         : 210    int hstart = ph * stride_h_ - pad_h_;
+    0.00 :   19dd52: ld      s1,-232(s0)
+    0.00 :   19dd56: mulw    t4,s1,a5
+         : 212    int hend = min(hstart + kernel_h_, height_ + pad_h_);
+    0.00 :   19dd5a: ld      s1,-240(s0)
+         : 210    int hstart = ph * stride_h_ - pad_h_;
+    0.00 :   19dd5e: subw    t4,t4,t1
+         : 212    int hend = min(hstart + kernel_h_, height_ + pad_h_);
+    0.00 :   19dd62: addw    t5,t4,s1
+         : 214    int const& std::min<int>(int const&, int const&):
+         : 239    if (__b < __a)
+    0.00 :   19dd66: ld      s1,-256(s0)
+    0.00 :   19dd6a: mv      s4,t5
+    0.00 :   19dd6c: bge     s1,t5,19dd72 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x300>
+    0.00 :   19dd70: mv      s4,s1
+    0.00 :   19dd72: sext.w  t5,s4
+         : 245    int const& std::max<int>(int const&, int const&):
+         : 263    if (__a < __b)
+    0.00 :   19dd76: sext.w  s3,t4
+         : 265    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 214    int pool_size = (hend - hstart) * (wend - wstart);
+    0.00 :   19dd7a: subw    s4,s4,t4
+         : 216    int const& std::max<int>(int const&, int const&):
+    0.00 :   19dd7e: bgez    t4,19dd84 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x312>
+    0.00 :   19dd82: li      s3,0
+         : 265    int const& std::min<int>(int const&, int const&):
+         : 239    if (__b < __a)
+    0.00 :   19dd84: sext.w  t4,a2
+    0.00 :   19dd88: bge     t5,a2,19dd90 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x31e>
+    0.00 :   19dd8c: sext.w  t4,t5
+    0.00 :   19dd90: mulw    s10,s3,t6
+    0.00 :   19dd94: ld      t5,-264(s0)
+    0.00 :   19dd98: addw    s9,a4,s2
+    0.00 :   19dd9c: mv      t0,a1
+    0.00 :   19dd9e: sd      t1,-288(s0)
+    0.00 :   19dda2: sd      a2,-296(s0)
+    0.00 :   19dda6: sd      a1,-304(s0)
+    0.00 :   19ddaa: sd      a5,-312(s0)
+    0.00 :   19ddae: sd      a3,-320(s0)
+         : 252    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 213    int wend = min(wstart + kernel_w_, width_ + pad_w_);
+    0.00 :   19ddb2: addw    a5,s7,t5
+         : 215    int const& std::min<int>(int const&, int const&):
+    0.00 :   19ddb6: sext.w  a3,a5
+    0.00 :   19ddba: bge     t2,a5,19ddc2 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x350>
+    0.00 :   19ddbe: sext.w  a3,t2
+         : 242    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 214    int pool_size = (hend - hstart) * (wend - wstart);
+    0.00 :   19ddc2: subw    s1,a3,t5
+    0.00 :   19ddc6: mulw    s1,s1,s4
+         : 219    for (int h = hstart; h < hend; ++h) {
+    0.00 :   19ddca: bge     s3,t4,19de2c <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x3ba>
+         : 221    int const& std::max<int>(int const&, int const&):
+         : 263    if (__a < __b)
+    0.00 :   19ddce: sext.w  a5,t5
+    0.00 :   19ddd2: bgez    t5,19ddd8 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x366>
+    0.00 :   19ddd6: li      a5,0
+         : 267    int const& std::min<int>(int const&, int const&):
+         : 239    if (__b < __a)
+    0.00 :   19ddd8: mv      a2,t6
+    0.00 :   19ddda: bge     a3,t6,19dde0 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x36e>
+    0.00 :   19ddde: mv      a2,a3
+    0.00 :   19dde0: sext.w  a3,a2
+    0.00 :   19dde4: bge     a5,a3,19de2c <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x3ba>
+    0.00 :   19dde8: subw    t1,a2,a5
+    0.00 :   19ddec: slli    t1,t1,0x20
+    0.00 :   19ddee: srli    t1,t1,0x20
+    0.00 :   19ddf2: add     a3,a5,s10
+    0.00 :   19ddf6: add     a3,a3,t1
+         : 250    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 221    top_data[ph * pooled_width_ + pw] +=
+    0.00 :   19ddf8: slli    a2,s2,0x2
+    0.00 :   19ddfc: slli    a3,a3,0x2
+    0.00 :   19ddfe: neg     t1,t1
+    0.00 :   19de02: add     a3,a3,s8
+    0.00 :   19de04: slli    t1,t1,0x2
+    0.00 :   19de06: add     a2,a2,s11
+         : 219    for (int h = hstart; h < hend; ++h) {
+    0.00 :   19de08: mv      a1,s3
+         : 221    top_data[ph * pooled_width_ + pw] +=
+    0.00 :   19de0a: flw     fa5,0(a2)
+    0.00 :   19de0e: add     a5,t1,a3
+    0.00 :   19de12: flw     fa4,0(a5)
+         : 220    for (int w = wstart; w < wend; ++w) {
+    0.00 :   19de16: addi    a5,a5,4
+         : 221    top_data[ph * pooled_width_ + pw] +=
+    0.00 :   19de18: fadd.s  fa5,fa5,fa4
+    0.00 :   19de1c: fsw     fa5,0(a2)
+         : 220    for (int w = wstart; w < wend; ++w) {
+    0.00 :   19de20: bne     a5,a3,19de12 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x3a0>
+         : 219    for (int h = hstart; h < hend; ++h) {
+    0.00 :   19de24: addiw   a1,a1,1
+    0.00 :   19de26: add     a3,a3,a6
+    0.00 :   19de28: bne     t4,a1,19de0a <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x398>
+         : 225    top_data[ph * pooled_width_ + pw] /= pool_size;
+    0.00 :   19de2c: flw     fa5,0(t0)
+    0.00 :   19de30: fcvt.s.w        fa4,s1
+         : 209    for (int pw = 0; pw < pooled_width_; ++pw) {
+    0.00 :   19de34: addiw   s2,s2,1
+    0.00 :   19de36: addw    t5,t5,s5
+         : 225    top_data[ph * pooled_width_ + pw] /= pool_size;
+    0.00 :   19de3a: fdiv.s  fa5,fa5,fa4
+         : 209    for (int pw = 0; pw < pooled_width_; ++pw) {
+    0.00 :   19de3e: addi    t0,t0,4
+         : 225    top_data[ph * pooled_width_ + pw] /= pool_size;
+    0.00 :   19de40: fsw     fa5,-4(t0)
+         : 209    for (int pw = 0; pw < pooled_width_; ++pw) {
+    0.00 :   19de44: bne     s9,s2,19ddb2 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x340>
+         : 208    for (int ph = 0; ph < pooled_height_; ++ph) {
+    0.00 :   19de48: ld      a5,-312(s0)
+    0.00 :   19de4c: ld      a1,-304(s0)
+    0.00 :   19de50: ld      s1,-248(s0)
+    0.00 :   19de54: ld      a3,-320(s0)
+    0.00 :   19de58: addiw   a5,a5,1
+    0.00 :   19de5a: ld      t1,-288(s0)
+    0.00 :   19de5e: ld      a2,-296(s0)
+    0.00 :   19de62: add     a1,a1,s1
+    0.00 :   19de64: bne     a5,a3,19dd52 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x2e0>
+    0.00 :   19de68: ld      s3,-272(s0)
+    0.00 :   19de6c: ld      s10,-280(s0)
+    0.00 :   19de70: mv      s1,a7
+    0.00 :   19de72: mv      s4,t3
+    0.00 :   19de74: mv      s9,a0
+         : 229    bottom_data += bottom[0]->offset(0, 1);
+    0.00 :   19de76: ld      a5,0(s4)
+         : 207    for (int c = 0; c < channels_; ++c) {
+    0.00 :   19de7a: addiw   s10,s10,1
+         : 229    bottom_data += bottom[0]->offset(0, 1);
+    0.00 :   19de7c: ld      a0,0(a5)
+    0.00 :   19de7e: jal     19cc1e <caffe::Blob<float>::offset(int, int, int, int) const [clone .constprop.0]>
+         : 230    top_data += top[0]->offset(0, 1);
+    0.00 :   19de82: ld      a4,0(s9)
+         : 229    bottom_data += bottom[0]->offset(0, 1);
+    0.00 :   19de86: slli    a5,a0,0x2
+    0.00 :   19de8a: add     s8,s8,a5
+         : 230    top_data += top[0]->offset(0, 1);
+    0.00 :   19de8c: ld      a0,0(a4)
+    0.00 :   19de8e: jal     19cc1e <caffe::Blob<float>::offset(int, int, int, int) const [clone .constprop.0]>
+         : 207    for (int c = 0; c < channels_; ++c) {
+    0.00 :   19de92: lw      a4,752(s1)
+         : 230    top_data += top[0]->offset(0, 1);
+    0.00 :   19de96: slli    a5,a0,0x2
+    0.00 :   19de9a: add     s11,s11,a5
+         : 207    for (int c = 0; c < channels_; ++c) {
+    0.00 :   19de9c: blt     s10,a4,19dce4 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x272>
+    0.00 :   19dea0: ld      s5,264(sp)
+    0.00 :   19dea2: ld      s10,224(sp)
+         : 206    for (int n = 0; n < bottom[0]->num(); ++n) {
+    0.00 :   19dea4: ld      a5,0(s4)
+    0.00 :   19dea8: addiw   s3,s3,1
+         : 207    caffe::Blob<float>::num() const:
+    0.00 :   19deaa: ld      a0,0(a5)
+    0.00 :   19deac: jal     19cb46 <caffe::Blob<float>::LegacyShape(int) const [clone .constprop.0]>
+         : 134    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+    0.00 :   19deb0: blt     s3,a0,19dcd6 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x264>
+    0.00 :   19deb4: ld      s9,232(sp)
+    0.00 :   19deb6: j       19dc6e <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x1fc>
+         : 208    int const& std::max<int>(int const&, int const&):
+         : 263    if (__a < __b)
+    0.00 :   19deb8: li      a1,0
+    0.00 :   19deba: j       19dbae <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x13c>
+         : 266    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 159    mask = max_idx_.mutable_cpu_data();
+    0.00 :   19debc: addi    a0,s1,864
+    0.00 :   19dec0: jal     e2310 <caffe::Blob<int>::mutable_cpu_data()@plt>
+         : 160    caffe_set(top_count, -1, mask);
+    0.00 :   19dec4: mv      a2,a0
+    0.00 :   19dec6: li      a1,-1
+         : 159    mask = max_idx_.mutable_cpu_data();
+    0.00 :   19dec8: mv      s3,a0
+         : 160    caffe_set(top_count, -1, mask);
+    0.00 :   19deca: mv      a0,s4
+    0.00 :   19decc: jal     e4280 <void caffe::caffe_set<int>(int, int, int*)@plt>
+         : 162    caffe_set(top_count, Dtype(-FLT_MAX), top_data);
+    0.00 :   19ded0: auipc   a5,0xdc
+    0.00 :   19ded4: flw     fa0,376(a5) # 27a048 <typeinfo name for boost::detail::sp_counted_impl_p<caffe::SyncedMemory>+0x58>
+    0.00 :   19ded8: mv      a0,s4
+    0.00 :   19deda: mv      a1,s7
+    0.00 :   19dedc: jal     e39d0 <void caffe::caffe_set<float>(int, float, float*)@plt>
+    0.00 :   19dee0: li      s4,0
+         : 164    for (int n = 0; n < bottom[0]->num(); ++n) {
+    0.00 :   19dee2: ld      a5,0(s8)
+         : 166    caffe::Blob<float>::num() const:
+    0.00 :   19dee6: ld      a0,0(a5)
+    0.00 :   19dee8: jal     19cb46 <caffe::Blob<float>::LegacyShape(int) const [clone .constprop.0]>
+         : 134    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+    0.00 :   19deec: bge     s4,a0,19dc6e <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x1fc>
+         : 165    for (int c = 0; c < channels_; ++c) {
+    0.00 :   19def0: lw      a5,752(s1)
+    0.00 :   19def4: blez    a5,19e004 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x592>
+    0.00 :   19def8: sd      s5,264(sp)
+    0.00 :   19defa: li      s5,0
+         : 166    for (int ph = 0; ph < pooled_height_; ++ph) {
+    0.00 :   19defc: lw      a4,764(s1)
+    0.00 :   19df00: blez    a4,19dfc8 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x556>
+         : 167    for (int pw = 0; pw < pooled_width_; ++pw) {
+    0.00 :   19df04: lw      a5,768(s1)
+         : 166    for (int ph = 0; ph < pooled_height_; ++ph) {
+    0.00 :   19df08: li      t4,0
+         : 167    for (int pw = 0; pw < pooled_width_; ++pw) {
+    0.00 :   19df0a: blez    a5,19dfc2 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x550>
+    0.00 :   19df0e: li      t3,0
+         : 168    int hstart = ph * stride_h_ - pad_h_;
+    0.00 :   19df10: lw      a4,736(s1)
+    0.00 :   19df14: lw      a1,744(s1)
+         : 170    int hend = min(hstart + kernel_h_, height_);
+    0.00 :   19df18: lw      a3,728(s1)
+         : 168    int hstart = ph * stride_h_ - pad_h_;
+    7.14 :   19df1c: mulw    a4,a4,t4
+         : 170    int const& std::min<int>(int const&, int const&):
+         : 239    if (__b < __a)
+    0.00 :   19df20: lw      a2,756(s1)
+         : 241    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+    0.00 :   19df24: subw    a4,a4,a1
+         : 170    int hend = min(hstart + kernel_h_, height_);
+    7.14 :   19df26: addw    a3,a3,a4
+         : 172    int const& std::min<int>(int const&, int const&):
+    0.00 :   19df28: sext.w  a7,a3
+    0.00 :   19df2c: bge     a2,a3,19df34 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x4c2>
+    0.00 :   19df30: sext.w  a7,a2
+         : 242    int const& std::max<int>(int const&, int const&):
+         : 263    if (__a < __b)
+    0.00 :   19df34: sext.w  a1,a4
+    0.00 :   19df38: bltz    a4,19e00c <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x59a>
+         : 266    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 175    for (int h = hstart; h < hend; ++h) {
+    0.00 :   19df3c: bge     a1,a7,19dfbe <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x54c>
+         : 169    int wstart = pw * stride_w_ - pad_w_;
+    0.00 :   19df40: lw      a4,740(s1)
+    0.00 :   19df44: lw      a0,748(s1)
+         : 171    int wend = min(wstart + kernel_w_, width_);
+    0.00 :   19df48: lw      a3,732(s1)
+         : 169    int wstart = pw * stride_w_ - pad_w_;
+    0.00 :   19df4c: mulw    a4,a4,t3
+         : 171    int const& std::min<int>(int const&, int const&):
+         : 239    if (__b < __a)
+    0.00 :   19df50: lw      a2,760(s1)
+         : 241    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+    0.00 :   19df54: subw    a4,a4,a0
+         : 171    int wend = min(wstart + kernel_w_, width_);
+    0.00 :   19df56: addw    a3,a3,a4
+         : 173    int const& std::min<int>(int const&, int const&):
+    0.00 :   19df58: sext.w  a0,a3
+    7.14 :   19df5c: bge     a2,a3,19df64 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x4f2>
+    0.00 :   19df60: sext.w  a0,a2
+         : 242    int const& std::max<int>(int const&, int const&):
+         : 263    if (__a < __b)
+    0.00 :   19df64: sext.w  t1,a4
+    0.00 :   19df68: bltz    a4,19e008 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x596>
+    0.00 :   19df6c: bge     t1,a0,19dfb8 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x546>
+         : 267    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 174    const int pool_index = ph * pooled_width_ + pw;
+    0.00 :   19df70: mulw    a6,a5,t4
+    0.00 :   19df74: addw    a6,a6,t3
+         : 178    if (bottom_data[index] > top_data[pool_index]) {
+    0.00 :   19df78: slli    a6,a6,0x2
+    0.00 :   19df7a: add     a2,s7,a6
+         : 183    mask[pool_index] = index;
+    0.00 :   19df7e: add     a6,a6,s3
+         : 176    for (int w = wstart; w < wend; ++w) {
+    7.14 :   19df80: mv      a4,t1
+         : 177    const int index = h * width_ + w;
+    0.00 :   19df82: lw      a5,760(s1)
+         : 178    if (bottom_data[index] > top_data[pool_index]) {
+    0.00 :   19df86: flw     fa4,0(a2)
+         : 177    const int index = h * width_ + w;
+    0.00 :   19df8a: mulw    a5,a5,a1
+    0.00 :   19df8e: addw    a5,a5,a4
+         : 178    if (bottom_data[index] > top_data[pool_index]) {
+    0.00 :   19df90: slli    a3,a5,0x2
+    7.14 :   19df94: add     a3,a3,s11
+    0.00 :   19df96: flw     fa5,0(a3)
+    7.14 :   19df9a: flt.s   a3,fa4,fa5
+    7.14 :   19df9e: beqz    a3,19dfa8 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x536>
+         : 179    top_data[pool_index] = bottom_data[index];
+    0.00 :   19dfa0: fsw     fa5,0(a2)
+         : 183    mask[pool_index] = index;
+    0.00 :   19dfa4: sw      a5,0(a6)
+         : 176    for (int w = wstart; w < wend; ++w) {
+   42.86 :   19dfa8: addiw   a4,a4,1
+    7.14 :   19dfaa: bne     a4,a0,19df82 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x510>
+         : 175    for (int h = hstart; h < hend; ++h) {
+    0.00 :   19dfae: addiw   a1,a1,1
+    0.00 :   19dfb0: bne     a1,a7,19df80 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x50e>
+    0.00 :   19dfb4: lw      a5,768(s1)
+         : 167    for (int pw = 0; pw < pooled_width_; ++pw) {
+    0.00 :   19dfb8: addiw   t3,t3,1
+    0.00 :   19dfba: blt     t3,a5,19df10 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x49e>
+         : 166    for (int ph = 0; ph < pooled_height_; ++ph) {
+    0.00 :   19dfbe: lw      a4,764(s1)
+    0.00 :   19dfc2: addiw   t4,t4,1
+    0.00 :   19dfc4: blt     t4,a4,19df0a <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x498>
+         : 191    bottom_data += bottom[0]->offset(0, 1);
+    0.00 :   19dfc8: ld      a5,0(s8)
+         : 165    for (int c = 0; c < channels_; ++c) {
+    0.00 :   19dfcc: addiw   s5,s5,1
+         : 191    bottom_data += bottom[0]->offset(0, 1);
+    0.00 :   19dfce: ld      a0,0(a5)
+    0.00 :   19dfd0: jal     19cc1e <caffe::Blob<float>::offset(int, int, int, int) const [clone .constprop.0]>
+         : 192    top_data += top[0]->offset(0, 1);
+    0.00 :   19dfd4: ld      a4,0(s2)
+         : 191    bottom_data += bottom[0]->offset(0, 1);
+    0.00 :   19dfd8: slli    a5,a0,0x2
+    0.00 :   19dfdc: add     s11,s11,a5
+         : 192    top_data += top[0]->offset(0, 1);
+    0.00 :   19dfde: ld      a0,0(a4)
+    0.00 :   19dfe0: jal     19cc1e <caffe::Blob<float>::offset(int, int, int, int) const [clone .constprop.0]>
+         : 194    top_mask += top[0]->offset(0, 1);
+    0.00 :   19dfe4: ld      a4,0(s2)
+         : 192    top_data += top[0]->offset(0, 1);
+    0.00 :   19dfe8: slli    a5,a0,0x2
+    0.00 :   19dfec: add     s7,s7,a5
+         : 196    mask += top[0]->offset(0, 1);
+    0.00 :   19dfee: ld      a0,0(a4)
+    0.00 :   19dff0: jal     19cc1e <caffe::Blob<float>::offset(int, int, int, int) const [clone .constprop.0]>
+         : 165    for (int c = 0; c < channels_; ++c) {
+    0.00 :   19dff4: lw      a4,752(s1)
+         : 196    mask += top[0]->offset(0, 1);
+    0.00 :   19dff8: slli    a5,a0,0x2
+    0.00 :   19dffc: add     s3,s3,a5
+         : 165    for (int c = 0; c < channels_; ++c) {
+    0.00 :   19dffe: blt     s5,a4,19defc <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x48a>
+    0.00 :   19e002: ld      s5,264(sp)
+         : 164    for (int n = 0; n < bottom[0]->num(); ++n) {
+    0.00 :   19e004: addiw   s4,s4,1
+    0.00 :   19e006: j       19dee2 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x470>
+         : 165    int const& std::max<int>(int const&, int const&):
+    0.00 :   19e008: li      t1,0
+    0.00 :   19e00a: j       19df6c <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x4fa>
+    0.00 :   19e00c: li      a1,0
+    0.00 :   19e00e: j       19df3c <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x4ca>
+    0.00 :   19e010: sd      s5,264(sp)
+    0.00 :   19e012: sd      s9,232(sp)
+    0.00 :   19e014: sd      s10,224(sp)
+         : 270    caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&):
+         : 240    }
+    0.00 :   19e016: jal     e26b0 <__stack_chk_fail@plt>
+         : 235    NOT_IMPLEMENTED;
+    0.00 :   19e01a: addi    a0,s0,-216
+    0.00 :   19e01e: li      a2,235
+    0.00 :   19e022: auipc   a1,0xd7
+    0.00 :   19e026: addi    a1,a1,-1410 # 274aa0 <google::protobuf::MessageLite* google::protobuf::internal::RepeatedPtrFieldBase::CopyMessage<caffe::V1LayerParameter>(google::protobuf::Arena*, google::protobuf::MessageLite const&)+0x4d54>
+    0.00 :   19e02a: jal     e5760 <google::LogMessageFatal::LogMessageFatal(char const*, int)@plt>
+    0.00 :   19e02e: addi    a0,s0,-216
+    0.00 :   19e032: jal     e4ba0 <google::LogMessage::stream()@plt>
+    0.00 :   19e036: auipc   a1,0xd2
+    0.00 :   19e03a: addi    a1,a1,-526 # 26fe28 <google::protobuf::MessageLite* google::protobuf::internal::RepeatedPtrFieldBase::CopyMessage<caffe::V1LayerParameter>(google::protobuf::Arena*, google::protobuf::MessageLite const&)+0xdc>
+    0.00 :   19e03e: jal     e3040 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>
+         : 238    LOG(FATAL) << "Unknown pooling method.";
+    0.00 :   19e042: ld      a4,-120(s0)
+    0.00 :   19e046: ld      a5,0(s6)
+    0.00 :   19e04a: xor     a5,a5,a4
+    0.00 :   19e04c: li      a4,0
+    0.00 :   19e04e: sd      s3,280(sp)
+    0.00 :   19e050: sd      s5,264(sp)
+    0.00 :   19e052: sd      s9,232(sp)
+    0.00 :   19e054: sd      s10,224(sp)
+    0.00 :   19e056: bnez    a5,19e016 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x5a4>
+    0.00 :   19e058: addi    a0,s0,-216
+    0.00 :   19e05c: jal     e4330 <google::LogMessageFatal::~LogMessageFatal()@plt>
+    0.00 :   19e060: addi    a0,s0,-216
+    0.00 :   19e064: li      a2,238
+    0.00 :   19e068: auipc   a1,0xd7
+    0.00 :   19e06c: addi    a1,a1,-1480 # 274aa0 <google::protobuf::MessageLite* google::protobuf::internal::RepeatedPtrFieldBase::CopyMessage<caffe::V1LayerParameter>(google::protobuf::Arena*, google::protobuf::MessageLite const&)+0x4d54>
+    0.00 :   19e070: jal     e5760 <google::LogMessageFatal::LogMessageFatal(char const*, int)@plt>
+    0.00 :   19e074: addi    a0,s0,-216
+    0.00 :   19e078: jal     e4ba0 <google::LogMessage::stream()@plt>
+    0.00 :   19e07c: auipc   a1,0xd7
+    0.00 :   19e080: addi    a1,a1,-1308 # 274b60 <google::protobuf::MessageLite* google::protobuf::internal::RepeatedPtrFieldBase::CopyMessage<caffe::V1LayerParameter>(google::protobuf::Arena*, google::protobuf::MessageLite const&)+0x4e14>
+    0.00 :   19e084: jal     e3040 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>
+    0.00 :   19e088: j       19e042 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x5d0>
+    0.00 :   19e08a: j       19e042 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x5d0>
+    0.00 :   19e08c: j       19e042 <caffe::PoolingLayer<float>::Forward_cpu(std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&, std::vector<caffe::Blob<float>*, std::allocator<caffe::Blob<float>*> > const&)+0x5d0>

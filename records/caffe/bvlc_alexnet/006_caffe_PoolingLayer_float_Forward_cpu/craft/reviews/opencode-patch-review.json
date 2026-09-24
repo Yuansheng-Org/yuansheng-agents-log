@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-caffe-bvlc-alexnet-006-20260921",
+  "patchCandidateId": "pc-bp-caffe-bvlc-alexnet-006",
+  "reviewedAt": "2026-09-21T06:40:00.000Z",
+  "reviewer": "opencode-independent-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan: archSpecific=true (rvv-intrinsic, riscv-macro). Target SpacemiT X100/K3, RVV 1.0, VLEN=256, vlenb=32 (metadata Tag_RISCV_arch contains v1p0/zve*/zvl128b; diaglog Phase 1 vlenb=32). vsetvl/vtype self-consistent (dynamic __riscv_vsetvl_e32m4 + all _e32m4 intrinsics, SEW=e32, LMUL=m4); mask type vbool8_t correct for e32/m4 (32/4=8); scalar<->vector boundary (interior vector, prefix/suffix/row-border scalar) with vlse32 byte stride stride_w*4; compile-time __riscv_v gate and float-non-template vs generic-template overload dispatch self-consistent; no x86/ARM instructions. Register spill cannot be verified from provided artifacts (no disassembly) -> downgraded to suggestion S2."
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "证据锚点真实性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "无虚构文件/行号",
+      "result": "PASS"
+    },
+    {
+      "dimension": "语义等价推断有据",
+      "result": "PASS"
+    },
+    {
+      "dimension": "架构结论基于提供证据",
+      "result": "PASS"
+    },
+    {
+      "dimension": "只读与产物边界",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "S1",
+      "file": "src/caffe/layers/pooling_layer.cpp",
+      "evidence": "patch.diff hunk: \"+        const size_t vl = __riscv_vsetvl_e32m4(static_cast<size_t>(n - i));\" and \"+        vfloat32m4_t vmax = __riscv_vfmv_v_f_f32m4(-FLT_MAX, vl);\"; blueprint.diagnosis.recommendedFirstAction field records AlexNet pooled_width 为 27/13/6.",
+      "severity": "suggestion",
+      "category": "RISC-V 向量化调优",
+      "suggestion": "e32m4 在 VLEN=256 下为 32 lane，而 AlexNet interior 向量长度 n 通常仅 27/13/6，短向量下 m4 的大寄存器组利用率低且可能抬高 vsetvl/寄存器压力。建议在目标核 A/B 上评估 e32m1 或 e32m2 的吞吐/占用，再决定最终 LMUL（当前实现语义正确，不阻断通过）。"
+    },
+    {
+      "id": "S2",
+      "file": "src/caffe/layers/pooling_layer.cpp",
+      "evidence": "patch.diff hunk: \"+            const vbool8_t gt = __riscv_vmfgt_vv_f32m4_b8(tap, vmax, vl);\" 与同段同时 live 的 \"+        vint32m4_t vindex = __riscv_vmv_v_x_i32m4(-1, vl);\"、\"+        const vuint32m4_t lane = __riscv_vid_v_u32m4(vl);\"、\"+            const vfloat32m4_t tap = __riscv_vlse32_v_f32m4(\"、\"+            const vint32m4_t cand =\"、\"+        __riscv_vmerge_vvm_f32m4(vmax, tap, gt, vl);\"。",
+      "severity": "suggestion",
+      "category": "RISC-V 寄存器压力",
+      "suggestion": "该段同时持有 vmax/vindex/tap/lane/lane_off/cand 及 vbool8 掩码，e32m4 下约 5 个四寄存器组。当前 artifact 无编译产物或反汇编，无法核实是否发生 vector spill（cannot verify）。建议对目标构建做 objdump/llvm-objdump 反汇编确认无 vspill/reload，再据实更新说明。"
+    }
+  ]
+}

@@ -1,0 +1,574 @@
+ Percent |	Source code & Disassembly of libcaffe.so.1.0.0 for cpu-clock (49 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000228656 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)>:
+         : 6      void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*):
+         : 19     inline bool is_a_ge_zero_and_a_lt_b(int a, int b) {
+         : 20     return static_cast<unsigned>(a) < static_cast<unsigned>(b);
+         : 21     }
+         :
+         : 23     template <typename Dtype>
+         : 24     void im2col_cpu(const Dtype* data_im, const int channels,
+    0.00 :   228656: addi    sp,sp,-240
+    0.00 :   228658: sd      s0,224(sp)
+    0.00 :   22865a: sd      s1,216(sp)
+    0.00 :   22865c: addi    s0,sp,240
+    0.00 :   22865e: sd      s5,184(sp)
+    0.00 :   228660: sd      s7,168(sp)
+    0.00 :   228662: sd      ra,232(sp)
+    0.00 :   228664: lw      s1,24(s0)
+    0.00 :   228666: lw      s7,0(s0)
+    0.00 :   22866a: lw      s5,8(s0)
+    0.00 :   22866e: sd      s1,-152(s0)
+    0.00 :   228672: lw      t0,16(s0)
+    0.00 :   228676: ld      t1,32(s0)
+         : 30     const int output_h = (height + 2 * pad_h -
+         : 31     (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+         : 32     const int output_w = (width + 2 * pad_w -
+         : 33     (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+         : 34     const int channel_size = height * width;
+         : 35     for (int channel = channels; channel--; data_im += channel_size) {
+    0.00 :   22867a: beqz    a1,2288ba <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x264>
+    0.00 :   22867e: blez    a4,2288ba <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x264>
+    0.00 :   228682: sd      s11,136(sp)
+    0.00 :   228684: mv      s11,a2
+         : 26     (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+    0.00 :   228686: addiw   a2,a4,-1
+    0.00 :   22868a: mulw    a2,a2,t0
+    0.00 :   22868e: sd      s4,192(sp)
+    0.00 :   228690: mv      s4,a6
+    0.00 :   228692: sd      s6,176(sp)
+         : 25     const int output_h = (height + 2 * pad_h -
+    0.00 :   228694: slliw   s6,s4,0x1
+    0.00 :   228698: addw    s6,s6,s11
+    0.00 :   22869c: sd      s3,200(sp)
+    0.00 :   22869e: mv      s3,a0
+    0.00 :   2286a0: mv      a0,a5
+         : 28     (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+    0.00 :   2286a2: addiw   a5,a5,-1
+         : 26     (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+    0.00 :   2286a4: addiw   a2,a2,1
+         : 25     const int output_h = (height + 2 * pad_h -
+    0.00 :   2286a6: subw    s6,s6,a2
+         : 26     (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+    0.00 :   2286aa: divw    s6,s6,s7
+    0.00 :   2286ae: mv      t5,a7
+         : 27     const int output_w = (width + 2 * pad_w -
+    0.00 :   2286b0: slliw   a7,a7,0x1
+    0.00 :   2286b4: addw    a7,a7,a3
+    0.00 :   2286b8: sd      s2,208(sp)
+    0.00 :   2286ba: mv      s2,a3
+    0.00 :   2286bc: sd      s8,160(sp)
+    0.00 :   2286be: sd      s9,152(sp)
+    0.00 :   2286c0: sd      s10,144(sp)
+    0.00 :   2286c2: li      a3,1
+    0.00 :   2286c4: mv      a6,a4
+         : 30     for (int channel = channels; channel--; data_im += channel_size) {
+    0.00 :   2286c6: addiw   a4,a1,-1
+         : 28     (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+    0.00 :   2286ca: mulw    a5,a5,s1
+    0.00 :   2286ce: addiw   a5,a5,1
+         : 27     const int output_w = (width + 2 * pad_w -
+    0.00 :   2286d0: subw    a7,a7,a5
+         : 28     (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+    0.00 :   2286d4: divw    a7,a7,s5
+         : 25     const int output_h = (height + 2 * pad_h -
+    0.00 :   2286d8: addiw   a5,s6,1
+    0.00 :   2286dc: sd      a5,-128(s0)
+         : 29     const int channel_size = height * width;
+    0.00 :   2286e0: mulw    a5,s11,s2
+         : 27     const int output_w = (width + 2 * pad_w -
+    0.00 :   2286e4: addiw   s6,a7,1
+         : 30     for (int channel = channels; channel--; data_im += channel_size) {
+    0.00 :   2286e8: slli    a5,a5,0x2
+    0.00 :   2286ea: sd      a5,-208(s0)
+    0.00 :   2286ee: bne     s5,a3,22895c <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x306>
+    0.00 :   2286f2: mulw    a5,s4,s2
+         : 37     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+         : 38     int input_row = -pad_h + kernel_row * dilation_h;
+         : 39     for (int output_rows = output_h; output_rows; output_rows--) {
+         : 40     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+         : 41     for (int output_cols = output_w; output_cols; output_cols--) {
+         : 42     *(data_col++) = 0;
+    0.00 :   2286f6: slli    s10,a7,0x20
+    0.00 :   2286fa: srli    s10,s10,0x1e
+    0.00 :   2286fe: addi    s10,s10,4
+    0.00 :   228700: mv      a2,a7
+    0.00 :   228702: mv      s8,a6
+    0.00 :   228704: mulw    a3,t0,s2
+    0.00 :   228708: negw    s9,a5
+    0.00 :   22870c: subw    a5,s5,t5
+    0.00 :   228710: mv      s5,s6
+    0.00 :   228712: mulw    s6,s7,s2
+    0.00 :   228716: sd      a3,-216(s0)
+    0.00 :   22871a: mv      a3,s4
+    0.00 :   22871c: mv      s4,a4
+    0.00 :   22871e: mv      a4,s9
+    0.00 :   228720: mv      s9,a3
+         : 32     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   228722: blez    a0,228952 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x2fc>
+    0.00 :   228726: sd      s4,-224(s0)
+    0.00 :   22872a: sd      a2,-120(s0)
+    0.00 :   22872e: sd      s8,-200(s0)
+    0.00 :   228732: mv      t6,a4
+    0.00 :   228734: mv      s8,s2
+    0.00 :   228736: li      s4,0
+    0.00 :   228738: mv      s2,s5
+    0.00 :   22873a: negw    a2,s9
+    0.00 :   22873e: sd      a4,-232(s0)
+    0.00 :   228742: sd      a5,-192(s0)
+    0.00 :   228746: mv      s1,s11
+    0.00 :   228748: mv      s5,s10
+    0.00 :   22874a: sd      a0,-168(s0)
+    0.00 :   22874e: sd      s9,-240(s0)
+    0.00 :   228752: ld      a4,-120(s0)
+    0.00 :   228756: ld      a5,-192(s0)
+    0.00 :   22875a: sd      s4,-176(s0)
+    0.00 :   22875e: mv      s11,s1
+    0.00 :   228760: addw    s9,a5,a4
+    0.00 :   228764: mv      s4,s3
+    0.00 :   228766: mv      s1,s2
+    0.00 :   228768: li      a4,0
+    0.00 :   22876a: mv      s2,s9
+    0.00 :   22876c: sd      a2,-136(s0)
+    0.00 :   228770: mv      s9,s7
+    0.00 :   228772: sd      t6,-160(s0)
+    0.00 :   228776: mv      s3,s5
+    0.00 :   228778: sd      t0,-184(s0)
+    0.00 :   22877c: mv      s7,s8
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   22877e: ld      a5,-128(s0)
+    0.00 :   228782: beqz    a5,228834 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x1de>
+    0.00 :   228784: mv      s8,s1
+    0.00 :   228786: sd      a4,-144(s0)
+    0.00 :   22878a: mv      s1,s11
+    0.00 :   22878c: mv      s5,s9
+    0.00 :   22878e: mv      s11,s3
+    0.00 :   228790: mv      s10,s6
+    0.00 :   228792: mv      s3,s2
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   228794: ld      a5,-136(s0)
+         : 36     for (int output_cols = output_w; output_cols; output_cols--) {
+    0.00 :   228798: ld      s2,-160(s0)
+    0.00 :   22879c: mv      s9,a5
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   22879e: bgeu    a5,s1,2288d4 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x27e>
+    0.00 :   2287a2: ld      s6,-128(s0)
+    0.00 :   2287a6: ld      a5,-120(s0)
+    0.00 :   2287aa: subw    a6,s3,a5
+         : 41     }
+         : 42     } else {
+         : 43     int input_col = -pad_w + kernel_col * dilation_w;
+         : 44     for (int output_col = output_w; output_col; output_col--) {
+    0.00 :   2287ae: beqz    s8,228b58 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x502>
+         : 40     int input_col = -pad_w + kernel_col * dilation_w;
+    0.00 :   2287b2: addiw   a4,a6,-1
+         : 41     for (int output_col = output_w; output_col; output_col--) {
+    0.00 :   2287b6: mv      a3,t1
+         : 43     if (is_a_ge_zero_and_a_lt_b(input_col, width)) {
+         : 44     *(data_col++) = data_im[input_row * width + input_col];
+    2.04 :   2287b8: addw    a5,a4,s2
+    0.00 :   2287bc: slli    a5,a5,0x2
+    0.00 :   2287be: add     a5,a5,s4
+   24.49 :   2287c0: addi    a3,a3,4
+         : 42     if (is_a_ge_zero_and_a_lt_b(input_col, width)) {
+    4.08 :   2287c2: bgeu    a4,s7,2288c8 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x272>
+         : 43     *(data_col++) = data_im[input_row * width + input_col];
+    2.04 :   2287c6: flw     fa5,0(a5)
+         : 47     } else {
+         : 48     *(data_col++) = 0;
+         : 49     }
+         : 50     input_col += stride_w;
+   34.69 :   2287ca: addiw   a4,a4,1
+    0.00 :   2287cc: fsw     fa5,-4(a3)
+         : 41     for (int output_col = output_w; output_col; output_col--) {
+    0.00 :   2287d0: bne     a4,s3,2287b8 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x162>
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   2287d4: addiw   s6,s6,-1
+    0.00 :   2287d6: add     t1,t1,s11
+    0.00 :   2287d8: beqz    s6,228824 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x1ce>
+         : 50     }
+         : 51     }
+         : 52     input_row += stride_h;
+    0.00 :   2287dc: addw    s9,s5,s9
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   2287e0: addw    s2,s10,s2
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   2287e4: bltu    s9,s1,2287ae <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x158>
+         : 37     *(data_col++) = 0;
+    0.00 :   2287e8: mv      a0,t1
+    0.00 :   2287ea: mv      a2,s11
+    0.00 :   2287ec: li      a1,0
+    2.04 :   2287ee: auipc   ra,0xffebd
+    0.00 :   2287f2: jalr    -830(ra) # e54b0 <memset@plt>
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   2287f6: addiw   s6,s6,-1
+    0.00 :   2287f8: add     t1,a0,s11
+    0.00 :   2287fc: beqz    s6,228824 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x1ce>
+         : 50     input_row += stride_h;
+    0.00 :   228800: addw    s9,s5,s9
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228804: addw    s2,s10,s2
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   228808: bltu    s9,s1,2287a6 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x150>
+         : 37     *(data_col++) = 0;
+    0.00 :   22880c: mv      a0,t1
+    0.00 :   22880e: mv      a2,s11
+    0.00 :   228810: li      a1,0
+    0.00 :   228812: auipc   ra,0xffebd
+    0.00 :   228816: jalr    -866(ra) # e54b0 <memset@plt>
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   22881a: addiw   s6,s6,-1
+    0.00 :   22881c: add     t1,a0,s11
+    0.00 :   228820: bnez    s6,228800 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x1aa>
+    0.00 :   228824: ld      a4,-144(s0)
+    0.00 :   228828: mv      s2,s3
+    0.00 :   22882a: mv      s9,s5
+    0.00 :   22882c: mv      s3,s11
+    0.00 :   22882e: mv      s6,s10
+    0.00 :   228830: mv      s11,s1
+    0.00 :   228832: mv      s1,s8
+         : 32     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   228834: ld      a5,-152(s0)
+    0.00 :   228838: addiw   a4,a4,1
+    0.00 :   22883a: addw    s2,a5,s2
+    0.00 :   22883e: ld      a5,-168(s0)
+    0.00 :   228842: bne     a5,a4,22877e <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x128>
+    0.00 :   228846: mv      s5,s3
+    0.00 :   228848: ld      a2,-136(s0)
+    0.00 :   22884c: mv      s3,s4
+    0.00 :   22884e: ld      t6,-160(s0)
+    0.00 :   228852: ld      s4,-176(s0)
+    0.00 :   228856: ld      t0,-184(s0)
+    0.00 :   22885a: mv      s2,s1
+    0.00 :   22885c: mv      s8,s7
+    0.00 :   22885e: mv      s1,s11
+    0.00 :   228860: mv      s7,s9
+         : 31     for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+    0.00 :   228862: ld      a5,-216(s0)
+    0.00 :   228866: addiw   s4,s4,1
+    0.00 :   228868: addw    a2,t0,a2
+    0.00 :   22886c: addw    t6,a5,t6
+    0.00 :   228870: ld      a5,-200(s0)
+    0.00 :   228874: bne     a5,s4,228752 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0xfc>
+    0.00 :   228878: mv      s10,s5
+    0.00 :   22887a: ld      s4,-224(s0)
+    0.00 :   22887e: mv      s5,s2
+    0.00 :   228880: ld      a2,-120(s0)
+    0.00 :   228884: mv      s2,s8
+    0.00 :   228886: ld      a4,-232(s0)
+    0.00 :   22888a: ld      a5,-192(s0)
+    0.00 :   22888e: ld      s8,-200(s0)
+    0.00 :   228892: ld      a0,-168(s0)
+    0.00 :   228896: ld      s9,-240(s0)
+    0.00 :   22889a: mv      s11,s1
+         : 30     for (int channel = channels; channel--; data_im += channel_size) {
+    0.00 :   22889c: ld      a3,-208(s0)
+    0.00 :   2288a0: addiw   s4,s4,-1
+    0.00 :   2288a2: add     s3,s3,a3
+    0.00 :   2288a4: li      a3,-1
+    0.00 :   2288a6: bne     s4,a3,228722 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0xcc>
+    0.00 :   2288aa: ld      s2,208(sp)
+    0.00 :   2288ac: ld      s3,200(sp)
+    0.00 :   2288ae: ld      s4,192(sp)
+    0.00 :   2288b0: ld      s6,176(sp)
+    0.00 :   2288b2: ld      s8,160(sp)
+    0.00 :   2288b4: ld      s9,152(sp)
+    0.00 :   2288b6: ld      s10,144(sp)
+    0.00 :   2288b8: ld      s11,136(sp)
+         : 55     }
+         : 56     }
+         : 57     }
+         : 58     }
+         : 59     }
+    0.00 :   2288ba: ld      ra,232(sp)
+    0.00 :   2288bc: ld      s0,224(sp)
+    0.00 :   2288be: ld      s1,216(sp)
+    0.00 :   2288c0: ld      s5,184(sp)
+    0.00 :   2288c2: ld      s7,168(sp)
+    0.00 :   2288c4: addi    sp,sp,240
+    0.00 :   2288c6: ret
+    0.00 :   2288c8: sw      zero,-4(a3)
+         : 47     input_col += stride_w;
+    4.08 :   2288cc: addiw   a4,a4,1
+         : 41     for (int output_col = output_w; output_col; output_col--) {
+    0.00 :   2288ce: bne     s3,a4,2287b8 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x162>
+    0.00 :   2288d2: j       2287d4 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x17e>
+         : 36     for (int output_cols = output_w; output_cols; output_cols--) {
+    0.00 :   2288d4: beqz    s8,2288de <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x288>
+    0.00 :   2288d8: ld      s6,-128(s0)
+    2.04 :   2288dc: j       2287e8 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x192>
+    0.00 :   2288de: ld      a5,-128(s0)
+         : 50     input_row += stride_h;
+    0.00 :   2288e2: addw    s9,s5,s9
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   2288e6: addiw   s6,a5,-1
+    0.00 :   2288ea: beqz    s6,228918 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x2c2>
+    0.00 :   2288ee: addw    s2,s10,s2
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   2288f2: bgeu    s9,s1,22890a <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x2b4>
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   2288f6: addiw   s6,a5,-2
+         : 50     input_row += stride_h;
+    0.00 :   2288fa: addw    s9,s5,s9
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   2288fe: beqz    s6,228824 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x1ce>
+    0.00 :   228902: addw    s2,s2,s10
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   228906: bltu    s9,s1,2287a6 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x150>
+         : 41     for (int output_col = output_w; output_col; output_col--) {
+    0.00 :   22890a: mv      a5,s6
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   22890c: addiw   s6,a5,-1
+         : 50     input_row += stride_h;
+    0.00 :   228910: addw    s9,s5,s9
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228914: bnez    s6,2288ee <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x298>
+         : 32     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   228918: ld      a5,-144(s0)
+    0.00 :   22891c: ld      a4,-168(s0)
+    0.00 :   228920: addiw   a5,a5,1
+    0.00 :   228922: sd      a5,-144(s0)
+    0.00 :   228926: beq     a4,a5,228934 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x2de>
+    0.00 :   22892a: ld      a5,-152(s0)
+    0.00 :   22892e: addw    s3,a5,s3
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228932: j       228794 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x13e>
+    0.00 :   228934: mv      s3,s4
+    0.00 :   228936: mv      s2,s8
+    0.00 :   228938: ld      a2,-136(s0)
+    0.00 :   22893c: mv      s8,s7
+    0.00 :   22893e: ld      t6,-160(s0)
+    0.00 :   228942: mv      s7,s5
+    0.00 :   228944: ld      s4,-176(s0)
+    0.00 :   228948: ld      t0,-184(s0)
+    0.00 :   22894c: mv      s6,s10
+    0.00 :   22894e: mv      s5,s11
+    0.00 :   228950: j       228862 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x20c>
+         : 32     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   228952: li      a3,0
+         : 31     for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+    0.00 :   228954: addiw   a3,a3,1
+    0.00 :   228956: bne     s8,a3,228954 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x2fe>
+    0.00 :   22895a: j       22889c <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x246>
+    0.00 :   22895c: mulw    a5,s2,s4
+    0.00 :   228960: slli    a2,a7,0x20
+    0.00 :   228964: srli    s8,a2,0x1e
+    0.00 :   228968: addi    s8,s8,4
+    0.00 :   22896a: mv      s10,s8
+    0.00 :   22896c: mv      s9,a6
+    0.00 :   22896e: mulw    a3,t0,s2
+    0.00 :   228972: negw    s8,a5
+    0.00 :   228976: negw    a5,t5
+    0.00 :   22897a: mv      t5,a0
+    0.00 :   22897c: sd      a3,-216(s0)
+    0.00 :   228980: mv      a3,s4
+    0.00 :   228982: mulw    s1,s7,s2
+    0.00 :   228986: mv      s4,s6
+    0.00 :   228988: mv      s6,s7
+    0.00 :   22898a: mv      s7,a4
+    0.00 :   22898c: mv      a4,a3
+         : 32     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   22898e: li      a3,0
+    0.00 :   228990: blez    t5,228a52 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x3fc>
+    0.00 :   228994: negw    a3,a4
+    0.00 :   228998: sd      s9,-200(s0)
+    0.00 :   22899c: sd      a3,-144(s0)
+    0.00 :   2289a0: mv      s9,s3
+    0.00 :   2289a2: sd      s8,-168(s0)
+    0.00 :   2289a6: mv      s3,s5
+    0.00 :   2289a8: sd      zero,-176(s0)
+    0.00 :   2289ac: mv      s5,s11
+    0.00 :   2289ae: sd      s7,-224(s0)
+    0.00 :   2289b2: mv      s11,s10
+    0.00 :   2289b4: sd      t0,-184(s0)
+    0.00 :   2289b8: sd      s4,-120(s0)
+    0.00 :   2289bc: sd      s8,-232(s0)
+    0.00 :   2289c0: sd      a5,-192(s0)
+    0.00 :   2289c4: mv      s10,s6
+    0.00 :   2289c6: sd      t5,-160(s0)
+    0.00 :   2289ca: sd      a4,-240(s0)
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   2289ce: ld      a5,-128(s0)
+         : 32     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   2289d2: sd      zero,-136(s0)
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   2289d6: ld      s8,-192(s0)
+    0.00 :   2289da: bnez    a5,228a60 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x40a>
+         : 32     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   2289dc: ld      a4,-160(s0)
+    0.00 :   2289e0: addiw   a5,a5,1
+    0.00 :   2289e2: bne     a4,a5,2289dc <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x386>
+         : 31     for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+    0.00 :   2289e6: ld      a3,-144(s0)
+    0.00 :   2289ea: ld      a4,-184(s0)
+    0.00 :   2289ee: ld      a5,-176(s0)
+    0.00 :   2289f2: addw    a4,a4,a3
+    0.00 :   2289f4: sd      a4,-144(s0)
+    0.00 :   2289f8: ld      a3,-168(s0)
+    0.00 :   2289fc: ld      a4,-216(s0)
+    0.00 :   228a00: addiw   a5,a5,1
+    0.00 :   228a02: sd      a5,-176(s0)
+    0.00 :   228a06: addw    a4,a4,a3
+    0.00 :   228a08: sd      a4,-168(s0)
+    0.00 :   228a0c: ld      a4,-200(s0)
+    0.00 :   228a10: bne     a4,a5,2289ce <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x378>
+    0.00 :   228a14: mv      s6,s10
+    0.00 :   228a16: ld      s7,-224(s0)
+    0.00 :   228a1a: mv      s10,s11
+    0.00 :   228a1c: ld      t0,-184(s0)
+    0.00 :   228a20: mv      s11,s5
+    0.00 :   228a22: ld      s4,-120(s0)
+    0.00 :   228a26: mv      s5,s3
+    0.00 :   228a28: ld      s8,-232(s0)
+    0.00 :   228a2c: mv      s3,s9
+    0.00 :   228a2e: ld      a5,-192(s0)
+    0.00 :   228a32: ld      s9,-200(s0)
+    0.00 :   228a36: ld      t5,-160(s0)
+    0.00 :   228a3a: ld      a4,-240(s0)
+         : 30     for (int channel = channels; channel--; data_im += channel_size) {
+    0.00 :   228a3e: ld      a3,-208(s0)
+    0.00 :   228a42: addiw   s7,s7,-1
+    0.00 :   228a44: add     s3,s3,a3
+    0.00 :   228a46: li      a3,-1
+    0.00 :   228a48: beq     s7,a3,2288aa <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x254>
+         : 32     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   228a4c: li      a3,0
+    0.00 :   228a4e: bgtz    t5,228994 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x33e>
+         : 31     for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+    0.00 :   228a52: addiw   a3,a3,1
+    0.00 :   228a54: beq     s9,a3,228a3e <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x3e8>
+    0.00 :   228a58: addiw   a3,a3,1
+    0.00 :   228a5a: bne     s9,a3,228a52 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x3fc>
+    0.00 :   228a5e: j       228a3e <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x3e8>
+    0.00 :   228a60: mv      s7,s1
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   228a62: ld      s1,-144(s0)
+    0.00 :   228a66: mv      s4,s8
+    0.00 :   228a68: mv      s8,s2
+    0.00 :   228a6a: mv      s2,s5
+         : 40     caffe::is_a_ge_zero_and_a_lt_b(int, int):
+         : 15     return static_cast<unsigned>(a) < static_cast<unsigned>(b);
+    0.00 :   228a6c: mv      s6,s10
+    0.00 :   228a6e: mv      s10,s3
+    0.00 :   228a70: mv      s3,s11
+         : 19     void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*):
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   228a72: bltu    s1,s2,228af6 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x4a0>
+    0.00 :   228a76: ld      s5,-168(s0)
+    0.00 :   228a7a: ld      s11,-128(s0)
+         : 36     for (int output_cols = output_w; output_cols; output_cols--) {
+    0.00 :   228a7e: ld      a5,-120(s0)
+    0.00 :   228a82: beqz    a5,228b38 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x4e2>
+         : 37     *(data_col++) = 0;
+    0.00 :   228a84: mv      a0,t1
+    0.00 :   228a86: mv      a2,s3
+    0.00 :   228a88: li      a1,0
+    0.00 :   228a8a: auipc   ra,0xffebd
+    0.00 :   228a8e: jalr    -1498(ra) # e54b0 <memset@plt>
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228a92: addiw   s11,s11,-1
+    0.00 :   228a94: add     t1,a0,s3
+    0.00 :   228a98: beqz    s11,228ad4 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x47e>
+         : 50     input_row += stride_h;
+    0.00 :   228a9c: addw    s1,s6,s1
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228aa0: addw    s5,s7,s5
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   228aa4: bgeu    s1,s2,228a7e <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x428>
+    0.00 :   228aa8: add     a3,t1,s3
+         : 40     int input_col = -pad_w + kernel_col * dilation_w;
+    0.00 :   228aac: mv      a4,s4
+         : 43     *(data_col++) = data_im[input_row * width + input_col];
+    2.04 :   228aae: addw    a5,a4,s5
+    0.00 :   228ab2: slli    a5,a5,0x2
+    0.00 :   228ab4: add     a5,a5,s9
+    6.12 :   228ab6: addi    t1,t1,4
+         : 42     if (is_a_ge_zero_and_a_lt_b(input_col, width)) {
+    0.00 :   228ab8: bgeu    a4,s8,228b06 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x4b0>
+         : 43     *(data_col++) = data_im[input_row * width + input_col];
+    0.00 :   228abc: flw     fa5,0(a5)
+         : 47     input_col += stride_w;
+    8.16 :   228ac0: addw    a4,s10,a4
+    4.08 :   228ac4: fsw     fa5,-4(t1)
+         : 41     for (int output_col = output_w; output_col; output_col--) {
+    2.04 :   228ac8: bne     t1,a3,228aae <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x458>
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228acc: addiw   s11,s11,-1
+    0.00 :   228ace: mv      t1,a3
+    2.04 :   228ad0: bnez    s11,228a9c <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x446>
+         : 32     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   228ad4: ld      a5,-136(s0)
+    0.00 :   228ad8: ld      a4,-160(s0)
+    0.00 :   228adc: addiw   a5,a5,1
+    0.00 :   228ade: sd      a5,-136(s0)
+    0.00 :   228ae2: beq     a4,a5,228b4a <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x4f4>
+    0.00 :   228ae6: ld      a5,-152(s0)
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   228aea: ld      s1,-144(s0)
+         : 32     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   228aee: addw    s4,a5,s4
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   228af2: bgeu    s1,s2,228a76 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x420>
+         : 41     for (int output_col = output_w; output_col; output_col--) {
+    0.00 :   228af6: ld      a5,-120(s0)
+    0.00 :   228afa: beqz    a5,228b14 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x4be>
+    0.00 :   228afc: ld      s5,-168(s0)
+    0.00 :   228b00: ld      s11,-128(s0)
+    0.00 :   228b04: j       228aa8 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x452>
+    0.00 :   228b06: sw      zero,-4(t1)
+    0.00 :   228b0a: beq     t1,a3,228acc <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x476>
+         : 47     input_col += stride_w;
+    0.00 :   228b0e: addw    a4,s10,a4
+    0.00 :   228b12: j       228aae <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x458>
+         : 41     for (int output_col = output_w; output_col; output_col--) {
+    0.00 :   228b14: ld      a5,-128(s0)
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228b18: addiw   s11,a5,-1
+         : 50     input_row += stride_h;
+    0.00 :   228b1c: addw    s1,s6,s1
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228b20: beqz    s11,228ad4 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x47e>
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   228b24: bltu    s1,s2,228b46 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x4f0>
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228b28: addiw   s11,a5,-2
+         : 50     input_row += stride_h;
+    0.00 :   228b2c: addw    s1,s1,s6
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228b30: beqz    s11,228ad4 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x47e>
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   228b34: bltu    s1,s2,228b46 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x4f0>
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228b38: addiw   s11,s11,-1
+    0.00 :   228b3a: beqz    s11,228ad4 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x47e>
+         : 50     input_row += stride_h;
+    0.00 :   228b3e: addw    s1,s6,s1
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   228b42: bgeu    s1,s2,228b38 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x4e2>
+         : 40     int input_col = -pad_w + kernel_col * dilation_w;
+    0.00 :   228b46: mv      a5,s11
+    0.00 :   228b48: j       228b18 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x4c2>
+    0.00 :   228b4a: mv      s11,s3
+    0.00 :   228b4c: mv      s5,s2
+    0.00 :   228b4e: mv      s3,s10
+    0.00 :   228b50: mv      s1,s7
+    0.00 :   228b52: mv      s10,s6
+    0.00 :   228b54: mv      s2,s8
+    0.00 :   228b56: j       2289e6 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x390>
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228b58: addiw   s6,s6,-1
+         : 50     input_row += stride_h;
+    0.00 :   228b5a: addw    s9,s5,s9
+         : 34     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   228b5e: beqz    s6,228918 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x2c2>
+    0.00 :   228b62: addw    s2,s10,s2
+         : 35     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   228b66: bltu    s9,s1,228b58 <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x502>
+         : 41     for (int output_col = output_w; output_col; output_col--) {
+    0.00 :   228b6a: mv      a5,s6
+    0.00 :   228b6c: j       22890c <void caffe::im2col_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*)+0x2b6>
