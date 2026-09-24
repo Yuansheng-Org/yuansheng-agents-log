@@ -1,0 +1,19 @@
+diff --git a/make/autoconf/flags-cflags.m4 b/make/autoconf/flags-cflags.m4
+index 8f8a7af47fc..0300f444598 100644
+--- a/make/autoconf/flags-cflags.m4
++++ b/make/autoconf/flags-cflags.m4
+@@ -754,6 +754,14 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_CPU_DEP],
+       fi
+     elif test "x$FLAGS_CPU" = xs390x; then
+       $1_CFLAGS_CPU="-mbackchain -march=z10"
++    elif test "x$FLAGS_CPU" = xriscv64; then
++      # The target hardware exposes the ratified RISC-V bit-manipulation
++      # extensions (Zba/Zbb/Zbs), conditional-move (Zicond) and the spin-wait
++      # hint (Zihintpause). rv64gcv keeps the V extension required by the port.
++      # Enabling them lets the backend emit zext.w/sh1add/sh2add/ctz and pause
++      # hints instead of multi-instruction synthesis in scaled-address chains
++      # and spin loops.
++      $1_CFLAGS_CPU="-march=rv64gcv_zba_zbb_zbs_zicond_zihintpause"
+     fi
+ 
+     if test "x$FLAGS_CPU_ARCH" != xarm &&  test "x$FLAGS_CPU_ARCH" != xppc; then
