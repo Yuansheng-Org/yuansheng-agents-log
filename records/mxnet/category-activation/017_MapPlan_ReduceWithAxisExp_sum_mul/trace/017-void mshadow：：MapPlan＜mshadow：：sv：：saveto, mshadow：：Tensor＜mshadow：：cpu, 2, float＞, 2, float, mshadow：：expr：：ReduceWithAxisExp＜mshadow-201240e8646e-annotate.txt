@@ -1,0 +1,210 @@
+ Percent |	Source code & Disassembly of libmxnet.so for cpu-clock (140 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3       Disassembly of section .text:
+         :
+         : 5       00000000011bf450 <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]>:
+         : 6       void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]:
+         : 173     inline void MapPlan(TRValue<R, cpu, dim, DType> *dst,
+         : 174     const expr::Plan<E, DType> &plan) {
+         : 175     Shape<2> shape = expr::ShapeCheck<dim, R>::Check(dst->self()).FlatTo2D();
+         : 176     expr::Plan<R, DType> dplan = expr::MakePlan(dst->self());
+         : 177     #ifndef __CUDACC__
+         : 178     #pragma omp parallel for
+    0.00 :   11bf450:        addi    sp,sp,-96
+    0.00 :   11bf452:        sd      ra,88(sp)
+    0.00 :   11bf454:        sd      s0,80(sp)
+    0.00 :   11bf456:        sd      s1,72(sp)
+    0.00 :   11bf458:        sd      s2,64(sp)
+    0.00 :   11bf45a:        sd      s3,56(sp)
+    0.00 :   11bf45c:        sd      s4,48(sp)
+    0.00 :   11bf45e:        addi    s0,sp,96
+         : 176     #endif
+         : 177     // temp remove openmp, as default setting throttles CPU
+         : 178     for (openmp_index_t y = 0; y < shape[0]; ++y) {
+    0.00 :   11bf460:        ld      s3,8(a0)
+         : 173     #pragma omp parallel for
+    0.00 :   11bf464:        mv      s4,a0
+    0.00 :   11bf466:        auipc   ra,0xff3e0
+    0.00 :   11bf46a:        jalr    -1350(ra) # 59ef20 <omp_get_num_threads@plt>
+         : 176     for (openmp_index_t y = 0; y < shape[0]; ++y) {
+    0.00 :   11bf46e:        ld      s2,0(s3)
+    0.00 :   11bf472:        mv      s1,a0
+    0.00 :   11bf474:        auipc   ra,0xff3e0
+    0.00 :   11bf478:        jalr    -228(ra) # 59f390 <omp_get_thread_num@plt>
+    0.00 :   11bf47c:        rem     t2,s2,s1
+    0.00 :   11bf480:        div     s2,s2,s1
+    0.00 :   11bf484:        blt     a0,t2,11bf58a <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]+0x13a>
+    0.00 :   11bf488:        mul     a0,s2,a0
+    0.00 :   11bf48c:        add     t2,t2,a0
+    0.00 :   11bf48e:        add     s2,s2,t2
+    0.00 :   11bf490:        bge     t2,s2,11bf4aa <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]+0x5a>
+         : 177     for (index_t x = 0; x < shape[1]; ++x) {
+    0.00 :   11bf494:        ld      s3,8(s3)
+         : 179     // trust your compiler! -_- they will optimize it
+         : 180     Saver::template Save<DType>(dplan.REval(y, x), plan.Eval(y, x));
+    0.00 :   11bf498:        ld      a5,16(s4)
+    0.00 :   11bf49c:        ld      s1,0(s4)
+         : 177     for (index_t x = 0; x < shape[1]; ++x) {
+    0.00 :   11bf4a0:        bgtz    s3,11bf4ba <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]+0x6a>
+    0.00 :   11bf4a4:        addi    t2,t2,1
+    0.00 :   11bf4a6:        bne     s2,t2,11bf4a0 <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]+0x50>
+         : 173     #pragma omp parallel for
+    0.00 :   11bf4aa:        ld      ra,88(sp)
+    0.00 :   11bf4ac:        ld      s0,80(sp)
+    0.00 :   11bf4ae:        ld      s1,72(sp)
+    0.00 :   11bf4b0:        ld      s2,64(sp)
+    0.00 :   11bf4b2:        ld      s3,56(sp)
+    0.00 :   11bf4b4:        ld      s4,48(sp)
+    0.00 :   11bf4b6:        addi    sp,sp,96
+    0.00 :   11bf4b8:        ret
+    0.00 :   11bf4ba:        sd      s5,40(sp)
+    0.00 :   11bf4bc:        sd      s6,32(sp)
+    0.00 :   11bf4be:        ld      a0,40(s1)
+    0.00 :   11bf4c0:        ld      a6,48(s1)
+    0.00 :   11bf4c4:        ld      s6,8(a5)
+    0.00 :   11bf4c8:        ld      s5,0(a5)
+    0.00 :   11bf4cc:        ld      s4,32(s1)
+    0.00 :   11bf4d0:        sd      s7,24(sp)
+         : 190     mshadow::expr::Plan<mshadow::Tensor<mshadow::cpu, 2, float>, float>::REval(long, long):
+         : 74      public:
+         : 75      explicit Plan(const Tensor<Device, dim, DType> &t)
+         : 76      : dptr_(t.dptr_), stride_(t.stride_) {}
+         : 77      // for RValue, the return type should be reference
+         : 78      MSHADOW_XINLINE DType &REval(index_t y, index_t x) {
+         : 79      return dptr_[y * stride_ + x];
+    0.00 :   11bf4d2:        mul     t6,t2,s6
+         : 81      void mshadow::red::sum::SetInitValue<float>(float&):
+         : 1043    /*!
+         : 1044    *\brief set the initial value during reduction
+         : 1045    */
+         : 1046    template<typename DType>
+         : 1047    MSHADOW_XINLINE static void SetInitValue(DType &initv) { // NOLINT(*)
+         : 1048    initv = 0;
+    0.00 :   11bf4d6:        sw      zero,-84(s0)
+         : 1050    mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float>::Eval(long, long) const:
+         : 123     public:
+         : 124     explicit Plan(const ReduceWithAxisExp<Reducer, SrcExp, DType, dimsrc, mask, dimdst> &e)
+         : 125     : src_(MakePlan(e.src_)), last_dst_dim_(e.last_dst_dim_), trailing_(e.trailing_),
+         : 126     size_(e.size_), last_(e.last_) {}
+         : 127     MSHADOW_XINLINE DType Eval(index_t i, index_t j) const {
+         : 128     index_t x = (i*last_dst_dim_ + j)/trailing_;
+    0.00 :   11bf4da:        mul     t5,t2,s4
+    0.00 :   11bf4de:        slli    t6,t6,0x2
+    0.00 :   11bf4e0:        add     t6,t6,s5
+    0.00 :   11bf4e2:        add     t0,s3,t5
+         : 140     }
+         : 141     }
+         : 142     return static_cast<DType>(static_cast<int>(idx));
+         : 143     } else {
+         : 144     DType res; Reducer::SetInitValue(res);
+         : 145     for (index_t k = 0; k < size_; ++k) {
+    0.00 :   11bf4e6:        blez    a6,11bf562 <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]+0x112>
+    0.00 :   11bf4ea:        ld      a1,56(s1)
+    0.00 :   11bf4ec:        ld      t4,0(s1)
+    0.00 :   11bf4f0:        ld      t3,8(s1)
+    0.00 :   11bf4f4:        ld      t1,16(s1)
+    0.00 :   11bf4f8:        ld      a7,24(s1)
+         : 123     index_t x = (i*last_dst_dim_ + j)/trailing_;
+    0.00 :   11bf4fc:        div     a3,t5,a0
+         : 140     for (index_t k = 0; k < size_; ++k) {
+    0.00 :   11bf500:        li      a2,0
+         : 124     index_t y = (i*last_dst_dim_ + j)%trailing_;
+    0.00 :   11bf502:        rem     a5,t5,a0
+         : 141     index_t z = (x*size_+k)*trailing_+y;
+    0.00 :   11bf506:        mul     a3,a3,a6
+    0.00 :   11bf50a:        mul     a3,a3,a0
+    0.00 :   11bf50e:        add     a3,a3,a5
+         : 142     Reducer::Reduce(res, src_.Eval(z/last_, z%last_));
+    0.00 :   11bf510:        div     a5,a3,a1
+         : 144     void mshadow::red::sum::Reduce<float>(float volatile&, float):
+         : 991     dst += src;
+    0.00 :   11bf514:        flw     fa4,-84(s0)
+         : 993     mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float>::Eval(long, long) const:
+         : 140     for (index_t k = 0; k < size_; ++k) {
+   50.71 :   11bf518:        addi    a2,a2,1
+         : 142     Reducer::Reduce(res, src_.Eval(z/last_, z%last_));
+    0.00 :   11bf51a:        rem     s7,a3,a1
+         : 140     for (index_t k = 0; k < size_; ++k) {
+    0.00 :   11bf51e:        add     a3,a3,a0
+         : 142     mshadow::expr::Plan<mshadow::Tensor<mshadow::cpu, 3, float>, float>::Eval(long, long) const:
+         : 78      }
+         : 79      // const evaluation
+         : 80      MSHADOW_XINLINE const DType &Eval(index_t y, index_t x) const {
+         : 81      return dptr_[y * stride_ + x];
+    0.00 :   11bf520:        mul     a4,a5,t3
+    0.00 :   11bf524:        mul     a5,a5,a7
+    0.00 :   11bf528:        add     a4,a4,s7
+         : 85      mshadow::expr::Plan<mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float>::Eval(long, long) const:
+         : 149     class Plan<BinaryMapExp<OP, TA, TB, DType, etype>, DType> {
+         : 150     public:
+         : 151     explicit Plan(const Plan<TA, DType> &lhs, const Plan<TB, DType> &rhs)
+         : 152     : lhs_(lhs), rhs_(rhs) {}
+         : 153     MSHADOW_XINLINE DType Eval(index_t y, index_t x) const {
+         : 154     return OP::Map(lhs_.Eval(y, x), rhs_.Eval(y, x));
+    0.00 :   11bf52a:        slli    a4,a4,0x2
+    0.00 :   11bf52c:        add     a4,a4,t4
+         : 157     float mshadow::op::mul::Map<float>(float, float):
+         : 629     return a * b;
+    3.57 :   11bf52e:        flw     fa5,0(a4)
+         : 631     mshadow::expr::Plan<mshadow::Tensor<mshadow::cpu, 3, float>, float>::Eval(long, long) const:
+         : 78      return dptr_[y * stride_ + x];
+    8.57 :   11bf532:        add     a5,a5,s7
+         : 80      mshadow::expr::Plan<mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float>::Eval(long, long) const:
+         : 149     return OP::Map(lhs_.Eval(y, x), rhs_.Eval(y, x));
+    0.00 :   11bf534:        slli    a5,a5,0x2
+    0.00 :   11bf536:        add     a5,a5,t1
+         : 152     float mshadow::op::mul::Map<float>(float, float):
+    0.71 :   11bf538:        flw     fa3,0(a5)
+    4.29 :   11bf53c:        fmul.s  fa5,fa5,fa3
+         : 631     void mshadow::red::sum::Reduce<float>(float volatile&, float):
+         : 991     dst += src;
+    4.29 :   11bf540:        fadd.s  fa5,fa5,fa4
+   27.86 :   11bf544:        fsw     fa5,-84(s0)
+         : 994     mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float>::Eval(long, long) const:
+    0.00 :   11bf548:        bne     a2,a6,11bf510 <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]+0xc0>
+         : 144     }
+         : 145     return res;
+    0.00 :   11bf54c:        flw     fa5,-84(s0)
+         : 147     void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]:
+         : 177     for (index_t x = 0; x < shape[1]; ++x) {
+    0.00 :   11bf550:        addi    t5,t5,1
+         : 179     void mshadow::sv::saveto::Save<float>(float&, float):
+         : 684     a = b;
+    0.00 :   11bf552:        fsw     fa5,0(t6)
+         : 686     void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]:
+    0.00 :   11bf556:        beq     t5,t0,11bf56e <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]+0x11e>
+    0.00 :   11bf55a:        addi    t6,t6,4
+         : 179     void mshadow::red::sum::SetInitValue<float>(float&):
+         : 1043    initv = 0;
+    0.00 :   11bf55c:        sw      zero,-84(s0)
+         : 1045    mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float>::Eval(long, long) const:
+         : 140     for (index_t k = 0; k < size_; ++k) {
+    0.00 :   11bf560:        j       11bf4fc <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]+0xac>
+         : 142     void mshadow::sv::saveto::Save<float>(float&, float):
+         : 684     a = b;
+    0.00 :   11bf562:        sw      zero,0(t6)
+         : 686     void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]:
+    0.00 :   11bf566:        addi    t5,t5,1
+    0.00 :   11bf568:        addi    t6,t6,4
+    0.00 :   11bf56a:        bne     t0,t5,11bf562 <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]+0x112>
+    0.00 :   11bf56e:        addi    t2,t2,1
+    0.00 :   11bf570:        bne     s2,t2,11bf4d2 <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]+0x82>
+         : 173     #pragma omp parallel for
+    0.00 :   11bf574:        ld      ra,88(sp)
+    0.00 :   11bf576:        ld      s0,80(sp)
+    0.00 :   11bf578:        ld      s5,40(sp)
+    0.00 :   11bf57a:        ld      s6,32(sp)
+    0.00 :   11bf57c:        ld      s7,24(sp)
+    0.00 :   11bf57e:        ld      s1,72(sp)
+    0.00 :   11bf580:        ld      s2,64(sp)
+    0.00 :   11bf582:        ld      s3,56(sp)
+    0.00 :   11bf584:        ld      s4,48(sp)
+    0.00 :   11bf586:        addi    sp,sp,96
+    0.00 :   11bf588:        ret
+    0.00 :   11bf58a:        addi    s2,s2,1
+         : 176     for (openmp_index_t y = 0; y < shape[0]; ++y) {
+    0.00 :   11bf58c:        li      t2,0
+    0.00 :   11bf58e:        j       11bf488 <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::Tensor<mshadow::cpu, 3, float>, mshadow::Tensor<mshadow::cpu, 3, float>, float, 1>, float, 3, false, 2>, float> const&) [clone ._omp_fn.0]+0x38>

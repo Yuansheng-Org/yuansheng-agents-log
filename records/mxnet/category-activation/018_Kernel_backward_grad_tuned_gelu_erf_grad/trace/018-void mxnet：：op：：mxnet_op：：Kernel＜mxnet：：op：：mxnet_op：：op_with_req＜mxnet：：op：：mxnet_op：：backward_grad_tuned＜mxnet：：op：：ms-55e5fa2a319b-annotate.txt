@@ -1,0 +1,142 @@
+ Percent |	Source code & Disassembly of libmxnet.so for cpu-clock (132 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3       Disassembly of section .text:
+         :
+         : 5       00000000011e046a <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, float, float*, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*, float*) [clone ._omp_fn.0]>:
+         : 6       void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, float, float*, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*, float*) [clone ._omp_fn.0]:
+         : 1086    !tuned_op<PRIMITIVE_OP, DType>::UseOMP(N, static_cast<size_t>(omp_threads))) {
+         : 1087    for (size_t i = 0; i < N; ++i) {
+         : 1088    OP::Map(i, args...);
+         : 1089    }
+         : 1090    } else {
+         : 1091    #pragma omp parallel for num_threads(omp_threads)
+    0.00 :   11e046a:        addi    sp,sp,-112
+    0.00 :   11e046c:        sd      ra,104(sp)
+    0.00 :   11e046e:        sd      s0,96(sp)
+    0.00 :   11e0470:        sd      s1,88(sp)
+    0.00 :   11e0472:        sd      s2,80(sp)
+    0.00 :   11e0474:        sd      s5,56(sp)
+    0.00 :   11e0476:        addi    s0,sp,112
+         : 1087    for (index_t i = 0; i < static_cast<index_t>(N); ++i) {
+    0.00 :   11e0478:        ld      s5,0(a0)
+         : 1086    #pragma omp parallel for num_threads(omp_threads)
+    0.00 :   11e047c:        mv      s2,a0
+    0.00 :   11e047e:        auipc   ra,0xff3bf
+    0.00 :   11e0482:        jalr    -1374(ra) # 59ef20 <omp_get_num_threads@plt>
+    0.00 :   11e0486:        mv      s1,a0
+    0.00 :   11e0488:        auipc   ra,0xff3bf
+    0.00 :   11e048c:        jalr    -248(ra) # 59f390 <omp_get_thread_num@plt>
+    0.00 :   11e0490:        rem     a5,s5,s1
+    0.00 :   11e0494:        div     s5,s5,s1
+    0.00 :   11e0498:        blt     a0,a5,11e0560 <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, float, float*, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*, float*) [clone ._omp_fn.0]+0xf6>
+    0.00 :   11e049c:        mul     a0,s5,a0
+    0.00 :   11e04a0:        add     a0,a0,a5
+    0.00 :   11e04a2:        add     s5,s5,a0
+    0.00 :   11e04a4:        bge     a0,s5,11e0552 <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, float, float*, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*, float*) [clone ._omp_fn.0]+0xe8>
+    0.00 :   11e04a8:        ld      s1,16(s2)
+    0.00 :   11e04ac:        sd      s3,72(sp)
+    0.00 :   11e04ae:        sd      s4,64(sp)
+    0.00 :   11e04b0:        ld      s3,32(s2)
+    0.00 :   11e04b4:        ld      s4,24(s2)
+    0.00 :   11e04b8:        ld      s2,8(s2)
+    0.00 :   11e04bc:        fsd     fs1,32(sp)
+    0.00 :   11e04be:        fsd     fs2,24(sp)
+    0.00 :   11e04c0:        fsd     fs4,8(sp)
+    0.00 :   11e04c2:        auipc   a5,0x719d
+    0.00 :   11e04c6:        flw     fs2,-2030(a5) # 837ccd4 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x6c>
+    0.00 :   11e04ca:        auipc   a5,0x719d
+    0.00 :   11e04ce:        flw     fs4,-1858(a5) # 837cd88 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x120>
+    0.00 :   11e04d2:        auipc   a5,0x719f
+    0.00 :   11e04d6:        fld     fs1,-1458(a5) # 837ef20 <typeinfo name for mxnet::op::LstsqParam+0x190>
+    0.00 :   11e04da:        slli    a0,a0,0x2
+    0.00 :   11e04dc:        slli    s5,s5,0x2
+    0.00 :   11e04de:        add     s5,s5,s1
+    0.00 :   11e04e0:        fsd     fs0,40(sp)
+    0.00 :   11e04e2:        fsd     fs3,16(sp)
+    0.00 :   11e04e4:        fsd     fs5,0(sp)
+    0.00 :   11e04e6:        add     s1,s1,a0
+    0.00 :   11e04e8:        add     s4,s4,a0
+    0.00 :   11e04ea:        add     s3,s3,a0
+    0.00 :   11e04ec:        add     s2,s2,a0
+         : 1125    void mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, 1>::Map<float>(long, float*, float const*, float const*, float const*):
+         : 892     KERNEL_ASSIGN(out[i], req, OP::Map(input_1[i], input_2[i], input_3[i]));
+    0.00 :   11e04ee:        flw     fs0,0(s4)
+         : 894     float mxnet::op::mshadow_op::gelu_erf_grad::Map<float>(float, float):
+         :
+         : 629     MXNET_UNARY_MATH_OP(gelu_erf,
+         : 630     DType(0.5f * static_cast<float>(a) *
+         : 631     (1.0f + math::erf(static_cast<float>(a) / SQRT_2))));
+         :
+         : 633     MXNET_BINARY_MATH_OP_NC(gelu_erf_grad,
+    0.00 :   11e04f2:        flw     fs3,0(s3)
+         : 635     void mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, 1>::Map<float>(long, float*, float const*, float const*, float const*):
+    4.55 :   11e04f6:        flw     fs5,0(s1)
+         : 893     float mxnet::op::mshadow_op::gelu_erf_grad::Map<float>(float, float):
+    0.00 :   11e04fa:        fdiv.s  fa0,fs0,fs4
+         : 629     mxnet::op::math::exp(float):
+         : 69      return ::name(a, b);                                            \
+         : 70      }
+         :
+         : 72      MXNET_UNARY_MATH_FUNC(erf)
+         :
+         : 74      MXNET_UNARY_MATH_FUNC(exp)
+    0.00 :   11e04fe:        addi    s1,s1,4
+    0.00 :   11e0500:        addi    s4,s4,4
+    0.00 :   11e0502:        addi    s3,s3,4
+    0.00 :   11e0504:        addi    s2,s2,4
+         : 79      float mxnet::op::mshadow_op::erf_grad::Map<float>(float):
+         : 620     MXNET_UNARY_MATH_OP(erf_grad, 2.0 / math::sqrt(PI) * math::exp(-(a * a)));
+    0.00 :   11e0506:        fmul.s  fa0,fa0,fa0
+         : 622     float mxnet::op::mshadow_op::gelu_erf_grad::Map<float>(float, float):
+         : 628     MXNET_BINARY_MATH_OP_NC(gelu_erf_grad,
+    1.52 :   11e050a:        fdiv.s  fs3,fs3,fs0
+         : 630     mxnet::op::math::exp(float):
+    0.00 :   11e050e:        fneg.s  fa0,fa0
+    0.00 :   11e0512:        auipc   ra,0xff3bf
+    0.00 :   11e0516:        jalr    -786(ra) # 59f200 <expf@plt>
+         : 72      float mxnet::op::mshadow_op::erf_grad::Map<float>(float):
+         : 620     MXNET_UNARY_MATH_OP(erf_grad, 2.0 / math::sqrt(PI) * math::exp(-(a * a)));
+    0.00 :   11e051a:        fcvt.d.s        fa0,fa0
+         : 622     float mxnet::op::mshadow_op::gelu_erf_grad::Map<float>(float, float):
+         : 628     MXNET_BINARY_MATH_OP_NC(gelu_erf_grad,
+    7.58 :   11e051e:        fmul.s  fs0,fs0,fs2
+         : 630     float mxnet::op::mshadow_op::erf_grad::Map<float>(float):
+         : 620     MXNET_UNARY_MATH_OP(erf_grad, 2.0 / math::sqrt(PI) * math::exp(-(a * a)));
+    0.00 :   11e0522:        fmul.d  fa0,fa0,fs1
+    0.00 :   11e0526:        fcvt.s.d        fa0,fa0
+         : 623     float mxnet::op::mshadow_op::gelu_erf_grad::Map<float>(float, float):
+         : 628     MXNET_BINARY_MATH_OP_NC(gelu_erf_grad,
+   15.91 :   11e052a:        fmul.s  fs0,fs0,fa0
+    0.00 :   11e052e:        fdiv.s  fs0,fs0,fs4
+    0.00 :   11e0532:        fadd.s  fs0,fs0,fs3
+         : 632     float mxnet::op::mxnet_op::backward_grad<mxnet::op::mshadow_op::gelu_erf_grad>::Map<float, float, float>(float, float, float):
+         : 807     return DType(a * GRAD_OP::Map(args...));
+   59.85 :   11e0536:        fmul.s  fs0,fs0,fs5
+         : 809     void mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, 1>::Map<float>(long, float*, float const*, float const*, float const*):
+         : 892     KERNEL_ASSIGN(out[i], req, OP::Map(input_1[i], input_2[i], input_3[i]));
+   10.61 :   11e053a:        fsw     fs0,-4(s2)
+    0.00 :   11e053e:        bne     s1,s5,11e04ee <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, float, float*, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*, float*) [clone ._omp_fn.0]+0x84>
+    0.00 :   11e0542:        ld      s3,72(sp)
+    0.00 :   11e0544:        ld      s4,64(sp)
+    0.00 :   11e0546:        fld     fs0,40(sp)
+    0.00 :   11e0548:        fld     fs1,32(sp)
+    0.00 :   11e054a:        fld     fs2,24(sp)
+    0.00 :   11e054c:        fld     fs3,16(sp)
+    0.00 :   11e054e:        fld     fs4,8(sp)
+    0.00 :   11e0550:        fld     fs5,0(sp)
+         : 901     void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, float, float*, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*, float*) [clone ._omp_fn.0]:
+         : 1086    #pragma omp parallel for num_threads(omp_threads)
+    0.00 :   11e0552:        ld      ra,104(sp)
+    0.00 :   11e0554:        ld      s0,96(sp)
+    0.00 :   11e0556:        ld      s1,88(sp)
+    0.00 :   11e0558:        ld      s2,80(sp)
+    0.00 :   11e055a:        ld      s5,56(sp)
+    0.00 :   11e055c:        addi    sp,sp,112
+    0.00 :   11e055e:        ret
+    0.00 :   11e0560:        addi    s5,s5,1
+         : 1087    for (index_t i = 0; i < static_cast<index_t>(N); ++i) {
+    0.00 :   11e0562:        li      a5,0
+    0.00 :   11e0564:        j       11e049c <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, float, float*, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*, float*) [clone ._omp_fn.0]+0x32>

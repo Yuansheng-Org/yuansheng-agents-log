@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-category-activation-001",
+  "blueprintId": "bp-mxnet-category-activation-001",
+  "createdAt": "2026-09-21T11:30:00.000Z",
+  "objective": "Vectorize the MXNet CPU Softmax forward template for RISC-V SG2044 (RVV 1.0, VLEN=128) and enable the native FP16 conversion. The diagnosed rank-001 hotspot Softmax<softmax_fwd,false,double,float,half_t,int,2> is an un-vectorized 3-pass scalar loop (max -> exp/sum -> normalize) whose per-element scalar libm expf@plt call sites dominate 83.21% of local samples, with the scalar compare-branch max reduction at 9.51%; additionally the build ISA lacks zfhmin while the hardware provides it, forcing the FP16 output conversion through the software float2half bit-manipulation sequence (~3.8%). The patch adds a guarded RVV fast path that keeps the exact 3-pass stabilization semantics (vector max reduction with a running scalar seed, vector exp(x-mmax) with seed-based sum reduction, vector-scalar normalization and store), preserves the existing scalar loops as the fallback for every other case, and appends the zfhmin/zvfhmin ISA to the RISC-V build flags so the FP16 output path can use the native convert.",
+  "changes": [
+    {
+      "filePath": "src/operator/nn/softmax-inl.h",
+      "action": "modify",
+      "rationale": "The CPU Softmax() template is the diagnosed root-cause site: its float32 forward path (length==nullptr, temperature==1.0) executes three scalar passes over the softmax axis, calling scalar libm expf for every element (two expf call sites accounting for 83.21% of local samples) and using a scalar compare-branch max reduction (9.51%). RVV is available in the build (v1p0/zvl128b) but the hot loops contain zero vector instructions.",
+      "instructions": [
+        "Add a guarded include of <riscv_vector.h> under `#if defined(__riscv) && defined(__riscv_v)`.",
+        "Add a self-contained RVV f32m1 vector exp helper (range-reduced exp(x)=2^k*P(r), k=round(x*log2e), r=x-k*ln2, degree-6 Horner polynomial), with explicit NaN, -Inf/underflow and range handling; do not depend on any existing project vector-exp implementation.",
+        "Add a small OType-dispatched vector store helper: vse32 for float output, and vfncvt.f.f.w + vse16 for mshadow::half::half_t output when the toolchain exposes zfhmin/zvfhmin, with a scalar-conversion fallback otherwise.",
+        "Inside Softmax(), in the `length == nullptr` branch, before the existing `#pragma omp parallel for`, insert a compile-time-gated RVV fast path that is only taken for DType=float, OP=softmax_fwd, OType in {float, half_t}, temperature==1.0 and unit axis stride (sa==1); run it under `#pragma omp parallel for` and return after it completes.",
+        "Implement pass 1 as vle32 + vfredmax.vs with a running scalar seed accumulated across blocks; pass 2 as vle32 -> vfsub.vf(x, mmax) -> vector exp -> vfredusum.vs with a running scalar seed; pass 3 as vle32 -> vfsub.vf(x, mmax) -> vector exp -> vfmul.vf(exp, 1/sum) -> vector store.",
+        "Preserve the `negate` template semantics by negating the loaded vector when negate is true, and keep every existing scalar loop untouched as the fallback for length!=nullptr, temperature!=1.0, non-float DType, non-softmax_fwd OP, non-RVV builds and non-unit stride."
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "CMakeLists.txt",
+      "action": "modify",
+      "rationale": "The build ISA (Tag_RISCV_arch: rv64...v1p0...zvl128b) lacks zfh/zfhmin while the SG2044 hardware ISA contains zfh and zfhmin, so the FP16 output conversion cannot use the native convert and falls back to the software float2half bit-manipulation sequence (~3.8% of local samples). The vector half-precision narrowing used by the new softmax store path also requires zvfhmin.",
+      "instructions": [
+        "In the non-MSVC `else()` branch, immediately after `set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS}\")`, add a RISC-V block.",
+        "When CMAKE_SYSTEM_PROCESSOR or SYSTEM_ARCHITECTURE matches riscv64, probe `-march=rv64gcv_zfhmin_zvfhmin` with check_cxx_compiler_flag; on success append it to both CMAKE_C_FLAGS and CMAKE_CXX_FLAGS.",
+        "If the zfhmin probe fails, fall back to probing and appending `-march=rv64gcv`.",
+        "Do not touch the MSVC branch or any unrelated flags."
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "src/operator/nn/softmax-inl.h gains a guarded RISC-V RVV fast path for the float32 CPU Softmax forward hot path (vector max reduction via vfredmax.vs, self-contained vectorized exp, seed-based vfredusum.vs sum reduction, vector-scalar normalization and vse32/vfncvt+vse16 store) plus its helper functions and <riscv_vector.h> include, while all existing scalar loops remain as fallback; CMakeLists.txt appends `-march=rv64gcv_zfhmin_zvfhmin` (fallback `-march=rv64gcv`) for riscv64 builds via check_cxx_compiler_flag. No behavior change on non-RISC-V or non-float32 paths."
+}

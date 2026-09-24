@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-category-activation-017",
+  "blueprintId": "bp-mxnet-category-activation-017",
+  "createdAt": "2026-09-21T10:40:07Z",
+  "objective": "消除 mshadow ReduceWithAxisExp<red::sum, mul> 双输入 3D->2D 按轴 sum-of-products 归约求值路径在 RISC-V C920v2 上的全标量瓶颈：① 强度削减内层 k 归约的 z 索引解码，消除每元素 div/rem；② 用寄存器累加替代 red::sum 的 volatile accumulator 栈槽往返（保持相同归约顺序/结果）；③ 为 unit-stride float32 形态增加 RVV 1.0 向量化快路径（多 vle32+vfmacc.vv 独立累加器 + vfredusum.vs 归约），其余形态标量回退。",
+  "changes": [
+    {
+      "filePath": "3rdparty/mshadow/mshadow/extension/reduce_with_axis.h",
+      "action": "modify",
+      "rationale": "perf annotate 显示 MapPlan<ReduceWithAxisExp<sum, mul>> 的 inner k-loop（11bf510-11bf548 ≈100% 局部份额）由 volatile accumulator 栈槽往返（11bf544 fsw 27.86% + flw）、每元素 div/rem 索引解码（11bf510/11bf51a）与串行标量 FP 链主导，硬件与 build 均含 RVV 1.0 但全函数 zero v*。该求值路径是本根因的唯一修复载体。",
+      "instructions": [
+        "在文件顶部（extension.h 之后）按 `#if defined(__riscv) && defined(__riscv_v)` 守卫包含 <riscv_vector.h>。",
+        "在 namespace expr 内新增 ReduceWithAxisStep 重载：对 red::sum 以非 volatile 局部寄存器执行 `acc += val`（与 red::sum::Reduce 的 `dst += src` 序列完全一致，保持严格加法顺序与逐位结果）；其他 Reducer 继续调用 Reducer::Reduce。",
+        "新增 ReduceWithAxisSrcTraits<SrcExp>：通用版本 kUnitStrideF32=false 且返回空指针；对 BinaryMapExp<op::mul, Tensor<cpu,3,float>, Tensor<cpu,3,float>, float, etype> 特化，暴露 lhs_/rhs_ 的 dptr_ 与 stride_。",
+        "新增 RVV 快路径 ReduceWithAxisRvv<DType>：通用版本 Run 返回 false；float 特化使用两个独立 vfloat32m2_t 累加器，主循环每次 vle32 两路并 vfmacc.vv，runtime-VL tail 处理余数，末尾 vfadd 合并后以 seed 的 vfredusum.vs 水平归约写回标量。",
+        "Plan 构造函数新增保存 `const SrcExp *src_expr_`（指向 e.src_），保持其余成员初始化顺序。",
+        "Eval 的 mask 与非 mask 两个分支：将内层 z 索引解码改为增量计数器——预计算 q=trailing_/last_、r=trailing_%last_ 与 base_z=x*size_*trailing_+y，循环内维护 (zdiv,zmod) 并使用 `zmod += r; zdiv += q; if (zmod >= last_) { zmod -= last_; ++zdiv; }`，与原始 `z=(x*size_+k)*trailing_+y; z/last_; z%last_` 整数等价且无每元素 div/rem。",
+        "Eval 非 mask 分支在标量回退前插入 RVV 快路径：仅当 trailing_==1 且 last_==1 且 SrcExp 特化命中且两路 stride_==1 时调用；不满足或 Run 返回 false 时走标量增量循环。",
+        "保持 saveto 直写语义、size_==0 置零路径（RVV Run 对 n<=0 返回 false 回退标量）、OpenMP 分片边界与所有输出索引语义不变。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "3rdparty/mshadow/mshadow/extension/reduce_with_axis.h 单文件聚焦改动：新增 RVV 头包含守卫、寄存器累加 tag-dispatch 辅助、源表达式 traits、RVV unit-stride float32 sum-of-products 快路径，并重写 Plan::Eval 的 z 索引解码为增量计数器。预期 annotate 中 addi 循环计数、fsw(volatile 回写) 与 div/rem 份额消失，出现 vsetvli/vle32/vfmacc/vfredusum/vse32；标量路径对 trailing_>1、非 float、非 sum reducer 与非 cpu 3D tensor 对保持行为不变。"
+}

@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-category-activation-018",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T02:16:23.810Z",
+    "software": "mxnet",
+    "testcaseIds": [
+      "category-activation"
+    ],
+    "diagnosisId": "diag-20260921T021623810Z-55512ecb",
+    "targetHardware": "XuanTie C920v2 (SOPHGO SG2044, RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede",
+    "specBaseline": 3.014851
+  },
+  "problem": {
+    "summary": "mxnet GELU(erf) 激活 backward kernel（backward_grad_tuned<gelu_erf_grad>）在 RISC-V C920v2 上以全标量 float 执行：每元素调用 libm expf（erf_grad 内 exp），`2.0` double 字面量强制 fcvt.d.s/fmul.d/fcvt.s.d float64 往返，配合 b/a 除法与串行 FP 链；单 hot loop 占函数内 ≈100.0% 局部样本份额（最终 fmul 59.85%、fsw 10.61%），硬件与 build 均支持 RVV 1.0 但全函数 zero v*。",
+    "evidence": [
+      "perf annotate 局部份额（132 samples, cpu-clock, local period）：`59.85 : 11e0536: fmul.s fs0,fs0,fs5`（×grad_out）、`15.91 : 11e052a: fmul.s`、`10.61 : 11e053a: fsw`、`7.58 : 11e051e: fmul.s`、`1.52 : 11e050a: fdiv.s`、`0.00 : 11e0516: jalr <expf@plt>`、`0.00 : 11e051a/11e0522/11e0526: fcvt.d.s/fmul.d/fcvt.s.d`（double 往返）—— 单 main loop ≈100.0%",
+      "perf stat（整 testcase）：IPC=0.562；LLC_load_miss_rate=43.99%；L1_dcache_load_miss_rate=5.16%",
+      "opperf 实测 RISC-V 侧 softmax backward 79.83us 等 —— 无 ARM 对照，仅方向性证据",
+      "硬件 `rv64imafdcv_..._zve64d_zvfh` 与 build `rv64i2p1_..._v1p0_zvl128b1p0` 均含 `v`；VLEN=128；全函数 zero `v*`"
+    ]
+  },
+  "rootCause": {
+    "summary": "gelu_erf_grad 是 lane-independent 的 transcendental activation backward，但每元素以 libm expf 执行 erf_grad 的 exp(-t²)，`2.0` double 字面量强制每元素 fcvt.d.s/fmul.d/fcvt.s.d float64 往返，配合 b/a 除法与串行 FP 链；全函数在 RVV-capable 硬件上 zero v*，向量执行单元未参与。",
+    "candidateFiles": [
+      "src/operator/mshadow_op.h"
+    ],
+    "performanceFactors": [
+      "RVV Elementwise Activation Kernels",
+      "No vectorization",
+      "Eliminate Unnecessary Float32/Float64 Conversions"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "gelu_erf_grad 公式：b/a + 0.5f·a·erf_grad(a/√2)/√2（mshadow_op.h:628-631）",
+      "b/a 除零（a==0 → ±Inf/NaN）语义",
+      "float 数据流与 out[i]=input_1[i]·gelu_erf_grad(...) 乘法顺序（FP 舍入）",
+      "KERNEL_ASSIGN(out[i], req=1) 直写语义与 backward_grad_tuned 的 a*GRAD_OP::Map 合同",
+      "NaN/±Inf/subnormal/exp overflow 行为与 OpenMP 分片边界"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-activation"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-activation"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.73,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "impact 侧证据不完整：采样为 local period 无法量化 workload 级收益；Sampling IP precision 未确认；mxnet 无向量 exp 实现、数值合同待定义；double 往返消除需容差验证；无 ARM 对照。需人工确认向量 math 方案与误差合同后再转发。",
+    "reasoning": "整 testcase IPC=0.562 与 LLC miss 43.99% 构成指标层；perf annotate 显示单 hot loop（11e04ee-11e053e ≈100.0% 局部份额）每元素 libm expf 调用（11e0516）、erf_grad 的 double 往返（11e051a/11e0522/11e0526）与串行 FP 链（最终 fmul 59.85%），模式匹配 RVV Elementwise Activation Kernels（route High：annotate 源码行映射 + mshadow_op.h:620,628-631 确认 lane-independent gelu_erf_grad 语义 + hardware/build 均含 v 且 zero v*）；支持性模式 Eliminate Unnecessary Float32/Float64 Conversions 解释 `2.0` 字面量导致的 fcvt.d.s/fmul.d/fcvt.s.d 往返（被向量化 float 重写自然消除）；知识层 OpenCV/oneDNN/llama.cpp/MNN 的 RVV activation/vector-math 提交证明同类逐元素激活可向量化。因无 ARM 对照、local-period 采样且向量 exp 可达性未证实，impact 为 Low，结论 probable_root_cause。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "expf 主体样本归属 libm 符号，若 libm expf 自身为热点，第一杠杆可能是 libm 级优化而非本 kernel 向量化",
+      "erf_grad 的 double 往返行样本 0.00%，单独消除该往返收益有限，需随向量化一并处理",
+      "小 N（短 tensor）低于向量化 crossover 时收益有限，OpenMP 分片开销可能主导"
+    ],
+    "currentGaps": "无 ARM 侧对照数据；采样元数据不完整（percent=local period）；Sampling IP precision 未确认；mxnet 无向量 exp 实现，vector-math 数值合同待定义与验证；double 往返消除的容差验证（向量 float 路径 vs 2.0 double reference）；小 N crossover 未评估。",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认向量化修复的数值合同：向量 exp 的 ULP/relative error 边界、b/a 除零语义保持、erf_grad double→float 常量吸收的容差（eliminate-unnecessary-precision-conversions 前置语义合同），以及是否接受函数内收益仅以方向性表述。",
+    "affectedTarget": "RV + category-activation（mxnet opperf）",
+    "recommendedFirstAction": "在 src/operator/mshadow_op.h:620,628-631 的 erf_grad/gelu_erf_grad 与 mxnet_op.h LaunchTuned 路径实现 RVV 向量化：vle32 载入 input_1/2/3、vfdiv（a/√2 与 b/a）、向量 exp（erf_grad 的 exp(-t²)）、vfmul 组合、vse32 写回，并将 erf_grad 的 2.0/sqrt(PI) 改为 float 常量消除 fcvt.d.s/fmul.d/fcvt.s.d 往返，fixed-VL main + runtime-VL tail。",
+    "recommendedVerification": "重新运行 category-activation opperf benchmark，并以 global-period 重采同一函数 annotate 确认 expf@plt 调用点与 fmul/fsw 份额消失、fcvt.d.s/fmul.d/fcvt.s.d 往返消失、v* 序列出现；覆盖 a==0 除零、±0/NaN/±Inf/subnormal、大 |a| exp overflow、N=0/小 N/step 整倍数/全 tail 长度，比对向量 float 路径与 2.0 double reference 的逐位/容差。",
+    "metricEvidence": [
+      {
+        "metric": "softmax backward avg time (us)",
+        "rv": 79.8326,
+        "anomalyNote": "RISC-V 侧 opperf 实测 softmax backward 79.83us（同 testcase 参考）；无 ARM 对照，仅方向性证据"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.562,
+        "anomalyNote": "整 testcase IPC 0.562，latency-bound 倾向"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 43.99,
+        "anomalyNote": "全局 LLC 缺失率 43.99%，内存流量大；本函数内由超越函数 helper 调用主导"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 5.158,
+        "anomalyNote": "L1 缺失率 5.16%，访存形态健康"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::gelu_erf_grad>, 1>, mshadow::cpu>::LaunchTuned<backward_grad_tuned<gelu_erf_grad>, float, float*, float*, float*, float*>(...) [clone ._omp_fn.0]",
+        "fileModule": "src/operator/mshadow_op.h",
+        "rvvPattern": "RVV Elementwise Activation Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 1,
+        "note": "GELU(erf) 激活 backward：lane-independent 逐元素激活，每元素 libm expf（erf_grad）+ 2.0 字面量 double 往返 + 串行 FP 链；全函数 zero v*"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/operator/mshadow_op.h:620, 628-631; mxnet_op.h:1077-1096",
+      "relatedKnowledge": "https://github.com/opencv/opencv/commit/524d8ae01c6336c6d3cc7420ca71055246a61843; https://github.com/opencv/opencv/commit/86241653a7815dac1525639544cc3c44bab1277e; https://github.com/opencv/opencv/pull/27072; https://github.com/uxlfoundation/oneDNN/commit/aa23ab5573918d442c30a277ad615db36ed786ce; https://github.com/uxlfoundation/oneDNN/commit/d5ae4488090377e04c4f9d7d55bbd41e6bad7c4a; https://github.com/ggml-org/llama.cpp/pull/17227; https://github.com/ggml-org/llama.cpp/pull/15057; https://github.com/alibaba/MNN/pull/4508; https://github.com/alibaba/MNN/pull/4484; https://github.com/alibaba/MNN/pull/4044; https://github.com/alibaba/MNN/commit/b7268aa3dab754190ed7d86dc16b9bab02e73d12; https://github.com/alibaba/MNN/pull/4359; https://github.com/golang/go/pull/75463; https://github.com/golang/go/commit/2b50ab2aee75d3c361fcd1eb39e830e2e73056b6",
+      "evidenceExplanation": "mshadow_op.h:620 的 erf_grad 用 `2.0 / math::sqrt(PI)`（2.0 为 double 字面量）导致 annotate 中每元素 fcvt.d.s/fmul.d/fcvt.s.d 往返（11e051a/11e0522/11e0526），628-631 的 gelu_erf_grad 组合 b/a 与 erf_grad 形成串行 FP 链，11e0516 的 expf@plt 是每元素超越函数调用；OpenCV/oneDNN/llama.cpp/MNN 的 RVV vector-math/activation kernel 提交（524d8ae01c63、#17227、#4484 等）与 Go 的 float32/float64 往返消除提交（#75463）分别支撑本 kernel 的向量化与常量精度修复方向。"
+    }
+  }
+}

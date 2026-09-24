@@ -1,0 +1,61 @@
+11-MXNET-OPPERF-BENCHMARK category-convolution RISC-V perf stat
+===============================================================
+
+Source CSV: /workspace/results/11-mxnet-opperf-benchmark_results.csv
+TestName: category-convolution
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 94,613,674,023 |
+| task_clock | 101,852.5800000000 |
+| cpu_cycle | 95,501,654,817,703 |
+| instruction | 61,049,492,740,430 |
+| cache_references | 13,812,060,708 |
+| cache_misses | 13,812,063,016 |
+| branches | 72,615,201,354 |
+| branch_misses | 776,704,576 |
+| L1_dcache_loads | 107,913,143,084 |
+| L1_dcache_load_misses | 677,893,402 |
+| LLC_load_misses | 2,057,108,707 |
+| LLC_loads | 13,812,075,228 |
+| IPC | 0.6392510000 |
+| opperf_Convolution_input_0_max_storage_mem_alloc_cpu_0 | 246.0160000000 |
+| opperf_Convolution_input_0_avg_time_forward_Convolution_us | 12.7634000000 |
+| opperf_Convolution_input_0_avg_time_backward_Convolution_us | 25.5695000000 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 94.613674 |
+| cache_miss_rate | 100.000% |
+| branch_miss_rate | 1.070% |
+| L1_dcache_load_miss_rate | 0.628% |
+| LLC_load_miss_rate | 14.894% |
+
+perf stat style summary
+-----------------------
+            94,613,674,023  duration_time
+        101,852.5800000000  task_clock
+        95,501,654,817,703  cpu_cycle
+        61,049,492,740,430  instruction
+            13,812,060,708  cache_references
+            13,812,063,016  cache_misses
+            72,615,201,354  branches
+               776,704,576  branch_misses
+           107,913,143,084  L1_dcache_loads
+               677,893,402  L1_dcache_load_misses
+             2,057,108,707  LLC_load_misses
+            13,812,075,228  LLC_loads
+              0.6392510000  IPC
+            246.0160000000  opperf_Convolution_input_0_max_storage_mem_alloc_cpu_0
+             12.7634000000  opperf_Convolution_input_0_avg_time_forward_Convolution_us
+             25.5695000000  opperf_Convolution_input_0_avg_time_backward_Convolution_us
+                 94.613674  duration_s
+                  100.000%  cache_miss_rate
+                    1.070%  branch_miss_rate
+                    0.628%  L1_dcache_load_miss_rate
+                   14.894%  LLC_load_miss_rate

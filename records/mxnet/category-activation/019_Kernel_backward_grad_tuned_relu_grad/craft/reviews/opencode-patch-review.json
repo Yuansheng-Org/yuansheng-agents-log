@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-mxnet-category-activation-019",
+  "patchCandidateId": "pc-bp-mxnet-category-activation-019",
+  "reviewedAt": "2026-09-21T12:31:47Z",
+  "reviewer": "opencode-cpp-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 判定 archSpecific=true（riscv-macro、vlenb）。全部 RVV 代码位于 #if defined(__riscv) && defined(__riscv_v) 守卫内；仅使用 RVV 1.0 基础浮点向量指令 vle32/vse32/vmfgt.vf/vmfne.vv/vmerge.vvm/vfmul.vv/vfadd.vv/vsetvl/vsetvlmax，兼容目标 rv64imafdcv_zve64d_zvfh 与 build rv64i...v1p0_zvl128b1p0，无 x86/ARM 指令。逐字抽取补丁代码块以 clang --target=riscv64-linux-gnu -march=rv64gcv_zvl128b 编译通过；objdump 确认逐元素 compare/branch 已由 vmfgt/vmfne/vmerge mask/select 取代；qemu-riscv64 -cpu max 下与标量 reference 逐位一致（n=0..11 与 n=40，write 与 kAddTo，含 ±0/±Inf/NaN payload/sNaN/subnormal）。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "src/operator/nn/activation-inl.h",
+      "evidence": "patch.diff 新增行 `+    if (omp_threads >= 2 && N >= 4096) {`；标量回退仍使用 `tuned_op<typename op_type::Operation, DType>::UseOMP(N, ...)`，两条路径的 OpenMP 开关判据不再一致。",
+      "severity": "minor",
+      "category": "性能调优一致性",
+      "suggestion": "向量 float32 路径的 OpenMP 阈值改为复用 tuned_op<backward_grad_tuned<relu_grad>, float>::UseOMP(N, omp_threads)（或引入命名常量并说明 4096 的依据），使标量/向量路径共享同一 crossover，避免小/中 N 下 OpenMP 决策漂移。"
+    },
+    {
+      "id": "F2",
+      "file": "src/operator/nn/activation-inl.h",
+      "evidence": "patch.diff 新增行 `+struct Kernel<op_with_req<backward_grad_tuned<mshadow_op::relu_grad>, req>, mshadow::cpu> {`，偏特化定义在 activation-inl.h，而非主模板 Kernel 所在的 mxnet_op.h。",
+      "severity": "suggestion",
+      "category": "代码组织/ODR",
+      "suggestion": "当前 relu_grad 仅作为 activation-inl.h:289 的 BackwardOp 被实例化，风险低；可考虑将该偏特化（或其声明）放到所有可能实例化该 Kernel 类型的 TU 都能看到的头文件中，以消除潜在 ODR 分歧。"
+    },
+    {
+      "id": "F3",
+      "file": "src/operator/mshadow_op.h",
+      "evidence": "patch.diff 新增行 `+    res = __riscv_vfadd_vv_f32m1(res, __riscv_vle32_v_f32m1(out, vl), vl);` 计算 res+out，而标量 `KERNEL_ASSIGN` 的 kAddTo 分支为 `(out) += (val)`（out+val）。",
+      "severity": "suggestion",
+      "category": "数值边界",
+      "suggestion": "数值结果一致；仅在两个操作数同时为 NaN 时 IEEE NaN payload 选择顺序可能不同。若要求 kAddTo 下与标量逐位严格对齐，可交换操作数为 vfadd(out_vec, res)；注意被诊断热路径为 kWriteTo，影响可忽略。"
+    }
+  ]
+}

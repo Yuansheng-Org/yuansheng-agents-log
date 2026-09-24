@@ -1,0 +1,94 @@
+ Percent |	Source code & Disassembly of libmxnet.so for cpu-clock (114 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3       Disassembly of section .text:
+         :
+         : 5       000000000124e240 <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, float, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*) [clone ._omp_fn.0]>:
+         : 6       void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, float, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*) [clone ._omp_fn.0]:
+         : 1086    !tuned_op<PRIMITIVE_OP, DType>::UseOMP(N, static_cast<size_t>(omp_threads))) {
+         : 1087    for (size_t i = 0; i < N; ++i) {
+         : 1088    OP::Map(i, args...);
+         : 1089    }
+         : 1090    } else {
+         : 1091    #pragma omp parallel for num_threads(omp_threads)
+    0.00 :   124e240:        addi    sp,sp,-48
+    0.00 :   124e242:        sd      ra,40(sp)
+    0.00 :   124e244:        sd      s0,32(sp)
+    0.00 :   124e246:        sd      s1,24(sp)
+    0.00 :   124e248:        sd      s2,16(sp)
+    0.00 :   124e24a:        sd      s3,8(sp)
+    0.00 :   124e24c:        addi    s0,sp,48
+         : 1087    for (index_t i = 0; i < static_cast<index_t>(N); ++i) {
+    0.00 :   124e24e:        ld      s1,0(a0)
+         : 1086    #pragma omp parallel for num_threads(omp_threads)
+    0.00 :   124e250:        mv      s2,a0
+    0.00 :   124e252:        auipc   ra,0xff351
+    0.00 :   124e256:        jalr    -818(ra) # 59ef20 <omp_get_num_threads@plt>
+    0.00 :   124e25a:        mv      s3,a0
+    0.00 :   124e25c:        auipc   ra,0xff351
+    0.00 :   124e260:        jalr    308(ra) # 59f390 <omp_get_thread_num@plt>
+    0.00 :   124e264:        rem     a5,s1,s3
+    0.00 :   124e268:        div     a2,s1,s3
+    0.00 :   124e26c:        blt     a0,a5,124e2d2 <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, float, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*) [clone ._omp_fn.0]+0x92>
+    0.00 :   124e270:        mul     a0,a2,a0
+    0.00 :   124e274:        add     a0,a0,a5
+    0.00 :   124e276:        add     a2,a2,a0
+    0.00 :   124e278:        bge     a0,a2,124e2be <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, float, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*) [clone ._omp_fn.0]+0x7e>
+    0.00 :   124e27c:        ld      a5,16(s2)
+    0.00 :   124e280:        ld      a3,24(s2)
+    0.00 :   124e284:        ld      a4,8(s2)
+         : 1103    float mxnet::op::mshadow_op::relu_grad::Map<float>(float):
+         : 1542    template <typename DType>
+         : 1543    MSHADOW_XINLINE static DType Map(DType a) {
+         : 1544    if (IsNan(a)) {
+         : 1545    return a;
+         : 1546    } else {
+         : 1547    return a > DType(0) ? DType(1) : DType(0);
+    0.00 :   124e288:        fmv.w.x fa3,zero
+    0.00 :   124e28c:        slli    a0,a0,0x2
+    0.00 :   124e28e:        slli    a2,a2,0x2
+    0.00 :   124e290:        add     a2,a2,a5
+    0.00 :   124e292:        add     a3,a3,a0
+    0.00 :   124e294:        add     a5,a5,a0
+    0.00 :   124e296:        add     a4,a4,a0
+         : 1555    void mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>::Map<float>(long, float*, float const*, float const*):
+         : 844     KERNEL_ASSIGN(out[i], req, OP::Map(lhs[i], rhs[i]));
+    1.75 :   124e298:        flw     fa5,0(a3)
+   18.42 :   124e29c:        flw     fa4,0(a5)
+         : 847     float mxnet::op::mshadow_op::relu_grad::Map<float>(float):
+         : 1539    if (IsNan(a)) {
+   13.16 :   124e2a0:        feq.s   a1,fa5,fa5
+   10.53 :   124e2a4:        beqz    a1,124e2cc <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, float, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*) [clone ._omp_fn.0]+0x8c>
+         : 1542    return a > DType(0) ? DType(1) : DType(0);
+   21.05 :   124e2a6:        flt.s   a1,fa3,fa5
+    0.88 :   124e2aa:        bnez    a1,124e2b0 <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, float, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*) [clone ._omp_fn.0]+0x70>
+         : 1545    float mxnet::op::mxnet_op::backward_grad<mxnet::op::mshadow_op::relu_grad>::Map<float, float>(float, float):
+         : 807     return DType(a * GRAD_OP::Map(args...));
+    0.00 :   124e2ac:        fmul.s  fa4,fa4,fa3
+         : 809     void mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>::Map<float>(long, float*, float const*, float const*):
+         : 844     KERNEL_ASSIGN(out[i], req, OP::Map(lhs[i], rhs[i]));
+   18.42 :   124e2b0:        fsw     fa4,0(a4)
+   14.04 :   124e2b4:        addi    a5,a5,4
+    0.00 :   124e2b6:        addi    a3,a3,4
+    0.00 :   124e2b8:        addi    a4,a4,4
+    1.75 :   124e2ba:        bne     a5,a2,124e298 <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, float, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*) [clone ._omp_fn.0]+0x58>
+         : 848     void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, float, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*) [clone ._omp_fn.0]:
+         : 1086    #pragma omp parallel for num_threads(omp_threads)
+    0.00 :   124e2be:        ld      ra,40(sp)
+    0.00 :   124e2c0:        ld      s0,32(sp)
+    0.00 :   124e2c2:        ld      s1,24(sp)
+    0.00 :   124e2c4:        ld      s2,16(sp)
+    0.00 :   124e2c6:        ld      s3,8(sp)
+    0.00 :   124e2c8:        addi    sp,sp,48
+    0.00 :   124e2ca:        ret
+         : 1094    float mxnet::op::mxnet_op::backward_grad<mxnet::op::mshadow_op::relu_grad>::Map<float, float>(float, float):
+         : 807     return DType(a * GRAD_OP::Map(args...));
+    0.00 :   124e2cc:        fmul.s  fa4,fa4,fa5
+    0.00 :   124e2d0:        j       124e2b0 <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, float, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*) [clone ._omp_fn.0]+0x70>
+    0.00 :   124e2d2:        addi    a2,a2,1
+         : 809     void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, float, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*) [clone ._omp_fn.0]:
+         : 1087    for (index_t i = 0; i < static_cast<index_t>(N); ++i) {
+    0.00 :   124e2d4:        li      a5,0
+    0.00 :   124e2d6:        j       124e270 <void mxnet::op::mxnet_op::Kernel<mxnet::op::mxnet_op::op_with_req<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, 1>, mshadow::cpu>::LaunchTuned<mxnet::op::mxnet_op::backward_grad_tuned<mxnet::op::mshadow_op::relu_grad>, float, float*, float*, float*>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, float*) [clone ._omp_fn.0]+0x30>

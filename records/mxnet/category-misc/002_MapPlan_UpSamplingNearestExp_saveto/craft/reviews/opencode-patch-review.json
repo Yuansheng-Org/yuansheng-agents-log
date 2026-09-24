@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-mxnet-opperf-category-misc-002-r1",
+  "patchCandidateId": "pc-bp-mxnet-opperf-category-misc-002",
+  "reviewedAt": "2026-09-21T08:20:00.000Z",
+  "reviewer": "opencode independent read-only reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "RVV 1.0 only: vsetvl/vle32/vluxei32/vse32, SEW=32 LMUL=m4 consistent per iteration, runtime vl tail, no x86/ARM, macro-guarded; objdump confirms vluxei32.v and vse32.v are emitted."
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "f-scope-mshadow-expr-scalar",
+      "file": "src/operator/nn/upsampling-inl.h",
+      "evidence": "+    if (UpSamplingNearestTryRVV<xpu, DType>(data, out, req, param.scale)) {",
+      "severity": "minor",
+      "category": "scope",
+      "suggestion": "mshadow expression path (MapPlan<...UpSamplingNearestExp...>) remains scalar; only the single-input nearest/write/float operator path is vectorized. Acceptable focused scope, but note it in the residual risk."
+    },
+    {
+      "id": "f-gather-throughput-unmeasured",
+      "file": "3rdparty/mshadow/mshadow/extension/spatial_upsampling_nearest.h",
+      "evidence": "+ *        then performs a vluxei32 indexed load from the current source row and",
+      "severity": "minor",
+      "category": "performance-risk",
+      "suggestion": "vluxei32 throughput on C920v2 and the rigid output write bandwidth were not measured on real hardware; verification here is bit-exact differential testing under QEMU plus objdump. Confirm gains with the category-misc benchmark on SG2044."
+    },
+    {
+      "id": "f-per-call-allocation",
+      "file": "3rdparty/mshadow/mshadow/extension/spatial_upsampling_nearest.h",
+      "evidence": "+  std::vector<uint32_t> w_byte(static_cast<size_t>(dst_width));",
+      "severity": "suggestion",
+      "category": "efficiency",
+      "suggestion": "The offset table is allocated per forward call; for small/shallow calls this adds fixed overhead. If needed later, cache the pattern keyed by (scale, dst_width)."
+    }
+  ]
+}

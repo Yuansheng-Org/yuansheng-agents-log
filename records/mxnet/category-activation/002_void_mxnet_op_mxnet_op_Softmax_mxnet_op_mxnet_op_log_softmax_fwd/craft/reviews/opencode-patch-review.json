@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-mxnet-category-activation-002-r2",
+  "patchCandidateId": "pc-bp-mxnet-category-activation-002",
+  "reviewedAt": "2026-09-21T05:19:32Z",
+  "reviewer": "opencode-cpp-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan: archSpecific=true (riscv-macro, march-flag). RISC-V specialized review passed. (1) ISA membership: all intrinsics are base V (zve32f) or Zvfhmin, both present on targetHardware SOPHGO SG2044 (RVV 1.0, VLEN=128, zve32f/zve64f/zvl128b/zfh/zfhmin/zvfh/zvfhmin); the softmax_rvv_detail block cross-compiled cleanly with clang++ --target=riscv64-unknown-linux-gnu -march=rv64gcv_zfhmin_zvfhmin -O3 (readelf Machine=RISC-V); vfncvt.f.f.w is emitted only under MXNET_RVV_F16_NARROW=1 and requires Zvfh/Zvfhmin. (2) vsetvl/LMUL/SEW: uniform vsetvl_e32m1 matching vfloat32m1_t/vbool32_t/vint32m1_t; disassembly shows vsetvli e32,m1,ta,ma and vsetvli zero,zero,e16,mf2,ta,ma before vfncvt/vse16 (correct f32m1->f16mf2 ratio). (3) tail/mask: fixed-VL main loop plus runtime tail via vsetvl(M-j), seed-style reduction with scalar seed carried across blocks, mask used only for NaN re-injection (vmfne.vv + vmerge.vvm). (4) dispatch gating: compile-time (#if defined(__riscv) && defined(__riscv_v)), type-level (if constexpr eligibility) and runtime (length==nullptr && sa==1 && temperature==1) gates all self-consistent; scalar fallback and non-RISC-V TUs unaffected. (5) no x86/ARM instructions. F1 RECHECK (previous critical): patch.diff now computes r = xc - k*ln2_hi - k*ln2_lo with BOTH terms scaled by the integer k; disassembly confirms vfmul.vf v14,v13,fa2 (k*ln2_hi) + vfsub.vv + vfmul.vf v13,v13,fa1 (k*ln2_lo) + vfsub.vv where v13=k. Scalar replay: vexp(0)=1.0, vexp(-1)=0.3678795 (expf 0.3678794), vexp(-3)=0.0497871, vexp(-20)=2.0612e-9; max relative error ~3e-8 (~1 ulp f32) in the actually-used domain d = x - max <= 0. F1 is FIXED."
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "src/operator/nn/softmax-inl.h",
+      "severity": "minor",
+      "category": "numerical-precision",
+      "evidence": "patch.diff added hunk: '+      const vfloat32m1_t blk = __riscv_vfredusum_vs_f32m1_f32m1(zero, e, cur);' / '+      sum += static_cast<double>(__riscv_vfmv_f_s_f32m1_f32(blk));'. Blueprint constraints.mustPreserve requires LogSoftmax consistency and sum~=1 behavior with AType=double accumulation.",
+      "suggestion": "The scalar reference accumulates per-element std::exp results in AType (double) in element order; the fast path reduces each block with unordered f32 vfredusum and only widens the block partial to double. With VLEN=128 each block is at most 4 lanes so the deviation is small (~1 ulp in the used domain), but results depend on lane order and are not identically ordered to the reference. Add explicit regression for the log_softmax == log(softmax) identity and sum~=1 tolerance, and consider vfredosum or compensated block accumulation if strict reproducibility is required."
+    },
+    {
+      "id": "F2",
+      "file": "src/operator/nn/softmax-inl.h",
+      "severity": "minor",
+      "category": "numerical-semantics",
+      "evidence": "patch.diff added hunk: '+struct rvv_log_softmax_fwd_eligible {' / '+      std::is_same<OP, log_softmax_fwd>::value && !negate &&' / '+      std::is_same<DType, float>::value &&'. The trait does not mention AType, while softmax-inl.h dispatches Softmax<OP,negate,AType> when safe_acc=true (MXNET_SAFE_ACCUMULATION default true) and Softmax<OP,negate,DType> when safe_acc=false.",
+      "suggestion": "With MXNET_SAFE_ACCUMULATION=0 (safe_acc=false) the instantiation is AType=float, yet the fast path still accumulates in double and computes std::log(double). That is more accurate but changes the configured float-accumulation numerical behavior. Either add std::is_same<AType,double>::value to the trait, or explicitly document and regression-test the AType=float deviation."
+    },
+    {
+      "id": "F3",
+      "file": "src/operator/nn/softmax-inl.h",
+      "severity": "suggestion",
+      "category": "numerical-accuracy",
+      "evidence": "patch.diff added hunk: '+  // Q(r) = 1 + r/2 + r^2/6 + r^3/24 + r^4/120 + r^5/720 (Horner).' / '+  const vfloat32m1_t er = __riscv_vfadd_vf_f32m1(__riscv_vfmul_vv_f32m1(r, q, vl), 1.0f, vl);'",
+      "suggestion": "Q is correctly degree-5, so exp(r) = 1 + r*Q(r) is degree-6 and its truncation term is r^7/5040 (about 1.2e-7 at |r|<=ln2/2), measured max relative error ~1.4e-7 and ~3e-8 in the used domain d<=0, far below FP16 resolution. For OType=float instantiations a minimax/Cephes polynomial could reach ~1 ulp; otherwise keep as-is and state the r^7/5040 truncation in the comment."
+    },
+    {
+      "id": "F4",
+      "file": "src/operator/nn/softmax-inl.h",
+      "severity": "suggestion",
+      "category": "numerical-semantics",
+      "evidence": "patch.diff added hunk: '+      seed                  = __riscv_vfredmax_vs_f32m1_f32m1(seed, x, cur);'. Blueprint constraints.mustPreserve requires NaN/+-Inf/all-equal handling; the scalar reference uses 'if (mmax < val)' which only propagates a leading NaN.",
+      "suggestion": "The RVV vfredmax NaN propagation policy differs from the scalar compare-branch chain and cannot be determined from the provided blueprint/diaglog evidence (unverifiable here, no RVV hardware). Add row-level tests with NaN at a non-leading position, all -Inf, mixed +-Inf and all-equal rows, and confirm per-lane parity with the scalar reference before relying on the fast path."
+    },
+    {
+      "id": "F5",
+      "file": "CMakeLists.txt",
+      "severity": "suggestion",
+      "category": "build-config",
+      "evidence": "patch.diff added hunk: '+    check_c_compiler_flag(\"-march=rv64gcv_zfhmin_zvfhmin\" MXNET_RISCV_ZFHMIN_C_SUPPORTED)' / '+      set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -march=rv64gcv_zfhmin_zvfhmin\")'. cmake is not installed in this review environment.",
+      "suggestion": "A real RISC-V CMake configure was not executed (cmake unavailable); the block was reviewed statically and both C and CXX are now probed with a rv64gcv fallback (previous F5 addressed). Run a real configure on the RISC-V toolchain to confirm the probe hits and the -march lands in both flag variables, then run agent1 patch_regression --case category-activation and re-annotate."
+    },
+    {
+      "id": "F6",
+      "file": "src/operator/nn/softmax-inl.h",
+      "severity": "suggestion",
+      "category": "performance",
+      "evidence": "patch.diff added hunk: '+    if (length == nullptr && sa == 1 && temperature == DType(1.0)) {' / '+        softmax_rvv_detail::log_softmax_fwd_row<OType>(in + base, out + base, M);'",
+      "suggestion": "There is no small-M crossover threshold: very short axes (M=1..3) still pay three vector passes and two reductions. The diaglog applicable-precondition note says short axes may keep the scalar path. Consider a small-M fallback or confirm via benchmark that short-axis rows still benefit."
+    },
+    {
+      "id": "F7",
+      "file": "CMakeLists.txt",
+      "severity": "suggestion",
+      "category": "process-metadata",
+      "evidence": "arch-scan patch.diff reports archSpecific=true (rules riscv-macro, march-flag) but patch-candidate.json.archReviewWarning is an empty string.",
+      "suggestion": "Confirm the candidate tool auto-populates archReviewWarning from the arch-scan result; if this is a tooling gap, fix the tool so later arch-specific candidates carry the warning field."
+    }
+  ]
+}

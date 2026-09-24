@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-category-nn-basic-010",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T05:08:56.818Z",
+    "software": "mxnet",
+    "testcaseIds": [
+      "category-nn-basic"
+    ],
+    "diagnosisId": "diag-20260921-050856",
+    "targetHardware": "SOPHGO SG2044 / XuanTie C920v2 (RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede"
+  },
+  "problem": {
+    "summary": "mxnet 在 SG2044 (RVV 1.0) 上的 category-nn-basic 用例中，L2Normalization 前向的平方和归约内核 seq_reduce_compute<mshadow_op::sum, 2, double, float, float, square, set_index_no_op> 仍以纯标量逐元素 Kahan 补偿链执行，累计 6798 个 cpu-clock 样本中的 94.88% 集中在该归约循环。根因是累加器形参被 volatile 限定导致每轮从栈往返，叠加逐元素串行补偿求和与 f32→f64 逐元素 widening，构成贯穿整个 reduce 长度的循环携带依赖链，且热区内零条 RVV 向量指令。",
+    "evidence": [
+      "perf annotate (cpu-clock, percent: local period): 函数共 6798 samples；hot loop interval 13de80e-13de85c 内 fld fa3,-80(s0)=22.62% + fsd fa5,-72(s0)=21.87% + fcvt.d.s=11.43% + fadd.d=11.30% + fsub.d=9.86% + fsub.d=9.03% + fmul.s=4.90% + fld fa2,-72(s0)=3.13% + fsub.d=0.74%，归约机制合计 94.88%",
+      "hot loop 整数侧 index scaling: div a5,a4,a1 (13de80e) + rem a5,a5,t1 (13de81e) + mul a3,a3,a6 (13de82c) + add a5,a5,a2 (13de830) + add a5,a5,a3 (13de832) + mul a2,a2,s1 (13de7fc)，合计约 4.65%",
+      "testcase 级 perf stat: IPC=0.567926, duration_time=1286224209532 ns, L1_dcache_load_miss_rate=0.974%, LLC_load_miss_rate=22.822%, branch_miss_rate=0.960%",
+      "源码 provenance: src/operator/mshadow_op.h:1815-1830 的 mshadow_op::sum::Reduce(volatile AType&, volatile DType, volatile DType&) 被 src/operator/tensor/broadcast_reduce-inl.h:364-371 的 for (size_t k = 0; k < M; ++k) 逐元素调用；该实例经 seq_reduce_assign 的 use_omp=false 分支（broadcast_reduce-inl.h:363）在单线程内串行完成 M 长度归约，外层 idx 由 OpenMP 并行（broadcast_reduce-inl.h:453）",
+      "知识证据: patterns/rvv_widening_reduction_kernels.md 与 patterns/loop_induction_variable_strength_reduction.md 的 Related PRs 表（OpenCV/oneDNN/OpenJDK/OpenBLAS/MNN、Linux Kernel RISC-V）"
+    ]
+  },
+  "rootCause": {
+    "summary": "mshadow_op::sum::Reduce 的三个形参全部 volatile 限定，迫使双精度累加器 val 与补偿项 residual 每轮在栈上往返（占 47.62% 局部样本），叠加逐元素 Kahan 补偿链与 f32→f64 逐元素 widening，形成贯穿整个 reduce 长度的串行依赖链；热区无任何 RVV 向量指令。",
+    "candidateFiles": [
+      "src/operator/mshadow_op.h",
+      "src/operator/tensor/broadcast_reduce-inl.h"
+    ],
+    "performanceFactors": [
+      "RVV Widening Additive Reduction Kernels",
+      "Loop Induction Variable Strength Reduction"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "归约数值语义：必须保持「先在 f32 精度下平方 (fmul.s)，再 widening 到 f64 累加」的顺序，不得改为先 widening 再在 f64 平方（会改变 |x|>~1.8e19 时的溢出行为）",
+      "稳定算法语义：平方和（L2 范数）的补偿求和结构不得替换为朴素 sum(x*x)；要求与标量 reference 位一致时必须使用 ordered 归约 vfredosum，不得默认 unordered vfredusum",
+      "函数签名与公共 API 不变（seq_reduce_compute / seq_reduce_assign / mshadow_op::sum 模板实参序列不变）",
+      "空输入 (M==0) 与 tail 语义不变：必须返回 SetInitValue 的 0，且 tail 使用运行时 vl，不得写入固定 lane 数",
+      "跨多个数据块的长期 accumulator 不得使用最后一次循环的 vl 做最终归约"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-nn-basic"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-nn-basic"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.85,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "testcase 级 perf stat 显示 category-nn-basic IPC 仅 0.567926、LLC_load_miss_rate 22.822%，指向非访存带宽受限的低 IPC 计算形态。函数级 perf annotate（6798 samples, cpu-clock/local period）显示 94.88% 的局部样本集中在 hot loop interval 13de80e-13de85c，其指令序列经 DWARF 行号映射确认是 src/operator/mshadow_op.h:1823-1830 的 Kahan 补偿求和 Reduce 被 src/operator/tensor/broadcast_reduce-inl.h:364-371 逐元素调用；其中 fld fa3,-80(s0) 22.62% 与 fsd fa5,-72(s0) 21.87% 合计 47.62% 是 volatile 形参强制的栈往返，即 patterns/rvv_widening_reduction_kernels.md §Why this is slow 所述「本轮结果依赖上一轮，形成贯穿完整序列的串行链」与「过早回写」两个机制，该文件明确要求在寄存器内保留部分和并用 RVV reduction 合并。第二条独立 finding 是同一 interval 内约 4.65% 的每轮 unravel/dot 地址重建（div/rem/mul/add），对应 patterns/loop_induction_variable_strength_reduction.md，但其整数链当前被 FP 依赖链掩盖、不在关键路径上。知识侧 OpenCV/oneDNN/OpenJDK/OpenBLAS/MNN 的同类 widening reduction 提交均以向量寄存器内部分和 + vfred* 合并替代标量逐元素累加。综合判定为 code_path 类根因，置信度 0.85（因缺函数级 bound type 与 global-period 采样语义而未取更高）。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "LLC_load_miss_rate 22.822% 提示可能存在缓存层级压力；但本循环为 unit-stride 连续访问且 L1_dcache_load_miss_rate 仅 0.974%，访存侧证据不支持以 memory-bound 解释该 94.88% 的热点份额",
+      "同一 broadcast_reduce 家族的另一实例 seq_reduce_compute<sum, 2, double, float, float, identity, ...>（rank 002）共享 mshadow_op.h:1823-1830 同一 Reduce 实现，其瓶颈同样来自 volatile 栈往返，说明该根因是族级共因而非本实例特有",
+      "编译器可能因 -O 级别或 volatile 语义约束未做 loop-invariant 提升；但 annotate 显示循环不变量 div a5,t4,s2 (13de7d4) 已被提到循环外，说明优化器已尽力，剩余成本确由 volatile 语义与算法结构决定"
+    ],
+    "currentGaps": "缺少 ARM 侧对照数据与 ys-trace-execution-summary 输出的 duration ratio，无法给出跨架构倍差；共享 perf stat 为 testcase 级，无函数级 bound type（baseline_gap: bound type）；采样 percent type 为 local period 且函数级 workload 贡献未知（baseline_gap: sampling metadata），收益只能表述为局部样本份额；precise_ip/Exact-IP 能力未知（baseline_gap: sampling IP precision），单条指令占比只锚定 loop interval。",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV — category-nn-basic（L2Normalization 前向平方和归约内核）",
+    "recommendedFirstAction": "分两步实施，优先第一步：①在 src/operator/mshadow_op.h:1823-1825 去掉 Reduce(volatile AType& dst, volatile DType src, volatile DType& residual) 三个形参的 volatile 限定（同时处理 :1818 的单参重载），使 val/residual 保持寄存器驻留——该步无语义变更，可直接消除 47.62% 的 fld/fsd 栈往返；②在 src/operator/tensor/broadcast_reduce-inl.h:364-371 的 seq_reduce_assign 内层循环按 patterns/rvv_widening_reduction_kernels.md §The fix 改造为分块 RVV 归约：vle32.v 载入 → vfmul.vv 在 f32 下平方（保持原精度语义）→ vfwcvt.f.f.v widening 到 f64 → 向量寄存器内累加（维持补偿项）→ 末尾单次 vfredosum.vs 有序水平归约；使用运行时 vsetvl，不得写死 lane 数。",
+    "recommendedVerification": "重新运行 category-nn-basic 用例，用 perf annotate 确认 13de816: fld fa3,-80(s0) 与 13de854: fsd fa5,-72(s0) 消失、热区出现 vsetvli/vle32.v/vfmul.vv/vfwcvt.f.f.v/vfadd.vv/vfredosum.vs；同时用 perf stat 观察 IPC 是否从 0.567926 上升；数值侧与标量 reference 比较平方和（含最大长度、极值输入、全零输入、M<VLMAX 的 tail）确认在项目容差内。",
+    "metricEvidence": [
+      {
+        "metric": "duration_time(s)",
+        "rv": 1286.22421,
+        "anomalyNote": "category-nn-basic testcase 级总时长；无 ARM 侧对照数据，无法计算 ratio"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.567926,
+        "anomalyNote": "testcase 级 IPC 仅 0.568，显著低于乱序核常规区间，与热区 94.88% 样本落在串行标量归约链的观察一致"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 22.822,
+        "anomalyNote": "testcase 级 LLC 未命中率 22.822%，明显偏高；但本归约循环为 unit-stride 连续访问且 L1 未命中率仅 0.974%，故不作为该热点的 bound 归因"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.974,
+        "anomalyNote": "0.974% 极低，排除本循环的 L1 容量/带宽瓶颈解释"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.96,
+        "anomalyNote": "0.960% 正常，排除分支预测失败解释"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void mxnet::op::broadcast::seq_reduce_compute<mxnet::op::mshadow_op::sum, 2, double, float, float, mxnet::op::mshadow_op::square, mxnet::op::mshadow_op::set_index_no_op<double, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]",
+        "fileModule": "src/operator/tensor/broadcast_reduce-inl.h (seq_reduce_assign 内层归约循环, :364-371) + src/operator/mshadow_op.h (mshadow_op::sum::Reduce, :1823-1830)",
+        "rvvPattern": "RVV Widening Additive Reduction Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.9488,
+        "note": "归约/统计类计算（L2Normalization 前向的平方和）。hot loop interval 13de80e-13de85c 内 94.88% 局部样本为标量 Kahan 补偿链与 volatile 强制的累加器栈往返，热区零 RVV 向量指令；同一函数内另有约 4.65% 的每轮 unravel/dot 地址重建（div/rem/mul/add），命中 Loop Induction Variable Strength Reduction，但其整数链被 FP 依赖链掩盖、不在关键路径上，故未作为主杠杆。"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/operator/mshadow_op.h:1815-1830 (mshadow_op::sum::Reduce, volatile Kahan 补偿求和) + src/operator/tensor/broadcast_reduce-inl.h:345-393 (seq_reduce_assign 逐元素归约循环)",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/27096 https://github.com/opencv/opencv/commit/33d632f85e4c1cc4d70bc7210c2f126fa8a4b0bb https://github.com/opencv/opencv/pull/26624 https://github.com/uxlfoundation/oneDNN/pull/5361 https://github.com/uxlfoundation/oneDNN/commit/a95f0060cfcb75aeee7b937f18dbb2ff32064f50 https://github.com/openjdk/jdk/commit/72297d22d19e34ff26bd34644dc087a1dec9527e https://github.com/openjdk/jdk/commit/08a2f841ec78a10f8d6d54b2ac3a92e89f765f14 https://github.com/openjdk/jdk/commit/2c1e4c381615ce52276f4bf331a1e7a845af4b6e https://github.com/openjdk/jdk/pull/20910 https://github.com/openjdk/jdk/commit/134b63f0e8c4093f7ad0a528d6996898ab881d5c https://github.com/openjdk/jdk/pull/16629 https://github.com/openjdk/jdk/commit/1aebab780c5b84a85b6f10884d05bb29bae3c3bf https://github.com/openjdk/jdk/commit/1b6281d98cf0e7c5435c563bfedd6f07b79bfa62 https://github.com/OpenMathLib/OpenBLAS/commit/c37509c213a34a8cae449ededd7bc7064675ecc4 https://github.com/OpenMathLib/OpenBLAS/commit/3918d8504e7720d94221025ae6078a2459ccb104 https://github.com/alibaba/MNN/pull/4433 https://github.com/torvalds/linux/commit/18be4ca5cb4e5a86833de97d331f5bc14a6c5a6d https://github.com/OpenMathLib/OpenBLAS/commit/477dd40f073c371d175d48e8b264ea40449515df https://github.com/OpenMathLib/OpenBLAS/commit/d832ee50868a48bb8a16d4343d428c11d80065ec",
+      "evidenceExplanation": "annotate 内嵌源码行号把热点地址 13de816/13de854/13de840/13de848 精确绑定到 src/operator/mshadow_op.h:1826-1829 的 Kahan 补偿公式与 src/operator/tensor/broadcast_reduce-inl.h:364-371 的逐元素循环，证明当前走的是通用标量归约路径而非任何 RVV 实现；同一 Reduce 模板已在同族实例 rank 002/006 中重复出现，说明这是族级共因。patterns/rvv_widening_reduction_kernels.md 的 Related PRs（OpenCV #27096/#26624、oneDNN #5361、OpenJDK #20910/#16629、OpenBLAS c37509c2、MNN #4433）提供了跨项目同构改造的可复用范式：分块 widening 累加 + 寄存器内部分和 + RVV reduction 合并；patterns/loop_induction_variable_strength_reduction.md 的 Linux Kernel RISC-V 18be4ca5 与 OpenBLAS 477dd40f/d832ee50 支撑第二条 finding 的地址强度削减方向。"
+    }
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-opperf-category-reduction-003",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T04:26:53.416Z",
+    "software": "mxnet-opperf",
+    "testcaseIds": [
+      "category-reduction"
+    ],
+    "diagnosisId": "diag-20260921T042653416Z-dc723a1b",
+    "targetHardware": "SOPHGO SG2044 / XuanTie C920v2 (RVV 1.0, VLEN=128, OoO)",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede"
+  },
+  "problem": {
+    "summary": "mxnet-opperf category-reduction 测试 rank 003 热点函数 broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, ...> 的广播 min 归约完全未向量化：1294 个 cpu-clock 样本中约 100% 落在内层归约循环（0x1ca1604-0x1ca163e），compare/conditional-update 簇占约 89.5%（单条条件分支 1ca1638 占 82.92%），loop-carried volatile 累加器每迭代经栈槽往返，且每迭代用 div/rem 重建索引。硬件（v/zve64d/zfa）与 build（v1p0/zvl128b）均支持 RVV 1.0，但函数内零向量指令，属可向量化的 scalar extrema reduction 实现缺口。",
+    "evidence": [
+      "热点函数 seq_reduce_compute<minimum,2,...> [._omp_fn.0]：1294 samples (cpu-clock, local period)，内层归约循环 0x1ca1604-0x1ca163e 承载约 100% 样本；compare/conditional-update 簇约 89.5%（1ca1638 bnez 82.92%、1ca162e beqz 5.87%、1ca163e bne 3.55%）",
+      "函数内 load 仅 1.62%、地址/索引 div/rem 子区间约 5.3%——非 memory-bound，主导为 loop-carried 依赖与分支（compute/latency-bound）",
+      "IndexOP=set_index_no_op<float,long> 证明 value-only 归约；mshadow::red::minimum::Reduce(volatile DType&, volatile DType) 为 NaN 传播型 min 语义",
+      "perf stat：IPC=0.484246，L1_dcache_load_miss_rate=2.991%，LLC_load_miss_rate=36.729%，branch_miss_rate=0.487%",
+      "pattern 命中：RVV Extrema Reduction Kernels（primary，route High / impact Medium）；No vectorization 与 Zfa fminm.s 指令替换为 supporting"
+    ]
+  },
+  "rootCause": {
+    "summary": "编译器将广播 min 归约生成为全标量 loop-carried 循环：volatile 累加器栈槽往返 + NaN guard/条件更新分支链 + 每迭代 div/rem 索引分解，在 hardware/build 均支持 RVV 1.0（VLEN=128）时零向量化，归约 compare/conditional-update 簇占据约 89.5% 的函数内样本。",
+    "candidateFiles": [
+      "src/operator/tensor/broadcast_reduce-inl.h",
+      "3rdparty/mshadow/mshadow/base.h"
+    ],
+    "performanceFactors": [
+      "RVV Extrema Reduction Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)",
+      "RISC-V ISA Extension-Specific Instruction Substitution"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "NaN 传播型 min 语义：任一归约元素为 NaN 时结果必须为 NaN（mshadow::red::minimum::Reduce 的 isnan 前置检查），RVV vfredmin（IEEE minNum，忽略 NaN）不得直接替代，须额外 NaN 检测路径",
+      "±0 语义：标量 !(dst<=src) 在 ±0 相等比较时保留先值（first-wins），与 vfredmin/minNum 返回 -0.0 的行为不同，须显式对齐或记录差异",
+      "value-only 归约合同：IndexOP 为 set_index_no_op，不得引入 index/tie-break 维护",
+      "seed 初值 = limits::PosInfValue<float>()（+inf），Finalize/Merge/addto 语义与输出布局不变",
+      "volatile 仅在该归约的 API 需要外部可观察者时保留；kernel 内部累加器改用局部非 volatile 寄存器"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-reduction"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-reduction"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.8,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "需人工确认 NaN 传播与 ±0 first-wins 语义是否必须 bit-exact 保留（决定 RVV kernel 是否需额外 NaN/±0 处理路径），并确认归约长度 M 的分布以选定向量化形状（对 k 轴分块 vfredmin 或对输出轴多累加器 vfmin）",
+    "reasoning": "perf stat 显示 IPC=0.484、L1 miss 仅 2.99%，结合函数内 load 只占 1.62%、主导样本落在 compare/conditional-update 簇（1ca1638 bnez 82.92% + 1ca162e beqz 5.87% + 1ca163e bne 3.55%），判定该函数为 loop-carried 依赖主导的 compute/latency-bound，而非 memory-bound。annotate 证明该归约循环 0x1ca1604-0x1ca163e 承载约 100% 的 1294 个函数内样本，符号（set_index_no_op、red::minimum::Reduce(volatile...)）与源码（broadcast_reduce-inl.h:349/437、mshadow base.h:1108-1159）确认是 value-only、NaN 传播型 scalar min 归约；hardware 与 build 均含 RVV 1.0（VLEN=128）而函数零 v* 指令，命中 RVV Extrema Reduction Kernels（route High）。该 pattern 的 Related PRs（oneDNN #5361、MNN #4036 等）证明同类 min/max 归约在 RVV 上的向量化实现先例与收益方向。因此根因是代码实现层（code_path）的归约未向量化 + volatile 累加器与 div/rem 索引分解阻碍编译器自动向量化。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "归约长度 M 较小（<VLEN lanes=4）时，向量化 kernel 的 vsetvl/setup 开销可能抵消收益，需按 M 分布 benchmark 确认",
+      "workload 全局 LLC_load_miss_rate=36.7% 提示 cache 行为也可能影响该算子，向量化需避免放大访存带宽竞争（尤其 vlse32 固定 stride 访存）",
+      "若上游接受 IEEE minNum（忽略 NaN）语义而非 NaN 传播，可直接用 vfredmin 简化实现，但改变了 mshadow 既有数值语义，需框架层确认"
+    ],
+    "currentGaps": "Sampling IP precision 未知（无 precise_ip/Exact-IP，baseline_gap: sampling IP precision），单行 82.92% 只作 interval 级锚点；percent=local period 且函数 workload 级贡献未知，无法给出 workload 级 Amdahl 上界（baseline_gap: sampling metadata）；±0/NaN 语义差异的处理方案未经验证；M 尺寸分布未采集",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 NaN 传播与 ±0 first-wins 语义是否必须 bit-exact 保留（决定 RVV kernel 是否需额外 NaN/±0 处理路径）；确认归约长度 M 的典型分布以选定向量化形状",
+    "affectedTarget": "RV / category-reduction（本批次仅 RISC-V SG2044 数据，无 ARM 对照）",
+    "recommendedFirstAction": "在 src/operator/tensor/broadcast_reduce-inl.h 的 seq_reduce_assign（行 349-391，非 use_omp 分支）将内层 k 归约改写为 RVV intrinsic 分块 min 归约：vsetvl/fixed-VL main loop + runtime-VL tail，unit-stride 用 vle32、固定 stride 用 vlse32，vfredmin.vs 以当前标量 best（seed=+inf）为 seed 分块归约，并用 vmfeq+mask 检测 NaN 以保持 NaN 传播语义；同时在 3rdparty/mshadow/mshadow/base.h 的 red::minimum::Reduce（行 1111-1115）用局部非 volatile 累加器消除每迭代栈槽往返",
+    "recommendedVerification": "重跑 category-reduction 测试并对该函数重跑 perf annotate：预期 scalar compare/branch 份额（1ca1638/1ca162e/1ca163e）显著下降、出现 vsetvli/vle32(vlse32)/vfredmin.vs、div/rem 索引链消失、cycles/element 改善；并用 NaN/±0/极值首尾/VLEN 边界输入与 scalar reference 对比确认语义一致（NaN 传播与 ±0 first-wins 契约）",
+    "metricEvidence": [
+      {
+        "metric": "Duration(s)",
+        "rv": 49.097969,
+        "anomalyNote": "perf stat duration_time=49,097,968,529 ns，为整个 category-reduction 采样窗口时长（非单算子延迟）；函数级占比未知"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.484246,
+        "anomalyNote": "workload 全局 IPC 0.48，偏低；函数内为 loop-carried 依赖 + 分支主导（compute/latency-bound）"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 2.991,
+        "anomalyNote": "L1 命中率高，函数内 load 仅 1.62% 样本，排除 memory-bound 主因"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 36.729,
+        "anomalyNote": "LLC miss 较高，为 workload 级背景特征；不作为本函数第一杠杆"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.487,
+        "anomalyNote": "分支 miss 率低，条件更新分支（82.92% 样本）主要为分支开销而非 mispredict"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long>>(...) [clone ._omp_fn.0]",
+        "fileModule": "src/operator/tensor/broadcast_reduce-inl.h（annotate 无 debug 行号，symbol 为 C++ 模板 OMP clone）",
+        "rvvPattern": "RVV Extrema Reduction Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.99,
+        "note": "广播 min 归约（归约类/线性代数），1294 个 cpu-clock local samples 中约 100% 落在内层归约循环，compare/conditional-update 簇约 89.5%，value-only（IndexOP no-op）"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/operator/tensor/broadcast_reduce-inl.h:349-391（seq_reduce_assign 内层归约循环）/ :437-460（seq_reduce_compute）；3rdparty/mshadow/mshadow/base.h:1108-1159（red::minimum::Reduce 的 volatile NaN 传播型 min 语义）",
+      "relatedKnowledge": "https://github.com/uxlfoundation/oneDNN/pull/5361; https://github.com/uxlfoundation/oneDNN/commit/a95f0060cfcb75aeee7b937f18dbb2ff32064f50; https://github.com/alibaba/MNN/pull/4036; https://github.com/alibaba/MNN/commit/09c339c65cb73dda7c055c3e49e9026dfd998e3e; https://github.com/alibaba/MNN/pull/4433; https://github.com/opencv/opencv/pull/22179; https://github.com/opencv/opencv/pull/27160; https://github.com/v8/v8/commit/6f100865663fb99df2628144fc65977e55ab7e68; https://github.com/v8/v8/commit/e62c1e307d207e1e56219c172929289a1b474530",
+      "evidenceExplanation": "热点函数在 annotate 中为全标量 min 归约（82.92% 分支 + volatile 栈槽往返 + 每迭代 div/rem），对应 mshadow red::minimum 的 NaN 传播型语义；源码确认 seq_reduce_assign 内层循环结构。oneDNN/MNN 的 RVV min/max reduction PR/commit 证明同类 value-only 极值归约可用 vfredmin/vfmin 向量化并带来收益；OpenCV 的 scalable RVV universal-intrinsic 与 V8 的 Zfa FP min/max 提交分别支撑向量化载体与 fminm.s 指令替换的可行性。知识来源仅作 provenance/示例，不替代本次 profile 证据。"
+    }
+  }
+}

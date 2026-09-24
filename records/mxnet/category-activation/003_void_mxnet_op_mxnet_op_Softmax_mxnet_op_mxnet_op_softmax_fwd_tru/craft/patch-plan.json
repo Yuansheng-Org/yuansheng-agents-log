@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-category-activation-003",
+  "blueprintId": "bp-mxnet-category-activation-003",
+  "createdAt": "2026-09-21T05:32:33Z",
+  "objective": "Vectorize the CPU softmin forward path (Softmax<softmax_fwd, negate=true, AType=double, DType=float, OType=half_t, IType=int, ndim=2>) on RISC-V RVV 1.0 so the 3-pass scalar normalization stops calling scalar libm expf per element (~82.7% of local samples) and stops using scalar compare-branch max reduction (~10%); apply the softmin sign once per vector with vfneg.v, reduce max/sum with vector reductions, and replace the software float2half epilogue with native zfhmin/zvfhmin narrowing by enabling -march=rv64gcv_zfhmin_zvfhmin at build time. Keep all existing scalar loops as the fallback for every other case.",
+  "changes": [
+    {
+      "filePath": "src/operator/nn/softmax-inl.h",
+      "action": "modify",
+      "rationale": "The hot function Softmax<softmax_fwd, true, double, float, mshadow::half::half_t, int, 2> executes an un-vectorized 3-pass cross-lane normalization in the length==nullptr / temperature==1.0 branch. perf annotate shows scalar libm expf call sites (sum pass fsub.s 41.70% at 0x19a6680 + auipc 0.23%; map pass auipc 40.79% at 0x19a670a) and a scalar flt.s+beqz compare-branch max reduction (3.35% + 6.50%), with a per-element fneg.s for the softmin sign, even though both hardware and build expose RVV. A vectorized fast path removes those costs while preserving softmin numerics.",
+      "instructions": [
+        "Add `#if defined(__riscv) && defined(__riscv_v)` guarded `#include <riscv_vector.h>` after the existing includes, so no RVV header is pulled in for other targets or for nvcc.",
+        "Add a `#if defined(__riscv) && defined(__riscv_v)` guarded namespace `mxnet::op::mxnet_op::softmax_rvv` before the Softmax template containing (a) a constexpr `kMinRowLen = 8` threshold and (b) `VecExp(vfloat32m1_t x, size_t vl)`, a self-contained range-reduced float32 vector exp: clamp x to [-87.33654475, 88.722839] (keep exp representable; exp of the softmax argument is always <= 1), compute n = rint(x*log2e) via vfcvt.x.f.v (RNE) clamped to [-126,127], compute r = x - n*ln2_hi - n*ln2_lo with BOTH ln2 terms scaled by the integer n using vfnmsac.vf, evaluate a degree-7 Taylor/Horner polynomial of r with vfmadd.vv, scale by 2^n built from the biased exponent bits, restore +inf via vmfgt+vmerge and NaN via vmfne+vmerge.",
+        "In `softmax_rvv`, add `template <typename OType> void SoftminRow(const float* in, OType* out, size_t M)` implementing the explicit 3-pass semantics for the contiguous row: pass 1 accumulates -in over vlmax lanes with vle32+vfneg.v+vfmax.vv and reduces once with vfredmax.vs seeded with -inf; pass 2 accumulates exp(-in - mmax) over vlmax lanes with vle32+vfneg.v+vfsub.vf+VecExp+vfadd.vv and reduces once with vfredusum.vs seeded with 0; pass 3 reloads, recomputes exp(-in - mmax), divides by sum with vfdiv.vf and stores the block. The negation is applied exactly once per vector (vfneg.v) in each pass instead of per element.",
+        "For the pass-3 store use `if constexpr (std::is_same<OType, float>::value)` -> `__riscv_vse32_v_f32m1`, else (half_t) `#if defined(__riscv_zvfhmin)` -> `__riscv_vfncvt_f_f_w_f16mf2` + `__riscv_vreinterpret_v_f16mf2_u16mf2` + `__riscv_vse16_v_u16mf2` into the half_t storage; keep the `#if` so the native f16 intrinsics are only parsed when the build enables zvfhmin.",
+        "In the `length == nullptr` branch of Softmax(), right after `index_t base = unravel_dot(...)`, insert an `#if defined(__riscv) && defined(__riscv_v)` guarded `if constexpr` that is enabled only for OP==softmax_fwd, DType==float and (OType==float, or OType==half_t when `__riscv_zvfhmin` is defined), then a runtime check `negate && temperature == 1.0 && sa == 1 && M >= softmax_rvv::kMinRowLen` before calling `softmax_rvv::SoftminRow(in + base, out + base, M)` and `continue`.",
+        "Leave every existing scalar loop untouched as the fallback for negate==false, non-float DType, temperature != 1.0, sa != 1, length != nullptr, OType outside {float, half_t}, and short rows."
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "CMakeLists.txt",
+      "action": "modify",
+      "rationale": "The target CPU (SOPHGO SG2044 / XuanTie C920v2) advertises zfh/zfhmin/zvfhmin, but the build's Tag_RISCV_arch has v1p0/zvl128b without zfh, so the FP16 output epilogue is synthesized from ~20 integer/bit instructions (perf annotate 0x19a6720-0x19a676a, ~4% of local samples). Enabling the half-precision extensions lets the compiler emit native fcvt.h.s and lets the vectorized half_t store use vfncvt.f.f.w.",
+      "instructions": [
+        "In the non-MSVC branch of the compiler-flag setup, immediately after `set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} ${CMAKE_C_FLAGS}\")`, add a block gated on `CMAKE_SYSTEM_PROCESSOR` matching `^riscv64` or `^rv64`.",
+        "Inside the block `include(CheckCCompilerFlag)`, probe `-march=rv64gcv_zfhmin_zvfhmin` with both `check_cxx_compiler_flag` and `check_c_compiler_flag`, and when both pass append it to CMAKE_C_FLAGS and CMAKE_CXX_FLAGS.",
+        "When the zfhmin/zvfhmin probe fails, fall back to probing `-march=rv64gcv` with both compilers and append it when accepted; otherwise leave flags unchanged so non-RVV toolchains keep their defaults."
+      ],
+      "risk": "low"
+    }
+  ],
+  "expectedDiffSummary": "src/operator/nn/softmax-inl.h gains a guarded <riscv_vector.h> include, a guarded softmax_rvv namespace with a range-reduced vector exp and a 3-pass vectorized softmin row (vfneg once per vector, vfredmax/vfredusum seeded reductions, native half_t narrowing store), and a guarded if constexpr dispatch inside the length==nullptr branch that keeps the scalar loops as fallback. CMakeLists.txt gains a riscv64-gated probe that appends -march=rv64gcv_zfhmin_zvfhmin (fallback -march=rv64gcv) to the C and C++ flags. No other code is reformatted."
+}

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-category-activation-018",
+  "blueprintId": "bp-mxnet-category-activation-018",
+  "createdAt": "2026-09-21T11:09:43Z",
+  "objective": "Remove the per-element libm expf call and the per-element float64 round-trip from the float32 GELU(erf) backward kernel (backward_grad_tuned<gelu_erf_grad> in src/operator/mshadow_op.h, dispatched from src/operator/leaky_relu-inl.h), replacing them with an RVV-vectorized float32 path on RVV-capable RISC-V targets while keeping the existing scalar kernel as the fallback for every other dtype/target/request and preserving the documented numerical contract.",
+  "changes": [
+    {
+      "filePath": "src/operator/mshadow_op.h",
+      "action": "modify",
+      "rationale": "Root cause: gelu_erf_grad computes erf_grad(a/sqrt(2)) with the double literal 2.0, forcing a per-element fcvt.d.s/fmul.d/fcvt.s.d round-trip, and calls scalar libm expf per element; the whole main loop is scalar (zero v*) on RVV-capable SG2044. Give erf_grad a float32 specialization with the coefficient in float32, and add a guarded RVV float32 kernel for the lane-independent gelu_erf_grad backward (vle32/vfdiv/vector range-reduced exp/vfmul/vse32) plus a dispatch hook.",
+      "instructions": [
+        "Add `#if defined(__riscv) && defined(__riscv_v)` + `#include <riscv_vector.h>` near the top includes so the RVV code is compiled only when the V extension is enabled.",
+        "Replace `MXNET_UNARY_MATH_OP(erf_grad, 2.0 / math::sqrt(PI) * math::exp(-(a * a)));` with an explicit `struct erf_grad : public mxnet_op::tunable` whose generic template keeps the previous double evaluation, plus an explicit `template <> MSHADOW_XINLINE float erf_grad::Map<float>(float a)` that uses `2.0f / math::sqrt(PI)` so the float path stays in float32. Preserve the `Map(DType)` signature used by gelu_erf_grad and by `_backward_erf`.",
+        "After the `gelu_erf_grad` definition add a guarded `namespace gelu_erf_grad_rvv` with: (a) `exp_f32m1`, a self-contained range-reduced vector exp (k = round_to_nearest(x*log2e); r = x - k*ln2_hi - k*ln2_lo with BOTH ln2 terms scaled by integer k; degree-6 Cephes polynomial; exact 2^k scaling via integer bit construction; flush x <= -87.33654475f (incl. -inf) to 0; propagate NaN); (b) `gelu_erf_grad_block_f32m1` computing `t=a/sqrt2`, `exp(-t*t)`, `eg=(2/sqrt(pi))*exp`, `inner=b/a + (0.5f*a*eg)/sqrt2`, `out=g*inner` with vle32/vfdiv/vfmul/vfadd/vse32; (c) `gelu_erf_grad_f32` with a fixed-VL (`vsetvlmax`) main loop and a runtime-VL tail.",
+        "Add a `template <typename xpu, typename DType> struct gelu_erf_grad_vec` dispatch hook whose generic Launch returns false, and a guarded `template <> struct gelu_erf_grad_vec<mshadow::cpu, float>` specialization that calls `gelu_erf_grad_rvv::gelu_erf_grad_f32` and returns true.",
+        "Do not touch the scalar `gelu_erf_grad` expression, `SQRT_2`, `PI`, or any other operator; keep the diff focused."
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/operator/leaky_relu-inl.h",
+      "action": "modify",
+      "rationale": "The GELU(erf) backward launch site must be able to route the contiguous float32 case to the vectorized path, and must keep using the original scalar kernel for every other case (other dtypes, add-to/null requests, non-RVV targets, GPU).",
+      "instructions": [
+        "In `LeakyReLUOp::Backward`, `case leakyrelu::kGELU_ERF`, before the existing `MXNET_ASSIGN_REQ_SWITCH`, attempt `mshadow_op::gelu_erf_grad_vec<xpu, DType>::Launch(s, gdata.size(0)*gdata.size(1)*gdata.size(2), gdata.dptr_, grad.dptr_, data.dptr_, output.dptr_)`.",
+        "Guard the attempt with `req[leakyrelu::kData] == kWriteTo || req[leakyrelu::kData] == kWriteInplace` because the vectorized path performs a plain store; `kAddTo`/`kNullOp` must keep the original `KERNEL_ASSIGN` semantics.",
+        "If the dispatcher returns true, `break` out of the case; otherwise fall through to the unmodified original `MXNET_ASSIGN_REQ_SWITCH` launch.",
+        "Do not alter the argument order (gdata, grad, data, output) or any other activation case."
+      ],
+      "risk": "low"
+    }
+  ],
+  "expectedDiffSummary": "src/operator/mshadow_op.h: erf_grad float32 specialization (2.0f coefficient, no fp64 round-trip) + guarded RVV float32 vectorized gelu_erf_grad backward (vector range-reduced exp, vle32/vfdiv/vfmul/vse32, fixed-VL main + runtime-VL tail) + gelu_erf_grad_vec dispatch hook. src/operator/leaky_relu-inl.h: route the contiguous float32 kGELU_ERF backward to the vectorized path for kWriteTo/kWriteInplace, with the original scalar kernel retained as fallback for all other dtypes/targets/requests."
+}

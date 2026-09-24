@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-mxnet-opperf-category-misc-003",
+  "patchCandidateId": "pc-bp-mxnet-opperf-category-misc-003",
+  "reviewedAt": "2026-09-21T08:52:00.000Z",
+  "reviewer": "OpenCode Comet Reviewer (independent read-only)",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "RVV 1.0 / VLEN=128 / SEW=32 目标。补丁使用 vsetvlmax_e32m4、vsetvl_e32m4、vle32_v_f32m4、vse32_v_f32m4、vfadd_vv_f32m4，均属 build Tag_RISCV_arch (v1p0/zve32f/zve64f/zvl128b) 与硬件 ISA 子集；无 x86/ARM 指令。runtime vsetvl 决定 vl，vle/vse/vfadd 共用同一 vl，vtype 一致；runtime-VL tail 无越界；m4 acc+x 共 8 个向量寄存器，无寄存器组重叠；以 __riscv_v_intrinsic/__riscv_vector 守卫并保留标量 fallback。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F-001",
+      "file": "src/operator/numpy/np_cumsum-inl.h",
+      "evidence": "+          std::is_same<OType, float>::value && trailing > 1) {",
+      "severity": "minor",
+      "category": "coverage",
+      "suggestion": "axis=None（trailing==1）与单 lane 形状走原标量路径，不获得向量加速；这是 mustPreserve 中 bit-exact（不得沿 scan 轴 reassociate）约束下的必要回退，非缺陷，但 (10000,1) 类输入无收益，应作为已知覆盖边界披露。"
+    },
+    {
+      "id": "F-002",
+      "file": "src/operator/numpy/np_cumsum-inl.h",
+      "evidence": "+      if (std::is_same<xpu, cpu>::value && std::is_same<IType, float>::value &&",
+      "severity": "minor",
+      "category": "type-coverage",
+      "suggestion": "仅 float32 I/O 走 RVV 批处理，float16/float64/int* 回退标量。属技术必要（当前仅实现 e32m4/f32 路径），回退分支保留且正确；后续如需可扩展 f64 路径。"
+    },
+    {
+      "id": "F-003",
+      "file": "src/operator/numpy/np_cumsum-inl.h",
+      "evidence": "+        const index_t chunks_per_group = static_cast<index_t>((trailing + vlmax - 1) / vlmax);",
+      "severity": "suggestion",
+      "category": "performance-tuning",
+      "suggestion": "chunk 粒度绑定 e32m4 的 VLMAX，trailing 较小时 chunk 数偏少（如 trailing=100 → 7 chunks），可能不足以填满多核；后续可按 trailing 与线程数在 m1/m2/m4 间自适应。不影响当前正确性。"
+    }
+  ]
+}

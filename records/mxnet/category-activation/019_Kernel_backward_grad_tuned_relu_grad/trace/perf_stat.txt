@@ -1,0 +1,223 @@
+11-MXNET-OPPERF-BENCHMARK category-activation RISC-V perf stat
+==============================================================
+
+Source CSV: /workspace/results/11-mxnet-opperf-benchmark_results.csv
+TestName: category-activation
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 125,525,643,590 |
+| task_clock | 471,308.1400000000 |
+| cpu_cycle | 104,991,993,216,869 |
+| instruction | 59,051,503,773,521 |
+| cache_references | 22,879,522,533 |
+| cache_misses | 22,879,524,850 |
+| branches | 53,588,927,857 |
+| branch_misses | 1,456,986,507 |
+| L1_dcache_loads | 77,828,486,395 |
+| L1_dcache_load_misses | 4,014,112,596 |
+| LLC_load_misses | 10,064,779,860 |
+| LLC_loads | 22,879,536,996 |
+| IPC | 0.5624380000 |
+| opperf_Activation_input_0_max_storage_mem_alloc_cpu_0 | 2,097.1521000000 |
+| opperf_Activation_input_0_avg_time_forward_Activation_us | 1.3608000000 |
+| opperf_Activation_input_0_avg_time_backward_Activation_us | 1.4229000000 |
+| opperf_Activation_input_1_max_storage_mem_alloc_cpu_0 | 4,194.3042000000 |
+| opperf_Activation_input_1_avg_time_forward_Activation_us | 7.6425000000 |
+| opperf_Activation_input_1_avg_time_backward_Activation_us | 0.6029000000 |
+| opperf_Activation_input_2_max_storage_mem_alloc_cpu_0 | 2,097.1521000000 |
+| opperf_Activation_input_2_avg_time_forward_Activation_us | 13.0700000000 |
+| opperf_Activation_input_2_avg_time_backward_Activation_us | 6.6506000000 |
+| opperf_Activation_input_3_max_storage_mem_alloc_cpu_0 | 2,097.1521000000 |
+| opperf_Activation_input_3_avg_time_forward_Activation_us | 43.6548000000 |
+| opperf_Activation_input_3_avg_time_backward_Activation_us | 52.3007000000 |
+| opperf_Activation_input_4_max_storage_mem_alloc_cpu_0 | 2,097.1521000000 |
+| opperf_Activation_input_4_avg_time_forward_Activation_us | 24.6993000000 |
+| opperf_Activation_input_4_avg_time_backward_Activation_us | 13.9761000000 |
+| opperf_Activation_input_5_max_storage_mem_alloc_cpu_0 | 2,097.1521000000 |
+| opperf_Activation_input_5_avg_time_forward_Activation_us | 1.3228000000 |
+| opperf_Activation_input_5_avg_time_backward_Activation_us | 1.2737000000 |
+| opperf_Activation_input_6_max_storage_mem_alloc_cpu_0 | 2,097.1521000000 |
+| opperf_Activation_input_6_avg_time_forward_Activation_us | 19.2216000000 |
+| opperf_Activation_input_6_avg_time_backward_Activation_us | 0.6031000000 |
+| opperf_LeakyReLU_input_0_max_storage_mem_alloc_cpu_0 | 4,194.3042000000 |
+| opperf_LeakyReLU_input_0_avg_time_forward_LeakyReLU_us | 1.2724000000 |
+| opperf_LeakyReLU_input_0_avg_time_backward_LeakyReLU_us | 1.3282000000 |
+| opperf_LeakyReLU_input_1_max_storage_mem_alloc_cpu_0 | 2,097.1521000000 |
+| opperf_LeakyReLU_input_1_avg_time_forward_LeakyReLU_us | 8.4888000000 |
+| opperf_LeakyReLU_input_1_avg_time_backward_LeakyReLU_us | 1.3227000000 |
+| opperf_LeakyReLU_input_2_max_storage_mem_alloc_cpu_0 | 2,097.1521000000 |
+| opperf_LeakyReLU_input_2_avg_time_forward_LeakyReLU_us | 8.2968000000 |
+| opperf_LeakyReLU_input_2_avg_time_backward_LeakyReLU_us | 1.4075000000 |
+| opperf_LeakyReLU_input_3_max_storage_mem_alloc_cpu_0 | 4,194.3042000000 |
+| opperf_LeakyReLU_input_3_avg_time_forward_LeakyReLU_us | 9.3902000000 |
+| opperf_LeakyReLU_input_3_avg_time_backward_LeakyReLU_us | 9.5589000000 |
+| opperf_Softmax_input_0_max_storage_mem_alloc_cpu_0 | 4,194.3042000000 |
+| opperf_Softmax_input_0_avg_time_forward_Softmax_us | 7.3215000000 |
+| opperf_Softmax_input_1_max_storage_mem_alloc_cpu_0 | 40 |
+| opperf_Softmax_input_1_avg_time_forward_Softmax_us | 0.1540000000 |
+| opperf_Softmax_input_2_max_storage_mem_alloc_cpu_0 | 4,000 |
+| opperf_Softmax_input_2_avg_time_forward_Softmax_us | 7.1409000000 |
+| opperf_SoftmaxActivation_input_0_max_storage_mem_alloc_cpu_0 | 4,194.3042000000 |
+| opperf_SoftmaxActivation_input_0_avg_time_forward_SoftmaxActivation_us | 8.7377000000 |
+| opperf_SoftmaxActivation_input_0_avg_time_backward_SoftmaxActivation_us | 6.0690000000 |
+| opperf_SoftmaxActivation_input_1_max_storage_mem_alloc_cpu_0 | 91.8080000000 |
+| opperf_SoftmaxActivation_input_1_avg_time_forward_SoftmaxActivation_us | 0.1704000000 |
+| opperf_SoftmaxActivation_input_1_avg_time_backward_SoftmaxActivation_us | 0.1009000000 |
+| opperf_SoftmaxActivation_input_2_max_storage_mem_alloc_cpu_0 | 2,000 |
+| opperf_SoftmaxActivation_input_2_avg_time_forward_SoftmaxActivation_us | 8.5770000000 |
+| opperf_SoftmaxActivation_input_2_avg_time_backward_SoftmaxActivation_us | 6.1152000000 |
+| opperf_hard_sigmoid_input_0_max_storage_mem_alloc_cpu_0 | 2,097.1521000000 |
+| opperf_hard_sigmoid_input_0_avg_time_forward_hard_sigmoid_us | 0.6347000000 |
+| opperf_hard_sigmoid_input_0_avg_time_backward_hard_sigmoid_us | 0.8825000000 |
+| opperf_hard_sigmoid_input_1_max_storage_mem_alloc_cpu_0 | 20 |
+| opperf_hard_sigmoid_input_1_avg_time_forward_hard_sigmoid_us | 0.0706000000 |
+| opperf_hard_sigmoid_input_1_avg_time_backward_hard_sigmoid_us | 0.0318000000 |
+| opperf_hard_sigmoid_input_2_max_storage_mem_alloc_cpu_0 | 4,000 |
+| opperf_hard_sigmoid_input_2_avg_time_forward_hard_sigmoid_us | 0.6097000000 |
+| opperf_hard_sigmoid_input_2_avg_time_backward_hard_sigmoid_us | 0.8472000000 |
+| opperf_log_softmax_input_0_max_storage_mem_alloc_cpu_0 | 1,048.5760000000 |
+| opperf_log_softmax_input_0_avg_time_forward_log_softmax_us | 142.7843000000 |
+| opperf_log_softmax_input_0_avg_time_backward_log_softmax_us | 48.6760000000 |
+| opperf_log_softmax_input_1_max_storage_mem_alloc_cpu_0 | 20 |
+| opperf_log_softmax_input_1_avg_time_forward_log_softmax_us | 0.5710000000 |
+| opperf_log_softmax_input_1_avg_time_backward_log_softmax_us | 0.3100000000 |
+| opperf_log_softmax_input_2_max_storage_mem_alloc_cpu_0 | 4,000 |
+| opperf_log_softmax_input_2_avg_time_forward_log_softmax_us | 16.1563000000 |
+| opperf_log_softmax_input_2_avg_time_backward_log_softmax_us | 11.1118000000 |
+| opperf_softmax_input_0_max_storage_mem_alloc_cpu_0 | 1,048.5760000000 |
+| opperf_softmax_input_0_avg_time_forward_softmax_us | 147.6938000000 |
+| opperf_softmax_input_0_avg_time_backward_softmax_us | 79.8326000000 |
+| opperf_softmax_input_1_max_storage_mem_alloc_cpu_0 | 20 |
+| opperf_softmax_input_1_avg_time_forward_softmax_us | 0.6430000000 |
+| opperf_softmax_input_1_avg_time_backward_softmax_us | 0.0548000000 |
+| opperf_softmax_input_2_max_storage_mem_alloc_cpu_0 | 4,000 |
+| opperf_softmax_input_2_avg_time_forward_softmax_us | 17.5709000000 |
+| opperf_softmax_input_2_avg_time_backward_softmax_us | 12.2620000000 |
+| opperf_softmin_input_0_max_storage_mem_alloc_cpu_0 | 1,048.5760000000 |
+| opperf_softmin_input_0_avg_time_forward_softmin_us | 143.8858000000 |
+| opperf_softmin_input_0_avg_time_backward_softmin_us | 79.9495000000 |
+| opperf_softmin_input_1_max_storage_mem_alloc_cpu_0 | 20 |
+| opperf_softmin_input_1_avg_time_forward_softmin_us | 0.6444000000 |
+| opperf_softmin_input_1_avg_time_backward_softmin_us | 0.0700000000 |
+| opperf_softmin_input_2_max_storage_mem_alloc_cpu_0 | 4,000 |
+| opperf_softmin_input_2_avg_time_forward_softmin_us | 15.5835000000 |
+| opperf_softmin_input_2_avg_time_backward_softmin_us | 10.2333000000 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 125.525644 |
+| cache_miss_rate | 100.000% |
+| branch_miss_rate | 2.719% |
+| L1_dcache_load_miss_rate | 5.158% |
+| LLC_load_miss_rate | 43.990% |
+
+perf stat style summary
+-----------------------
+            125,525,643,590  duration_time
+         471,308.1400000000  task_clock
+        104,991,993,216,869  cpu_cycle
+         59,051,503,773,521  instruction
+             22,879,522,533  cache_references
+             22,879,524,850  cache_misses
+             53,588,927,857  branches
+              1,456,986,507  branch_misses
+             77,828,486,395  L1_dcache_loads
+              4,014,112,596  L1_dcache_load_misses
+             10,064,779,860  LLC_load_misses
+             22,879,536,996  LLC_loads
+               0.5624380000  IPC
+           2,097.1521000000  opperf_Activation_input_0_max_storage_mem_alloc_cpu_0
+               1.3608000000  opperf_Activation_input_0_avg_time_forward_Activation_us
+               1.4229000000  opperf_Activation_input_0_avg_time_backward_Activation_us
+           4,194.3042000000  opperf_Activation_input_1_max_storage_mem_alloc_cpu_0
+               7.6425000000  opperf_Activation_input_1_avg_time_forward_Activation_us
+               0.6029000000  opperf_Activation_input_1_avg_time_backward_Activation_us
+           2,097.1521000000  opperf_Activation_input_2_max_storage_mem_alloc_cpu_0
+              13.0700000000  opperf_Activation_input_2_avg_time_forward_Activation_us
+               6.6506000000  opperf_Activation_input_2_avg_time_backward_Activation_us
+           2,097.1521000000  opperf_Activation_input_3_max_storage_mem_alloc_cpu_0
+              43.6548000000  opperf_Activation_input_3_avg_time_forward_Activation_us
+              52.3007000000  opperf_Activation_input_3_avg_time_backward_Activation_us
+           2,097.1521000000  opperf_Activation_input_4_max_storage_mem_alloc_cpu_0
+              24.6993000000  opperf_Activation_input_4_avg_time_forward_Activation_us
+              13.9761000000  opperf_Activation_input_4_avg_time_backward_Activation_us
+           2,097.1521000000  opperf_Activation_input_5_max_storage_mem_alloc_cpu_0
+               1.3228000000  opperf_Activation_input_5_avg_time_forward_Activation_us
+               1.2737000000  opperf_Activation_input_5_avg_time_backward_Activation_us
+           2,097.1521000000  opperf_Activation_input_6_max_storage_mem_alloc_cpu_0
+              19.2216000000  opperf_Activation_input_6_avg_time_forward_Activation_us
+               0.6031000000  opperf_Activation_input_6_avg_time_backward_Activation_us
+           4,194.3042000000  opperf_LeakyReLU_input_0_max_storage_mem_alloc_cpu_0
+               1.2724000000  opperf_LeakyReLU_input_0_avg_time_forward_LeakyReLU_us
+               1.3282000000  opperf_LeakyReLU_input_0_avg_time_backward_LeakyReLU_us
+           2,097.1521000000  opperf_LeakyReLU_input_1_max_storage_mem_alloc_cpu_0
+               8.4888000000  opperf_LeakyReLU_input_1_avg_time_forward_LeakyReLU_us
+               1.3227000000  opperf_LeakyReLU_input_1_avg_time_backward_LeakyReLU_us
+           2,097.1521000000  opperf_LeakyReLU_input_2_max_storage_mem_alloc_cpu_0
+               8.2968000000  opperf_LeakyReLU_input_2_avg_time_forward_LeakyReLU_us
+               1.4075000000  opperf_LeakyReLU_input_2_avg_time_backward_LeakyReLU_us
+           4,194.3042000000  opperf_LeakyReLU_input_3_max_storage_mem_alloc_cpu_0
+               9.3902000000  opperf_LeakyReLU_input_3_avg_time_forward_LeakyReLU_us
+               9.5589000000  opperf_LeakyReLU_input_3_avg_time_backward_LeakyReLU_us
+           4,194.3042000000  opperf_Softmax_input_0_max_storage_mem_alloc_cpu_0
+               7.3215000000  opperf_Softmax_input_0_avg_time_forward_Softmax_us
+                         40  opperf_Softmax_input_1_max_storage_mem_alloc_cpu_0
+               0.1540000000  opperf_Softmax_input_1_avg_time_forward_Softmax_us
+                      4,000  opperf_Softmax_input_2_max_storage_mem_alloc_cpu_0
+               7.1409000000  opperf_Softmax_input_2_avg_time_forward_Softmax_us
+           4,194.3042000000  opperf_SoftmaxActivation_input_0_max_storage_mem_alloc_cpu_0
+               8.7377000000  opperf_SoftmaxActivation_input_0_avg_time_forward_SoftmaxActivation_us
+               6.0690000000  opperf_SoftmaxActivation_input_0_avg_time_backward_SoftmaxActivation_us
+              91.8080000000  opperf_SoftmaxActivation_input_1_max_storage_mem_alloc_cpu_0
+               0.1704000000  opperf_SoftmaxActivation_input_1_avg_time_forward_SoftmaxActivation_us
+               0.1009000000  opperf_SoftmaxActivation_input_1_avg_time_backward_SoftmaxActivation_us
+                      2,000  opperf_SoftmaxActivation_input_2_max_storage_mem_alloc_cpu_0
+               8.5770000000  opperf_SoftmaxActivation_input_2_avg_time_forward_SoftmaxActivation_us
+               6.1152000000  opperf_SoftmaxActivation_input_2_avg_time_backward_SoftmaxActivation_us
+           2,097.1521000000  opperf_hard_sigmoid_input_0_max_storage_mem_alloc_cpu_0
+               0.6347000000  opperf_hard_sigmoid_input_0_avg_time_forward_hard_sigmoid_us
+               0.8825000000  opperf_hard_sigmoid_input_0_avg_time_backward_hard_sigmoid_us
+                         20  opperf_hard_sigmoid_input_1_max_storage_mem_alloc_cpu_0
+               0.0706000000  opperf_hard_sigmoid_input_1_avg_time_forward_hard_sigmoid_us
+               0.0318000000  opperf_hard_sigmoid_input_1_avg_time_backward_hard_sigmoid_us
+                      4,000  opperf_hard_sigmoid_input_2_max_storage_mem_alloc_cpu_0
+               0.6097000000  opperf_hard_sigmoid_input_2_avg_time_forward_hard_sigmoid_us
+               0.8472000000  opperf_hard_sigmoid_input_2_avg_time_backward_hard_sigmoid_us
+           1,048.5760000000  opperf_log_softmax_input_0_max_storage_mem_alloc_cpu_0
+             142.7843000000  opperf_log_softmax_input_0_avg_time_forward_log_softmax_us
+              48.6760000000  opperf_log_softmax_input_0_avg_time_backward_log_softmax_us
+                         20  opperf_log_softmax_input_1_max_storage_mem_alloc_cpu_0
+               0.5710000000  opperf_log_softmax_input_1_avg_time_forward_log_softmax_us
+               0.3100000000  opperf_log_softmax_input_1_avg_time_backward_log_softmax_us
+                      4,000  opperf_log_softmax_input_2_max_storage_mem_alloc_cpu_0
+              16.1563000000  opperf_log_softmax_input_2_avg_time_forward_log_softmax_us
+              11.1118000000  opperf_log_softmax_input_2_avg_time_backward_log_softmax_us
+           1,048.5760000000  opperf_softmax_input_0_max_storage_mem_alloc_cpu_0
+             147.6938000000  opperf_softmax_input_0_avg_time_forward_softmax_us
+              79.8326000000  opperf_softmax_input_0_avg_time_backward_softmax_us
+                         20  opperf_softmax_input_1_max_storage_mem_alloc_cpu_0
+               0.6430000000  opperf_softmax_input_1_avg_time_forward_softmax_us
+               0.0548000000  opperf_softmax_input_1_avg_time_backward_softmax_us
+                      4,000  opperf_softmax_input_2_max_storage_mem_alloc_cpu_0
+              17.5709000000  opperf_softmax_input_2_avg_time_forward_softmax_us
+              12.2620000000  opperf_softmax_input_2_avg_time_backward_softmax_us
+           1,048.5760000000  opperf_softmin_input_0_max_storage_mem_alloc_cpu_0
+             143.8858000000  opperf_softmin_input_0_avg_time_forward_softmin_us
+              79.9495000000  opperf_softmin_input_0_avg_time_backward_softmin_us
+                         20  opperf_softmin_input_1_max_storage_mem_alloc_cpu_0
+               0.6444000000  opperf_softmin_input_1_avg_time_forward_softmin_us
+               0.0700000000  opperf_softmin_input_1_avg_time_backward_softmin_us
+                      4,000  opperf_softmin_input_2_max_storage_mem_alloc_cpu_0
+              15.5835000000  opperf_softmin_input_2_avg_time_forward_softmin_us
+              10.2333000000  opperf_softmin_input_2_avg_time_backward_softmin_us
+                 125.525644  duration_s
+                   100.000%  cache_miss_rate
+                     2.719%  branch_miss_rate
+                     5.158%  L1_dcache_load_miss_rate
+                    43.990%  LLC_load_miss_rate

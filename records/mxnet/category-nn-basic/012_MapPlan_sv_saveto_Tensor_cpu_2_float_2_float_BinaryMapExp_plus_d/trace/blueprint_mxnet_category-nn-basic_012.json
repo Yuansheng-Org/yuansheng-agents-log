@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-category-nn-basic-012",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T05:16:32.458Z",
+    "software": "mxnet",
+    "testcaseIds": [
+      "category-nn-basic"
+    ],
+    "diagnosisId": "diag-20260921-051632",
+    "targetHardware": "SOPHGO SG2044 / XuanTie C920v2 (RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede"
+  },
+  "problem": {
+    "summary": "mxnet 在 SG2044 (RVV 1.0) 上的 category-nn-basic 用例中，L2Normalization 前向复合表达式内核 MapPlan<saveto, Tensor<cpu,2,float>, ... BinaryMapExp<plus, div, mul, square_root, minus>> 仍以纯标量逐元素方式求值，5115 个 cpu-clock 样本中约 84% 落在其 x 循环内。首要根因是 math::sqrt 在未启用 -fno-math-errno 的构建下产生 errno 保持型 lowering：每个元素都执行 FCSR 保存(frflags)/比较(flt.s)/恢复(fsflags)/条件分支(bnez → sqrtf@plt) 的分支菱形，占 42.76%；其次是逐元素表达式求值与广播索引计算（slli/flw/fadd/fdiv/fsw，占 41.12%），热区内零条 RVV 向量指令。",
+    "evidence": [
+      "perf annotate (cpu-clock, percent: local period): 函数共 5115 samples；hot loop interval 11b41ea-11b424a 内 fsqrt.s=16.09% + bnez=14.80% + flt.s=14.41% + slli a5,a5,0x2=14.27% + fsflags=13.55% + flw fa4,0(a5)=10.36% + fadd.s=4.91% + fsw fa5,-4(a1)=3.13% + ld a7,144(a4)=2.13% + fdiv.s=1.51% + flw fa4,0(t5)=1.33% + ld a0,128(a4)=1.27% + div a5,s2,a5=1.15% + flw fa3,88(a4)=1.06%",
+      "FCSR/branch-diamond 分组（F1）: flt.s a5,fa0,fa2(14.41) + fsflags a2(13.55) + bnez a5,11b426a(14.80) = 42.76%；frflags a2 为 0.00%；另有 fsqrt.s(16.09%) 为必要工作，不属可删项",
+      "逐元素表达式求值分组（F2）: slli a5,a5,0x2(14.27) + flw fa4,0(a5)(10.36) + fadd.s(4.91) + fsw fa5,-4(a1)(3.13) + ld a7,144(a4)(2.13) + fdiv.s(1.51) + flw fa4,0(t5)(1.33) + ld a0,128(a4)(1.27) + div a5,s2,a5(1.15) + flw fa3,88(a4)(1.06) = 41.12%",
+      "慢路径确认: bnez 目标 11b426a 保存 8 个活跃寄存器后于 11b428e 执行 jalr → 59cce0 <sqrtf@plt>，返回后恢复并 j 11b421c 汇合（annotate 逐字）",
+      "testcase 级 perf stat: IPC=0.567926, duration_time=1286224209532 ns, L1_dcache_load_miss_rate=0.974%, LLC_load_miss_rate=22.822%, branch_miss_rate=0.960%",
+      "源码 provenance: src/operator/math_functions-inl.h:42-55 的 MXNET_UNARY_MATH_FUNC(sqrt)（float 重载 :44-46 直接 return ::sqrtf(a)）在 :91 实例化，被 src/operator/mshadow_op.h:908 的 MXNET_UNARY_MATH_OP(square_root, math::sqrt(a)) 引用；逐元素求值循环在 3rdparty/mshadow/mshadow/tensor_cpu-inl.h:177（for index_t x = 0; x < shape[1]; ++x），广播索引在 :146（src_.Eval(0, (y / ystride_) % length_)），算术算子与 Save 在 expr_scalar-inl.h:629-658 与 :684-689",
+      "知识证据: patterns/floating_point_semantic_lowering.md 与 patterns/rvv_contiguous_elementwise_arithmetic_kernels.md 的 Related PRs 表（V8；OpenBLAS/MNN/oneDNN/OpenJDK）"
+    ]
+  },
+  "rootCause": {
+    "summary": "math::sqrt（MXNET_UNARY_MATH_FUNC(sqrt) 转发 ::sqrtf）在未启用 -fno-math-errno 的构建下必须保持 errno 语义，于是每个元素都生成 FCSR 保存/比较/恢复/条件分支到 libm sqrtf 的菱形（42.76%）；同一 x 循环还逐元素重建广播索引并标量求值整棵表达式树（41.12%），热区无任何 RVV 向量指令。",
+    "candidateFiles": [
+      "src/operator/math_functions-inl.h",
+      "src/operator/mshadow_op.h",
+      "3rdparty/mshadow/mshadow/tensor_cpu-inl.h"
+    ],
+    "performanceFactors": [
+      "Floating-Point Semantic Lowering",
+      "RVV Contiguous Elementwise Arithmetic Kernels"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "数值语义：sqrt 对 a>0、a==0、a==-0.0、a<0、+inf、NaN 的结果必须与参考实现一致（RISC-V fsqrt.s 对负有限输入产生 canonical qNaN 并置 NV flag）",
+      "errno 合同：只有在证明算子路径不读取 errno 后，才可移除 errno 保持型 lowering；否则必须保留显式 slow path",
+      "禁止使用 -ffast-math 等会改变 NaN/Inf 语义或重结合浮点加法的编译开关替代本项修复",
+      "表达式求值语义：plus/div/mul/minus 的逐元素定义与广播（Broadcast1DExp 同列重复）语义不得改变",
+      "tail 与边界：shape[1] 不假设为 VLMAX 整倍数，shape[1]==0 行为不变；广播源列索引在 run 边界处取值不变",
+      "公共 API 不变（MapPlan / MXNET_UNARY_MATH_FUNC / MXNET_UNARY_MATH_OP 宏接口不变）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-nn-basic"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-nn-basic"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.85,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "testcase 级 perf stat 显示 category-nn-basic IPC 仅 0.567926、LLC_load_miss_rate 22.822%，指向非访存带宽受限的低 IPC 计算形态。函数级 perf annotate（5115 samples, cpu-clock/local period）显示约 84% 的局部样本落在 hot loop interval 11b41ea-11b424a，经 DWARF 行号映射确认是 3rdparty/mshadow/mshadow/tensor_cpu-inl.h:177 的 for (index_t x = 0; x < shape[1]; ++x) 逐元素求值 L2Normalization 前向表达式。份额可清晰分账：42.76% 是 flt.s a5,fa0,fa2 / fsflags a2 / bnez a5,11b426a 构成的 FCSR 保存-比较-恢复-分支菱形，其目标 11b426a 逐字确认 jalr → 59cce0 <sqrtf@plt>，来源是 src/operator/math_functions-inl.h:44-46 的 float sqrt(float) 直接转发 ::sqrtf 且构建未加 -fno-math-errno，对应 patterns/floating_point_semantic_lowering.md §Why this is slow 所述「FCSR 访问可能序列化浮点流水线，helper call 和 NaN/rounding branch 会增加控制流与保存恢复开销」；41.12% 是逐元素表达式求值与广播索引（slli a5,a5,0x2 14.27%、flw fa4,0(a5) 10.36%、fadd.s 4.91%、fsw 3.13%、fdiv.s 1.51%），对应 patterns/rvv_contiguous_elementwise_arithmetic_kernels.md §Why this is slow 所述「Scalar per-element overhead」与「Narrow load/store instruction stream」；另有 fsqrt.s 16.09% 为必要工作。因果层次上 F1 属 L3（FP 语义 lowering/编译配置层）、F2 属 L1（数据并行层），且 F1 的分支菱形会阻断 F2 的向量化，故实施顺序为 F1 → F2。知识侧 V8 的 FP 语义 lowering 提交与 MNN/oneDNN/OpenBLAS/OpenJDK 的 elementwise 向量化提交分别支撑两条修复方向。综合判定为 code_path 类根因，置信度 0.85。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "可考虑归类为 config_mismatch（构建缺少 -fno-math-errno）：这是同一根因的构建层表述；本蓝图按 code_path 记录，因为修复落点在 src/operator/math_functions-inl.h 的 sqrt 转发实现与构建开关两处",
+      "LLC_load_miss_rate 22.822% 提示可能存在缓存层级压力；但本内核输出区间为 unit-stride 连续写（fsw fa5,-4(a1) 配合 addi a1,a1,4）、L1_dcache_load_miss_rate 仅 0.974%，访存侧证据不支持以 memory-bound 解释该热点",
+      "fsqrt.s 的 16.09% 与 fdiv.s 的 1.51% 提示 FP 长延迟 op 也可能贡献部分样本；但 Sampling IP precision 未知（baseline_gap: sampling IP precision），这些占比只锚定同一 loop interval，不足以单独构成 instruction-latency 根因",
+      "同一 L2Normalization 前向还包含 rank 010 的平方和归约内核 seq_reduce_compute<sum, 2, double, float, float, square, ...>，两者共同构成该算子的总成本，说明本算子的瓶颈是族级（归约 + 逐元素变换）而非单点"
+    ],
+    "currentGaps": "缺少 ARM 侧对照数据与 ys-trace-execution-summary 输出的 duration ratio，无法给出跨架构倍差；共享 perf stat 为 testcase 级，无函数级 bound type（baseline_gap: bound type）；采样 percent type 为 local period 且函数级 workload 贡献未知（baseline_gap: sampling metadata），收益只能表述为局部样本份额；precise_ip/Exact-IP 能力未知（baseline_gap: sampling IP precision），flt.s/fsflags/bnez/fsqrt.s 的占比只锚定 loop interval；未验证构建中 -fno-math-errno 的实际取值（需核对 CMake 配置），也未验证算子路径是否读取 errno。",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV — category-nn-basic（L2Normalization 前向复合表达式内核）",
+    "recommendedFirstAction": "分两步，优先第一步：①消除 sqrt 的 errno 保持型 lowering——核对并修改构建配置使该 TU/目标启用 -fno-math-errno（mxnet 的 CMake 编译选项），或在 src/operator/math_functions-inl.h:44-46 把 float sqrt(float a) 从 return ::sqrtf(a) 改为直接落到硬件语义的 __builtin_sqrtf(a)（必要时仅对 a<0 的冷路径保留 ::sqrtf 调用），从而删除每个元素的 frflags/flt.s/fsflags/bnez 菱形；前提是先证明算子路径不读取 errno，并保持 NaN/±0/Inf 语义。②在 3rdparty/mshadow/mshadow/tensor_cpu-inl.h:177 的 for (index_t x = 0; x < shape[1]; ++x) 增加「输出最后一维连续、各叶子在 run 内为 unit-stride 或同列重复」的向量化快速路径，用 __riscv_vsetvl_e32m4 动态 vl 循环把 plus/div/mul/minus 映射为 vfadd.vv/vfdiv.vv/vfmul.vv/vfsub.vv，并把广播索引 (y / ystride_) % length_ 提到 run 外计算一次；不满足条件时回退原标量路径。",
+    "recommendedVerification": "重新运行 category-nn-basic 用例，用 perf annotate 确认 11b420e: flt.s a5,fa0,fa2、11b4212: fsflags a2、11b4216: bnez a5,11b426a、11b420a: frflags a2 从循环体消失，且 11b428e: jalr 59cce0 <sqrtf@plt> 不再从热路径可达；确认 11b423a: slli a5,a5,0x2、11b423e: flw fa4,0(a5)、11b4242: fadd.s、11b4246: fsw fa5,-4(a1)、11b422e: fdiv.s 折叠为向量体并出现 vsetvli/vle32.v/vfadd.vv/vfmul.vv/vfdiv.vv/vse32.v；同时用 perf stat 观察 IPC 是否从 0.567926 上升；数值侧覆盖 a>0 / a==0 / a==-0.0 / a<0 / +inf / NaN 的 sqrt 结果对照、shape[1] < VLMAX 的 tail、shape[1]==0，并确认无代码路径读取 errno。",
+    "metricEvidence": [
+      {
+        "metric": "duration_time(s)",
+        "rv": 1286.22421,
+        "anomalyNote": "category-nn-basic testcase 级总时长；无 ARM 侧对照数据，无法计算 ratio"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.567926,
+        "anomalyNote": "testcase 级 IPC 仅 0.568，显著低于乱序核常规区间，与热区 84% 样本落在标量逐元素表达式求值的观察一致"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 22.822,
+        "anomalyNote": "testcase 级 LLC 未命中率 22.822%，明显偏高；但本内核输出为 unit-stride 连续写且 L1 未命中率仅 0.974%，故不作为该热点的 bound 归因"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.974,
+        "anomalyNote": "0.974% 极低，排除本循环的 L1 容量/带宽瓶颈解释"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.96,
+        "anomalyNote": "0.960% 正常，排除分支预测失败解释（sqrt 的 bnez 虽每元素执行但预测良好）"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::BinaryMapExp<mshadow::op::plus, mshadow::expr::BinaryMapExp<mshadow::op::div, mshadow::expr::BinaryMapExp<mshadow::op::mul, mshadow::expr::MakeTensorExp<mshadow::expr::Broadcast1DExp<mshadow::expr::MakeTensorExp<mshadow::expr::ReshapeExp<mshadow::expr::MakeTensorExp<mshadow::expr::Broadcast1DExp<mshadow::Tensor<mshadow::cpu, 1, float>, float, 2, 1>, mshadow::Tensor<mshadow::cpu, 1, float>, 2, float>, float, 1, 2>, mshadow::expr::MakeTensorExp<mshadow::expr::Broadcast1DExp<mshadow::Tensor<mshadow::cpu, 1, float>, float, 2, 1>, mshadow::Tensor<mshadow::cpu, 1, float>, 2, float>, 1, float>, float, 2, 2>, mshadow::expr::MakeTensorExp<mshadow::expr::ReshapeExp<mshadow::expr::MakeTensorExp<mshadow::expr::Broadcast1DExp<mshadow::Tensor<mshadow::cpu, 1, float>, float, 2, 1>, mshadow::Tensor<mshadow::cpu, 1, float>, 2, float>, float, 1, 2>, mshadow::expr::MakeTensorExp<mshadow::expr::Broadcast1DExp<mshadow::Tensor<mshadow::cpu, 1, float>, float, 2, 1>, mshadow::Tensor<mshadow::cpu, 1, float>, 2, float>, 1, float>, 2, float>, mshadow::expr::BinaryMapExp<mshadow::op::minus, mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::expr::MakeTensorExp<mshadow::expr::Broadcast1DExp<mshadow::Tensor<mshadow::cpu, 1, float>, float, 2, 2>, mshadow::Tensor<mshadow::cpu, 1, float>, 2, float>, float, 3>, float, 3>, mshadow::expr::UnaryMapExp<mxnet::op::mshadow_op::square_root, mshadow::expr::MakeTensorExp<mshadow::expr::Broadcast1DExp<mshadow::expr::BinaryMapExp<mshadow::op::plus, mshadow::Tensor<mshadow::cpu, 1, float>, mshadow::expr::ScalarExp<float>, float, 1>, float, 2, 2>, mshadow::expr::BinaryMapExp<mshadow::op::plus, mshadow::Tensor<mshadow::cpu, 1, float>, mshadow::expr::ScalarExp<float>, float, 1>, 2, float>, float, 3>, float, 3>, mshadow::expr::MakeTensorExp<mshadow::expr::Broadcast1DExp<mshadow::expr::MakeTensorExp<mshadow::expr::ReshapeExp<mshadow::expr::MakeTensorExp<mshadow::expr::Broadcast1DExp<mshadow::Tensor<mshadow::cpu, 1, float>, float, 2, 1>, mshadow::Tensor<mshadow::cpu, 1, float>, 2, float>, float, 1, 2>, mshadow::expr::MakeTensorExp<mshadow::expr::Broadcast1DExp<mshadow::Tensor<mshadow::cpu, 1, float>, float, 2, 1>, mshadow::Tensor<mshadow::cpu, 1, float>, 2, float>, 1, float>, float, 2, 2>, mshadow::expr::MakeTensorExp<mshadow::expr::ReshapeExp<mshadow::expr::MakeTensorExp<mshadow::expr::Broadcast1DExp<mshadow::Tensor<mshadow::cpu, 1, float>, float, 2, 1>, mshadow::Tensor<mshadow::cpu, 1, float>, 2, float>, float, 1, 2>, mshadow::expr::MakeTensorExp<mshadow::expr::Broadcast1DExp<mshadow::Tensor<mshadow::cpu, 1, float>, float, 2, 1>, mshadow::Tensor<mshadow::cpu, 1, float>, 2, float>, 1, float>, 2, float>, float, 3>, float> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 2, float>, mshadow::cpu, 2, float>*, mshadow::expr::Plan<...> const&) [clone ._omp_fn.0]",
+        "fileModule": "3rdparty/mshadow/mshadow/tensor_cpu-inl.h (MapPlan 逐元素求值, :177) + src/operator/math_functions-inl.h (MXNET_UNARY_MATH_FUNC(sqrt), :42-55,91) + src/operator/mshadow_op.h (square_root, :908) + 3rdparty/mshadow/mshadow/expr_scalar-inl.h (plus/div/mul/minus/Save, :629-658,684-689)",
+        "rvvPattern": "Floating-Point Semantic Lowering",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.8388,
+        "note": "逐元素复合表达式计算（L2Normalization 前向：plus(div(mul(...), sqrt(plus(...))), minus(...))）。hot loop interval 11b41ea-11b424a 内零 RVV 向量指令；份额分账为 F1 FP 语义 lowering 42.76%（flt.s 14.41% + fsflags 13.55% + bnez 14.80%，目标为 sqrtf@plt，frflags 0.00%）与 F2 逐元素表达式求值 41.12%（slli 地址 scaling 14.27%、flw 10.36%、fadd.s 4.91%、fsw 3.13%、fdiv.s 1.51% 等）；另有 fsqrt.s 16.09% 为必要工作不属可删项。F1 属 L3（编译配置/FP lowering）、F2 属 L1（数据并行），F1 的分支菱形阻断 F2 的向量化，故 primary 归 F1 且实施顺序 F1 → F2。"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/operator/math_functions-inl.h:42-55,91 (MXNET_UNARY_MATH_FUNC(sqrt)，float 重载 :44-46 转发 ::sqrtf) + src/operator/mshadow_op.h:908 (MXNET_UNARY_MATH_OP(square_root, math::sqrt(a))) + 3rdparty/mshadow/mshadow/tensor_cpu-inl.h:177 + 3rdparty/mshadow/mshadow/extension/broadcast.h:146 (MapPlan 逐元素循环与 Broadcast1DExp 索引) + 3rdparty/mshadow/mshadow/expr_scalar-inl.h:629-658,684-689 (plus/div/mul/minus/Save)",
+      "relatedKnowledge": "https://github.com/v8/v8/commit/9256d2ff895ba2f8cbd978e60030f8b08bea6162 https://github.com/v8/v8/commit/f3e199b1b6be7c7724defbed48a8f0d72e973b46 https://github.com/v8/v8/commit/ec0a91140c0df826932a740205595d038e8469f9 https://github.com/v8/v8/commit/9656c3fbe244ce15e26e1bf1788caade0b805d3c https://github.com/v8/v8/commit/30ec825beb1be3efdd06aa52f8046cdb0a2ed74c https://github.com/v8/v8/commit/c39d21639f3dbbdacf39e9fd0ffe5624c54a3f15 https://github.com/OpenMathLib/OpenBLAS/commit/45fd2d9b0790c5ca3698502d65d59d38d911ef4f https://github.com/alibaba/MNN/pull/3913 https://github.com/alibaba/MNN/commit/5376580ba19ac4034dc373f566fca846326fd612 https://github.com/alibaba/MNN/pull/3779 https://github.com/alibaba/MNN/commit/b35da10227477e90d5e5be55e1e5e646d4af41e4 https://github.com/alibaba/MNN/commit/815ed5d6cb7052e2294d9eb6298e9e23b2fdf91d https://github.com/uxlfoundation/oneDNN/commit/2b1dfe2d6233696bc2c803b48c06c00b29f7f866 https://github.com/uxlfoundation/oneDNN/pull/5265 https://github.com/uxlfoundation/oneDNN/commit/1184757c286814e552c137ca354060a30a9872bb https://github.com/uxlfoundation/oneDNN/pull/5079 https://github.com/uxlfoundation/oneDNN/commit/de1342a9d1dfe8419dd5159a16013529e567a6bc https://github.com/uxlfoundation/oneDNN/commit/580b9c80484f5df175ad36870280703ea5767cbe https://github.com/uxlfoundation/oneDNN/commit/a0961ab37e4ccf7dec0a0fd05fab92c1fc812e38 https://github.com/uxlfoundation/oneDNN/commit/1147a0739a1fa1ee881075ac1cb8dd8f05e26cb5 https://github.com/uxlfoundation/oneDNN/commit/595fc3b9bf46a5381d337af4ae0d7c529e2a9bcd https://github.com/openjdk/jdk/commit/6700baa5052046f53eb1b04ed3205bbd8e9e9070 https://github.com/openjdk/jdk/commit/885be2efa6b1359a7c7ab36882e19a7eaba77fb3 https://github.com/openjdk/jdk/commit/9b61a7608efff13fc3685488f3f54a810ec0ac22 https://github.com/v8/v8/commit/2b368def484809ad8d35b0c5d5f913bd95ad23ef https://github.com/v8/v8/commit/56dd6a2f1ee28b2d37989a7888ad178a89f4f5ea https://github.com/alibaba/MNN/pull/4042 https://github.com/alibaba/MNN/commit/672c5862392393c171f1513bf7994d3b95e2a6a1",
+      "evidenceExplanation": "annotate 内嵌源码行号把热点地址 11b420e/11b4212/11b4216 绑定到 src/operator/math_functions-inl.h:91 的 MXNET_UNARY_MATH_FUNC(sqrt) 展开（float 重载 :44-46 直接 return ::sqrtf(a)），并把 11b428e 的 jalr 59cce0 <sqrtf@plt> 逐字确认为其 errno 慢路径；11b423a/11b423e/11b4242/11b4246/11b422e 则绑定到 tensor_cpu-inl.h:177 的逐元素循环与 expr_scalar-inl.h 的 plus/div/mul/Save，证明当前走的是标量逐元素表达式求值路径而非任何 RVV 实现。patterns/floating_point_semantic_lowering.md 的 §Why this is slow 明确点名「FCSR 访问可能序列化浮点流水线」且 §The fix 给出「把少数特殊值留给明确 slow path」的范式，其 Related PRs（V8 9256d2ff/f3e199b1/ec0a9114/9656c3fb/30ec825b/c39d2163）提供跨项目同构改造参考；patterns/rvv_contiguous_elementwise_arithmetic_kernels.md 的 Related PRs（MNN #3913/#3779/#4042、oneDNN #5265/#5079、OpenJDK 6700baa5/885be2ef/9b61a760、V8 2b368def/56dd6a2f、OpenBLAS 45fd2d9b）支撑第二条 finding 的 unit-stride 向量化方向。"
+    }
+  }
+}

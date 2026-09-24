@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-category-nn-basic-010",
+  "blueprintId": "bp-mxnet-category-nn-basic-010",
+  "createdAt": "2026-09-21T07:07:37.880Z",
+  "objective": "mshadow_op::sum::Reduce 的三个形参全部 volatile 限定，迫使双精度累加器 val 与补偿项 residual 每轮在栈上往返（占 47.62% 局部样本），叠加逐元素 Kahan 补偿链与 f32→f64 逐元素 widening，形成贯穿整个 reduce 长度的串行依赖链；热区无任何 RVV 向量指令。",
+  "changes": [
+    {
+      "filePath": "src/operator/mshadow_op.h",
+      "action": "modify",
+      "rationale": "mshadow_op::sum::Reduce 的三个形参全部 volatile 限定，迫使双精度累加器 val 与补偿项 residual 每轮在栈上往返（占 47.62% 局部样本），叠加逐元素 Kahan 补偿链与 f32→f64 逐元素 widening，形成贯穿整个 reduce 长度的串行依赖链；热区无任何 RVV 向量指令。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/operator/tensor/broadcast_reduce-inl.h",
+      "action": "modify",
+      "rationale": "mshadow_op::sum::Reduce 的三个形参全部 volatile 限定，迫使双精度累加器 val 与补偿项 residual 每轮在栈上往返（占 47.62% 局部样本），叠加逐元素 Kahan 补偿链与 f32→f64 逐元素 widening，形成贯穿整个 reduce 长度的串行依赖链；热区无任何 RVV 向量指令。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 src/operator/mshadow_op.h, src/operator/tensor/broadcast_reduce-inl.h 来解决 blueprint bp-mxnet-category-nn-basic-010。"
+}

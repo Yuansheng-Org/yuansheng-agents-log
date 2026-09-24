@@ -8,4 +8,28 @@
 | ------:| ------:| ----------------:| ------:| ------------- | ------------ |
 | 23     | 87     | 60               | 8      | 原图空白／待补录      | 原图空白／待补录     |
 
+## 已筛选补丁的产物归档
 
+本分支仅整理 `add-mxnet` 已筛选的 15 个 MXNet 补丁目录，按 `records/mxnet/<测试用例>/<函数>/` 组织。测例名称取自 Agent Debug Trace 的 `source.testcaseIds`；原有补丁和专家复核文件保留，新增的 Trace、Craft 中间产物来自 Agent Debug。
+
+| 补丁目录 | 测试用例 | Agent Debug Trace 来源 | Blueprint ID |
+| --- | --- | --- | --- |
+| [001_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_fal](category-activation/001_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_fal/) | `category-activation` | `trace/mxnet/category-activation/001_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_fal` | `bp-mxnet-category-activation-001` |
+| [002_MapPlan_UpSamplingNearestExp_saveto](category-misc/002_MapPlan_UpSamplingNearestExp_saveto/) | `category-misc` | `trace/mxnet/category-misc/002_MapPlan_UpSamplingNearestExp_saveto` | `bp-mxnet-opperf-category-misc-002` |
+| [002_mxnet_warpctc_CpuCTC_float_log_softmax](category-loss/002_mxnet_warpctc_CpuCTC_float_log_softmax/) | `category-loss` | `trace/mxnet/category-loss/002_mxnet_warpctc_CpuCTC_float_log_softmax` | `bp-mxnet-category-loss-002` |
+| [002_void_mxnet_op_im2col_float_mshadow_Stream_mshadow_cpu_float_cons](category-convolution/002_void_mxnet_op_im2col_float_mshadow_Stream_mshadow_cpu_float_cons/) | `category-convolution` | `trace/mxnet/category-convolution/002_void_mxnet_op_im2col_float_mshadow_Stream_mshadow_cpu_float_cons` | `bp-mxnet-opperf-category-convolution-002` |
+| [002_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_log_softmax_fwd](category-activation/002_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_log_softmax_fwd/) | `category-activation` | `trace/mxnet/category-activation/002_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_log_softmax_fwd` | `bp-mxnet-category-activation-002` |
+| [003_ConvolutionOp_cpu_float_BackwardData](category-convolution/003_ConvolutionOp_cpu_float_BackwardData/) | `category-convolution` | `trace/mxnet/category-convolution/003_ConvolutionOp_cpu_float_BackwardData` | `bp-mxnet-opperf-category-convolution-003` |
+| [003_mxnet_op_mxnet_op_Kernel_mxnet_op_cumsum_forward_mshadow_cpu_Lau](category-misc/003_mxnet_op_mxnet_op_Kernel_mxnet_op_cumsum_forward_mshadow_cpu_Lau/) | `category-misc` | `trace/mxnet/category-misc/003_mxnet_op_mxnet_op_Kernel_mxnet_op_cumsum_forward_mshadow_cpu_Lau` | `bp-mxnet-opperf-category-misc-003` |
+| [003_void_mxnet_op_broadcast_seq_reduce_compute_mshadow_red_minim](category-reduction/003_void_mxnet_op_broadcast_seq_reduce_compute_mshadow_red_minim/) | `category-reduction` | `trace/mxnet/category-reduction/003_003-void_mxnet_op_broadcast_seq_reduce_compute_mshadow_red_minim` | `bp-mxnet-opperf-category-reduction-003` |
+| [003_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_tru](category-activation/003_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_tru/) | `category-activation` | `trace/mxnet/category-activation/003_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_tru` | `bp-mxnet-category-activation-003` |
+| [003_void_mxnet_op_broadcast_seq_reduce_compute_mshadow_red_sum_5_dou](category-nn-basic/003_void_mxnet_op_broadcast_seq_reduce_compute_mshadow_red_sum_5_dou/) | `category-nn-basic` | `trace/mxnet/category-nn-basic/003_void_mxnet_op_broadcast_seq_reduce_compute_mshadow_red_sum_5_dou` | `bp-mxnet-category-nn-basic-003` |
+| [010_seq_reduce_compute_mxnet_op_mshadow_op_sum_2_double_float_float_](category-nn-basic/010_seq_reduce_compute_mxnet_op_mshadow_op_sum_2_double_float_float_/) | `category-nn-basic` | `trace/mxnet/category-nn-basic/010_seq_reduce_compute_mxnet_op_mshadow_op_sum_2_double_float_float_` | `bp-mxnet-category-nn-basic-010` |
+| [012_MapPlan_sv_saveto_Tensor_cpu_2_float_2_float_BinaryMapExp_plus_d](category-nn-basic/012_MapPlan_sv_saveto_Tensor_cpu_2_float_2_float_BinaryMapExp_plus_d/) | `category-nn-basic` | `trace/mxnet/category-nn-basic/012_MapPlan_sv_saveto_Tensor_cpu_2_float_2_float_BinaryMapExp_plus_d` | `bp-mxnet-category-nn-basic-012` |
+| [017_MapPlan_ReduceWithAxisExp_sum_mul](category-activation/017_MapPlan_ReduceWithAxisExp_sum_mul/) | `category-activation` | `trace/mxnet/category-activation/017_MapPlan_ReduceWithAxisExp_sum_mul` | `bp-mxnet-category-activation-017` |
+| [018_Kernel_backward_grad_tuned_gelu_erf_grad](category-activation/018_Kernel_backward_grad_tuned_gelu_erf_grad/) | `category-activation` | `trace/mxnet/category-activation/018_Kernel_backward_grad_tuned_gelu_erf_grad` | `bp-mxnet-category-activation-018` |
+| [019_Kernel_backward_grad_tuned_relu_grad](category-activation/019_Kernel_backward_grad_tuned_relu_grad/) | `category-activation` | `trace/mxnet/category-activation/019_Kernel_backward_grad_tuned_relu_grad` | `bp-mxnet-category-activation-019` |
+
+`craft/reviews/` 为 Agent Debug 的 AI 审核，原有 `review/` 或 `reviews/` 为同事整理的复核结果；AI 审核通过不代表编译、回归或社区接收。历史统计保持原值。
+
+本次补充的 6 个目录来自 `add-mxnet` 的新增提交 `dee6491`；`craft/patch.diff` 与 Agent Debug 原始 Craft 补丁逐字节一致。原有专家复核文件各自保留在 `reviews/`。

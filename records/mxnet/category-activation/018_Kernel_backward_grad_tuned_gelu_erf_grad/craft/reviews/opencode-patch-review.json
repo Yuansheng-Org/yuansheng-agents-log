@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-mxnet-category-activation-018",
+  "patchCandidateId": "pc-bp-mxnet-category-activation-018",
+  "reviewedAt": "2026-09-21T11:16:01Z",
+  "reviewer": "opencode-cpp-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 判定 archSpecific=true，命中 riscv-macro 与 vlenb。全部 RVV 代码位于 `#if defined(__riscv) && defined(__riscv_v)` 之内，非 RISC-V/无 V 目标由通用 gelu_erf_grad_vec 返回 false 回退标量；补丁中 exp_f32m1/gelu_erf_grad_block_f32m1/gelu_erf_grad_f32 已逐字提取，用 riscv64-linux-gnu-gcc 15 与 clang-21 (--target=riscv64-linux-gnu -march=rv64gcv -mabi=lp64d) 实编译均 0 错误；向量 exp 范围归约将 ln2_hi/ln2_lo 两项均乘以同一整数 k，Cephes 系数正确；未发现 x86/ARM 指令；vlmax 由 vsetvlmax_e32m1 运行时探测，无 VLEN 硬编码。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-018-01",
+      "file": "src/operator/leaky_relu-inl.h",
+      "evidence": "patch.diff 新增 hunk `@@ -402,6 +402,20 @@`：`if ((req[leakyrelu::kData] == kWriteTo || req[leakyrelu::kData] == kWriteInplace) && mshadow_op::gelu_erf_grad_vec<xpu, DType>::Launch(...)) { break; }`，该分派在 float CPU RVV 上无条件接管；而 `src/operator/mshadow_op.h` 新增的 `gelu_erf_grad_f32` 是普通串行 `for (; i + vlmax <= N; i += vlmax)` 循环，无 `#pragma omp`。blueprint.hotspotEvidence 显示原路径符号含 `[clone ._omp_fn.0]`，即原 `LaunchTuned` 为 OpenMP 并行。",
+      "severity": "minor",
+      "category": "performance",
+      "suggestion": "为向量路径保留多核扩展性：在 gelu_erf_grad_f32 外层按 omp_get_max_threads() 分块加 OpenMP parallel for，或仅在小 N 时启用向量快路径、大 N 继续走原 LaunchTuned 并行标量路径；避免在 64 核 SG2044 上以串行向量循环替代原并行标量循环导致吞吐回归。"
+    },
+    {
+      "id": "F-018-02",
+      "file": "src/operator/mshadow_op.h",
+      "evidence": "patch.diff 中 `vbool32_t is_under = __riscv_vmfle(x, -87.33654475f, vl); res = __riscv_vfmerge(res, 0.0f, is_under, vl);` 将 x ≤ -87.33654475f（含 -inf）一律置 0；标量 libm expf 在 (-103.97, -87.33654475) 区间返回 subnormal。blueprint.constraints.mustPreserve 列出 `NaN/±Inf/subnormal/exp overflow 行为`。",
+      "severity": "suggestion",
+      "category": "numerical",
+      "suggestion": "在注释与验证中明确该 flush 属可接受容差（绝对误差 < 2^-126），或在需严格保持 subnormal 语义时改用可生成 subnormal 的缩放实现；补充令 t² 落入该区间（如 a≈13.2 附近）的回归用例并与标量 reference 比对。"
+    },
+    {
+      "id": "F-018-03",
+      "file": "src/operator/leaky_relu-inl.h",
+      "evidence": "新增分派对 `kWriteTo/kWriteInplace` 无条件尝试向量路径，无 N 阈值判断；blueprint.diagnosis.alternativeExplanations 指出 `小 N（短 tensor）低于向量化 crossover 时收益有限，OpenMP 分片开销可能主导`。",
+      "severity": "suggestion",
+      "category": "performance",
+      "suggestion": "为向量快路径增加小 N 阈值（例如 N < 2*vlmax，或经短/中/长 N 基准标定的 crossover），短 tensor 回退标量路径，避免向量设置与 tail 开销在短 tensor 上占主导。"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-mxnet-category-activation-017",
+  "patchCandidateId": "pc-bp-mxnet-category-activation-017",
+  "reviewedAt": "2026-09-21T10:57:19Z",
+  "reviewer": "opencode-cpp-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 判定 archSpecific=true（riscv-macro、vlenb）。全部架构相关代码位于 `#if defined(__riscv) && defined(__riscv_v)` 守卫内，无 x86/ARM/SSE/NEON。源码核对确认 red::sum::Reduce 为 volatile 累加，补丁以非 volatile `acc += val` 等价替换并保留其它 reducer 的 Reducer::Reduce 合同；增量索引解码经 20 万组随机暴力比对与原 z/last_、z%last_ 完全一致；RVV unit-stride float32 快路径仅当 sum reducer、trailing_==1、连续 float mul 且 stride_==last_ 时启用，否则回退标量，索引几何（z=x*size_+k，stride_==last_ 时 Eval 映射为 dptr_[z]）正确无越界。宿主与 riscv64（-march=rv64gcv_zvl128b）实际编译均通过，反汇编确认生成 vsetvli/vle32.v/vfmacc.vv/vfadd.vv/vfredusum.vs/vse32.v，内层循环无 div/rem。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "f-001",
+      "file": "3rdparty/mshadow/mshadow/extension/reduce_with_axis.h",
+      "evidence": "patch.diff 新增注释 `Note: vfredusum is unordered, so callers relying on the strict scalar addition order must validate the tolerance.` 仅覆盖 vfredusum，未说明同样改变加法结合顺序的双累加器拆分（`vfloat32m2_t acc0`/`acc1` 分别累积奇偶块后 `__riscv_vfadd_vv_f32m2` 合并）；蓝图 constraints.mustPreserve 要求「FP 加法顺序的 reference 容差（volatile 严格顺序；vfredusum 无序需验证或改 vfredosum）」。",
+      "severity": "minor",
+      "category": "数值合同/可维护性",
+      "suggestion": "在 RVV 内核注释中同时点明双累加器与 vfredusum 两处顺序变化，并在回归中显式覆盖向量路径 vs volatile 标量 reference 的容差；若项目要求逐位稳定，评估改用 vfredosum（ordered）或单累加器。"
+    },
+    {
+      "id": "f-002",
+      "file": "3rdparty/mshadow/mshadow/extension/reduce_with_axis.h",
+      "evidence": "patch.diff 中 `const index_t q = trailing_ / last_;`、`const index_t r = trailing_ % last_;`、`index_t zdiv = (x*size_*trailing_ + y) / last_;`、`index_t zmod = (x*size_*trailing_ + y) % last_;` 位于 `#if defined(__riscv) && defined(__riscv_v)` 快路径之前；快路径命中并 `return acc` 时这些整数除法未被使用。",
+      "severity": "suggestion",
+      "category": "效率",
+      "suggestion": "将增量解码的预计算移动到 RVV 快路径尝试失败之后（或仅在标量回退分支内计算），避免向量路径上多余的四次整数除法。"
+    },
+    {
+      "id": "f-003",
+      "file": "3rdparty/mshadow/mshadow/extension/reduce_with_axis.h",
+      "evidence": "patch.diff 构造函数 `: src_(MakePlan(e.src_)), src_expr_(&e.src_), ...` 新增裸指针成员 `const SrcExp *src_expr_;`，其有效性依赖源表达式对象在整条赋值表达式内的存活（mshadow 即时求值模型）。",
+      "severity": "suggestion",
+      "category": "健壮性",
+      "suggestion": "补充注释说明 `src_expr_` 仅在 ReduceWithAxisExp 表达式存活期内有效，避免后续重构把 Plan 存放到超出表达式生命周期的位置导致悬垂指针。"
+    },
+    {
+      "id": "f-004",
+      "file": "3rdparty/mshadow/mshadow/extension/reduce_with_axis.h",
+      "evidence": "patch.diff 定义 `static const bool kUnitStrideF32 = true;` 并在运行时额外检查 `ReduceWithAxisSrcTraits<SrcExp>::LhsStride(se) == last_ && ReduceWithAxisSrcTraits<SrcExp>::RhsStride(se) == last_`；trait 名未体现“连续 float mul over cpu 3D”且与运行时检查语义重叠。",
+      "severity": "suggestion",
+      "category": "可维护性",
+      "suggestion": "统一为单一具名谓词（例如 kContiguousMulF32_3D）或补充注释，减少后续维护对两处条件是否等价的误判。"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-category-nn-basic-012",
+  "blueprintId": "bp-mxnet-category-nn-basic-012",
+  "createdAt": "2026-09-21T07:54:14.171Z",
+  "objective": "math::sqrt（MXNET_UNARY_MATH_FUNC(sqrt) 转发 ::sqrtf）在未启用 -fno-math-errno 的构建下必须保持 errno 语义，于是每个元素都生成 FCSR 保存/比较/恢复/条件分支到 libm sqrtf 的菱形（42.76%）；同一 x 循环还逐元素重建广播索引并标量求值整棵表达式树（41.12%），热区无任何 RVV 向量指令。",
+  "changes": [
+    {
+      "filePath": "src/operator/math_functions-inl.h",
+      "action": "modify",
+      "rationale": "math::sqrt（MXNET_UNARY_MATH_FUNC(sqrt) 转发 ::sqrtf）在未启用 -fno-math-errno 的构建下必须保持 errno 语义，于是每个元素都生成 FCSR 保存/比较/恢复/条件分支到 libm sqrtf 的菱形（42.76%）；同一 x 循环还逐元素重建广播索引并标量求值整棵表达式树（41.12%），热区无任何 RVV 向量指令。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/operator/mshadow_op.h",
+      "action": "modify",
+      "rationale": "math::sqrt（MXNET_UNARY_MATH_FUNC(sqrt) 转发 ::sqrtf）在未启用 -fno-math-errno 的构建下必须保持 errno 语义，于是每个元素都生成 FCSR 保存/比较/恢复/条件分支到 libm sqrtf 的菱形（42.76%）；同一 x 循环还逐元素重建广播索引并标量求值整棵表达式树（41.12%），热区无任何 RVV 向量指令。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "3rdparty/mshadow/mshadow/tensor_cpu-inl.h",
+      "action": "modify",
+      "rationale": "math::sqrt（MXNET_UNARY_MATH_FUNC(sqrt) 转发 ::sqrtf）在未启用 -fno-math-errno 的构建下必须保持 errno 语义，于是每个元素都生成 FCSR 保存/比较/恢复/条件分支到 libm sqrtf 的菱形（42.76%）；同一 x 循环还逐元素重建广播索引并标量求值整棵表达式树（41.12%），热区无任何 RVV 向量指令。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 src/operator/math_functions-inl.h, src/operator/mshadow_op.h, 3rdparty/mshadow/mshadow/tensor_cpu-inl.h 来解决 blueprint bp-mxnet-category-nn-basic-012。"
+}

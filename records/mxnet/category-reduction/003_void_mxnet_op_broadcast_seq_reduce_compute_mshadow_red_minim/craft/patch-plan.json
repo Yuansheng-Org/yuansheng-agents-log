@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-opperf-category-reduction-003",
+  "blueprintId": "bp-mxnet-opperf-category-reduction-003",
+  "createdAt": "2026-09-21T10:26:49.221Z",
+  "objective": "为 broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, ...>（value-only，OP=identity，IndexOP=set_index_no_op）的内层 k 归约提供 RVV 1.0 向量化快路径：用 vsetvl + vle32/vlse32 + vfredmin.vs 分块归约，消除每迭代 div/rem 索引分解、volatile 栈槽往返与 82.92% 的条件分支链，同时逐位保持 mshadow::red::minimum 的 NaN 传播与 ±0 first-wins 标量语义；无 RVV 或形状不匹配时保留原有标量循环。",
+  "changes": [
+    {
+      "filePath": "src/operator/tensor/broadcast_reduce-inl.h",
+      "action": "modify",
+      "rationale": "热点函数 seq_reduce_compute<red::minimum, 2, float, float, float, mshadow_op::identity, set_index_no_op> 的内层 k 归约在 V-capable hardware/build 上仍为全标量 loop-carried 循环（annotate: 1ca1638 bnez 82.92%、1ca162e beqz 5.87%、1ca163e bne 3.55%、1ca1604 div/1ca1610 rem 索引链、1ca1608/1ca163a volatile 栈槽往返），根因是缺少 RVV extrema-reduction kernel。在 broadcast_reduce-inl.h 的 seq_reduce_assign（!use_omp 路径）内引入可扩展的 RVV kernel 选择层与 float32 minimum 实现，是命中根因的最小改动点。",
+      "instructions": [
+        "在文件头部按既有约定加入 `#if defined(__riscv_v_intrinsic) || defined(__riscv_vector)` 保护下的 `#include <riscv_vector.h>`。",
+        "在 broadcast 命名空间内新增可派发的 traits 层 `rvv_reduce::SeqReduceKernel<Reducer, AType, DType>`：主模板 enabled=false 且 Reduce() 原样返回 seed，供无向量实现的 reducer 走标量回退；为后续 maximum/nrm2/product 预留同名特化位置（本补丁只实现 minimum，不实现其它 reducer）。",
+        "在 RVV 编译保护下特化 `SeqReduceKernel<mshadow::red::minimum, float, float>`：enabled=true，Reduce() 调用 mshadow_rvv_min_f32。",
+        "实现 `mshadow_rvv_min_f32(const float* base, ptrdiff_t stride, size_t len, float seed)`：runtime `__riscv_vsetvl_e32m1` 分块（fixed-VL main loop + runtime-VL tail 由 vsetvl 自动完成），stride==1 用 `__riscv_vle32_v_f32m1`，否则用 `__riscv_vlse32_v_f32m1`；每块先用 `vmfeq(v,v)` 检测 NaN，命中则取该块首个 NaN 原始值并立即返回（保持首 NaN 传播）；否则 `vfredmin.vs` 求块最小值，再用 `vmfeq`+`vfirst` 定位块内首个等于该最小值的 lane 作为候选，仅当候选 < 当前 best 时更新（保证 tie 保留更早元素，即 ±0 first-wins）。",
+        "在 seq_reduce_assign 的 !use_omp 分支按编译期 traits 与运行期形状派发：仅当 `!IndexOP::do_op && std::is_same<OP, mshadow_op::identity>::value && SeqReduceKernel<...>::enabled` 且归约恰为单个轴（rshape 中非 1 维度数为 1，即偏移为等差序列 base+k*stride）且 M 不小于 kernel 的 MinLength() 时走 RVV，否则执行原标量循环。",
+        "保持 SetInitValue(+inf) / Finalize / Merge / assign(&small[idx], addto, OType(val)) 及 use_omp 分块路径不变；不修改公共签名、输出布局与 OMP 结构。",
+        "不修改 3rdparty/mshadow/mshadow/base.h：向量路径已完全绕开 volatile 累加器，改动共享 reducer 的 volatile 签名会波及全框架调用点且无额外收益，故本补丁以文件内向量化替代。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "仅修改 src/operator/tensor/broadcast_reduce-inl.h：新增 RVV 编译保护、可扩展的 rvv_reduce::SeqReduceKernel traits 层与 float32 minimum 的 vfredmin 分块归约实现（含 NaN 传播与 ±0 first-wins 对齐），并在 seq_reduce_assign 的标量路径前加入单轴/M/identity/IndexOP 条件的派发；标量回退与非 RISC-V 构建行为不变。不新增文件、不改动 mshadow base.h 或其它 reducer。"
+}

@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-mxnet-category-loss-002",
+  "patchCandidateId": "pc-bp-mxnet-category-loss-002",
+  "reviewedAt": "2026-09-21T14:08:22Z",
+  "reviewer": "opencode-cpp-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 返回 archSpecific=true（命中 riscv-macro、vlenb、rvv-intrinsic）。补丁在 CpuCTC<float>::log_softmax 上以 RVV 1.0 universal intrinsics 向量化三阶段：阶段1 vle32+vfredmax.vs 标量 seed 分块归约；阶段2 vle32→vfsub.vf(max)→exp_f32→vfredusum.vs 分块归约；阶段3 单次 std::log(denom)+vfsub.vf+vse32。exp 范围归约 r=x-k*ln2_hi-k*ln2_lo，ln2_hi 与 ln2_lo 均按整数 k(kf) 缩放；2^k 经 (k+127)<<23 还原且 k 被夹到 [-126,127] 无溢出。fixed-VL 主循环(vlmax=vsetvlmax_e32m4)+runtime-VL tail(vsetvl_e32m4(n-i))覆盖任意 alphabet_size。if constexpr(std::is_same<ProbT,float>) 仅对 float 分发并 continue，其余类型保持原标量三循环；标量 fallback 完整保留。全文无 x86/ARM 指令（无 _mm/NEON/vaddq）。OMP parallel-for 分片结构未改变。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "3rdparty/ctc_include/detail/cpu_ctc.h",
+      "evidence": "patch.diff 新增行 \"+    x = __riscv_vfmax_vf_f32m4(x, -87.33654475f, vl);  // exp underflow bound\" 与 \"+        vfloat32m1_t red = __riscv_vfredmax_vs_f32m4_f32m1(v, max_seed, vlmax);\"：vfmax/vfmin 与 vfredmax 遵循 maxNum 语义，NaN lane 被替换为 -87.33654；blueprint constraints.mustPreserve 明示需保持 \"exp/log 的 NaN、±Inf、±0、denom=0/Inf/NaN 特殊值行为\"。",
+      "severity": "minor",
+      "category": "correctness/fp-special-values",
+      "suggestion": "标量路径下任一 NaN 经 denom += expf(NaN) 使整行输出 NaN，而向量路径仅该元素输出 NaN、其余元素有限，特殊值传播语义发生边界性改变。建议补充 NaN/±Inf 激活输入的数值回归以验证或固定该行为；若合同要求逐位一致，可在 exp_f32 前显式保留 NaN（如 NaN 掩码选择），并在注释中说明与标量 maxNum 行为的差异。"
+    },
+    {
+      "id": "F2",
+      "file": "3rdparty/ctc_include/detail/cpu_ctc.h",
+      "evidence": "patch.diff 新增行 \"+    vint32m4_t k = __riscv_vfcvt_x_f_v_i32m4(__riscv_vfmul_vf_f32m4(x, log2e, vl), vl);\"：未指定舍入参数，使用动态 frm。",
+      "severity": "suggestion",
+      "category": "numerical-robustness",
+      "suggestion": "默认 frm=RNE 时 k=round(x*log2e) 且 r∈[-ln2/2,ln2/2]，6 阶多项式相对误差约 1e-7；若调用方遗留非 RNE 的 frm，r 可扩至约 ln2，误差升至约 1e-5。建议显式使用 round-to-nearest 的转换（或在函数入口规范化 frm / 在注释中声明对 frm 的依赖），确保与 kernel-conventions 的 FRM/FCSR 约定一致。"
+    },
+    {
+      "id": "F3",
+      "file": "3rdparty/ctc_include/detail/cpu_ctc.h",
+      "evidence": "patch.diff 新增行 \"+        vfloat32m1_t red = __riscv_vfredusum_vs_f32m4_f32m1(e, sum_seed, vlmax);\" 与 \"+        sum_seed = __riscv_vfmv_s_f_f32m1(__riscv_vfmv_f_s_f32m1_f32(red), 1);\"：跨 chunk 归约由单一标量 seed 循环携带，且阶段 2/3 各自重新 vle32 加载 activations。",
+      "severity": "suggestion",
+      "category": "performance",
+      "suggestion": "diaglog Phase 4 已提示 OoO C920v2 上归约依赖链需多 accumulator 隐藏延迟。对较长 alphabet_size 行，单 seed 循环携带会串行化 chunk 归约；建议为长行引入多个独立累加器，或复用阶段 2 的 exp 中间值避免阶段 3 重复访存/重算。属性能优化空间，不影响正确性。"
+    },
+    {
+      "id": "F4",
+      "file": "3rdparty/ctc_include/detail/cpu_ctc.h",
+      "evidence": "patch.diff 新增行 \"+// (relative error ~1e-7 on r in [-ln2/2, ln2/2]) and 2^k is materialised\" 与 \"+// CTC loss test tolerances (measured max abs error ~4e-6).\"：向量 exp 为多项式近似，且 vfredusum 改变求和结合顺序。",
+      "severity": "suggestion",
+      "category": "numerical-accuracy",
+      "suggestion": "向量 exp 与 libm expf 非逐位一致（相对误差约 1e-7、实测最大绝对误差约 4e-6），vfredusum 亦改变 FP 求和顺序，相对原标量实现对某些行可能超出 CTC 测试容差。建议在 category-loss 回归中保留 LogSoftmax consistency / sum≈1 / 极端 logits 数值断言，持续约束近似误差漂移。"
+    }
+  ]
+}

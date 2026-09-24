@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-category-activation-017",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T02:13:53.963Z",
+    "software": "mxnet",
+    "testcaseIds": [
+      "category-activation"
+    ],
+    "diagnosisId": "diag-20260921T021353963Z-a6279f09",
+    "targetHardware": "XuanTie C920v2 (SOPHGO SG2044, RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede",
+    "specBaseline": 3.014851
+  },
+  "problem": {
+    "summary": "mshadow ReduceWithAxisExp<sum, mul>（双输入 3D→2D 按轴 sum-of-products 点积式归约）在 RISC-V C920v2 上以全标量执行：red::sum::Reduce 的 volatile accumulator 合同强制每迭代栈槽往返（过早回写），每元素 div/rem 索引解码 + 串行 FP 链使内层 k 归约 loop latency-bound，占函数内 ≈100.0% 局部样本份额（addi 50.71%、fsw 27.86%），硬件与 build 均支持 RVV 1.0 但全函数 zero v*。",
+    "evidence": [
+      "perf annotate 局部份额（140 samples, cpu-clock, local period）：`50.71 : 11bf518: addi a2,a2,1`、`27.86 : 11bf544: fsw fa5,-84(s0)`（volatile accumulator 回写）、`8.57 : 11bf532: add`、`4.29 : 11bf53c: fmul.s`、`4.29 : 11bf540: fadd.s`、`0.00 : 11bf510/11bf51a: div/rem` —— inner k-loop ≈100.0%",
+      "perf stat（整 testcase）：IPC=0.562；LLC_load_miss_rate=43.99%；L1_dcache_load_miss_rate=5.16%",
+      "opperf 实测 RISC-V 侧 softmax backward 79.83us 等 —— 无 ARM 对照，仅方向性证据",
+      "硬件 `rv64imafdcv_..._zve64d_zvfh` 与 build `rv64i2p1_..._v1p0_zvl128b1p0` 均含 `v`；VLEN=128；全函数 zero `v*`"
+    ]
+  },
+  "rootCause": {
+    "summary": "sum-of-products 按轴归约以全标量执行：volatile accumulator（red::sum::Reduce 的 float volatile&）强制每迭代过早回写栈槽（fsw/flw 往返），叠加每元素 div/rem 索引解码与串行 FP 链，k-loop latency-bound 且零 v*，RVV 寄存器内归约完全未参与。",
+    "candidateFiles": [
+      "3rdparty/mshadow/mshadow/expr/expression.h"
+    ],
+    "performanceFactors": [
+      "RVV Widening Additive Reduction Kernels",
+      "No vectorization"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "out[y*stride+x] = Σ_k src1[z/last_] * src2[...] 的索引语义（z 序列、trailing_/last_ 布局）",
+      "size_==0 空输入置零路径（saveto 直写 0）",
+      "FP 加法顺序的 reference 容差（volatile 严格顺序；vfredusum 无序需验证或改 vfredosum）",
+      "saveto 直写语义与 OpenMP 分片边界",
+      "NaN/±Inf/subnormal 行为与 tail 语义"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-activation"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-activation"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "impact 侧证据不完整：采样为 local period 无法量化 workload 级收益；Sampling IP precision 未确认；该表达式是 mshadow 通用基础设施，消费它的具体算子未确认（回归面大）；FP 顺序合同（volatile vs vfredusum）待验证；无 ARM 对照。需人工确认向量化方案与顺序合同后再转发。",
+    "reasoning": "整 testcase IPC=0.562 与 LLC miss 43.99% 构成指标层；perf annotate 显示 inner k-loop（11bf510-11bf548 ≈100.0% 局部份额）以 volatile accumulator 栈槽往返（fsw 27.86% + flw）、循环控制（addi 50.71%）与每元素 div/rem 索引解码主导，模式匹配 RVV Widening Additive Reduction Kernels（route High：mshadow ReduceWithAxisExp 的 sum-of-products 点积式归约语义 + 标量累加样本主导 + hardware/build 均含 v 且 zero v*）；知识层 OpenCV/oneDNN/OpenJDK 的 RVV reduction kernel 提交证明同类可分块归约可向量化。因无 ARM 对照、local-period 采样、调用算子未确认且 FP 顺序合同待验证，impact 为 Low，结论 probable_root_cause。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "该表达式被 category-activation 中具体算子（如 softmax/activation 相关归约）消费，若消费方本身为更大热点，第一杠杆可能在算子级融合而非表达式级向量化",
+      "trailing_>1 的 strided 访存场景下向量化收益有限，unit-stride（trailing_==1）才是主收益形态",
+      "volatile accumulator 是 mshadow 的 reference 顺序合同；若项目允许关闭严格顺序（如编译期宽松 FP），编译器层面即可改进而无需 RVV"
+    ],
+    "currentGaps": "无 ARM 侧对照数据；采样元数据不完整（percent=local period）；Sampling IP precision 未确认；消费该表达式的具体算子未确认（回归面未知）；FP 顺序合同（volatile 严格顺序 vs vfredusum unordered）待验证；stride（trailing_>1）场景收益未评估。",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认向量化修复的数值合同：vfredusum/vfredosum 与 volatile 标量 reference 的容差对比、多独立 accumulator 的顺序变化、该表达式在 category-activation 中的实际调用算子与回归面，以及通用表达式改动对全量算子的影响。",
+    "affectedTarget": "RV + category-activation（mxnet opperf）",
+    "recommendedFirstAction": "在 mshadow expr/expression.h 的 ReduceWithAxisExp::Eval 标量求值路径实现 RVV 向量化：先对 z 索引做强度削减（z 每 k 递增 trailing_，预计算双基址指针，消除每元素 div/rem），再将 k 归约改为寄存器内部分和（vle32 + vfmacc 多独立 accumulator，trailing_==1 时 unit-stride），末次 vfredusum/vfredosum 合并，fixed-VL main + runtime-VL tail。",
+    "recommendedVerification": "重新运行 category-activation opperf benchmark，并以 global-period 重采同一函数 annotate 确认 addi/fsw(volatile)/div/rem 份额消失、vsetvli/vle32/vfmacc/vfredusum/vse32 出现；覆盖 size_==0/单元素/VLMAX 整倍数/全 tail 长度、trailing_==1 与 trailing_>1 两形态，比对向量 vs volatile 标量 reference 的逐位/容差。",
+    "metricEvidence": [
+      {
+        "metric": "softmax backward avg time (us)",
+        "rv": 79.8326,
+        "anomalyNote": "RISC-V 侧 opperf 实测 softmax backward 79.83us（相关归约消费方之一）；无 ARM 对照，仅方向性证据"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.562,
+        "anomalyNote": "整 testcase IPC 0.562，latency-bound 倾向"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 43.99,
+        "anomalyNote": "全局 LLC 缺失率 43.99%，内存流量大；本函数内由归约链与索引算术主导"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 5.158,
+        "anomalyNote": "L1 缺失率 5.16%，访存形态健康"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 2, float>, 2, float, mshadow::expr::ReduceWithAxisExp<mshadow::red::sum, mshadow::expr::BinaryMapExp<mshadow::op::mul, ...>>> (...) [clone ._omp_fn.0]",
+        "fileModule": "3rdparty/mshadow/mshadow/expr/expression.h",
+        "rvvPattern": "RVV Widening Additive Reduction Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 1,
+        "note": "双输入 3D→2D 按轴 sum-of-products（点积式加性归约）表达式求值器：volatile accumulator 过早回写 + 每元素 div/rem 索引解码 + 串行标量累加；全函数 zero v*"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "3rdparty/mshadow/mshadow/expr/expression.h (ReduceWithAxisExp::Eval, red::sum::Reduce)",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/27096; https://github.com/opencv/opencv/commit/33d632f85e4c1cc4d70bc7210c2f126fa8a4b0bb; https://github.com/opencv/opencv/pull/26624; https://github.com/uxlfoundation/oneDNN/pull/5361; https://github.com/uxlfoundation/oneDNN/commit/a95f0060cfcb75aeee7b937f18dbb2ff32064f50; https://github.com/openjdk/jdk/commit/72297d22d19e34ff26bd34644dc087a1dec9527e; https://github.com/openjdk/jdk/commit/08a2f841ec78a10f8d6d54b2ac3a92e89f765f14; https://github.com/openjdk/jdk/commit/2c1e4c381615ce52276f4bf331a1e7a845af4b6e; https://github.com/openjdk/jdk/pull/20910; https://github.com/openjdk/jdk/commit/134b63f0e8c4093f7ad0a528d6996898ab881d5c; https://github.com/openjdk/jdk/pull/16629; https://github.com/openjdk/jdk/commit/1aebab780c5b84a85b6f10884d05bb29bae3c3bf; https://github.com/openjdk/jdk/commit/1b6281d98cf0e7c5435c563bfedd6f07b79bfa62; https://github.com/OpenMathLib/OpenBLAS/commit/c37509c213a34a8cae449ededd7bc7064675ecc4; https://github.com/OpenMathLib/OpenBLAS/commit/3918d8504e7720d94221025ae6078a2459ccb104; https://github.com/alibaba/MNN/pull/4433",
+      "evidenceExplanation": "annotate 显示 ReduceWithAxisExp::Eval 的 k 归约 loop 以 volatile accumulator 栈槽往返（fsw/flw -84(s0)）与标量累加主导，样本全部落在该 interval；red::sum::Reduce 的 float volatile& 合同是过早回写根因；OpenCV/oneDNN/OpenJDK/OpenBLAS/MNN 的 RVV 归约 kernel 提交（#27096、#5361、72297d22d19e 等）证明 sum-of-squares/点积式/checksum 类可分块归约在 RVV 上以寄存器内部分和 + vfredusum 合并实现，支撑本表达式求值路径的向量化修复方向。"
+    }
+  }
+}

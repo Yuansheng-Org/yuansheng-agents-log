@@ -1,0 +1,1789 @@
+ Percent |	Source code & Disassembly of libmxnet.so for cpu-clock (1411 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3       Disassembly of section .text:
+         :
+         : 5       00000000012b6764 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)>:
+         : 6       mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 363     }
+         : 364     return workspace;
+         : 365     }
+         :
+         : 367     // Computes dLoss/dData
+         : 368     Tensor<xpu, 1, DType> _BackwardData(const OpContext& ctx,
+    0.00 :   12b6764:        addi    sp,sp,-1344
+    0.00 :   12b6768:        sd      s0,1328(sp)
+    0.00 :   12b676c:        sd      s1,1320(sp)
+    0.00 :   12b6770:        addi    s0,sp,1344
+    0.00 :   12b6774:        sd      s2,1312(sp)
+    0.00 :   12b6778:        sd      s3,1304(sp)
+    0.00 :   12b677c:        sd      s4,1296(sp)
+    0.00 :   12b6780:        sd      s7,1272(sp)
+    0.00 :   12b6784:        sd      ra,1336(sp)
+    0.00 :   12b6788:        sd      s5,1288(sp)
+    0.00 :   12b678c:        sd      s6,1280(sp)
+    0.00 :   12b6790:        sd      s8,1264(sp)
+    0.00 :   12b6794:        sd      s9,1256(sp)
+    0.00 :   12b6798:        sd      s10,1248(sp)
+    0.00 :   12b679c:        sd      s11,1240(sp)
+    0.00 :   12b67a0:        fsd     fs0,1224(sp)
+    0.00 :   12b67a4:        mv      s3,a4
+    0.00 :   12b67a6:        auipc   a4,0x848b
+    0.00 :   12b67aa:        ld      a4,1218(a4) # 9741c68 <__stack_chk_guard@GLIBC_2.27>
+         : 370     const TBlob& weights,
+         : 371     const OpReqType data_grad_req,
+         : 372     const TBlob& data_grad_dst) {
+         : 373     using namespace mshadow;
+         : 374     using namespace mshadow::expr;
+         : 375     CHECK_EQ(weights.CheckContiguous(), true);
+    0.00 :   12b67ae:        li      a7,1
+         : 363     Tensor<xpu, 1, DType> _BackwardData(const OpContext& ctx,
+    0.00 :   12b67b0:        sd      a0,-1160(s0)
+    0.00 :   12b67b4:        sd      a5,-1256(s0)
+    0.00 :   12b67b8:        mv      s4,a1
+    0.00 :   12b67ba:        mv      s1,a2
+         : 370     CHECK_EQ(weights.CheckContiguous(), true);
+    0.00 :   12b67bc:        addi    a0,s0,-1024
+    0.00 :   12b67c0:        addi    a2,s0,-1025
+    0.00 :   12b67c4:        addi    a1,s0,-1026
+    0.00 :   12b67c8:        auipc   t1,0x8477
+    0.00 :   12b67cc:        ld      t1,488(t1) # 972d9b0 <dmlc::LogCheckError dmlc::LogCheck_EQ<bool, bool>(bool const&, bool const&)@@Base+0x8d947ee>
+         : 363     Tensor<xpu, 1, DType> _BackwardData(const OpContext& ctx,
+    0.00 :   12b67d0:        ld      a5,0(a4)
+    0.00 :   12b67d2:        sd      a5,-136(s0)
+    0.00 :   12b67d6:        li      a5,0
+    0.00 :   12b67d8:        mv      s2,a3
+    0.00 :   12b67da:        sd      a6,-1216(s0)
+         : 370     CHECK_EQ(weights.CheckContiguous(), true);
+    0.00 :   12b67de:        sb      a7,-1026(s0)
+    0.00 :   12b67e2:        sb      a7,-1025(s0)
+    0.00 :   12b67e6:        jalr    t1
+         : 374     dmlc::LogCheckError::operator bool() const:
+         : 174     LogCheckError(const LogCheckError& other) = delete;
+         : 175     LogCheckError(LogCheckError&& other) : str(other.str) {
+         : 176     other.str = nullptr;
+         : 177     }
+         : 178     ~LogCheckError() { if (str != nullptr) delete str; }
+         : 179     operator bool() const { return str != nullptr; }
+    0.00 :   12b67e8:        ld      s7,-1024(s0)
+         : 181     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b67ec:        bnez    s7,12b73fa <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xc96>
+    0.00 :   12b67f0:        addi    a0,s0,-1024
+    0.00 :   12b67f4:        auipc   t1,0x848d
+    0.00 :   12b67f8:        ld      t1,-1964(t1) # 9743048 <dmlc::LogCheckError::~LogCheckError()@@Base+0x8fc6fca>
+    0.00 :   12b67fc:        jalr    t1
+         : 371     LayerSetUp(data_grad_dst.shape_, out_grad.shape_);
+    0.00 :   12b67fe:        ld      a5,-1216(s0)
+    0.00 :   12b6802:        addi    a4,s2,8
+    0.00 :   12b6806:        mv      a2,a4
+    0.00 :   12b6808:        addi    a5,a5,8
+    0.00 :   12b680a:        mv      a1,a5
+    0.00 :   12b680c:        mv      a0,s4
+    0.00 :   12b680e:        auipc   t1,0x848f
+    0.00 :   12b6812:        ld      t1,682(t1) # 9745ab8 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::LayerSetUp(mxnet::TShape const&, mxnet::TShape const&)@@Base+0x8490a2c>
+    0.00 :   12b6816:        sd      a5,-1224(s0)
+    0.00 :   12b681a:        sd      a4,-1128(s0)
+    0.00 :   12b681e:        jalr    t1
+         : 378     Tensor<xpu, 1, DType> workspace;
+         :
+         : 380     // initialize weight and col_buffer 3D tensors for using gemm
+         : 381     index_t M = kernel_dim_;
+         : 382     index_t N = conv_out_spatial_dim_;
+         : 383     index_t K = conv_out_channels_ / group_;
+    0.00 :   12b6820:        ld      a5,392(s4)
+    0.00 :   12b6824:        ld      s6,400(s4)
+         : 386     mshadow::Stream<mshadow::cpu>* mxnet::RunContext::get_stream<mshadow::cpu>() const:
+         : 365     * \return the mshadow stream
+         : 366     * \tparam xpu the device type of the stream
+         : 367     */
+         : 368     template <typename xpu>
+         : 369     inline mshadow::Stream<xpu>* get_stream() const {
+         : 370     return static_cast<mshadow::Stream<xpu>*>(stream);
+    0.00 :   12b6828:        ld      a4,16(s1)
+         : 372     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 376     index_t M = kernel_dim_;
+    0.00 :   12b682a:        ld      s8,424(s4)
+         : 378     index_t K = conv_out_channels_ / group_;
+    0.00 :   12b682e:        div     s6,s6,a5
+         : 380     mshadow::Tensor<mshadow::cpu, 1, float>::Tensor():
+         : 681     DType *dptr_;
+         : 682     Shape<1> shape_;
+         : 683     index_t stride_;
+         : 684     Stream<Device> *stream_;
+         : 685     // constructor
+         : 686     MSHADOW_XINLINE Tensor(void) : stream_(NULL) {}
+    0.00 :   12b6832:        ld      a3,-1160(s0)
+         : 688     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 379     Tensor<xpu, 3, DType> weight_3d =
+    0.00 :   12b6836:        addi    s5,s0,-528
+         : 381     mshadow::Shape3(long, long, long):
+         : 243     s[0] = s0; s[1] = s1; s[2] = s2;
+    0.00 :   12b683a:        sd      a5,-528(s0)
+         : 245     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b683e:        mv      a1,s3
+         : 380     mshadow::Tensor<mshadow::cpu, 1, float>::Tensor():
+         : 681     MSHADOW_XINLINE Tensor(void) : stream_(NULL) {}
+    0.00 :   12b6840:        sd      zero,24(a3)
+         : 683     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6844:        mv      a2,s5
+    0.00 :   12b6846:        mv      a3,a4
+    0.00 :   12b6848:        addi    a0,s0,-760
+    0.00 :   12b684c:        auipc   t1,0x848d
+    0.00 :   12b6850:        ld      t1,-332(t1) # 9743700 <mshadow::Tensor<mshadow::cpu, 3, float> mxnet::TBlob::get_with_shape<mshadow::cpu, 3, float>(mshadow::Shape<3> const&, mshadow::Stream<mshadow::cpu>*) const@@Base+0x8c795aa>
+         : 384     mshadow::Shape3(long, long, long):
+         : 243     s[0] = s0; s[1] = s1; s[2] = s2;
+    0.00 :   12b6854:        sd      s8,-512(s0)
+         : 245     mshadow::Stream<mshadow::cpu>* mxnet::RunContext::get_stream<mshadow::cpu>() const:
+    0.00 :   12b6858:        mv      s7,a4
+         : 366     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 377     index_t N = conv_out_spatial_dim_;
+    0.00 :   12b685a:        ld      s9,408(s4)
+         : 379     mshadow::Stream<mshadow::cpu>* mxnet::RunContext::get_stream<mshadow::cpu>() const:
+    0.00 :   12b685e:        sd      a4,-1120(s0)
+         : 366     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 382     weights.get_with_shape<xpu, 3, DType>(Shape3(group_, K, M), s);
+         : 383     Tensor<xpu, 4, DType> out_grad_4d =
+         : 384     out_grad.get_with_shape<xpu, 4, DType>(Shape4(num_, group_, K, N), s);
+    0.00 :   12b6862:        addi    s3,s4,384
+         : 386     mshadow::Shape3(long, long, long):
+    0.00 :   12b6866:        sd      s6,-520(s0)
+         : 244     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 379     Tensor<xpu, 3, DType> weight_3d =
+    0.00 :   12b686a:        jalr    t1
+         : 381     mshadow::Shape4(long, long, long, long):
+         : 257     s[0] = s0; s[1] = s1; s[2] = s2; s[3] = s3;
+    0.00 :   12b686c:        vsetivli        zero,2,e64,m1,ta,ma
+    0.00 :   12b6870:        vle64.v v1,(s3)
+         : 260     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6874:        ld      a4,-760(s0)
+         : 381     Tensor<xpu, 4, DType> out_grad_4d =
+    0.00 :   12b6878:        mv      a3,s7
+    0.00 :   12b687a:        mv      a1,s2
+         : 379     Tensor<xpu, 3, DType> weight_3d =
+    0.00 :   12b687c:        sd      a4,-1240(s0)
+    0.00 :   12b6880:        ld      a4,-736(s0)
+         : 382     mshadow::Shape4(long, long, long, long):
+    0.00 :   12b6884:        vse64.v v1,(s5)
+         : 258     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 381     Tensor<xpu, 4, DType> out_grad_4d =
+    0.00 :   12b6888:        mv      s2,s7
+         : 379     Tensor<xpu, 3, DType> weight_3d =
+    0.00 :   12b688a:        sd      a4,-1088(s0)
+    0.00 :   12b688e:        ld      s7,-744(s0)
+    0.00 :   12b6892:        ld      a4,-720(s0)
+         : 383     mshadow::Shape4(long, long, long, long):
+    0.00 :   12b6896:        sd      s6,-512(s0)
+         : 258     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 381     Tensor<xpu, 4, DType> out_grad_4d =
+    0.00 :   12b689a:        mv      a2,s5
+    0.00 :   12b689c:        addi    a0,s0,-664
+    0.00 :   12b68a0:        auipc   t1,0x847e
+    0.00 :   12b68a4:        ld      t1,-1504(t1) # 97342c0 <mshadow::Tensor<mshadow::cpu, 4, float> mxnet::TBlob::get_with_shape<mshadow::cpu, 4, float>(mshadow::Shape<4> const&, mshadow::Stream<mshadow::cpu>*) const@@Base+0x8c6a4d8>
+         : 386     mshadow::Shape4(long, long, long, long):
+    0.00 :   12b68a8:        sd      s9,-504(s0)
+         : 258     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 379     Tensor<xpu, 3, DType> weight_3d =
+    0.00 :   12b68ac:        sd      a4,-1112(s0)
+    0.00 :   12b68b0:        ld      s11,-728(s0)
+    0.00 :   12b68b4:        sd      s7,-1080(s0)
+         : 381     Tensor<xpu, 4, DType> out_grad_4d =
+    0.00 :   12b68b8:        jalr    t1
+    0.00 :   12b68ba:        ld      a4,-664(s0)
+    0.00 :   12b68be:        ld      a3,-632(s0)
+    0.00 :   12b68c2:        ld      s6,-640(s0)
+    0.00 :   12b68c6:        sd      a4,-1232(s0)
+    0.00 :   12b68ca:        sd      a3,-1104(s0)
+    0.00 :   12b68ce:        ld      a4,-648(s0)
+    0.00 :   12b68d2:        ld      a3,-616(s0)
+         :
+         : 386     // no need to allocating memory and reordering in memory
+         : 387     if (is_1x1_) {
+    0.00 :   12b68d6:        lbu     a5,497(s4)
+         : 381     Tensor<xpu, 4, DType> out_grad_4d =
+    0.00 :   12b68da:        sd      a4,-1064(s0)
+    0.00 :   12b68de:        sd      s6,-1072(s0)
+    0.00 :   12b68e2:        sd      a3,-1096(s0)
+    0.00 :   12b68e6:        ld      s10,-624(s0)
+         : 385     if (is_1x1_) {
+    0.00 :   12b68ea:        bnez    a5,12b6ef4 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x790>
+         : 387     mshadow::Shape1(long):
+         : 221     Shape<1> s; s[0] = s0;
+    0.00 :   12b68ee:        ld      a5,456(s4)
+         : 223     std::vector<mxnet::Resource, std::allocator<mxnet::Resource> >::operator[](unsigned long) const:
+         : 1283    _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
+         : 1284    const_reference
+         : 1285    operator[](size_type __n) const _GLIBCXX_NOEXCEPT
+         : 1286    {
+         : 1287    __glibcxx_requires_subscript(__n);
+         : 1288    return *(this->_M_impl._M_start + __n);
+    0.00 :   12b68f2:        ld      a4,64(s1)
+         : 1290    mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 397     linalg_gemm(weight_3d[g], out_grad_3d[g], in_grad_3d[g], true, false, s);
+         : 398     }
+         : 399     }
+         : 400     } else {
+         : 401     // allocate workspace for col_buffer
+         : 402     workspace = ctx.requested[conv::kTempSpace].get_space_typed<xpu, 1, DType>(
+    0.00 :   12b68f4:        addi    s2,s0,-840
+    0.00 :   12b68f8:        mv      a0,s2
+    0.00 :   12b68fa:        auipc   a1,0x7026
+    0.00 :   12b68fe:        addi    a1,a1,334 # 82dca48 <__pthread_atfork+0x8af8>
+    0.00 :   12b6902:        sd      s2,-1152(s0)
+         : 401     std::vector<mxnet::Resource, std::allocator<mxnet::Resource> >::operator[](unsigned long) const:
+    0.00 :   12b6906:        sd      a4,-1168(s0)
+         : 1284    mshadow::Shape1(long):
+    0.00 :   12b690a:        sd      a5,-1016(s0)
+         : 222     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b690e:        jal     12a7ca0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+         : 398     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, char const*):
+         : 3975    template<typename _CharT, typename _Traits, typename _Alloc>
+         : 3976    _GLIBCXX_NODISCARD _GLIBCXX20_CONSTEXPR
+         : 3977    inline basic_string<_CharT, _Traits, _Alloc>
+         : 3978    operator+(basic_string<_CharT, _Traits, _Alloc>&& __lhs,
+         : 3979    const _CharT* __rhs)
+         : 3980    { return std::move(__lhs.append(__rhs)); }
+    0.00 :   12b6912:        mv      a0,s2
+    0.00 :   12b6914:        auipc   a1,0x703b
+    0.00 :   12b6918:        addi    a1,a1,1268 # 82f1e08 <__pthread_atfork+0x1deb8>
+    0.00 :   12b691c:        auipc   ra,0xff2eb
+    0.00 :   12b6920:        jalr    -972(ra) # 5a1550 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
+    0.00 :   12b6924:        addi    s1,s0,-880
+    0.00 :   12b6928:        mv      a1,a0
+    0.00 :   12b692a:        mv      a0,s1
+    0.00 :   12b692c:        sd      s1,-1144(s0)
+         : 3977    mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6930:        addi    s3,s0,-712
+         : 398     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, char const*):
+    0.00 :   12b6934:        auipc   ra,0xff2ee
+    0.00 :   12b6938:        jalr    -2020(ra) # 5a4150 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+         : 3977    mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b693c:        mv      a0,s3
+    0.00 :   12b693e:        auipc   a1,0x7061
+    0.00 :   12b6942:        addi    a1,a1,1058 # 8317d60 <__pthread_atfork+0x43e10>
+    0.00 :   12b6946:        jal     12a7ca0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   12b694a:        addi    s2,s0,-800
+    0.00 :   12b694e:        mv      a0,s2
+    0.00 :   12b6950:        mv      a1,s3
+    0.00 :   12b6952:        sd      s2,-1136(s0)
+    0.00 :   12b6956:        jal     12a8bf8 <mxnet::(anonymous namespace)::__extract_fname(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)>
+    0.00 :   12b695a:        addi    a0,s0,-912
+    0.00 :   12b695e:        mv      a2,s2
+    0.00 :   12b6960:        mv      a1,s1
+    0.00 :   12b6962:        auipc   t1,0x8464
+    0.00 :   12b6966:        ld      t1,-1330(t1) # 971a430 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@@Base+0x89ea68c>
+    0.00 :   12b696a:        jalr    t1
+         : 403     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, char const*):
+    0.00 :   12b696c:        auipc   a1,0x701d
+    0.00 :   12b6970:        addi    a1,a1,1668 # 82d3ff0 <__pthread_atfork+0xa0>
+    0.00 :   12b6974:        addi    a0,s0,-912
+    0.00 :   12b6978:        auipc   ra,0xff2eb
+    0.00 :   12b697c:        jalr    -1064(ra) # 5a1550 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
+    0.00 :   12b6980:        addi    a5,s0,-944
+    0.00 :   12b6984:        mv      a1,a0
+    0.00 :   12b6986:        mv      a0,a5
+    0.00 :   12b6988:        sd      a5,-1048(s0)
+         : 3977    std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Alloc_hider::_Alloc_hider(char*, std::allocator<char>&&):
+         : 209     : allocator_type(std::move(__a)), _M_p(__dat) { }
+    0.00 :   12b698c:        addi    s1,s0,-608
+         : 211     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, char const*):
+         : 3975    { return std::move(__lhs.append(__rhs)); }
+    0.00 :   12b6990:        auipc   ra,0xff2ed
+    0.00 :   12b6994:        jalr    1984(ra) # 5a4150 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+         : 3978    void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::__resize_and_overwrite<std::__cxx11::to_string(int)::{lambda(char*, unsigned long)#1}>(unsigned long, std::__cxx11::to_string(int)::{lambda(char*, unsigned long)#1}):
+         : 621     resize_and_overwrite(const size_type __n, _Operation __op)
+         : 622     #else
+         : 623     __resize_and_overwrite(const size_type __n, _Operation __op)
+         : 624     #endif
+         : 625     {
+         : 626     reserve(__n);
+    0.00 :   12b6998:        mv      a0,s1
+    0.00 :   12b699a:        li      a1,3
+         : 629     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Alloc_hider::_Alloc_hider(char*, std::allocator<char>&&):
+         : 209     : allocator_type(std::move(__a)), _M_p(__dat) { }
+    0.00 :   12b699c:        addi    s2,s0,-592
+         : 211     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_length(unsigned long):
+         : 234     { _M_string_length = __length; }
+    0.00 :   12b69a0:        sd      zero,-600(s0)
+         : 236     std::char_traits<char>::assign(char&, char const&):
+         : 352     #if __cpp_constexpr_dynamic_alloc
+         : 353     if (std::__is_constant_evaluated())
+         : 354     std::construct_at(__builtin_addressof(__c1), __c2);
+         : 355     else
+         : 356     #endif
+         : 357     __c1 = __c2;
+    0.00 :   12b69a4:        sb      zero,-592(s0)
+         : 359     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Alloc_hider::_Alloc_hider(char*, std::allocator<char>&&):
+         : 209     : allocator_type(std::move(__a)), _M_p(__dat) { }
+    0.00 :   12b69a8:        sd      s2,-608(s0)
+         : 211     void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::__resize_and_overwrite<std::__cxx11::to_string(int)::{lambda(char*, unsigned long)#1}>(unsigned long, std::__cxx11::to_string(int)::{lambda(char*, unsigned long)#1}):
+    0.00 :   12b69ac:        auipc   ra,0xff2ec
+    0.00 :   12b69b0:        jalr    996(ra) # 5a2d90 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::reserve(unsigned long)@plt>
+         : 623     void std::__detail::__to_chars_10_impl<unsigned int>(char*, unsigned int, unsigned int):
+         : 111     auto const __num = __val * 2;
+         : 112     __first[1] = __digits[__num + 1];
+         : 113     __first[0] = __digits[__num];
+         : 114     }
+         : 115     else
+         : 116     __first[0] = '0' + __val;
+    0.00 :   12b69b4:        vsetivli        zero,2,e8,mf8,ta,ma
+    0.00 :   12b69b8:        vid.v   v1
+    0.00 :   12b69bc:        li      a5,6
+    0.00 :   12b69be:        vmul.vx v1,v1,a5
+    0.00 :   12b69c2:        li      a3,51
+         : 122     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const:
+         : 239     { return _M_dataplus._M_p; }
+    0.00 :   12b69c6:        ld      a5,-608(s0)
+         : 241     void std::__detail::__to_chars_10_impl<unsigned int>(char*, unsigned int, unsigned int):
+         : 100     __first[__pos] = __digits[__num + 1];
+    0.00 :   12b69ca:        li      a4,55
+         : 111     __first[0] = '0' + __val;
+    0.00 :   12b69ce:        vadd.vx v1,v1,a3
+         : 100     __first[__pos] = __digits[__num + 1];
+    0.00 :   12b69d2:        sb      a4,2(a5)
+         : 102     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b69d6:        ld      a1,-1048(s0)
+         : 398     void std::__detail::__to_chars_10_impl<unsigned int>(char*, unsigned int, unsigned int):
+         : 111     __first[0] = '0' + __val;
+    0.00 :   12b69da:        vse8.v  v1,(a5)
+         : 113     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_length(unsigned long):
+         : 234     { _M_string_length = __length; }
+    0.00 :   12b69de:        li      a4,3
+         : 236     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b69e0:        addi    a0,s0,-976
+    0.00 :   12b69e4:        mv      a2,s1
+    0.00 :   12b69e6:        auipc   t1,0x8464
+    0.00 :   12b69ea:        ld      t1,-1462(t1) # 971a430 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@@Base+0x89ea68c>
+         : 401     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_length(unsigned long):
+    0.00 :   12b69ee:        sd      a4,-600(s0)
+         : 235     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const:
+         : 239     { return _M_dataplus._M_p; }
+    0.00 :   12b69f2:        ld      a5,-608(s0)
+         : 241     std::char_traits<char>::assign(char&, char const&):
+    0.00 :   12b69f6:        sb      zero,3(a5)
+         : 353     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b69fa:        jalr    t1
+         : 398     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, char const*):
+         : 3975    { return std::move(__lhs.append(__rhs)); }
+    0.00 :   12b69fc:        auipc   a1,0x70c1
+    0.00 :   12b6a00:        addi    a1,a1,-1188 # 8377558 <__pthread_atfork+0xa3608>
+    0.00 :   12b6a04:        addi    a0,s0,-976
+    0.00 :   12b6a08:        auipc   ra,0xff2eb
+    0.00 :   12b6a0c:        jalr    -1208(ra) # 5a1550 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::append(char const*)@plt>
+    0.00 :   12b6a10:        addi    a5,s0,-1008
+    0.00 :   12b6a14:        mv      a1,a0
+    0.00 :   12b6a16:        mv      a0,a5
+    0.00 :   12b6a18:        sd      a5,-1056(s0)
+    0.00 :   12b6a1c:        auipc   ra,0xff2ed
+    0.00 :   12b6a20:        jalr    1844(ra) # 5a4150 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)@plt>
+         : 3979    mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6a24:        ld      a4,-1056(s0)
+    0.00 :   12b6a28:        ld      a3,-1120(s0)
+    0.00 :   12b6a2c:        ld      a1,-1168(s0)
+    0.00 :   12b6a30:        addi    a2,s0,-1016
+    0.00 :   12b6a34:        mv      a0,s5
+    0.00 :   12b6a36:        auipc   t1,0x848e
+    0.00 :   12b6a3a:        ld      t1,1066(t1) # 9744e60 <mshadow::Tensor<mshadow::cpu, 1, float> mxnet::Resource::get_space_typed<mshadow::cpu, 1, float>(mshadow::Shape<1>, mshadow::Stream<mshadow::cpu>*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) const@@Base+0x8a14fbe>
+    0.00 :   12b6a3e:        jalr    t1
+         : 405     mshadow::Tensor<mshadow::cpu, 1, float>::operator=(mshadow::Tensor<mshadow::cpu, 1, float> const&):
+         : 723     return dptr_[idx];
+         : 724     }
+         : 725     /*!\brief implement the assignment of same type */
+         : 726     inline Tensor<Device, 1, DType> &
+         : 727     operator=(const Tensor<Device, 1, DType> &exp) {
+         : 728     dptr_ = exp.dptr_;
+    0.00 :   12b6a40:        ld      a2,-1160(s0)
+         : 725     shape_ = exp.shape_;
+         : 726     stride_ = exp.stride_;
+    0.00 :   12b6a44:        ld      a5,-512(s0)
+         : 723     dptr_ = exp.dptr_;
+    0.00 :   12b6a48:        ld      a3,-528(s0)
+         : 724     shape_ = exp.shape_;
+    0.00 :   12b6a4c:        ld      a4,-520(s0)
+         : 725     stride_ = exp.stride_;
+    0.00 :   12b6a50:        sd      a5,16(a2)
+         : 726     stream_ = exp.stream_;
+    0.00 :   12b6a52:        ld      a5,-504(s0)
+         : 728     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const:
+         : 239     { return _M_dataplus._M_p; }
+    0.00 :   12b6a56:        ld      a0,-1008(s0)
+         : 241     mshadow::Tensor<mshadow::cpu, 1, float>::operator=(mshadow::Tensor<mshadow::cpu, 1, float> const&):
+         : 723     dptr_ = exp.dptr_;
+    0.00 :   12b6a5a:        sd      a3,0(a2)
+         : 726     stream_ = exp.stream_;
+    0.00 :   12b6a5c:        sd      a5,24(a2)
+         : 724     shape_ = exp.shape_;
+    0.00 :   12b6a5e:        sd      a4,8(a2)
+         : 726     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_is_local() const:
+         : 280     if (_M_data() == _M_local_data())
+    0.00 :   12b6a60:        addi    a5,s0,-992
+    0.00 :   12b6a64:        beq     a0,a5,12b6a76 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x312>
+         : 283     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_destroy(unsigned long):
+         : 305     { _Alloc_traits::deallocate(_M_get_allocator(), _M_data(), __size + 1); }
+    0.00 :   12b6a68:        ld      a1,-992(s0)
+         : 307     std::__new_allocator<char>::deallocate(char*, unsigned long):
+         : 172     _GLIBCXX_OPERATOR_DELETE(_GLIBCXX_SIZED_DEALLOC(__p, __n),
+         : 173     std::align_val_t(alignof(_Tp)));
+         : 174     return;
+         : 175     }
+         : 176     #endif
+         : 177     _GLIBCXX_OPERATOR_DELETE(_GLIBCXX_SIZED_DEALLOC(__p, __n));
+    0.00 :   12b6a6c:        addi    a1,a1,1
+    0.00 :   12b6a6e:        auipc   ra,0xff2e6
+    0.00 :   12b6a72:        jalr    -1678(ra) # 59c3e0 <operator delete(void*, unsigned long)@plt>
+         : 181     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const:
+         : 239     { return _M_dataplus._M_p; }
+    0.00 :   12b6a76:        ld      a0,-976(s0)
+         : 241     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_is_local() const:
+         : 280     if (_M_data() == _M_local_data())
+    0.00 :   12b6a7a:        addi    a5,s0,-960
+    0.00 :   12b6a7e:        beq     a0,a5,12b6a90 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x32c>
+         : 283     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_destroy(unsigned long):
+         : 305     { _Alloc_traits::deallocate(_M_get_allocator(), _M_data(), __size + 1); }
+    0.00 :   12b6a82:        ld      a1,-960(s0)
+         : 307     std::__new_allocator<char>::deallocate(char*, unsigned long):
+    0.00 :   12b6a86:        addi    a1,a1,1
+    0.00 :   12b6a88:        auipc   ra,0xff2e6
+    0.00 :   12b6a8c:        jalr    -1704(ra) # 59c3e0 <operator delete(void*, unsigned long)@plt>
+         : 175     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const:
+         : 239     { return _M_dataplus._M_p; }
+    0.00 :   12b6a90:        ld      a0,-608(s0)
+         : 241     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_is_local() const:
+         : 280     if (_M_data() == _M_local_data())
+    0.00 :   12b6a94:        beq     a0,s2,12b6aa6 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x342>
+         : 282     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_destroy(unsigned long):
+         : 305     { _Alloc_traits::deallocate(_M_get_allocator(), _M_data(), __size + 1); }
+    0.00 :   12b6a98:        ld      a1,-592(s0)
+         : 307     std::__new_allocator<char>::deallocate(char*, unsigned long):
+    0.00 :   12b6a9c:        addi    a1,a1,1
+    0.00 :   12b6a9e:        auipc   ra,0xff2e6
+    0.00 :   12b6aa2:        jalr    -1726(ra) # 59c3e0 <operator delete(void*, unsigned long)@plt>
+         : 175     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const:
+         : 239     { return _M_dataplus._M_p; }
+    0.00 :   12b6aa6:        ld      a0,-944(s0)
+         : 241     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_is_local() const:
+         : 280     if (_M_data() == _M_local_data())
+    0.00 :   12b6aaa:        addi    a5,s0,-928
+    0.00 :   12b6aae:        beq     a0,a5,12b6ac0 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x35c>
+         : 283     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_destroy(unsigned long):
+         : 305     { _Alloc_traits::deallocate(_M_get_allocator(), _M_data(), __size + 1); }
+    0.00 :   12b6ab2:        ld      a1,-928(s0)
+         : 307     std::__new_allocator<char>::deallocate(char*, unsigned long):
+    0.00 :   12b6ab6:        addi    a1,a1,1
+    0.00 :   12b6ab8:        auipc   ra,0xff2e6
+    0.00 :   12b6abc:        jalr    -1752(ra) # 59c3e0 <operator delete(void*, unsigned long)@plt>
+         : 175     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const:
+         : 239     { return _M_dataplus._M_p; }
+    0.00 :   12b6ac0:        ld      a0,-912(s0)
+         : 241     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_is_local() const:
+         : 280     if (_M_data() == _M_local_data())
+    0.00 :   12b6ac4:        addi    a5,s0,-896
+    0.00 :   12b6ac8:        beq     a0,a5,12b6ada <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x376>
+         : 283     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_destroy(unsigned long):
+         : 305     { _Alloc_traits::deallocate(_M_get_allocator(), _M_data(), __size + 1); }
+    0.00 :   12b6acc:        ld      a1,-896(s0)
+         : 307     std::__new_allocator<char>::deallocate(char*, unsigned long):
+    0.00 :   12b6ad0:        addi    a1,a1,1
+    0.00 :   12b6ad2:        auipc   ra,0xff2e6
+    0.00 :   12b6ad6:        jalr    -1778(ra) # 59c3e0 <operator delete(void*, unsigned long)@plt>
+         : 175     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const:
+         : 239     { return _M_dataplus._M_p; }
+    0.00 :   12b6ada:        ld      a0,-800(s0)
+         : 241     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_is_local() const:
+         : 280     if (_M_data() == _M_local_data())
+    0.00 :   12b6ade:        addi    a5,s0,-784
+    0.00 :   12b6ae2:        beq     a0,a5,12b6af4 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x390>
+         : 283     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_destroy(unsigned long):
+         : 305     { _Alloc_traits::deallocate(_M_get_allocator(), _M_data(), __size + 1); }
+    0.00 :   12b6ae6:        ld      a1,-784(s0)
+         : 307     std::__new_allocator<char>::deallocate(char*, unsigned long):
+    0.00 :   12b6aea:        addi    a1,a1,1
+    0.00 :   12b6aec:        auipc   ra,0xff2e6
+    0.00 :   12b6af0:        jalr    -1804(ra) # 59c3e0 <operator delete(void*, unsigned long)@plt>
+         : 175     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const:
+         : 239     { return _M_dataplus._M_p; }
+    0.00 :   12b6af4:        ld      a0,-712(s0)
+         : 241     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_is_local() const:
+         : 280     if (_M_data() == _M_local_data())
+    0.00 :   12b6af8:        addi    a5,s0,-696
+    0.00 :   12b6afc:        beq     a0,a5,12b6b0e <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x3aa>
+         : 283     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_destroy(unsigned long):
+         : 305     { _Alloc_traits::deallocate(_M_get_allocator(), _M_data(), __size + 1); }
+    0.00 :   12b6b00:        ld      a1,-696(s0)
+         : 307     std::__new_allocator<char>::deallocate(char*, unsigned long):
+    0.00 :   12b6b04:        addi    a1,a1,1
+    0.00 :   12b6b06:        auipc   ra,0xff2e6
+    0.00 :   12b6b0a:        jalr    -1830(ra) # 59c3e0 <operator delete(void*, unsigned long)@plt>
+         : 175     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const:
+         : 239     { return _M_dataplus._M_p; }
+    0.00 :   12b6b0e:        ld      a0,-880(s0)
+         : 241     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_is_local() const:
+         : 280     if (_M_data() == _M_local_data())
+    0.00 :   12b6b12:        addi    a5,s0,-864
+    0.00 :   12b6b16:        beq     a0,a5,12b6b28 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x3c4>
+         : 283     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_destroy(unsigned long):
+         : 305     { _Alloc_traits::deallocate(_M_get_allocator(), _M_data(), __size + 1); }
+    0.00 :   12b6b1a:        ld      a1,-864(s0)
+         : 307     std::__new_allocator<char>::deallocate(char*, unsigned long):
+    0.00 :   12b6b1e:        addi    a1,a1,1
+    0.00 :   12b6b20:        auipc   ra,0xff2e6
+    0.00 :   12b6b24:        jalr    -1856(ra) # 59c3e0 <operator delete(void*, unsigned long)@plt>
+         : 175     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_data() const:
+         : 239     { return _M_dataplus._M_p; }
+    0.00 :   12b6b28:        ld      a0,-840(s0)
+         : 241     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_is_local() const:
+         : 280     if (_M_data() == _M_local_data())
+    0.00 :   12b6b2c:        addi    a5,s0,-824
+    0.00 :   12b6b30:        beq     a0,a5,12b6b42 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x3de>
+         : 283     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_destroy(unsigned long):
+         : 305     { _Alloc_traits::deallocate(_M_get_allocator(), _M_data(), __size + 1); }
+    0.00 :   12b6b34:        ld      a1,-824(s0)
+         : 307     std::__new_allocator<char>::deallocate(char*, unsigned long):
+    0.00 :   12b6b38:        addi    a1,a1,1
+    0.00 :   12b6b3a:        auipc   ra,0xff2e6
+    0.00 :   12b6b3e:        jalr    -1882(ra) # 59c3e0 <operator delete(void*, unsigned long)@plt>
+         : 175     mxnet::Tuple<long>::Tuple():
+         : 60      */
+         : 61      template <typename ValueType>
+         : 62      class Tuple {
+         : 63      public:
+         : 64      /*! \brief default constructor */
+         : 65      Tuple() = default;
+    0.00 :   12b6b42:        vsetivli        zero,2,e32,mf2,ta,ma
+    0.00 :   12b6b46:        vmv.v.i v1,0
+         : 68      mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 400     Shape1(col_buffer_size_), s);
+         : 401     // calculate the shape of col_buffer
+         : 402     mxnet::TShape col_buffer_shape(num_spatial_axes_ + 1, 1);
+    0.00 :   12b6b4a:        ld      s2,376(s4)
+         : 404     mxnet::TShape::TShape(int, long):
+         : 452     * constructor to construct a shape with all `value`.
+         : 453     * \param ndim the number of dimension
+         : 454     * \param value the dimension size for all dims
+         : 455     */
+         : 456     inline TShape(const int ndim, const dim_t value) {  // NOLINT(*)
+         : 457     this->SetDim(ndim);
+    0.00 :   12b6b4e:        mv      a0,s1
+         : 459     mxnet::Tuple<long>::Tuple():
+         : 60      Tuple() = default;
+    0.00 :   12b6b50:        vse32.v v1,(s1)
+         : 62      mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6b54:        addiw   s2,s2,1
+         : 401     mxnet::TShape::TShape(int, long):
+         : 452     this->SetDim(ndim);
+    0.00 :   12b6b56:        mv      a1,s2
+    0.00 :   12b6b58:        auipc   t1,0x846b
+    0.00 :   12b6b5c:        ld      t1,1896(t1) # 97222c0 <mxnet::Tuple<long>::SetDim(int)@@Base+0x8f37556>
+         : 456     mxnet::Tuple<long>::Tuple():
+         : 60      Tuple() = default;
+    0.00 :   12b6b60:        sd      zero,-536(s0)
+         : 62      mxnet::TShape::TShape(int, long):
+         : 452     this->SetDim(ndim);
+    0.00 :   12b6b64:        jalr    t1
+         : 453     if (ndim > 0) {
+    0.00 :   12b6b66:        blez    s2,12b6b8c <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x428>
+         : 455     mxnet::Tuple<long>::begin():
+         : 206     return ndim_ <= kStackCache ? data_stack_ : data_heap_;
+    0.00 :   12b6b6a:        lw      a3,-608(s0)
+    0.00 :   12b6b6e:        li      a5,8
+    0.00 :   12b6b70:        addi    a4,s0,-600
+    0.00 :   12b6b74:        blt     a5,a3,12b73f2 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xc8e>
+         : 207     long* std::__fill_n_a<long*, int, long>(long*, int, long const&, std::random_access_iterator_tag):
+         : 1148    if (__n <= 0)
+         : 1149    return __first;
+         :
+         : 1151    __glibcxx_requires_can_increment(__first, __n);
+         :
+         : 1153    std::__fill_a(__first, __first + __n, __value);
+    0.00 :   12b6b78:        slli    a3,s2,0x20
+    0.00 :   12b6b7c:        srli    a5,a3,0x1d
+    0.00 :   12b6b80:        add     a5,a5,a4
+         : 1157    void std::__fill_a1<long*, long>(long*, long*, long const&):
+         : 925     *__first = __val;
+    0.00 :   12b6b82:        li      a3,1
+    0.00 :   12b6b84:        sd      a3,0(a4)
+         : 924     for (; __first != __last; ++__first)
+    0.00 :   12b6b86:        addi    a4,a4,8
+    0.00 :   12b6b88:        bne     a5,a4,12b6b84 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x420>
+         : 925     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 401     col_buffer_shape[0] = conv_in_channels_ * param_.kernel.Size();
+    0.00 :   12b6b8c:        mv      a0,s4
+    0.00 :   12b6b8e:        auipc   t1,0x847f
+    0.00 :   12b6b92:        ld      t1,850(t1) # 9735ee0 <mxnet::TShape::Size() const@@Base+0x8e20726>
+    0.00 :   12b6b96:        ld      s2,416(s4)
+    0.00 :   12b6b9a:        jalr    t1
+    0.00 :   12b6b9c:        mul     s2,s2,a0
+    0.00 :   12b6ba0:        li      a1,0
+    0.00 :   12b6ba2:        mv      a0,s1
+    0.00 :   12b6ba4:        auipc   t1,0x847e
+    0.00 :   12b6ba8:        ld      t1,780(t1) # 9734eb0 <mxnet::Tuple<long>::operator[](int)@@Base+0x8eec3de>
+    0.00 :   12b6bac:        jalr    t1
+         : 402     for (int i = 1; i < col_buffer_shape.ndim(); ++i) {
+    0.00 :   12b6bae:        lw      a5,-608(s0)
+         : 401     col_buffer_shape[0] = conv_in_channels_ * param_.kernel.Size();
+    0.00 :   12b6bb2:        sd      s2,0(a0)
+         : 402     for (int i = 1; i < col_buffer_shape.ndim(); ++i) {
+    0.00 :   12b6bb6:        li      s6,1
+    0.00 :   12b6bb8:        bge     s6,a5,12b6bfc <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x498>
+    0.00 :   12b6bbc:        li      s7,8
+         : 403     col_buffer_shape[i] = out_grad.shape_[i + 1];
+    0.00 :   12b6bbe:        auipc   a2,0x8483
+    0.00 :   12b6bc2:        ld      a2,922(a2) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b6bc6:        ld      a0,-1128(s0)
+    0.00 :   12b6bca:        mv      s2,s6
+    0.00 :   12b6bcc:        addiw   s6,s6,1
+    0.00 :   12b6bce:        mv      a1,s6
+    0.00 :   12b6bd0:        jalr    a2
+         : 411     mxnet::Tuple<long>::ndim() const:
+         : 218     return ndim_;
+    0.00 :   12b6bd2:        lw      a4,-608(s0)
+         : 220     mxnet::Tuple<long>::operator[](int):
+         : 230     CHECK(i >= 0 && i < ndim()) << "index = " << i << " must be in range [0, " << ndim() << ")";
+    0.00 :   12b6bd6:        auipc   a2,0x8483
+    0.00 :   12b6bda:        ld      a2,898(a2) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b6bde:        li      a6,8
+    0.00 :   12b6be0:        bge     s2,a4,12b74b0 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xd4c>
+         : 235     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6be4:        ld      a3,0(a0)
+         : 404     mxnet::Tuple<long>::begin():
+         : 206     return ndim_ <= kStackCache ? data_stack_ : data_heap_;
+    0.00 :   12b6be6:        addi    a5,s0,-600
+    0.00 :   12b6bea:        bge     a6,a4,12b6bf2 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x48e>
+    0.00 :   12b6bee:        ld      a5,-536(s0)
+         : 207     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6bf2:        add     a5,a5,s7
+    0.00 :   12b6bf4:        sd      a3,0(a5)
+         : 402     for (int i = 1; i < col_buffer_shape.ndim(); ++i) {
+    0.00 :   12b6bf6:        addi    s7,s7,8
+    0.00 :   12b6bf8:        blt     s6,a4,12b6bc6 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x462>
+         : 406     }
+         : 407     // create a column buffer using workspace and col_buffer_shape
+         : 408     TBlob col_buffer(workspace.dptr_, col_buffer_shape, xpu::kDevMask, DataType<DType>::kFlag);
+    0.00 :   12b6bfc:        ld      a5,-1160(s0)
+         : 410     mxnet::TShape::TShape(mxnet::TShape const&):
+         : 440     class TShape : public Tuple<dim_t> {
+    0.00 :   12b6c00:        addi    a4,s0,-520
+    0.00 :   12b6c04:        mv      a1,s1
+         : 443     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6c06:        ld      a5,0(a5)
+         : 407     mxnet::TShape::TShape(mxnet::TShape const&):
+    0.00 :   12b6c08:        mv      a0,a4
+    0.00 :   12b6c0a:        auipc   t1,0x8480
+    0.00 :   12b6c0e:        ld      t1,-626(t1) # 9736998 <mxnet::Tuple<long>::Tuple(mxnet::Tuple<long> const&)@@Base+0x8eedf2a>
+         : 443     mxnet::TBlob::TBlob<float>(float*, mxnet::TShape const&, int, int):
+         : 89      * \param dev_mask the device mask, can be cpu::kDevMask or gpu::kDevMask
+         : 90      * \param dev_id the device id
+         : 91      */
+         : 92      template <typename DType>
+         : 93      TBlob(DType* dptr, const mxnet::TShape& shape, int dev_mask, int dev_id = -1)
+         : 94      : dptr_(dptr), shape_(shape), type_flag_(mshadow::DataType<DType>::kFlag) {
+    0.00 :   12b6c12:        sd      a5,-528(s0)
+         : 96      mxnet::TShape::TShape(mxnet::TShape const&):
+    0.00 :   12b6c16:        sd      a4,-1280(s0)
+    0.00 :   12b6c1a:        jalr    t1
+         : 442     mxnet::TBlob::SetDLTensor(int, int):
+         : 458     << dldata_type.lanes << "}";
+         : 459     return mshadow::kFloat32;
+         : 460     }
+         :
+         : 462     inline void SetDLTensor(int dev_mask, int dev_id) {
+         : 463     dltensor_.data        = dptr_;
+    0.00 :   12b6c1c:        ld      a3,-528(s0)
+         : 465     mxnet::Tuple<long>::ndim() const:
+         : 218     return ndim_;
+    0.00 :   12b6c20:        lw      a4,-520(s0)
+         : 220     mxnet::TBlob::SetDLTensor(int, int):
+         : 461     dltensor_.ctx         = DLContext{static_cast<DLDeviceType>(dev_mask), dev_id};
+         : 462     dltensor_.ndim        = shape_.ndim();
+         : 463     dltensor_.dtype       = DTypeTransform(type_flag_);
+    0.00 :   12b6c24:        lui     a5,0x12
+    0.00 :   12b6c26:        addi    a5,a5,2 # 12002 <dmlc::moodycamel::details::thread_id()::x+0x11e72>
+    0.00 :   12b6c28:        sw      a5,-412(s0)
+         : 459     dltensor_.ctx         = DLContext{static_cast<DLDeviceType>(dev_mask), dev_id};
+    0.00 :   12b6c2c:        li      a5,1
+         : 458     dltensor_.data        = dptr_;
+    0.00 :   12b6c2e:        sd      a3,-432(s0)
+         : 459     dltensor_.ctx         = DLContext{static_cast<DLDeviceType>(dev_mask), dev_id};
+    0.00 :   12b6c32:        sd      a5,-424(s0)
+         : 461     mxnet::TBlob::TBlob<float>(float*, mxnet::TShape const&, int, int):
+         : 89      : dptr_(dptr), shape_(shape), type_flag_(mshadow::DataType<DType>::kFlag) {
+    0.00 :   12b6c36:        sw      zero,-440(s0)
+         : 91      mxnet::TBlob::SetDLTensor(int, int):
+         : 460     dltensor_.ndim        = shape_.ndim();
+    0.00 :   12b6c3a:        sw      a4,-416(s0)
+         : 462     mxnet::Tuple<long>::begin():
+         : 206     return ndim_ <= kStackCache ? data_stack_ : data_heap_;
+    0.00 :   12b6c3e:        li      a3,8
+    0.00 :   12b6c40:        addi    a5,s0,-512
+    0.00 :   12b6c44:        bge     a3,a4,12b6c4c <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x4e8>
+    0.00 :   12b6c48:        ld      a5,-448(s0)
+         : 207     mxnet::TBlob::SetDLTensor(int, int):
+         : 462     dltensor_.shape       = shape_.data();
+    0.00 :   12b6c4c:        sd      a5,-408(s0)
+         : 464     mshadow::Shape3(long, long, long):
+         : 243     s[0] = s0; s[1] = s1; s[2] = s2;
+    0.00 :   12b6c50:        ld      a5,392(s4)
+         : 245     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 407     Tensor<xpu, 3, DType> col_buffer_3d =
+    0.00 :   12b6c54:        ld      a3,-1120(s0)
+    0.00 :   12b6c58:        ld      a2,-1136(s0)
+         : 410     mshadow::Shape3(long, long, long):
+    0.00 :   12b6c5c:        sd      s8,-792(s0)
+    0.00 :   12b6c60:        sd      s9,-784(s0)
+         : 244     mxnet::TBlob::SetDLTensor(int, int):
+         : 463     dltensor_.strides     = nullptr;
+    0.00 :   12b6c64:        sd      zero,-400(s0)
+         : 464     dltensor_.byte_offset = 0;
+    0.00 :   12b6c68:        sd      zero,-392(s0)
+         : 466     mshadow::Shape3(long, long, long):
+    0.00 :   12b6c6c:        sd      a5,-800(s0)
+         : 244     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6c70:        mv      a0,s3
+    0.00 :   12b6c72:        mv      a1,s5
+    0.00 :   12b6c74:        auipc   t1,0x848d
+    0.00 :   12b6c78:        ld      t1,-1396(t1) # 9743700 <mshadow::Tensor<mshadow::cpu, 3, float> mxnet::TBlob::get_with_shape<mshadow::cpu, 3, float>(mshadow::Shape<3> const&, mshadow::Stream<mshadow::cpu>*) const@@Base+0x8c795aa>
+    0.00 :   12b6c7c:        jalr    t1
+         : 409     col_buffer.get_with_shape<xpu, 3, DType>(Shape3(group_, M, N), s);
+         : 410     for (index_t n = 0; n < num_; ++n) {
+    0.00 :   12b6c7e:        ld      a5,384(s4)
+    0.00 :   12b6c82:        blez    a5,12b6e80 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x71c>
+         : 413     long mshadow::Tensor<mshadow::cpu, 4, float>::MemSize<1>() const:
+         : 588     memsz *= this->shape_[i];
+    0.00 :   12b6c86:        ld      a5,-1064(s0)
+         : 590     long mshadow::Tensor<mshadow::cpu, 3, float>::MemSize<1>() const:
+    0.00 :   12b6c8a:        ld      a2,-1072(s0)
+         : 589     void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+         : 220     LOG(FATAL) << "linalg_batch_gemm not implemented by mxnet for cpu, needs cblas!"; \
+         : 221     }
+         :
+         : 223     #endif  // MSHADOW_USE_CBLAS == 1 || MSHADOW_USE_MKL == 1
+         :
+         : 225     LINALG_CPU_GEMM(sgemm, float)
+    0.00 :   12b6c8e:        auipc   a4,0x70c6
+    0.00 :   12b6c92:        flw     fs0,-22(a4) # 837cc78 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x10>
+         : 228     long mshadow::Tensor<mshadow::cpu, 4, float>::MemSize<1>() const:
+    0.00 :   12b6c96:        mul     a5,a5,s10
+         : 589     void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b6c9a:        sext.w  a4,s11
+    0.00 :   12b6c9e:        sd      a4,-1200(s0)
+    0.00 :   12b6ca2:        ld      a4,-1080(s0)
+         : 223     long mshadow::Tensor<mshadow::cpu, 3, float>::MemSize<1>() const:
+    0.00 :   12b6ca6:        sd      zero,-1176(s0)
+         : 589     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6caa:        sd      zero,-1168(s0)
+         : 410     void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b6cae:        sext.w  a3,a4
+    0.00 :   12b6cb2:        sd      a3,-1208(s0)
+         : 222     long mshadow::Tensor<mshadow::cpu, 4, float>::MemSize<1>() const:
+    0.00 :   12b6cb6:        mul     a5,a2,a5
+         : 589     long mshadow::Tensor<mshadow::cpu, 3, float>::MemSize<1>() const:
+    0.00 :   12b6cba:        mul     a3,s11,a4
+         : 589     long mshadow::Tensor<mshadow::cpu, 4, float>::MemSize<1>() const:
+    0.00 :   12b6cbe:        sd      a5,-1272(s0)
+    0.00 :   12b6cc2:        mul     a5,s10,a2
+    0.00 :   12b6cc6:        slli    a3,a3,0x2
+    0.00 :   12b6cc8:        sd      a3,-1192(s0)
+    0.00 :   12b6ccc:        slli    a5,a5,0x2
+    0.00 :   12b6cce:        sd      a5,-1184(s0)
+         : 594     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 411     Tensor<xpu, 3, DType> out_grad_3d = out_grad_4d[n];
+         : 412     for (index_t g = 0; g < group_; ++g) {
+    0.00 :   12b6cd2:        ld      a5,392(s4)
+    0.00 :   12b6cd6:        blez    a5,12b6df0 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x68c>
+         : 415     long mshadow::Tensor<mshadow::cpu, 3, float>::MemSize<1>() const:
+         : 585     index_t memsz = this->stride_;
+    0.00 :   12b6cda:        ld      s3,-680(s0)
+         : 588     memsz *= this->shape_[i];
+    0.00 :   12b6cde:        ld      s2,-696(s0)
+         : 590     mshadow::Tensor<mshadow::cpu, 3, float>::operator[](long) const:
+         : 634     shape_.SubShape(), stride_, stream_);
+    0.00 :   12b6ce2:        ld      a5,-672(s0)
+    0.00 :   12b6ce6:        ld      a4,-1176(s0)
+         : 637     mshadow::Shape<3>::SubShape() const:
+         : 188     s.shape_[i] = this->shape_[i + 1];
+    0.00 :   12b6cea:        ld      s6,-688(s0)
+         : 190     mshadow::Tensor<mshadow::cpu, 3, float>::operator[](long) const:
+         : 634     shape_.SubShape(), stride_, stream_);
+    0.00 :   12b6cee:        sd      a5,-1056(s0)
+         : 636     long mshadow::Tensor<mshadow::cpu, 3, float>::MemSize<1>() const:
+         : 588     memsz *= this->shape_[i];
+    0.00 :   12b6cf2:        mul     a5,s3,s2
+    0.00 :   12b6cf6:        slli    t1,a4,0x2
+         : 591     void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b6cfa:        sext.w  a4,s2
+    0.00 :   12b6cfe:        sd      a4,-1120(s0)
+    0.00 :   12b6d02:        sext.w  a4,s3
+    0.00 :   12b6d06:        sd      a4,-1128(s0)
+    0.00 :   12b6d0a:        sext.w  a4,s6
+    0.00 :   12b6d0e:        sd      a4,-1064(s0)
+    0.00 :   12b6d12:        ld      a4,-1232(s0)
+    0.00 :   12b6d16:        ld      s7,-712(s0)
+    0.00 :   12b6d1a:        ld      s9,-1240(s0)
+    0.00 :   12b6d1e:        slli    a5,a5,0x2
+    0.00 :   12b6d20:        add     s8,a4,t1
+         : 231     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6d24:        li      s1,0
+    0.00 :   12b6d26:        sd      a5,-1048(s0)
+         : 413     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+         : 93      this->shape_[i] = s[i];
+    0.00 :   12b6d2a:        ld      a5,-1080(s0)
+         : 95      void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b6d2e:        ld      a2,-1136(s0)
+    0.00 :   12b6d32:        ld      a1,-1152(s0)
+         : 222     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+    0.00 :   12b6d36:        sd      a5,-872(s0)
+    0.00 :   12b6d3a:        ld      a5,-1088(s0)
+         : 95      void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b6d3e:        ld      a0,-1144(s0)
+    0.00 :   12b6d42:        li      a4,0
+         : 222     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+    0.00 :   12b6d44:        sd      a5,-864(s0)
+         : 94      mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+         : 571     : dptr_(dptr), shape_(shape), stride_(stride), stream_(stream) {}
+    0.00 :   12b6d48:        ld      a5,-1112(s0)
+         : 573     void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b6d4c:        li      a3,1
+         : 221     mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b6d4e:        sd      s9,-880(s0)
+    0.00 :   12b6d52:        sd      a5,-848(s0)
+         : 573     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+         : 93      this->shape_[i] = s[i];
+    0.00 :   12b6d56:        ld      a5,-1072(s0)
+         : 95      mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+         : 571     : dptr_(dptr), shape_(shape), stride_(stride), stream_(stream) {}
+    0.00 :   12b6d5a:        sd      s11,-856(s0)
+    0.00 :   12b6d5e:        sd      s8,-840(s0)
+         : 574     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+         : 93      this->shape_[i] = s[i];
+    0.00 :   12b6d62:        sd      a5,-832(s0)
+    0.00 :   12b6d66:        ld      a5,-1104(s0)
+         : 96      mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+         : 571     : dptr_(dptr), shape_(shape), stride_(stride), stream_(stream) {}
+    0.00 :   12b6d6a:        sd      s10,-816(s0)
+    0.00 :   12b6d6e:        sd      s7,-800(s0)
+         : 574     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+         : 93      this->shape_[i] = s[i];
+    0.00 :   12b6d72:        sd      a5,-824(s0)
+         : 95      mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+         : 571     : dptr_(dptr), shape_(shape), stride_(stride), stream_(stream) {}
+    0.00 :   12b6d76:        ld      a5,-1096(s0)
+         : 573     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+         : 93      this->shape_[i] = s[i];
+    0.00 :   12b6d7a:        sd      s2,-792(s0)
+    0.00 :   12b6d7e:        sd      s6,-784(s0)
+         : 96      mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+         : 571     : dptr_(dptr), shape_(shape), stride_(stride), stream_(stream) {}
+    0.00 :   12b6d82:        sd      a5,-808(s0)
+    0.00 :   12b6d86:        ld      a5,-1056(s0)
+    0.00 :   12b6d8a:        sd      s3,-776(s0)
+    0.00 :   12b6d8e:        sd      a5,-768(s0)
+         : 576     void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b6d92:        jal     12a8fe6 <void check_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool) [clone .isra.0]>
+    0.00 :   12b6d96:        sext.w  a5,s10
+    0.00 :   12b6d9a:        sd      a5,8(sp)
+    0.00 :   12b6d9c:        ld      a5,-1128(s0)
+    0.00 :   12b6da0:        fmv.w.x fa1,zero
+    0.00 :   12b6da4:        fmv.s   fa0,fs0
+    0.00 :   12b6da8:        sd      a5,24(sp)
+    0.00 :   12b6daa:        ld      a7,-1200(s0)
+    0.00 :   12b6dae:        ld      a5,-1208(s0)
+    0.00 :   12b6db2:        ld      a4,-1064(s0)
+    0.00 :   12b6db6:        ld      a3,-1120(s0)
+    0.00 :   12b6dba:        sd      s7,16(sp)
+    0.00 :   12b6dbc:        sd      s8,0(sp)
+    0.00 :   12b6dbe:        mv      a6,s9
+    0.00 :   12b6dc0:        li      a2,111
+    0.00 :   12b6dc4:        li      a1,112
+    0.00 :   12b6dc8:        li      a0,101
+    0.00 :   12b6dcc:        auipc   ra,0x6f10
+    0.00 :   12b6dd0:        jalr    -1598(ra) # 81c678e <cblas_sgemm>
+         : 238     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6dd4:        ld      a4,-1192(s0)
+    0.00 :   12b6dd8:        ld      a5,392(s4)
+    0.00 :   12b6ddc:        addi    s1,s1,1
+    0.00 :   12b6dde:        add     s9,s9,a4
+    0.00 :   12b6de0:        ld      a4,-1184(s0)
+    0.00 :   12b6de4:        add     s8,s8,a4
+    0.00 :   12b6de6:        ld      a4,-1048(s0)
+    0.00 :   12b6dea:        add     s7,s7,a4
+    0.00 :   12b6dec:        blt     s1,a5,12b6d2a <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x5c6>
+         : 415     linalg_gemm(weight_3d[g], out_grad_3d[g], col_buffer_3d[g], true, false, s);
+         : 416     }
+         : 417     col2im(s,
+         : 418     col_buffer.dptr<DType>(),
+    0.00 :   12b6df0:        mv      a0,s5
+    0.00 :   12b6df2:        auipc   t1,0x8468
+    0.00 :   12b6df6:        ld      t1,214(t1) # 971eec8 <float* mxnet::TBlob::dptr<float>() const@@Base+0x8d8cd62>
+    0.00 :   12b6dfa:        jalr    t1
+    0.00 :   12b6dfc:        mv      s1,a0
+         : 422     col_buffer.shape_,
+         : 423     param_.kernel,
+         : 424     param_.pad,
+         : 425     param_.stride,
+         : 426     param_.dilate,
+         : 427     data_grad_dst.dptr<DType>() + n * input_dim_,
+    0.00 :   12b6dfe:        ld      a0,-1216(s0)
+         : 421     param_.dilate,
+    0.00 :   12b6e02:        addi    a5,s4,160
+         : 422     data_grad_dst.dptr<DType>() + n * input_dim_,
+    0.00 :   12b6e06:        auipc   t1,0x8468
+    0.00 :   12b6e0a:        ld      t1,194(t1) # 971eec8 <float* mxnet::TBlob::dptr<float>() const@@Base+0x8d8cd62>
+         : 419     param_.pad,
+    0.00 :   12b6e0e:        addi    s7,s4,240
+         : 420     param_.stride,
+    0.00 :   12b6e12:        addi    s3,s4,80
+         : 421     param_.dilate,
+    0.00 :   12b6e16:        sd      a5,-1048(s0)
+         : 422     data_grad_dst.dptr<DType>() + n * input_dim_,
+    0.00 :   12b6e1a:        jalr    t1
+    0.00 :   12b6e1c:        ld      a4,-1168(s0)
+    0.00 :   12b6e20:        ld      a5,464(s4)
+         : 424     void mxnet::op::col2im<float>(mshadow::Stream<mshadow::cpu>*, float const*, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, float*, mxnet::OpReqType):
+         : 360     const mxnet::TShape& stride,
+         : 361     const mxnet::TShape& dilation,
+         : 362     DType* data_im,
+         : 363     OpReqType req) {
+         : 364     int num_spatial_axes = kernel_shape.ndim();
+         : 365     if (2 == num_spatial_axes) {
+    0.00 :   12b6e24:        lw      a3,0(s4)
+         : 367     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6e28:        mul     a5,a4,a5
+         : 423     void mxnet::op::col2im<float>(mshadow::Stream<mshadow::cpu>*, float const*, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, float*, mxnet::OpReqType):
+    0.00 :   12b6e2c:        li      a4,2
+         : 361     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6e2e:        slli    a5,a5,0x2
+         : 414     col2im(s,
+    0.00 :   12b6e30:        add     s6,a0,a5
+         : 416     void mxnet::op::col2im<float>(mshadow::Stream<mshadow::cpu>*, float const*, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, float*, mxnet::OpReqType):
+    0.00 :   12b6e34:        beq     a3,a4,12b710a <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x9a6>
+         : 376     dilation[0],
+         : 377     dilation[1],
+         : 378     data_im,
+         : 379     req);
+         : 380     } else {
+         : 381     im2col_nd_core_cpu(
+    0.00 :   12b6e38:        ld      a5,-1256(s0)
+    0.00 :   12b6e3c:        ld      a3,-1280(s0)
+    0.00 :   12b6e40:        ld      a2,-1224(s0)
+    0.00 :   12b6e44:        sd      a5,8(sp)
+    0.00 :   12b6e46:        sd      s6,0(sp)
+    0.00 :   12b6e48:        addi    a7,s4,160
+    0.00 :   12b6e4c:        mv      a6,s3
+    0.00 :   12b6e4e:        mv      a5,s7
+    0.00 :   12b6e50:        mv      a0,s1
+    0.00 :   12b6e52:        mv      a4,s4
+    0.00 :   12b6e54:        li      a1,0
+    0.00 :   12b6e56:        auipc   t1,0x8468
+    0.00 :   12b6e5a:        ld      t1,-1910(t1) # 971e6e0 <void mxnet::op::im2col_nd_core_cpu<float>(float const*, bool, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, float*, mxnet::OpReqType)@@Base+0x8469114>
+    0.00 :   12b6e5e:        jalr    t1
+         : 396     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 409     for (index_t n = 0; n < num_; ++n) {
+    0.00 :   12b6e60:        ld      a4,-1168(s0)
+    0.00 :   12b6e64:        ld      a3,-1176(s0)
+    0.00 :   12b6e68:        ld      a2,-1272(s0)
+    0.00 :   12b6e6c:        ld      a5,384(s4)
+    0.00 :   12b6e70:        addi    a4,a4,1
+    0.00 :   12b6e72:        add     a3,a3,a2
+    0.00 :   12b6e74:        sd      a4,-1168(s0)
+    0.00 :   12b6e78:        sd      a3,-1176(s0)
+    0.00 :   12b6e7c:        blt     a4,a5,12b6cd2 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x56e>
+         : 411     mxnet::Tuple<long>::~Tuple():
+         : 63      delete[] data_heap_;
+    0.00 :   12b6e80:        ld      a0,-448(s0)
+    0.00 :   12b6e84:        beqz    a0,12b6e8e <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x72a>
+    0.00 :   12b6e86:        auipc   ra,0xff2e8
+    0.00 :   12b6e8a:        jalr    -1094(ra) # 59ea40 <operator delete[](void*)@plt>
+    0.00 :   12b6e8e:        ld      a0,-536(s0)
+    0.00 :   12b6e92:        beqz    a0,12b6e9c <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x738>
+    0.00 :   12b6e94:        auipc   ra,0xff2e8
+    0.00 :   12b6e98:        jalr    -1108(ra) # 59ea40 <operator delete[](void*)@plt>
+         : 65      mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 427     data_grad_req);
+         : 428     }
+         : 429     }
+         : 430     return workspace;
+         : 431     }
+    0.00 :   12b6e9c:        auipc   a5,0x848b
+    0.00 :   12b6ea0:        ld      a5,-564(a5) # 9741c68 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   12b6ea4:        ld      a4,-136(s0)
+    0.00 :   12b6ea8:        ld      a5,0(a5)
+    0.00 :   12b6eaa:        xor     a5,a5,a4
+    0.00 :   12b6eac:        li      a4,0
+    0.00 :   12b6eae:        bnez    a5,12b74a8 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xd44>
+    0.00 :   12b6eb2:        ld      a0,-1160(s0)
+    0.00 :   12b6eb6:        ld      ra,1336(sp)
+    0.00 :   12b6eba:        ld      s0,1328(sp)
+    0.00 :   12b6ebe:        ld      s1,1320(sp)
+    0.00 :   12b6ec2:        ld      s2,1312(sp)
+    0.00 :   12b6ec6:        ld      s3,1304(sp)
+    0.00 :   12b6eca:        ld      s4,1296(sp)
+    0.00 :   12b6ece:        ld      s5,1288(sp)
+    0.00 :   12b6ed2:        ld      s6,1280(sp)
+    0.00 :   12b6ed6:        ld      s7,1272(sp)
+    0.00 :   12b6eda:        ld      s8,1264(sp)
+    0.00 :   12b6ede:        ld      s9,1256(sp)
+    0.00 :   12b6ee2:        ld      s10,1248(sp)
+    0.00 :   12b6ee6:        ld      s11,1240(sp)
+    0.00 :   12b6eea:        fld     fs0,1224(sp)
+    0.00 :   12b6eee:        addi    sp,sp,1344
+    0.00 :   12b6ef2:        ret
+         : 456     mshadow::Shape4(long, long, long, long):
+         : 257     s[0] = s0; s[1] = s1; s[2] = s2; s[3] = s3;
+    0.00 :   12b6ef4:        vsetivli        zero,2,e64,m1,ta,ma
+    0.00 :   12b6ef8:        vle64.v v1,(s3)
+    0.00 :   12b6efc:        addi    s1,s0,-608
+         : 261     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 386     Tensor<xpu, 4, DType> in_grad_4d =
+    0.00 :   12b6f00:        ld      a1,-1216(s0)
+    0.00 :   12b6f04:        mv      a3,s2
+    0.00 :   12b6f06:        mv      a0,s5
+    0.00 :   12b6f08:        mv      a2,s1
+         : 391     mshadow::Shape4(long, long, long, long):
+    0.00 :   12b6f0a:        vse64.v v1,(s1)
+         : 258     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6f0e:        auipc   t1,0x847d
+    0.00 :   12b6f12:        ld      t1,946(t1) # 97342c0 <mshadow::Tensor<mshadow::cpu, 4, float> mxnet::TBlob::get_with_shape<mshadow::cpu, 4, float>(mshadow::Shape<4> const&, mshadow::Stream<mshadow::cpu>*) const@@Base+0x8c6a4d8>
+         : 388     mshadow::Shape4(long, long, long, long):
+    0.00 :   12b6f16:        sd      s8,-592(s0)
+    0.00 :   12b6f1a:        sd      s9,-584(s0)
+         : 258     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b6f1e:        jalr    t1
+         : 388     for (index_t n = 0; n < num_; ++n) {
+    0.00 :   12b6f20:        ld      t3,384(s4)
+    0.00 :   12b6f24:        blez    t3,12b6e9c <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x738>
+         : 391     long mshadow::Tensor<mshadow::cpu, 4, float>::MemSize<1>() const:
+         : 585     index_t memsz = this->stride_;
+    0.00 :   12b6f28:        ld      s9,-488(s0)
+         : 588     memsz *= this->shape_[i];
+    0.00 :   12b6f2c:        ld      s2,-504(s0)
+    0.00 :   12b6f30:        ld      a4,-1064(s0)
+         : 589     mshadow::Shape<4>::SubShape() const:
+         : 188     s.shape_[i] = this->shape_[i + 1];
+    0.00 :   12b6f34:        ld      s3,-496(s0)
+         : 190     long mshadow::Tensor<mshadow::cpu, 3, float>::MemSize<1>() const:
+         : 588     memsz *= this->shape_[i];
+    0.00 :   12b6f38:        mul     a6,s9,s2
+         : 590     long mshadow::Tensor<mshadow::cpu, 4, float>::MemSize<1>() const:
+    0.00 :   12b6f3c:        ld      a2,-512(s0)
+         : 589     mshadow::Tensor<mshadow::cpu, 4, float>::operator[](long) const:
+         : 634     shape_.SubShape(), stride_, stream_);
+    0.00 :   12b6f40:        ld      a5,-480(s0)
+         : 633     return Tensor<Device, kSubdim, DType>(dptr_ + this->MemSize<1>() * idx,
+    0.00 :   12b6f44:        ld      t0,-528(s0)
+         : 635     long mshadow::Tensor<mshadow::cpu, 4, float>::MemSize<1>() const:
+         : 588     memsz *= this->shape_[i];
+    0.00 :   12b6f48:        mv      a1,s3
+         : 590     mshadow::Tensor<mshadow::cpu, 4, float>::operator[](long) const:
+         : 634     shape_.SubShape(), stride_, stream_);
+    0.00 :   12b6f4a:        sd      a5,-1056(s0)
+         : 636     long mshadow::Tensor<mshadow::cpu, 4, float>::MemSize<1>() const:
+         : 588     memsz *= this->shape_[i];
+    0.00 :   12b6f4e:        mv      s8,s10
+    0.00 :   12b6f50:        ld      a5,392(s4)
+    0.00 :   12b6f54:        sd      s1,-1184(s0)
+    0.00 :   12b6f58:        mul     a0,a4,s10
+    0.00 :   12b6f5c:        auipc   a4,0x70c6
+    0.00 :   12b6f60:        flw     fs0,-740(a4) # 837cc78 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x10>
+         : 593     void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b6f64:        sext.w  a4,s2
+    0.00 :   12b6f68:        sd      a4,-1128(s0)
+    0.00 :   12b6f6c:        sext.w  a4,s9
+    0.00 :   12b6f70:        sd      a4,-1144(s0)
+    0.00 :   12b6f74:        sext.w  a4,s3
+    0.00 :   12b6f78:        sd      a4,-1136(s0)
+    0.00 :   12b6f7c:        sext.w  a4,s7
+    0.00 :   12b6f80:        sd      a4,-1152(s0)
+    0.00 :   12b6f84:        sext.w  a4,s11
+         : 221     long mshadow::Tensor<mshadow::cpu, 3, float>::MemSize<1>() const:
+    0.00 :   12b6f88:        mul     t1,s11,s7
+         : 589     void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b6f8c:        sd      a4,-1168(s0)
+    0.00 :   12b6f90:        sext.w  a4,s10
+    0.00 :   12b6f94:        sd      a4,-1176(s0)
+    0.00 :   12b6f98:        slli    a4,a6,0x2
+    0.00 :   12b6f9c:        sd      a4,-1064(s0)
+         : 225     long mshadow::Tensor<mshadow::cpu, 4, float>::MemSize<1>() const:
+    0.00 :   12b6fa0:        li      s3,0
+    0.00 :   12b6fa2:        mul     a2,s9,a2
+    0.00 :   12b6fa6:        slli    a4,t1,0x2
+    0.00 :   12b6faa:        sd      a4,-1120(s0)
+         : 592     long mshadow::Tensor<mshadow::cpu, 3, float>::MemSize<1>() const:
+    0.00 :   12b6fae:        mul     a6,s10,s6
+         : 589     long mshadow::Tensor<mshadow::cpu, 4, float>::MemSize<1>() const:
+    0.00 :   12b6fb2:        li      s10,0
+    0.00 :   12b6fb4:        mul     a3,a2,s2
+    0.00 :   12b6fb8:        slli    a4,a6,0x2
+    0.00 :   12b6fbc:        sd      a4,-1048(s0)
+    0.00 :   12b6fc0:        mv      a4,s4
+    0.00 :   12b6fc2:        li      s4,0
+    0.00 :   12b6fc4:        mul     a2,s6,a0
+    0.00 :   12b6fc8:        mv      a0,s11
+    0.00 :   12b6fca:        mv      s11,s2
+    0.00 :   12b6fcc:        mv      s2,s9
+    0.00 :   12b6fce:        mv      s9,a0
+         : 599     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 391     for (index_t g = 0; g < group_; ++g) {
+    0.00 :   12b6fd0:        blez    a5,12b70fe <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x99a>
+    0.00 :   12b6fd4:        ld      a5,-1232(s0)
+    0.00 :   12b6fd8:        ld      s7,-1240(s0)
+    0.00 :   12b6fdc:        slli    s6,s4,0x2
+    0.00 :   12b6fe0:        add     s6,s6,a5
+    0.00 :   12b6fe2:        addi    a5,s0,-712
+    0.00 :   12b6fe6:        slli    s5,s3,0x2
+    0.00 :   12b6fea:        sd      a5,-1200(s0)
+    0.00 :   12b6fee:        addi    a5,s0,-800
+    0.00 :   12b6ff2:        sd      s3,-1216(s0)
+    0.00 :   12b6ff6:        sd      s4,-1224(s0)
+    0.00 :   12b6ffa:        add     s3,t0,s5
+    0.00 :   12b6ffe:        li      s1,0
+    0.00 :   12b7000:        mv      s5,s2
+    0.00 :   12b7002:        sd      a5,-1192(s0)
+    0.00 :   12b7006:        mv      s2,s7
+    0.00 :   12b7008:        sd      a3,-1208(s0)
+    0.00 :   12b700c:        mv      s7,s6
+    0.00 :   12b700e:        sd      a2,-1248(s0)
+    0.00 :   12b7012:        mv      s4,a1
+    0.00 :   12b7014:        sd      t0,-1256(s0)
+    0.00 :   12b7018:        mv      s6,a4
+         : 414     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+         : 93      this->shape_[i] = s[i];
+    0.00 :   12b701a:        ld      a5,-1080(s0)
+         : 95      void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b701e:        ld      a2,-1184(s0)
+    0.00 :   12b7022:        ld      a1,-1200(s0)
+         : 222     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+    0.00 :   12b7026:        sd      a5,-792(s0)
+    0.00 :   12b702a:        ld      a5,-1088(s0)
+         : 95      void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b702e:        ld      a0,-1192(s0)
+    0.00 :   12b7032:        li      a4,0
+         : 222     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+    0.00 :   12b7034:        sd      a5,-784(s0)
+         : 94      mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+         : 571     : dptr_(dptr), shape_(shape), stride_(stride), stream_(stream) {}
+    0.00 :   12b7038:        ld      a5,-1112(s0)
+         : 573     void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b703c:        li      a3,1
+         : 221     mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b703e:        sd      s2,-800(s0)
+    0.00 :   12b7042:        sd      a5,-768(s0)
+         : 573     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+         : 93      this->shape_[i] = s[i];
+    0.00 :   12b7046:        ld      a5,-1072(s0)
+         : 95      mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+         : 571     : dptr_(dptr), shape_(shape), stride_(stride), stream_(stream) {}
+    0.00 :   12b704a:        sd      s7,-712(s0)
+    0.00 :   12b704e:        sd      s3,-608(s0)
+         : 574     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+         : 93      this->shape_[i] = s[i];
+    0.00 :   12b7052:        sd      a5,-704(s0)
+    0.00 :   12b7056:        ld      a5,-1104(s0)
+         : 96      mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+         : 571     : dptr_(dptr), shape_(shape), stride_(stride), stream_(stream) {}
+    0.00 :   12b705a:        sd      s9,-776(s0)
+    0.00 :   12b705e:        sd      s8,-688(s0)
+         : 574     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+         : 93      this->shape_[i] = s[i];
+    0.00 :   12b7062:        sd      a5,-696(s0)
+         : 95      mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+         : 571     : dptr_(dptr), shape_(shape), stride_(stride), stream_(stream) {}
+    0.00 :   12b7066:        ld      a5,-1096(s0)
+         : 573     mshadow::Shape<2>::Shape(mshadow::Shape<2> const&):
+         : 93      this->shape_[i] = s[i];
+    0.00 :   12b706a:        sd      s11,-600(s0)
+    0.00 :   12b706e:        sd      s4,-592(s0)
+         : 96      mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+         : 571     : dptr_(dptr), shape_(shape), stride_(stride), stream_(stream) {}
+    0.00 :   12b7072:        sd      a5,-680(s0)
+    0.00 :   12b7076:        ld      a5,-1056(s0)
+    0.00 :   12b707a:        sd      s5,-584(s0)
+         : 575     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b707e:        addi    s1,s1,1
+         : 392     mshadow::Tensor<mshadow::cpu, 2, float>::Tensor(float*, mshadow::Shape<2> const&, long, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b7080:        sd      a5,-576(s0)
+         : 572     void linalg_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool, mshadow::Stream<mshadow::cpu>*):
+    0.00 :   12b7084:        jal     12a8fe6 <void check_gemm<mshadow::cpu, float>(mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, mshadow::Tensor<mshadow::cpu, 2, float> const&, float, float, bool, bool) [clone .isra.0]>
+    0.00 :   12b7088:        ld      a5,-1144(s0)
+    0.00 :   12b708c:        ld      a4,-1136(s0)
+    0.00 :   12b7090:        fmv.s   fa0,fs0
+    0.00 :   12b7094:        sd      a5,24(sp)
+    0.00 :   12b7096:        ld      a5,-1176(s0)
+    0.00 :   12b709a:        fmv.w.x fa1,zero
+    0.00 :   12b709e:        ld      a7,-1168(s0)
+    0.00 :   12b70a2:        sd      a5,8(sp)
+    0.00 :   12b70a4:        ld      a3,-1128(s0)
+    0.00 :   12b70a8:        ld      a5,-1152(s0)
+    0.00 :   12b70ac:        sd      s3,16(sp)
+    0.00 :   12b70ae:        sd      s7,0(sp)
+    0.00 :   12b70b0:        mv      a6,s2
+    0.00 :   12b70b2:        li      a2,111
+    0.00 :   12b70b6:        li      a1,112
+    0.00 :   12b70ba:        li      a0,101
+    0.00 :   12b70be:        auipc   ra,0x6f0f
+    0.00 :   12b70c2:        jalr    1744(ra) # 81c678e <cblas_sgemm>
+         : 238     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b70c6:        ld      a4,-1120(s0)
+    0.00 :   12b70ca:        ld      a5,392(s6)
+    0.00 :   12b70ce:        add     s2,s2,a4
+    0.00 :   12b70d0:        ld      a4,-1048(s0)
+    0.00 :   12b70d4:        add     s7,s7,a4
+    0.00 :   12b70d6:        ld      a4,-1064(s0)
+    0.00 :   12b70da:        add     s3,s3,a4
+    0.00 :   12b70dc:        blt     s1,a5,12b701a <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x8b6>
+    0.00 :   12b70e0:        mv      a1,s4
+    0.00 :   12b70e2:        ld      a3,-1208(s0)
+    0.00 :   12b70e6:        ld      s3,-1216(s0)
+    0.00 :   12b70ea:        ld      a2,-1248(s0)
+    0.00 :   12b70ee:        ld      s4,-1224(s0)
+    0.00 :   12b70f2:        ld      t0,-1256(s0)
+    0.00 :   12b70f6:        ld      t3,384(s6)
+    0.00 :   12b70fa:        mv      s2,s5
+    0.00 :   12b70fc:        mv      a4,s6
+         : 388     for (index_t n = 0; n < num_; ++n) {
+    0.00 :   12b70fe:        addi    s10,s10,1
+    0.00 :   12b7100:        add     s4,s4,a2
+    0.00 :   12b7102:        add     s3,s3,a3
+    0.00 :   12b7104:        blt     s10,t3,12b6fd0 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x86c>
+    0.00 :   12b7108:        j       12b6e9c <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x738>
+         : 392     void mxnet::op::col2im<float>(mshadow::Stream<mshadow::cpu>*, float const*, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, float*, mxnet::OpReqType):
+         : 361     col2im_cpu(data_col,
+    0.00 :   12b710a:        ld      s2,-1224(s0)
+    0.00 :   12b710e:        li      a1,1
+    0.00 :   12b7110:        auipc   t1,0x8483
+    0.00 :   12b7114:        ld      t1,-440(t1) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b7118:        mv      a0,s2
+    0.00 :   12b711a:        jalr    t1
+    0.00 :   12b711c:        mv      a5,a0
+    0.00 :   12b711e:        li      a1,2
+    0.00 :   12b7120:        mv      a0,s2
+    0.00 :   12b7122:        auipc   t1,0x8483
+    0.00 :   12b7126:        ld      t1,-458(t1) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b712a:        ld      s9,0(a5)
+    0.00 :   12b712e:        jalr    t1
+    0.00 :   12b7130:        mv      a5,a0
+    0.00 :   12b7132:        ld      a5,0(a5)
+    0.00 :   12b7134:        li      a1,3
+    0.00 :   12b7136:        mv      a0,s2
+    0.00 :   12b7138:        auipc   t1,0x8483
+    0.00 :   12b713c:        ld      t1,-480(t1) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b7140:        sd      a5,-1056(s0)
+    0.00 :   12b7144:        jalr    t1
+    0.00 :   12b7146:        mv      a5,a0
+    0.00 :   12b7148:        li      a1,0
+    0.00 :   12b714a:        mv      a0,s4
+    0.00 :   12b714c:        auipc   t1,0x8483
+    0.00 :   12b7150:        ld      t1,-500(t1) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b7154:        ld      s2,0(a5)
+    0.00 :   12b7158:        jalr    t1
+    0.00 :   12b715a:        mv      a5,a0
+    0.00 :   12b715c:        ld      a4,0(a5)
+    0.00 :   12b715e:        li      a1,1
+    0.00 :   12b7160:        mv      a0,s4
+    0.00 :   12b7162:        auipc   t1,0x8483
+    0.00 :   12b7166:        ld      t1,-522(t1) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b716a:        sd      a4,-1064(s0)
+    0.00 :   12b716e:        jalr    t1
+    0.00 :   12b7170:        mv      a5,a0
+    0.00 :   12b7172:        ld      a4,0(a5)
+    0.00 :   12b7174:        li      a1,0
+    0.00 :   12b7176:        mv      a0,s7
+    0.00 :   12b7178:        auipc   t1,0x8483
+    0.00 :   12b717c:        ld      t1,-544(t1) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b7180:        sd      a4,-1120(s0)
+    0.00 :   12b7184:        jalr    t1
+    0.00 :   12b7186:        mv      a5,a0
+    0.00 :   12b7188:        ld      a4,0(a5)
+    0.00 :   12b718a:        li      a1,1
+    0.00 :   12b718c:        mv      a0,s7
+    0.00 :   12b718e:        auipc   t1,0x8483
+    0.00 :   12b7192:        ld      t1,-566(t1) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b7196:        sd      a4,-1248(s0)
+    0.00 :   12b719a:        jalr    t1
+    0.00 :   12b719c:        mv      a5,a0
+    0.00 :   12b719e:        ld      a4,0(a5)
+    0.00 :   12b71a0:        li      a1,0
+    0.00 :   12b71a2:        mv      a0,s3
+    0.00 :   12b71a4:        auipc   t1,0x8483
+    0.00 :   12b71a8:        ld      t1,-588(t1) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b71ac:        sd      a4,-1128(s0)
+    0.00 :   12b71b0:        jalr    t1
+    0.00 :   12b71b2:        mv      a5,a0
+    0.00 :   12b71b4:        li      a1,1
+    0.00 :   12b71b6:        mv      a0,s3
+    0.00 :   12b71b8:        auipc   t1,0x8483
+    0.00 :   12b71bc:        ld      t1,-608(t1) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b71c0:        ld      s8,0(a5)
+    0.00 :   12b71c4:        jalr    t1
+    0.00 :   12b71c6:        mv      a5,a0
+    0.00 :   12b71c8:        li      a1,0
+    0.00 :   12b71ca:        addi    a0,s4,160
+    0.00 :   12b71ce:        auipc   t1,0x8483
+    0.00 :   12b71d2:        ld      t1,-630(t1) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b71d6:        ld      s3,0(a5)
+    0.00 :   12b71da:        jalr    t1
+    0.00 :   12b71dc:        mv      a5,a0
+    0.00 :   12b71de:        ld      a4,0(a5)
+    0.00 :   12b71e0:        li      a1,1
+    0.00 :   12b71e2:        addi    a0,s4,160
+    0.00 :   12b71e6:        auipc   t1,0x8483
+    0.00 :   12b71ea:        ld      t1,-654(t1) # 9739f58 <mxnet::Tuple<long>::operator[](int) const@@Base+0x8ef160a>
+    0.00 :   12b71ee:        sd      a4,-1048(s0)
+    0.00 :   12b71f2:        jalr    t1
+         : 362     void mxnet::op::col2im_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*, mxnet::OpReqType):
+         : 295     if (mxnet::kNullOp == req)
+    0.00 :   12b71f4:        ld      a2,-1256(s0)
+    0.00 :   12b71f8:        beqz    a2,12b6e60 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x6fc>
+         : 298     void mxnet::op::col2im<float>(mshadow::Stream<mshadow::cpu>*, float const*, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, float*, mxnet::OpReqType):
+         : 361     col2im_cpu(data_col,
+    0.00 :   12b71fc:        ld      a5,-1056(s0)
+         : 363     void mxnet::op::col2im_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*, mxnet::OpReqType):
+         : 297     if (mxnet::kAddTo != req) {
+    0.00 :   12b7200:        li      a3,3
+         : 299     void mxnet::op::col2im<float>(mshadow::Stream<mshadow::cpu>*, float const*, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, float*, mxnet::OpReqType):
+         : 361     col2im_cpu(data_col,
+    0.00 :   12b7202:        sext.w  a4,s9
+         : 363     void mxnet::op::col2im_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*, mxnet::OpReqType):
+         : 298     std::fill(data_im, data_im + height * width * channels, static_cast<DType>(0));
+    0.00 :   12b7206:        mulw    a7,s2,a5
+         : 300     void mxnet::op::col2im<float>(mshadow::Stream<mshadow::cpu>*, float const*, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, float*, mxnet::OpReqType):
+         : 361     col2im_cpu(data_col,
+    0.00 :   12b720a:        ld      s9,0(a0)
+    0.00 :   12b720e:        sext.w  s7,a5
+    0.00 :   12b7212:        sext.w  s2,s2
+         : 362     void mxnet::op::col2im_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*, mxnet::OpReqType):
+         : 297     if (mxnet::kAddTo != req) {
+    0.00 :   12b7214:        beq     a2,a3,12b723c <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xad8>
+         : 298     std::fill(data_im, data_im + height * width * channels, static_cast<DType>(0));
+    0.00 :   12b7218:        mulw    a2,a7,a4
+    0.00 :   12b721c:        slli    a2,a2,0x2
+         : 301     void std::__fill_a1<float*, float>(float*, float*, float const&):
+    0.00 :   12b721e:        beqz    a2,12b723c <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xad8>
+         : 925     *__first = __val;
+    0.00 :   12b7220:        li      a1,0
+    0.00 :   12b7222:        mv      a0,s6
+    0.00 :   12b7224:        sd      a7,-1264(s0)
+    0.00 :   12b7228:        sd      a4,-1056(s0)
+    0.00 :   12b722c:        auipc   ra,0xff2ef
+    0.00 :   12b7230:        jalr    1396(ra) # 5a67a0 <memset@plt>
+    0.00 :   12b7234:        ld      a4,-1056(s0)
+    0.00 :   12b7238:        ld      a7,-1264(s0)
+         : 934     void mxnet::op::col2im_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*, mxnet::OpReqType):
+         : 312     for (int channel = channels; channel--; data_im += channel_size) {
+    0.00 :   12b723c:        beqz    a4,12b6e60 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x6fc>
+         : 314     void mxnet::op::col2im<float>(mshadow::Stream<mshadow::cpu>*, float const*, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, float*, mxnet::OpReqType):
+         : 361     col2im_cpu(data_col,
+    0.00 :   12b7240:        lw      a2,-1064(s0)
+         : 363     void mxnet::op::col2im_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*, mxnet::OpReqType):
+         : 312     for (int channel = channels; channel--; data_im += channel_size) {
+    0.00 :   12b7244:        addiw   a3,a4,-1
+    0.00 :   12b7248:        slli    a7,a7,0x2
+    0.00 :   12b724a:        li      a5,-1
+         : 313     for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+    0.00 :   12b724c:        bgtz    a2,12b725c <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xaf8>
+         : 312     for (int channel = channels; channel--; data_im += channel_size) {
+    0.00 :   12b7250:        addiw   a3,a3,-1
+    0.00 :   12b7252:        add     s6,s6,a7
+    0.00 :   12b7254:        beq     a3,a5,12b6e60 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x6fc>
+         : 313     for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+    0.00 :   12b7258:        blez    a2,12b7250 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xaec>
+         : 301     const int output_w     = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+    0.00 :   12b725c:        ld      a6,-1120(s0)
+    0.00 :   12b7260:        ld      t1,-1128(s0)
+         : 300     const int output_h     = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+    0.00 :   12b7264:        ld      t4,-1248(s0)
+         : 301     const int output_w     = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+    0.00 :   12b7268:        addiw   a5,a6,-1
+         : 303     void mxnet::op::col2im<float>(mshadow::Stream<mshadow::cpu>*, float const*, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, float*, mxnet::OpReqType):
+         : 361     col2im_cpu(data_col,
+    0.00 :   12b726c:        sext.w  t6,a6
+         : 363     void mxnet::op::col2im_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*, mxnet::OpReqType):
+         : 300     const int output_h     = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+    0.00 :   12b7270:        ld      a6,-1048(s0)
+         : 301     const int output_w     = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+    0.00 :   12b7274:        mulw    t3,a5,s9
+         : 300     const int output_h     = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+    0.00 :   12b7278:        addiw   a5,a2,-1
+         : 301     const int output_w     = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+    0.00 :   12b727c:        slliw   a4,t1,0x1
+    0.00 :   12b7280:        addw    a4,a4,s2
+         : 300     const int output_h     = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+    0.00 :   12b7284:        slliw   a1,t4,0x1
+    0.00 :   12b7288:        addw    a0,a1,s7
+    0.00 :   12b728c:        negw    a1,t1
+    0.00 :   12b7290:        mv      t5,a7
+    0.00 :   12b7292:        sd      s5,-1264(s0)
+    0.00 :   12b7296:        mulw    a5,a5,a6
+         : 301     const int output_w     = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+    0.00 :   12b729a:        addiw   t3,t3,1
+    0.00 :   12b729c:        subw    t3,a4,t3
+    0.00 :   12b72a0:        divw    t3,t3,s3
+         : 300     const int output_h     = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+    0.00 :   12b72a4:        addiw   a5,a5,1
+    0.00 :   12b72a6:        subw    a5,a0,a5
+    0.00 :   12b72aa:        divw    a0,a5,s8
+    0.00 :   12b72ae:        slli    t1,t3,0x20
+    0.00 :   12b72b2:        srli    t1,t1,0x20
+         : 301     const int output_w     = (width + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
+    0.00 :   12b72b6:        addiw   t3,t3,1
+    0.00 :   12b72b8:        slli    t1,t1,0x2
+         : 318     data_col += output_w;
+    0.00 :   12b72ba:        slli    a4,t3,0x2
+    0.00 :   12b72be:        addi    t1,t1,4
+    0.00 :   12b72c0:        mulw    a5,t4,s2
+    0.00 :   12b72c4:        mv      t4,a3
+    0.00 :   12b72c6:        mv      a3,s10
+    0.00 :   12b72c8:        ld      s10,-1048(s0)
+         : 300     const int output_h     = (height + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
+    0.00 :   12b72cc:        addiw   t0,a0,1
+    0.00 :   12b72d0:        mulw    t2,s2,a6
+    0.00 :   12b72d4:        negw    a0,a5
+    0.00 :   12b72d8:        mv      a5,s1
+    0.00 :   12b72da:        mv      s1,a0
+    0.00 :   12b72dc:        mulw    a6,s8,s2
+    0.00 :   12b72e0:        mv      a0,t2
+         : 314     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   12b72e2:        blez    t6,12b73e8 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xc84>
+    0.00 :   12b72e6:        ld      a7,-1248(s0)
+    0.00 :   12b72ea:        sd      t4,-1288(s0)
+    0.00 :   12b72ee:        sd      t5,-1296(s0)
+    0.00 :   12b72f2:        negw    s5,a7
+    0.00 :   12b72f6:        mv      t4,a2
+    0.00 :   12b72f8:        mv      t2,s1
+    0.00 :   12b72fa:        li      a7,0
+    0.00 :   12b72fc:        mv      a2,s10
+    0.00 :   12b72fe:        sd      a3,-1304(s0)
+    0.07 :   12b7302:        mv      t5,s1
+    0.00 :   12b7304:        mv      s10,a1
+    0.00 :   12b7306:        li      a3,0
+         : 316     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   12b7308:        bnez    t0,12b7344 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xbe0>
+         : 314     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   12b730c:        addiw   a3,a3,1
+    0.00 :   12b730e:        bne     t6,a3,12b730c <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xba8>
+         : 313     for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+    0.00 :   12b7312:        addiw   a7,a7,1
+    0.00 :   12b7314:        addw    s5,s5,a2
+    0.00 :   12b7318:        addw    t2,t2,a0
+    0.00 :   12b731c:        bne     a7,t4,12b7304 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xba0>
+    0.00 :   12b7320:        mv      s10,a2
+    0.00 :   12b7322:        mv      s1,t5
+    0.00 :   12b7324:        mv      a2,t4
+    0.00 :   12b7326:        ld      a3,-1304(s0)
+    0.00 :   12b732a:        ld      t4,-1288(s0)
+    0.00 :   12b732e:        ld      t5,-1296(s0)
+         : 312     for (int channel = channels; channel--; data_im += channel_size) {
+    0.00 :   12b7332:        addiw   t4,t4,-1
+    0.00 :   12b7334:        li      a7,-1
+    0.00 :   12b7336:        add     s6,s6,t5
+    0.00 :   12b7338:        bne     t4,a7,12b72e2 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xb7e>
+    0.00 :   12b733c:        ld      s5,-1264(s0)
+    0.00 :   12b7340:        mv      s10,a3
+    0.00 :   12b7342:        j       12b6e60 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x6fc>
+    0.00 :   12b7344:        sd      t2,-1056(s0)
+    0.00 :   12b7348:        sd      s5,-1064(s0)
+    0.07 :   12b734c:        sd      a7,-1120(s0)
+    0.00 :   12b7350:        sd      t4,-1128(s0)
+         : 320     mxnet::op::is_a_ge_zero_and_a_lt_b(int, int):
+         : 79      return static_cast<unsigned>(a) < static_cast<unsigned>(b);
+    0.00 :   12b7354:        ld      a7,-1056(s0)
+         : 81      void mxnet::op::col2im_cpu<float>(float const*, int, int, int, int, int, int, int, int, int, int, int, float*, mxnet::OpReqType):
+         : 315     int input_row = -pad_h + kernel_row * dilation_h;
+    0.00 :   12b7358:        ld      s1,-1064(s0)
+         : 316     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   12b735c:        mv      t4,t0
+         : 315     int input_row = -pad_h + kernel_row * dilation_h;
+    0.00 :   12b735e:        sd      a3,-1048(s0)
+         : 317     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   12b7362:        bltu    s1,s7,12b73a4 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xc40>
+         : 318     data_col += output_w;
+    0.00 :   12b7366:        add     a5,a5,a4
+         : 316     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   12b7368:        addiw   t4,t4,-1
+         : 329     input_row += stride_h;
+    0.00 :   12b736a:        addw    s1,s1,s8
+         : 316     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   12b736e:        addw    a7,a7,a6
+    0.00 :   12b7372:        bnez    t4,12b7362 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xbfe>
+    0.00 :   12b7376:        ld      a3,-1048(s0)
+         : 314     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   12b737a:        addw    s10,s10,s9
+    0.00 :   12b737e:        addiw   a3,a3,1
+    0.00 :   12b7380:        bne     a3,t6,12b7354 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xbf0>
+    0.00 :   12b7384:        ld      a7,-1120(s0)
+    0.00 :   12b7388:        ld      t2,-1056(s0)
+    0.00 :   12b738c:        ld      s5,-1064(s0)
+    0.00 :   12b7390:        ld      t4,-1128(s0)
+         : 313     for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+    0.07 :   12b7394:        addiw   a7,a7,1
+    0.00 :   12b7396:        addw    s5,s5,a2
+    0.00 :   12b739a:        addw    t2,t2,a0
+    0.00 :   12b739e:        bne     a7,t4,12b7304 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xba0>
+    0.00 :   12b73a2:        j       12b7320 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xbbc>
+         : 321     for (int output_col = output_w; output_col; output_col--) {
+    0.00 :   12b73a4:        beqz    t3,12b7368 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xc04>
+    0.35 :   12b73a8:        add     s5,a5,t1
+         : 320     int input_col = -pad_w + kernel_col * dilation_w;
+    0.00 :   12b73ac:        mv      a3,s10
+         : 322     if (is_a_ge_zero_and_a_lt_b(input_col, width)) {
+   16.80 :   12b73ae:        bgeu    a3,s2,12b73ca <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xc66>
+         : 323     data_im[input_row * width + input_col] += *data_col;
+    1.84 :   12b73b2:        addw    t2,a3,a7
+    0.07 :   12b73b6:        slli    t2,t2,0x2
+    2.98 :   12b73b8:        add     t2,t2,s6
+   13.96 :   12b73ba:        flw     fa5,0(t2)
+   12.12 :   12b73be:        flw     fa4,0(a5)
+    7.02 :   12b73c2:        fadd.s  fa5,fa5,fa4
+   37.70 :   12b73c6:        fsw     fa5,0(t2)
+         : 325     data_col++;
+    1.63 :   12b73ca:        addi    a5,a5,4
+         : 326     input_col += stride_w;
+    1.20 :   12b73cc:        addw    a3,a3,s3
+         : 321     for (int output_col = output_w; output_col; output_col--) {
+    2.98 :   12b73d0:        bne     a5,s5,12b73ae <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xc4a>
+         : 316     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.07 :   12b73d4:        addiw   t4,t4,-1
+    0.85 :   12b73d6:        beqz    t4,12b7376 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xc12>
+         : 329     input_row += stride_h;
+    0.21 :   12b73da:        addw    s1,s1,s8
+         : 316     for (int output_rows = output_h; output_rows; output_rows--) {
+    0.00 :   12b73de:        addw    a7,a7,a6
+         : 317     if (!is_a_ge_zero_and_a_lt_b(input_row, height)) {
+    0.00 :   12b73e2:        bgeu    s1,s7,12b7366 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xc02>
+    0.00 :   12b73e6:        j       12b73a8 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xc44>
+         : 314     for (int kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+    0.00 :   12b73e8:        li      a7,0
+         : 313     for (int kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+    0.00 :   12b73ea:        addiw   a7,a7,1
+    0.00 :   12b73ec:        bne     a2,a7,12b73ea <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xc86>
+    0.00 :   12b73f0:        j       12b7332 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xbce>
+         : 315     mxnet::Tuple<long>::begin():
+         : 206     return ndim_ <= kStackCache ? data_stack_ : data_heap_;
+    0.00 :   12b73f2:        ld      a4,-536(s0)
+    0.00 :   12b73f6:        j       12b6b78 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0x414>
+         : 209     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 370     CHECK_EQ(weights.CheckContiguous(), true);
+    0.00 :   12b73fa:        addi    a0,s0,-528
+    0.00 :   12b73fe:        li      a2,370
+    0.00 :   12b7402:        auipc   a1,0x7061
+    0.00 :   12b7406:        addi    a1,a1,-1698 # 8317d60 <__pthread_atfork+0x43e10>
+    0.00 :   12b740a:        auipc   t1,0x8481
+    0.00 :   12b740e:        ld      t1,70(t1) # 9738450 <dmlc::LogMessageFatal::LogMessageFatal(char const*, int)@@Base+0x8fbbf82>
+    0.00 :   12b7412:        jalr    t1
+    0.00 :   12b7414:        auipc   a1,0x701d
+    0.00 :   12b7418:        addi    a1,a1,-780 # 82d4108 <__pthread_atfork+0x1b8>
+    0.00 :   12b741c:        addi    a0,s0,-528
+    0.00 :   12b7420:        auipc   ra,0xff2e9
+    0.00 :   12b7424:        jalr    304(ra) # 5a0550 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>
+    0.00 :   12b7428:        auipc   a1,0x7062
+    0.00 :   12b742c:        addi    a1,a1,-776 # 8319120 <__pthread_atfork+0x451d0>
+    0.00 :   12b7430:        auipc   ra,0xff2e9
+    0.00 :   12b7434:        jalr    288(ra) # 5a0550 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>
+         : 374     std::basic_ostream<char, std::char_traits<char> >& std::operator<< <char, std::char_traits<char>, std::allocator<char> >(std::basic_ostream<char, std::char_traits<char> >&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&):
+         : 4370    operator<<(basic_ostream<_CharT, _Traits>& __os,
+         : 4371    const basic_string<_CharT, _Traits, _Alloc>& __str)
+         : 4372    {
+         : 4373    // _GLIBCXX_RESOLVE_LIB_DEFECTS
+         : 4374    // 586. string inserter not a formatted function
+         : 4375    return __ostream_insert(__os, __str.data(), __str.size());
+    0.00 :   12b7438:        ld      a2,8(s7)
+    0.00 :   12b743c:        ld      a1,0(s7)
+    0.00 :   12b7440:        auipc   ra,0xff2ee
+    0.00 :   12b7444:        jalr    -1904(ra) # 5a4cd0 <std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@plt>
+         : 4380    mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+    0.00 :   12b7448:        auipc   a1,0x70c0
+    0.00 :   12b744c:        addi    a1,a1,1552 # 8377a58 <__pthread_atfork+0xa3b08>
+    0.00 :   12b7450:        auipc   ra,0xff2e9
+    0.00 :   12b7454:        jalr    256(ra) # 5a0550 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>
+    0.00 :   12b7458:        auipc   a5,0x848b
+    0.00 :   12b745c:        ld      a5,-2032(a5) # 9741c68 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   12b7460:        ld      a4,-136(s0)
+    0.00 :   12b7464:        ld      a5,0(a5)
+    0.00 :   12b7466:        xor     a5,a5,a4
+    0.00 :   12b7468:        li      a4,0
+    0.00 :   12b746a:        bnez    a5,12b74a8 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xd44>
+    0.00 :   12b746c:        addi    a0,s0,-528
+    0.00 :   12b7470:        auipc   t1,0x847b
+    0.00 :   12b7474:        ld      t1,-1840(t1) # 9731d40 <dmlc::LogMessageFatal::~LogMessageFatal()@@Base+0x8fb469a>
+    0.00 :   12b7478:        jalr    t1
+         : 381     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string():
+         : 896     { _M_dispose(); }
+    0.00 :   12b747a:        mv      s1,a0
+    0.00 :   12b747c:        ld      a0,-1144(s0)
+    0.00 :   12b7480:        auipc   ra,0xff2eb
+    0.00 :   12b7484:        jalr    1840(ra) # 5a2bb0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+    0.00 :   12b7488:        ld      a0,-1152(s0)
+    0.00 :   12b748c:        auipc   ra,0xff2eb
+    0.00 :   12b7490:        jalr    1828(ra) # 5a2bb0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+         : 904     std::__new_allocator<char>::~__new_allocator():
+         : 104     ~__new_allocator() _GLIBCXX_USE_NOEXCEPT { }
+    0.00 :   12b7494:        auipc   a5,0x848a
+    0.00 :   12b7498:        ld      a5,2004(a5) # 9741c68 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   12b749c:        ld      a4,-136(s0)
+    0.00 :   12b74a0:        ld      a5,0(a5)
+    0.00 :   12b74a2:        xor     a5,a5,a4
+    0.00 :   12b74a4:        li      a4,0
+    0.00 :   12b74a6:        beqz    a5,12b7596 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xe32>
+         : 112     mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 427     }
+    0.00 :   12b74a8:        auipc   ra,0xff2e7
+    0.00 :   12b74ac:        jalr    1224(ra) # 59e970 <__stack_chk_fail@plt>
+         : 430     mxnet::Tuple<long>::operator[](int):
+         : 230     CHECK(i >= 0 && i < ndim()) << "index = " << i << " must be in range [0, " << ndim() << ")";
+    0.00 :   12b74b0:        li      a2,230
+    0.00 :   12b74b4:        auipc   a1,0x7020
+    0.00 :   12b74b8:        addi    a1,a1,-996 # 82d70d0 <__pthread_atfork+0x3180>
+    0.00 :   12b74bc:        mv      a0,s5
+    0.00 :   12b74be:        auipc   t1,0x8481
+    0.00 :   12b74c2:        ld      t1,-110(t1) # 9738450 <dmlc::LogMessageFatal::LogMessageFatal(char const*, int)@@Base+0x8fbbf82>
+    0.00 :   12b74c6:        jalr    t1
+    0.00 :   12b74c8:        auipc   a1,0x7021
+    0.00 :   12b74cc:        addi    a1,a1,1192 # 82d8970 <__pthread_atfork+0x4a20>
+    0.00 :   12b74d0:        mv      a0,s5
+    0.00 :   12b74d2:        auipc   ra,0xff2e9
+    0.00 :   12b74d6:        jalr    126(ra) # 5a0550 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>
+    0.00 :   12b74da:        auipc   a1,0x70c0
+    0.00 :   12b74de:        addi    a1,a1,1406 # 8377a58 <__pthread_atfork+0xa3b08>
+    0.00 :   12b74e2:        auipc   ra,0xff2e9
+    0.00 :   12b74e6:        jalr    110(ra) # 5a0550 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>
+    0.00 :   12b74ea:        auipc   a1,0x7021
+    0.00 :   12b74ee:        addi    a1,a1,1198 # 82d8998 <__pthread_atfork+0x4a48>
+    0.00 :   12b74f2:        auipc   ra,0xff2e9
+    0.00 :   12b74f6:        jalr    94(ra) # 5a0550 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>
+    0.00 :   12b74fa:        mv      a1,s2
+    0.00 :   12b74fc:        auipc   ra,0xff2e7
+    0.00 :   12b7500:        jalr    -412(ra) # 59e360 <std::ostream::operator<<(int)@plt>
+    0.00 :   12b7504:        auipc   a1,0x7021
+    0.00 :   12b7508:        addi    a1,a1,1188 # 82d89a8 <__pthread_atfork+0x4a58>
+    0.00 :   12b750c:        auipc   ra,0xff2e9
+    0.00 :   12b7510:        jalr    68(ra) # 5a0550 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>
+    0.00 :   12b7514:        lw      a1,-608(s0)
+    0.00 :   12b7518:        auipc   ra,0xff2e7
+    0.00 :   12b751c:        jalr    -440(ra) # 59e360 <std::ostream::operator<<(int)@plt>
+    0.00 :   12b7520:        auipc   a1,0x70c0
+    0.00 :   12b7524:        addi    a1,a1,56 # 8377558 <__pthread_atfork+0xa3608>
+    0.00 :   12b7528:        auipc   ra,0xff2e9
+    0.00 :   12b752c:        jalr    40(ra) # 5a0550 <std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*)@plt>
+    0.00 :   12b7530:        auipc   a5,0x848a
+    0.00 :   12b7534:        ld      a5,1848(a5) # 9741c68 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   12b7538:        ld      a4,-136(s0)
+    0.00 :   12b753c:        ld      a5,0(a5)
+    0.00 :   12b753e:        xor     a5,a5,a4
+    0.00 :   12b7540:        li      a4,0
+    0.00 :   12b7542:        bnez    a5,12b74a8 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xd44>
+    0.00 :   12b7544:        mv      a0,s5
+    0.00 :   12b7546:        auipc   t1,0x847a
+    0.00 :   12b754a:        ld      t1,2042(t1) # 9731d40 <dmlc::LogMessageFatal::~LogMessageFatal()@@Base+0x8fb469a>
+    0.00 :   12b754e:        jalr    t1
+    0.00 :   12b7550:        auipc   a5,0x848a
+    0.00 :   12b7554:        ld      a5,1816(a5) # 9741c68 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   12b7558:        ld      a4,-136(s0)
+    0.00 :   12b755c:        ld      a5,0(a5)
+    0.00 :   12b755e:        xor     a5,a5,a4
+    0.00 :   12b7560:        li      a4,0
+    0.00 :   12b7562:        bnez    a5,12b74a8 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xd44>
+    0.00 :   12b7564:        mv      a0,s5
+    0.00 :   12b7566:        auipc   t1,0x847a
+    0.00 :   12b756a:        ld      t1,2010(t1) # 9731d40 <dmlc::LogMessageFatal::~LogMessageFatal()@@Base+0x8fb469a>
+    0.00 :   12b756e:        jalr    t1
+         : 241     mxnet::Tuple<long>::~Tuple():
+         : 63      delete[] data_heap_;
+    0.00 :   12b7570:        ld      a5,-536(s0)
+    0.00 :   12b7574:        mv      s1,a0
+    0.00 :   12b7576:        beqz    a5,12b7582 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xe1e>
+    0.00 :   12b7578:        mv      a0,a5
+    0.00 :   12b757a:        auipc   ra,0xff2e7
+    0.00 :   12b757e:        jalr    1222(ra) # 59ea40 <operator delete[](void*)@plt>
+    0.00 :   12b7582:        auipc   a5,0x848a
+    0.00 :   12b7586:        ld      a5,1766(a5) # 9741c68 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   12b758a:        ld      a4,-136(s0)
+    0.00 :   12b758e:        ld      a5,0(a5)
+    0.00 :   12b7590:        xor     a5,a5,a4
+    0.00 :   12b7592:        li      a4,0
+    0.00 :   12b7594:        bnez    a5,12b74a8 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xd44>
+    0.00 :   12b7596:        mv      a0,s1
+    0.00 :   12b7598:        auipc   ra,0xff2ea
+    0.00 :   12b759c:        jalr    -680(ra) # 5a12f0 <_Unwind_Resume@plt>
+         : 73      std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string():
+    0.00 :   12b75a0:        mv      s1,a0
+    0.00 :   12b75a2:        mv      a0,s3
+    0.00 :   12b75a4:        auipc   ra,0xff2eb
+    0.00 :   12b75a8:        jalr    1548(ra) # 5a2bb0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+         : 900     std::__new_allocator<char>::~__new_allocator():
+    0.00 :   12b75ac:        j       12b747c <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xd18>
+    0.00 :   12b75ae:        mv      s2,a0
+         : 106     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string():
+    0.00 :   12b75b0:        ld      a0,-1056(s0)
+    0.00 :   12b75b4:        auipc   ra,0xff2eb
+    0.00 :   12b75b8:        jalr    1532(ra) # 5a2bb0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+    0.00 :   12b75bc:        addi    a0,s0,-976
+    0.00 :   12b75c0:        auipc   ra,0xff2eb
+    0.00 :   12b75c4:        jalr    1520(ra) # 5a2bb0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+    0.00 :   12b75c8:        mv      a0,s1
+    0.00 :   12b75ca:        auipc   ra,0xff2eb
+    0.00 :   12b75ce:        jalr    1510(ra) # 5a2bb0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+    0.00 :   12b75d2:        ld      a0,-1048(s0)
+    0.00 :   12b75d6:        mv      s1,s2
+    0.00 :   12b75d8:        auipc   ra,0xff2eb
+    0.00 :   12b75dc:        jalr    1496(ra) # 5a2bb0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+    0.00 :   12b75e0:        addi    a0,s0,-912
+    0.00 :   12b75e4:        auipc   ra,0xff2eb
+    0.00 :   12b75e8:        jalr    1484(ra) # 5a2bb0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+    0.00 :   12b75ec:        ld      a0,-1136(s0)
+    0.00 :   12b75f0:        auipc   ra,0xff2eb
+    0.00 :   12b75f4:        jalr    1472(ra) # 5a2bb0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+         : 915     std::__new_allocator<char>::~__new_allocator():
+    0.00 :   12b75f8:        j       12b75a2 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xe3e>
+         : 105     std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string():
+    0.00 :   12b75fa:        mv      s1,a0
+    0.00 :   12b75fc:        j       12b75ec <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xe88>
+    0.00 :   12b75fe:        mv      s1,a0
+    0.00 :   12b7600:        j       12b75e0 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xe7c>
+    0.00 :   12b7602:        mv      s2,a0
+    0.00 :   12b7604:        j       12b75c8 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xe64>
+    0.00 :   12b7606:        mv      s2,a0
+    0.00 :   12b7608:        j       12b75bc <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xe58>
+         : 904     mxnet::Tuple<long>::~Tuple():
+    0.00 :   12b760a:        ld      a5,-448(s0)
+    0.00 :   12b760e:        mv      s1,a0
+    0.00 :   12b7610:        beqz    a5,12b761c <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xeb8>
+    0.00 :   12b7612:        mv      a0,a5
+    0.00 :   12b7614:        auipc   ra,0xff2e7
+    0.00 :   12b7618:        jalr    1068(ra) # 59ea40 <operator delete[](void*)@plt>
+    0.00 :   12b761c:        ld      a0,-536(s0)
+    0.00 :   12b7620:        beqz    a0,12b7582 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xe1e>
+    0.00 :   12b7622:        auipc   ra,0xff2e7
+    0.00 :   12b7626:        jalr    1054(ra) # 59ea40 <operator delete[](void*)@plt>
+    0.00 :   12b762a:        j       12b7582 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xe1e>
+         : 66      std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string():
+    0.00 :   12b762c:        mv      s1,a0
+    0.00 :   12b762e:        j       12b7488 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xd24>
+         : 898     mxnet::Tuple<long>::~Tuple():
+    0.00 :   12b7630:        mv      s1,a0
+    0.00 :   12b7632:        j       12b761c <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xeb8>
+         : 65      mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&):
+         : 370     CHECK_EQ(weights.CheckContiguous(), true);
+    0.00 :   12b7634:        auipc   a5,0x848a
+    0.00 :   12b7638:        ld      a5,1588(a5) # 9741c68 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   12b763c:        ld      a4,-136(s0)
+    0.00 :   12b7640:        ld      a5,0(a5)
+    0.00 :   12b7642:        xor     a5,a5,a4
+    0.00 :   12b7644:        li      a4,0
+    0.00 :   12b7646:        bnez    a5,12b74a8 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xd44>
+    0.00 :   12b764a:        addi    a0,s0,-528
+    0.00 :   12b764e:        auipc   t1,0x847a
+    0.00 :   12b7652:        ld      t1,1778(t1) # 9731d40 <dmlc::LogMessageFatal::~LogMessageFatal()@@Base+0x8fb469a>
+    0.00 :   12b7656:        jalr    t1
+    0.00 :   12b7658:        mv      s1,a0
+    0.00 :   12b765a:        auipc   t1,0x848c
+    0.00 :   12b765e:        ld      t1,-1554(t1) # 9743048 <dmlc::LogCheckError::~LogCheckError()@@Base+0x8fc6fca>
+    0.00 :   12b7662:        addi    a0,s0,-1024
+    0.00 :   12b7666:        jalr    t1
+    0.00 :   12b7668:        auipc   a5,0x848a
+    0.00 :   12b766c:        ld      a5,1536(a5) # 9741c68 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   12b7670:        ld      a4,-136(s0)
+    0.00 :   12b7674:        ld      a5,0(a5)
+    0.00 :   12b7676:        xor     a5,a5,a4
+    0.00 :   12b7678:        li      a4,0
+    0.00 :   12b767a:        beqz    a5,12b7596 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xe32>
+    0.00 :   12b767c:        j       12b74a8 <mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData(mxnet::OpContext const&, mxnet::TBlob const&, mxnet::TBlob const&, mxnet::OpReqType, mxnet::TBlob const&)+0xd44>

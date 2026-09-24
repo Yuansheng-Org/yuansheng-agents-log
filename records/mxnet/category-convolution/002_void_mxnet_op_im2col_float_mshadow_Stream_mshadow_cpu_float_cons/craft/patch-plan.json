@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-opperf-category-convolution-002",
+  "blueprintId": "bp-mxnet-opperf-category-convolution-002",
+  "createdAt": "2026-09-21T06:01:30.729Z",
+  "objective": "向量化 src/operator/nn/im2col.h 中 im2col_cpu 的内层 output_col 抽取循环：将 interior 输出区间与 border padding 显式分离，对 interior 使用 RVV 连续/固定步长 load + 连续 store，消除逐元素 is_a_ge_zero_and_a_lt_b 边界分支与随之而来的 loop-invariant stride 栈 reload。",
+  "changes": [
+    {
+      "filePath": "src/operator/nn/im2col.h",
+      "action": "modify",
+      "rationale": "RootCauseBlueprint 定位根因为 im2col_cpu（L88-138）patch 抽取主循环完全未向量化：固定 stencil 邻域地址生成 + 逐元素边界分支 + data_col 连续写全为标量，且 hot loop 内每轮从栈 reload loop-invariant stride（ld a2,-136(s0) 占 32.92%）。该文件是唯一实现载体，blueprint rootCause.candidateFiles 仅列出该文件。",
+      "instructions": [
+        "在文件头按 __riscv_v_intrinsic / __riscv_vector 条件引入 <riscv_vector.h>，定义 MXNET_IM2COL_USE_RVV，非 RISC-V 或未启用向量扩展的构建保持原标量行为。",
+        "新增 im2col_copy_strided_row<DType> 辅助函数：stride==1 用 __riscv_vle32_v_f32m1 + __riscv_vse32_v_f32m1，stride>1 用 __riscv_vlse32_v_f32m1 + __riscv_vse32_v_f32m1，runtime vl 处理 tail；仅对 DType=float 启用，其他类型走原标量拷贝。",
+        "在 im2col_cpu 内层 output_col 循环计算 in-range 输出区间 [o_start, o_end]（input_col(o)=input_col0+o*stride_w 落在 [0,width) 的连续区间），区间外写 0，区间内调用 im2col_copy_strided_row，不构造越界指针。",
+        "保持 im2col 公共函数签名、mshadow Stream<cpu> 参数契约与 data_col 布局逐元素 bit-identical。",
+        "不修改 row 越界整行写 0 的语义（保留原 zero-fill 循环）。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "单文件改动 src/operator/nn/im2col.h：新增 RVV 条件包含与 im2col_copy_strided_row 辅助函数，并将 im2col_cpu 内层 output_col 循环改写为 interior/border 分离 + 向量化拷贝。输出与标量路径 bit-identical；预期反汇编出现 vsetvli/vle32/vlse32/vse32，原 flw/fsw/bgeu/ld -136(s0) 标量流消失。"
+}

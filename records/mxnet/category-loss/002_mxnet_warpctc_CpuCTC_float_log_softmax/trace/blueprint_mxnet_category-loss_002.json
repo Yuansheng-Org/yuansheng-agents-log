@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-category-loss-002",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T02:36:06.768Z",
+    "software": "mxnet",
+    "testcaseIds": [
+      "category-loss"
+    ],
+    "diagnosisId": "diag-20260921T023606768Z-cb3342f3",
+    "targetHardware": "XuanTie C920v2 (SOPHGO SG2044)",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede"
+  },
+  "problem": {
+    "summary": "MXNet warpctc 的 CTCLoss 前向在 RISC-V（SOPHGO SG2044 / XuanTie C920v2）上，CpuCTC<float>::log_softmax 以全标量三阶段（分支式 max 归约 → 逐元素 expf 的 denom 归约 → 逐元素 logf 的输出 pass）执行，三个 hot loop 零 RVV 指令，即使硬件为 RVV 1.0（VLEN=128）且 libmxnet.so build ISA 已含 v1p0+zvl128b1p0。整体 IPC 仅 0.63，CTCLoss 前向平均 299.46µs，逐元素 libm 调用与跨 lane 标量归约主导耗时。",
+    "evidence": [
+      "Benchmark duration(s): RV=86.95 — 全测试运行 86.95s（perf stat duration_time=86,952,084,067 ns）",
+      "CTCLoss forward avg time(us): RV=299.46 — CTCLoss 前向平均 299.46µs（opperf_CTCLoss_input_0_avg_time_forward_CTCLoss_us）",
+      "热点函数 mxnet_warpctc::CpuCTC<float>::log_softmax：三个标量 hot interval（max 归约环 12c54b0–12c54c8 ≈58.8% 局部样本、denom 环 12c5450–12c5466、log 输出环 12c546c–12c548c），局部样本份额合计 ≈99.2%，全函数零 v* 指令",
+      "perf annotate 证据行：29.02% @ 12c54be beqz（max 环）、4.09% @ 12c545a auipc → 12c545e jalr expf@plt、11.95% @ 12c5488 fsw、0.16% @ 12c547e jalr logf@plt",
+      "代码知识证据：oneDNN/MNN 已有 RVV normalization/softmax 实现与 PR 记录（见 codeKnowledgeEvidence）"
+    ]
+  },
+  "rootCause": {
+    "summary": "CpuCTC<float>::log_softmax 的 LogSoftmax 三阶段（max → exp(x-max) sum → log 输出）全部为编译器生成的标量循环：分支式 max 归约（flt.s+beqz+冗余 fmv.s）、逐元素 expf@plt/logf@plt libm 调用，跨 lane 归约逐元素串行；硬件 RVV 1.0 与 build ISA（v1p0+zvl128b1p0）均已具备向量能力但 autovectorizer 未覆盖这些循环。",
+    "candidateFiles": [
+      "mxnet_warpctc::CpuCTC<float>::log_softmax（warpctc CpuCTC 模板，位于 mxnet 3rdparty warpctc 模块，无 debug symbols 无法定位精确路径）"
+    ],
+    "performanceFactors": [
+      "RVV Normalization Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)",
+      "RISC-V ISA Extension-Specific Instruction Substitution"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "log_softmax 数值输出语义（LogSoftmax consistency、稳定减 max、denom 归约顺序的 FP 误差合同）",
+      "exp/log 的 NaN、±Inf、±0、denom=0/Inf/NaN 特殊值行为",
+      "CpuCTC<float> 模板公共接口与调用语义（不改变 OMP 并行分片行为）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-loss"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-loss"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示全 benchmark IPC 仅 0.6316、L1 Dcache miss rate 0.259%、branch miss rate 1.691%，排除 memory-bound 与 branch-bound，属 compute/latency-bound。perf annotate 显示 log_softmax 三个 hot interval（max 归约环 ≈58.8%、denom 环 ≈15.6%、log 输出环 ≈24.6%，合计 ≈99.2% 局部样本）全部为 scalar FP 指令且零 v*，而冻结的 hardware profile 确认 RVV 1.0 / VLEN=128、build ISA（libmxnet.so Tag_RISCV_arch）确认含 v1p0+zvl128b1p0——硬件与 build 均具备向量能力但未使用，根因为 LogSoftmax 算子未向量化（RVV Normalization Kernels pattern，route High）。逐元素 expf/logf@plt 调用与分支式 max 归约是热点内的具体慢速机制。oneDNN/MNN 的 RVV normalization/softmax 上游 PR 证明同类 kernel 在 RISC-V 上已向量化并合入。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "expf/logf 的 glibc 标量实现本身偏慢（libm 内部样本不在本函数 symbol 下，无法量化），即使向量化 max/denom 归约，exp 阶段收益受向量 exp 实现可用性限制",
+      "采样 IP precision（precise_ip）未记录，beqz 单行 29.02% 可能含 PMU skid，max 环真实成本可能与局部份额有偏差",
+      "IPC 0.63 是整 benchmark 均值，其中可能含 OMP 并行调度与任务开销，非全部可归因于该函数 FP 延迟"
+    ],
+    "currentGaps": "函数级 workload 贡献未知（percent type=local period 非 global，无法给 Amdahl 上界）；无 precise_ip/Exact-IP 记录，禁止 instruction-latency 级归因；无 debug symbols，candidateFiles 无法精确到源码 file:line；向量 exp 实现存在性未验证（RVV 无单指令 exp，需复用或新实现并过误差合同）；expf/logf 的 libm 内部样本不在本函数 symbol 下，实际收益上界被低估",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + category-loss",
+    "recommendedFirstAction": "在 warpctc 的 CpuCTC<float>::log_softmax 模板函数（mxnet 3rdparty warpctc 模块 cpu_ctc.h）中按 RVV 三阶段改写：① max 阶段用 vfredmax 分块归约（带标量 seed）；② exp+sum 阶段 vle32 → vfsub.vf(max) → 项目已验证的向量 exp → vfredusum 分块归约 denom；③ 输出阶段 act - max - log(denom) 用 vse32 写出；全部以 __riscv_v_intrinsic 宏保护并保留标量 fallback",
+    "recommendedVerification": "重新运行 category-loss 用例，对 log_softmax 重新 perf annotate：核对 vsetvli/vle32/vfredmax/vfredusum/vse32 出现、flt.s/beqz/fmv.s/expf@plt/fsw 环样本显著下降，并对比 CTCLoss forward 平均耗时（当前 299.46µs）与整体 IPC（当前 0.63）改善；数值合同（全相等、极端 logits、NaN/Inf、sum≈1、LogSoftmax consistency）回归通过",
+    "metricEvidence": [
+      {
+        "metric": "Benchmark duration(s)",
+        "rv": 86.952,
+        "anomalyNote": "category-loss 全测试运行 86.95s（duration_time=86,952,084,067 ns）"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.6316,
+        "anomalyNote": "IPC 0.63 显著低于典型 1.0+ 的 compute 型 workload，指向 compute/latency-bound"
+      },
+      {
+        "metric": "L1 Dcache Load Miss Rate(%)",
+        "rv": 0.259,
+        "anomalyNote": "0.259% 极低，排除 memory-bound，佐证 compute-bound"
+      },
+      {
+        "metric": "Branch Miss Rate(%)",
+        "rv": 1.691,
+        "anomalyNote": "1.69% 较低，排除 branch-bound 主导"
+      },
+      {
+        "metric": "CTCLoss forward avg time(us)",
+        "rv": 299.46,
+        "anomalyNote": "CTCLoss 前向平均 299.46µs（opperf_CTCLoss_input_0_avg_time_forward_CTCLoss_us），为 log_softmax 所在算子路径"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "mxnet_warpctc::CpuCTC<float>::log_softmax(float const*, float*, int const*) [clone ._omp_fn.0]",
+        "fileModule": "mxnet_warpctc::CpuCTC<float>::log_softmax（无 debug symbols，annotate 未提供源码路径，函数归属 warpctc CpuCTC 模板）",
+        "rvvPattern": "RVV Normalization Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.992,
+        "note": "CTC LogSoftmax 归一化计算：三个标量 hot interval（分支式 max 归约、逐元素 expf denom 归约、逐元素 logf 输出 pass），跨 lane 归约依赖链 + libm 调用主导，全函数零 v*"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "mxnet_warpctc::CpuCTC<float>::log_softmax（模板函数；无 debug symbols，精确 file:line 无法定位，位于 mxnet 3rdparty warpctc 模块）",
+      "relatedKnowledge": "https://github.com/uxlfoundation/oneDNN/commit/36df719b3bc9001d994455c2899e42533b2c29ac; https://github.com/uxlfoundation/oneDNN/commit/6dc3e2d84eec45eff0834e8985cc663db6fe07ee; https://github.com/uxlfoundation/oneDNN/commit/3b90f9d0650f4087d4a6fbcb3406dc0862f2ae25; https://github.com/uxlfoundation/oneDNN/pull/4809; https://github.com/uxlfoundation/oneDNN/pull/4622; https://github.com/uxlfoundation/oneDNN/pull/4453; https://github.com/uxlfoundation/oneDNN/pull/4480; https://github.com/uxlfoundation/oneDNN/commit/0d8f4a9e702b70f6188f58a20247ae06dbd41ce5; https://github.com/uxlfoundation/oneDNN/commit/7ad03324c2d17480e40cc20114576584888373ce; https://github.com/uxlfoundation/oneDNN/commit/3c8c37bab64f67bbdebcdb76330db0dcb25b31af; https://github.com/uxlfoundation/oneDNN/commit/c07b7f4e777636cf527f49093c03f8cacf58b3de; https://github.com/uxlfoundation/oneDNN/pull/4734; https://github.com/uxlfoundation/oneDNN/pull/4491; https://github.com/uxlfoundation/oneDNN/commit/25cd4a75095a2aebeb2f0140abadd466cd0b4e90; https://github.com/uxlfoundation/oneDNN/commit/b8360ec0a1d566f039d4fe286349c7988a762c98; https://github.com/alibaba/MNN/pull/4508; https://github.com/alibaba/MNN/pull/4044; https://github.com/alibaba/MNN/commit/b7268aa3dab754190ed7d86dc16b9bab02e73d12",
+      "evidenceExplanation": "oneDNN 的 RVV normalization/softmax kernel 优化与 MNN 的 Softmax normalization 实现表明：同类 Softmax/LogSoftmax 算子在 RISC-V 上已成功向量化（vfredmax/vfredusum + 向量 exp）并合入上游，直接支撑本函数标量三阶段循环为可修复的根因，且修复形态（RVV 三阶段、误差合同、tail 处理）有经过验证的参考实现。"
+    }
+  }
+}

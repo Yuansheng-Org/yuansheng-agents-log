@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-opperf-category-convolution-003",
+  "blueprintId": "bp-mxnet-opperf-category-convolution-003",
+  "createdAt": "2026-09-21T06:30:00.000Z",
+  "objective": "Vectorize the scalar col2im_cpu gather-scatter RMW inner loop used by ConvolutionOp<mshadow::cpu,float>::_BackwardData on RVV 1.0 targets (SG2044/XuanTie C920v2, VLEN=128): precompute the per-(kernel_row,kernel_col) valid output_col interval so the interior run is accumulated with RVV unit-/strided loads and stores, removing the per-element bounds branch and address rebuild while preserving exact per-element FP accumulation semantics.",
+  "changes": [
+    {
+      "filePath": "src/operator/nn/im2col.h",
+      "action": "modify",
+      "rationale": "The diagnosed hot interval 12b73a4-12b73d0 (98.3% of local samples in _BackwardData) is the compiler-generated scalar inner loop of col2im_cpu (im2col.h:403-409 at HEAD): per-element is_a_ge_zero_and_a_lt_b branch (16.80% bgeu), redundant data_im address rebuild (addw/slli/add, 4.89%) and overlap-sensitive scalar RMW flw/fadd.s/fsw (13.96+7.02+37.70%). Because input_col(o) = -pad_w + kernel_col*dilation_w + o*stride_w is affine in the output column with slope stride_w>=1, the in-range output positions form one contiguous interval; splitting it out lets the in-range run be vectorized with RVV, matching the blueprint recommendedFirstAction (segment split + interior RVV, scalar/border handled separately, guarded by the existing MXNET_IM2COL_USE_RVV macro).",
+      "instructions": [
+        "Add a templated helper col2im_accumulate_strided_row<DType>(src, dst, stride, n) implementing dst[i*stride] += src[i]: under #if MXNET_IM2COL_USE_RVV and for float, use __riscv_vsetvl_e32m4 runtime VL, unit-stride vle32/vse32 when stride==1, and strided vlse32/vsse32 (byte stride = stride*sizeof(float)) when stride>1; otherwise fall back to the scalar loop unchanged.",
+        "In col2im_cpu, hoist the affine segment computation per (kernel_col): input_col0 = -pad_w + kernel_col*dilation_w; o_start = 0 or ceil(-input_col0/stride_w); o_end = output_w-1 or floor((width-1-input_col0)/stride_w) clamped to output_w-1; n_valid = o_end>=o_start ? o_end-o_start+1 : 0.",
+        "Replace the scalar per-output_col branch loop with: if n_valid>0 and input_row in [0,height), call col2im_accumulate_strided_row(data_col+o_start, data_im + input_row*width + input_col0 + o_start*stride_w, stride_w, n_valid); always advance data_col by output_w and input_row by stride_h so column-buffer consumption is byte-identical to HEAD.",
+        "Keep the kNullOp early return and the kAddTo/std::fill zeroing semantics untouched, and do not construct out-of-bounds padding pointers (padding positions only advance data_col).",
+        "Do not change any public signature, the non-RVV scalar path, or unrelated code; do not revert the pre-existing im2col_cpu RVV change in the same header."
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "src/operator/nn/im2col.h: (1) new inline template col2im_accumulate_strided_row implementing strided RMW accumulate with RVV 1.0 e32,m4 runtime-vsetvl unit-stride (vle32/vse32) and strided (vlse32/vsse32) paths plus scalar fallback; (2) col2im_cpu inner output_col loop rewritten to precompute the contiguous valid interval [o_start,o_end] per kernel_col and accumulate that run through the helper, with unchanged data_col/input_row advancement. No signature, dispatch, or non-RISC-V behavior change."
+}

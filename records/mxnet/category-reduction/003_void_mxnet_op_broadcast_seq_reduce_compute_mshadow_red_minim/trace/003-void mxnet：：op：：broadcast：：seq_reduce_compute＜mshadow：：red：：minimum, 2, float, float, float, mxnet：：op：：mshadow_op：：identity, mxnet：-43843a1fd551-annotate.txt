@@ -1,0 +1,179 @@
+ Percent |	Source code & Disassembly of libmxnet.so for cpu-clock (1294 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3       Disassembly of section .text:
+         :
+         : 5       0000000001ca1546 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]>:
+         : 6       void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]:
+         : 448     const Shape<ndim> sshape,
+         : 449     const Shape<ndim> rshape,
+         : 450     const Shape<ndim> rstride) {
+         : 451     const int thread_count = engine::OpenMP::Get()->GetRecommendedOMPThreadCount();
+         : 452     if (N >= thread_count) {
+         : 453     #pragma omp parallel for num_threads(thread_count)
+    0.00 :   1ca1546:        addi    sp,sp,-80
+    0.00 :   1ca1548:        sd      ra,72(sp)
+    0.00 :   1ca154a:        sd      s0,64(sp)
+    0.00 :   1ca154c:        sd      s1,56(sp)
+    0.00 :   1ca154e:        sd      s2,48(sp)
+    0.00 :   1ca1550:        sd      s6,16(sp)
+    0.00 :   1ca1552:        addi    s0,sp,80
+         : 449     for (index_t idx = 0; idx < static_cast<index_t>(N); ++idx) {
+    0.00 :   1ca1554:        ld      s1,0(a0)
+         : 448     #pragma omp parallel for num_threads(thread_count)
+    0.00 :   1ca1556:        mv      s6,a0
+    0.00 :   1ca1558:        auipc   ra,0xfe8fe
+    0.00 :   1ca155c:        jalr    -1592(ra) # 59ef20 <omp_get_num_threads@plt>
+    0.00 :   1ca1560:        mv      s2,a0
+    0.00 :   1ca1562:        auipc   ra,0xfe8fe
+    0.00 :   1ca1566:        jalr    -466(ra) # 59f390 <omp_get_thread_num@plt>
+    0.00 :   1ca156a:        rem     t4,s1,s2
+    0.00 :   1ca156e:        div     t6,s1,s2
+    0.00 :   1ca1572:        blt     a0,t4,1ca1678 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]+0x132>
+    0.00 :   1ca1576:        mul     a0,t6,a0
+    0.00 :   1ca157a:        add     t4,t4,a0
+    0.00 :   1ca157c:        add     t6,t6,t4
+    0.00 :   1ca157e:        bge     t4,t6,1ca1664 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]+0x11e>
+         : 450     seq_reduce_assign<Reducer, ndim, AType, DType, OType, OP, IndexOP>(
+    0.00 :   1ca1582:        ld      a5,32(s6)
+    0.00 :   1ca1586:        ld      a4,40(s6)
+    0.00 :   1ca158a:        ld      t5,24(s6)
+         : 454     long mxnet::op::mxnet_op::ravel<2>(mshadow::Shape<2> const&, mshadow::Shape<2> const&):
+         : 672     template <int ndim>
+         : 673     MSHADOW_XINLINE index_t ravel(const Shape<ndim>& coord, const Shape<ndim>& shape) {
+         : 674     index_t ret = 0;
+         : 675     #pragma unroll
+         : 676     for (int i = 0; i < ndim; ++i) {
+         : 677     ret = ret * shape[i] + (shape[i] > coord[i]) * coord[i];
+    0.00 :   1ca158e:        ld      s1,8(a5)
+    0.00 :   1ca1590:        sd      s4,32(sp)
+    0.00 :   1ca1592:        ld      s4,0(a5)
+         : 681     void mshadow::red::minimum::SetInitValue<float>(float&):
+         : 1150    /*!
+         : 1151    *\brief set the initial value during reduction
+         : 1152    */
+         : 1153    template<typename DType>
+         : 1154    MSHADOW_XINLINE static void SetInitValue(DType &initv) { // NOLINT(*)
+         : 1155    initv = limits::PosInfValue<DType>();
+    0.00 :   1ca1596:        auipc   a5,0x66db
+    0.00 :   1ca159a:        flw     fa3,1786(a5) # 837cc90 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x28>
+    0.00 :   1ca159e:        sd      s3,40(sp)
+    0.00 :   1ca15a0:        sd      s5,24(sp)
+         : 1160    mshadow::Shape<2> mxnet::op::mxnet_op::unravel<2>(long, mshadow::Shape<2> const&):
+         : 683     template <int ndim>
+         : 684     MSHADOW_XINLINE Shape<ndim> unravel(const index_t idx, const Shape<ndim>& shape) {
+         : 685     Shape<ndim> ret;
+         : 686     #pragma unroll
+         : 687     for (index_t i = ndim - 1, j = idx; i >= 0; --i) {
+         : 688     auto tmp = j / shape[i];
+    0.00 :   1ca15a2:        ld      s2,8(a4)
+    0.00 :   1ca15a6:        ld      s5,0(a4)
+         : 691     void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]:
+         : 448     #pragma omp parallel for num_threads(thread_count)
+    0.00 :   1ca15aa:        ld      t3,16(s6)
+    0.00 :   1ca15ae:        lbu     s3,64(s6)
+    0.00 :   1ca15b2:        ld      a0,8(s6)
+         : 450     seq_reduce_assign<Reducer, ndim, AType, DType, OType, OP, IndexOP>(
+    0.00 :   1ca15b6:        ld      t2,56(s6)
+    0.00 :   1ca15ba:        ld      t0,48(s6)
+    0.00 :   1ca15be:        slli    a5,t4,0x2
+    0.00 :   1ca15c2:        add     t5,t5,a5
+         : 455     void mshadow::red::minimum::SetInitValue<float>(float&):
+    0.00 :   1ca15c4:        fsw     fa3,-68(s0)
+         : 1151    void mxnet::op::broadcast::seq_reduce_assign<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(long, unsigned long, bool, float const*, float*, mshadow::Shape<2> const&, mshadow::Shape<2> const&, mshadow::Shape<2> const&, mshadow::Shape<2> const&, bool):
+         : 364     for (size_t k = 0; k < M; ++k) {
+    0.00 :   1ca15c8:        beqz    a0,1ca1672 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]+0x12c>
+         : 366     mshadow::Shape<2> mxnet::op::mxnet_op::unravel<2>(long, mshadow::Shape<2> const&):
+    0.00 :   1ca15ca:        div     a5,t4,s2
+    0.00 :   1ca15ce:        ld      a2,8(t0)
+    0.00 :   1ca15d2:        ld      t1,0(t0)
+         : 686     long mxnet::op::mxnet_op::dot<2>(mshadow::Shape<2> const&, mshadow::Shape<2> const&):
+         : 696     template <int ndim>
+         : 697     MSHADOW_XINLINE index_t dot(const Shape<ndim>& coord, const Shape<ndim>& stride) {
+         : 698     index_t ret = 0;
+         : 699     #pragma unroll
+         : 700     for (int i = 0; i < ndim; ++i) {
+         : 701     ret += coord[i] * stride[i];
+    0.00 :   1ca15d6:        ld      a7,0(t2)
+    0.00 :   1ca15da:        ld      a6,8(t2)
+         : 704     void mxnet::op::broadcast::seq_reduce_assign<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(long, unsigned long, bool, float const*, float*, mshadow::Shape<2> const&, mshadow::Shape<2> const&, mshadow::Shape<2> const&, mshadow::Shape<2> const&, bool):
+    0.00 :   1ca15de:        li      a4,0
+    0.00 :   1ca15e0:        rem     a5,a5,s5
+    0.00 :   1ca15e4:        rem     a1,t4,s2
+         : 367     long mxnet::op::mxnet_op::ravel<2>(mshadow::Shape<2> const&, mshadow::Shape<2> const&):
+         : 672     ret = ret * shape[i] + (shape[i] > coord[i]) * coord[i];
+    0.00 :   1ca15e8:        slt     a3,a5,s4
+    0.00 :   1ca15ec:        neg     a3,a3
+    0.00 :   1ca15f0:        and     a3,a3,a5
+    0.00 :   1ca15f2:        mul     a3,a3,s1
+    0.00 :   1ca15f6:        mv      a5,a1
+    0.00 :   1ca15f8:        slt     a1,a1,s1
+    0.00 :   1ca15fc:        neg     a1,a1
+    0.00 :   1ca1600:        and     a5,a5,a1
+    0.00 :   1ca1602:        add     a3,a3,a5
+         : 675     mshadow::Shape<2> mxnet::op::mxnet_op::unravel<2>(long, mshadow::Shape<2> const&):
+         : 683     auto tmp = j / shape[i];
+    0.31 :   1ca1604:        div     a5,a4,a2
+         : 685     void mshadow::red::minimum::Reduce<float>(float volatile&, float):
+         : 1112    if (!isnan_typed::IsNan(dst)) {
+    0.00 :   1ca1608:        flw     fa5,-68(s0)
+    0.15 :   1ca160c:        feq.s   a1,fa5,fa5
+         : 1115    long mxnet::op::mxnet_op::dot<2>(mshadow::Shape<2> const&, mshadow::Shape<2> const&):
+         : 696     ret += coord[i] * stride[i];
+    0.70 :   1ca1610:        rem     a5,a5,t1
+    0.00 :   1ca1614:        rem     s6,a4,a2
+    0.08 :   1ca1618:        addi    a4,a4,1
+    0.08 :   1ca161a:        mul     a5,a5,a7
+    0.00 :   1ca161e:        mul     s6,s6,a6
+         : 698     void mxnet::op::broadcast::seq_reduce_assign<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(long, unsigned long, bool, float const*, float*, mshadow::Shape<2> const&, mshadow::Shape<2> const&, mshadow::Shape<2> const&, mshadow::Shape<2> const&, bool):
+         : 366     AType temp = OP::Map(big[j + mxnet_op::dot(coord, rstride)]);
+    1.39 :   1ca1622:        add     a5,a5,a3
+    1.08 :   1ca1624:        add     a5,a5,s6
+    0.00 :   1ca1626:        slli    a5,a5,0x2
+    1.55 :   1ca1628:        add     a5,a5,t3
+    1.62 :   1ca162a:        flw     fa5,0(a5)
+         : 369     void mshadow::red::minimum::Reduce<float>(float volatile&, float):
+    5.87 :   1ca162e:        beqz    a1,1ca163e <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]+0xf8>
+         : 1113    if (!(dst <= src)) dst = src;
+    0.31 :   1ca1630:        flw     fa4,-68(s0)
+    0.39 :   1ca1634:        fle.s   a5,fa4,fa5
+   82.92 :   1ca1638:        bnez    a5,1ca163e <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]+0xf8>
+    0.00 :   1ca163a:        fsw     fa5,-68(s0)
+         : 1114    void mxnet::op::broadcast::seq_reduce_assign<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(long, unsigned long, bool, float const*, float*, mshadow::Shape<2> const&, mshadow::Shape<2> const&, mshadow::Shape<2> const&, mshadow::Shape<2> const&, bool):
+         : 364     for (size_t k = 0; k < M; ++k) {
+    3.55 :   1ca163e:        bne     a0,a4,1ca1604 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]+0xbe>
+         : 390     assign(&small[idx], addto, OType(val));
+    0.00 :   1ca1642:        flw     fa5,-68(s0)
+         : 392     void mxnet::op::broadcast::assign<float>(float*, bool, float):
+         : 294     if (addto) {
+    0.00 :   1ca1646:        beqz    s3,1ca1652 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]+0x10c>
+         : 295     *dst += src;
+    0.00 :   1ca164a:        flw     fa4,0(t5)
+    0.00 :   1ca164e:        fadd.s  fa5,fa5,fa4
+    0.00 :   1ca1652:        fsw     fa5,0(t5)
+    0.00 :   1ca1656:        addi    t4,t4,1
+    0.00 :   1ca1658:        addi    t5,t5,4
+    0.00 :   1ca165a:        bne     t6,t4,1ca15c4 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]+0x7e>
+    0.00 :   1ca165e:        ld      s3,40(sp)
+    0.00 :   1ca1660:        ld      s4,32(sp)
+    0.00 :   1ca1662:        ld      s5,24(sp)
+         : 305     void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]:
+         : 448     #pragma omp parallel for num_threads(thread_count)
+    0.00 :   1ca1664:        ld      ra,72(sp)
+    0.00 :   1ca1666:        ld      s0,64(sp)
+    0.00 :   1ca1668:        ld      s1,56(sp)
+    0.00 :   1ca166a:        ld      s2,48(sp)
+    0.00 :   1ca166c:        ld      s6,16(sp)
+    0.00 :   1ca166e:        addi    sp,sp,80
+    0.00 :   1ca1670:        ret
+         : 456     void mxnet::op::broadcast::seq_reduce_assign<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(long, unsigned long, bool, float const*, float*, mshadow::Shape<2> const&, mshadow::Shape<2> const&, mshadow::Shape<2> const&, mshadow::Shape<2> const&, bool):
+         : 364     for (size_t k = 0; k < M; ++k) {
+    0.00 :   1ca1672:        fmv.s   fa5,fa3
+    0.00 :   1ca1676:        j       1ca1646 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]+0x100>
+    0.00 :   1ca1678:        addi    t6,t6,1
+         : 365     void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]:
+         : 449     for (index_t idx = 0; idx < static_cast<index_t>(N); ++idx) {
+    0.00 :   1ca167a:        li      t4,0
+    0.00 :   1ca167c:        j       1ca1576 <void mxnet::op::broadcast::seq_reduce_compute<mshadow::red::minimum, 2, float, float, float, mxnet::op::mshadow_op::identity, mxnet::op::mshadow_op::set_index_no_op<float, long> >(unsigned long, unsigned long, bool, float const*, float*, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>, mshadow::Shape<2>) [clone ._omp_fn.0]+0x30>

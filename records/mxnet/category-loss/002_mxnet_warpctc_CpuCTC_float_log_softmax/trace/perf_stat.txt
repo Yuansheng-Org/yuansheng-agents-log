@@ -1,0 +1,103 @@
+11-MXNET-OPPERF-BENCHMARK category-loss RISC-V perf stat
+========================================================
+
+Source CSV: /workspace/results/11-mxnet-opperf-benchmark_results.csv
+TestName: category-loss
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 86,952,084,067 |
+| task_clock | 322,847.4100000000 |
+| cpu_cycle | 17,433,209,451,669 |
+| instruction | 11,010,695,435,978 |
+| cache_references | 5,010,282,828 |
+| cache_misses | 5,010,285,096 |
+| branches | 42,827,155,087 |
+| branch_misses | 724,265,807 |
+| L1_dcache_loads | 110,552,669,755 |
+| L1_dcache_load_misses | 285,843,184 |
+| LLC_load_misses | 2,150,084,404 |
+| LLC_loads | 5,010,296,861 |
+| IPC | 0.6315930000 |
+| opperf_CTCLoss_input_0_max_storage_mem_alloc_cpu_0 | 20,480.4004000000 |
+| opperf_CTCLoss_input_0_avg_time_forward_CTCLoss_us | 299.4637000000 |
+| opperf_MakeLoss_input_0_max_storage_mem_alloc_cpu_0 | 2,097.1521000000 |
+| opperf_MakeLoss_input_0_avg_time_forward_MakeLoss_us | 0.4609000000 |
+| opperf_MakeLoss_input_0_avg_time_backward_MakeLoss_us | 0.3975000000 |
+| opperf_MakeLoss_input_1_max_storage_mem_alloc_cpu_0 | 20 |
+| opperf_MakeLoss_input_1_avg_time_forward_MakeLoss_us | 0.0808000000 |
+| opperf_MakeLoss_input_1_avg_time_backward_MakeLoss_us | 0.0205000000 |
+| opperf_MakeLoss_input_2_max_storage_mem_alloc_cpu_0 | 2,000 |
+| opperf_MakeLoss_input_2_avg_time_forward_MakeLoss_us | 0.4380000000 |
+| opperf_MakeLoss_input_2_avg_time_backward_MakeLoss_us | 0.3743000000 |
+| opperf_ctc_loss_input_0_max_storage_mem_alloc_cpu_0 | 40,960.1992000000 |
+| opperf_ctc_loss_input_0_avg_time_forward_ctc_loss_us | 299.4806000000 |
+| opperf_smooth_l1_input_0_max_storage_mem_alloc_cpu_0 | 4,194.3042000000 |
+| opperf_smooth_l1_input_0_avg_time_forward_smooth_l1_us | 1.3004000000 |
+| opperf_smooth_l1_input_0_avg_time_backward_smooth_l1_us | 1.1509000000 |
+| opperf_smooth_l1_input_1_max_storage_mem_alloc_cpu_0 | 20 |
+| opperf_smooth_l1_input_1_avg_time_forward_smooth_l1_us | 0.0696000000 |
+| opperf_smooth_l1_input_1_avg_time_backward_smooth_l1_us | 0.0703000000 |
+| opperf_smooth_l1_input_2_max_storage_mem_alloc_cpu_0 | 4,000 |
+| opperf_smooth_l1_input_2_avg_time_forward_smooth_l1_us | 1.2411000000 |
+| opperf_smooth_l1_input_2_avg_time_backward_smooth_l1_us | 1.0940000000 |
+| opperf_softmax_cross_entropy_input_0_max_storage_mem_alloc_cpu_0 | 0.0040000000 |
+| opperf_softmax_cross_entropy_input_0_avg_time_forward_softmax_cross_entropy_us | 7.4761000000 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 86.952084 |
+| cache_miss_rate | 100.000% |
+| branch_miss_rate | 1.691% |
+| L1_dcache_load_miss_rate | 0.259% |
+| LLC_load_miss_rate | 42.913% |
+
+perf stat style summary
+-----------------------
+            86,952,084,067  duration_time
+        322,847.4100000000  task_clock
+        17,433,209,451,669  cpu_cycle
+        11,010,695,435,978  instruction
+             5,010,282,828  cache_references
+             5,010,285,096  cache_misses
+            42,827,155,087  branches
+               724,265,807  branch_misses
+           110,552,669,755  L1_dcache_loads
+               285,843,184  L1_dcache_load_misses
+             2,150,084,404  LLC_load_misses
+             5,010,296,861  LLC_loads
+              0.6315930000  IPC
+         20,480.4004000000  opperf_CTCLoss_input_0_max_storage_mem_alloc_cpu_0
+            299.4637000000  opperf_CTCLoss_input_0_avg_time_forward_CTCLoss_us
+          2,097.1521000000  opperf_MakeLoss_input_0_max_storage_mem_alloc_cpu_0
+              0.4609000000  opperf_MakeLoss_input_0_avg_time_forward_MakeLoss_us
+              0.3975000000  opperf_MakeLoss_input_0_avg_time_backward_MakeLoss_us
+                        20  opperf_MakeLoss_input_1_max_storage_mem_alloc_cpu_0
+              0.0808000000  opperf_MakeLoss_input_1_avg_time_forward_MakeLoss_us
+              0.0205000000  opperf_MakeLoss_input_1_avg_time_backward_MakeLoss_us
+                     2,000  opperf_MakeLoss_input_2_max_storage_mem_alloc_cpu_0
+              0.4380000000  opperf_MakeLoss_input_2_avg_time_forward_MakeLoss_us
+              0.3743000000  opperf_MakeLoss_input_2_avg_time_backward_MakeLoss_us
+         40,960.1992000000  opperf_ctc_loss_input_0_max_storage_mem_alloc_cpu_0
+            299.4806000000  opperf_ctc_loss_input_0_avg_time_forward_ctc_loss_us
+          4,194.3042000000  opperf_smooth_l1_input_0_max_storage_mem_alloc_cpu_0
+              1.3004000000  opperf_smooth_l1_input_0_avg_time_forward_smooth_l1_us
+              1.1509000000  opperf_smooth_l1_input_0_avg_time_backward_smooth_l1_us
+                        20  opperf_smooth_l1_input_1_max_storage_mem_alloc_cpu_0
+              0.0696000000  opperf_smooth_l1_input_1_avg_time_forward_smooth_l1_us
+              0.0703000000  opperf_smooth_l1_input_1_avg_time_backward_smooth_l1_us
+                     4,000  opperf_smooth_l1_input_2_max_storage_mem_alloc_cpu_0
+              1.2411000000  opperf_smooth_l1_input_2_avg_time_forward_smooth_l1_us
+              1.0940000000  opperf_smooth_l1_input_2_avg_time_backward_smooth_l1_us
+              0.0040000000  opperf_softmax_cross_entropy_input_0_max_storage_mem_alloc_cpu_0
+              7.4761000000  opperf_softmax_cross_entropy_input_0_avg_time_forward_softmax_cross_entropy_us
+                 86.952084  duration_s
+                  100.000%  cache_miss_rate
+                    1.691%  branch_miss_rate
+                    0.259%  L1_dcache_load_miss_rate
+                   42.913%  LLC_load_miss_rate

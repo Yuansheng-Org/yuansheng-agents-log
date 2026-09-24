@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-mxnet-opperf-category-convolution-003",
+  "patchCandidateId": "pc-bp-mxnet-opperf-category-convolution-003",
+  "reviewedAt": "2026-09-21T06:32:00.000Z",
+  "reviewer": "opencode-independent-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "RVV 1.0 / Zve32f e32,m4 intrinsics only (vsetvl_e32m4, vle32/vse32, vlse32/vsse32, vfadd_vv_f32m4); no x86/ARM or th.v*. vtype SEW=32/LMUL=4 consistent across all vector ops; runtime vl = min(AVL=n-i, VLMAX) so VLEN-independent (VLEN=128, VLMAX m4=16). No mask; tail handled by runtime vl with ta,ma, only vl lanes stored (no OOB tail write). Peak live m4 groups ~2 (vc, vd/result), no spill. Strided store correctly uses __riscv_vsse32 (vsse32.v) not unit-stride vse32; confirmed by disassembly. RVV path guarded by MXNET_IM2COL_USE_RVV and std::is_same<DType,float>, scalar fallback intact. Evidence: diaglog Build ISA contains v1p0_..._zve32f1p0_..._zvl128b1p0; hardware ISA rv64imafdcv_..._zve32f; blueprint targetHardware 'SOPHGO SG2044 / XuanTie C920v2'."
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "src/operator/nn/im2col.h",
+      "evidence": "+  if (std::is_same<DType, float>::value) {",
+      "severity": "suggestion",
+      "category": "code-quality",
+      "suggestion": "The float dispatch uses a runtime-constant if rather than if constexpr, so for non-float DType the RVV body is still instantiated (dead but compilable). Optional: switch to if constexpr; however the pre-existing im2col_copy_strided_row in the same header uses the identical idiom, so keeping it is consistent. No correctness impact."
+    },
+    {
+      "id": "F2",
+      "file": "src/operator/nn/im2col.h",
+      "evidence": "recommendedVerification: 在 SG2044/C920v2 上重新运行 mxnet-opperf category-convolution 基准并对 _BackwardData perf record/annotate",
+      "severity": "suggestion",
+      "category": "verification",
+      "suggestion": "On-target perf re-sampling could not be performed in this environment; only functional equivalence and instruction generation were verified. After merge, run 'agent1 patch_regression --case category-convolution' on SG2044 and re-annotate to confirm interior bgeu/fsw share drops and vle32/vfadd.vv/vse32 appear. Residual risk due to environment limitation, not a patch defect."
+    }
+  ]
+}

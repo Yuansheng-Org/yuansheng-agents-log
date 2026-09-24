@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "WARNING: 本补丁未检测到 RISC-V 架构相关代码（汇编/inline-asm/RVV intrinsic/ISA 特性），已跳过架构专项审核，仅做通用质量审核。",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-mxnet-category-nn-basic-003",
+  "patchPlanId": "pp-bp-mxnet-category-nn-basic-003",
+  "createdAt": "2026-09-21T07:29:39.397Z",
+  "changedFiles": [
+    "src/operator/tensor/broadcast_reduce-inl.h"
+  ],
+  "gitDiff": "diff --git a/src/operator/tensor/broadcast_reduce-inl.h b/src/operator/tensor/broadcast_reduce-inl.h\nindex f9834d05b..a9625d04e 100644\n--- a/src/operator/tensor/broadcast_reduce-inl.h\n+++ b/src/operator/tensor/broadcast_reduce-inl.h\n@@ -361,13 +361,27 @@ MSHADOW_XINLINE void seq_reduce_assign(const index_t idx,\n   AType val, residual;\n   Reducer::SetInitValue(val, residual);\n   if (!use_omp) {\n+    // Loop-level strength reduction: walk the flat offset into `big`\n+    // incrementally (mixed-radix carry starting from the fastest dimension)\n+    // instead of recomputing mxnet_op::unravel(k, rshape) and\n+    // mxnet_op::dot(coord, rstride) for every reduce element.\n+    index_t offset = 0;\n+    for (int i = 0; i < ndim; ++i)\n+      coord[i] = 0;\n     for (size_t k = 0; k < M; ++k) {\n-      coord      = mxnet_op::unravel(k, rshape);\n-      AType temp = OP::Map(big[j + mxnet_op::dot(coord, rstride)]);\n+      AType temp = OP::Map(big[j + offset]);\n       // argmin/max, set IndexedNum.idx\n       if (IndexOP::do_op)\n         IndexOP::Op(&temp, k);\n       Reducer::Reduce(val, temp, residual);\n+      for (int i = ndim - 1; i >= 0; --i) {\n+        if (++coord[i] < rshape[i]) {\n+          offset += rstride[i];\n+          break;\n+        }\n+        coord[i] = 0;\n+        offset -= (rshape[i] - 1) * rstride[i];\n+      }\n     }\n   } else {\n     const int thread_count = engine::OpenMP::Get()->GetRecommendedOMPThreadCount();\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

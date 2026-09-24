@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-category-nn-basic-003",
+  "blueprintId": "bp-mxnet-category-nn-basic-003",
+  "createdAt": "2026-09-21T07:25:23.917Z",
+  "objective": "ndim=5 的 broadcast sum 归约内核在每个 reduce 元素上重复执行 5 维索引分解（5 div + 5 rem）、40 字节 Shape<5> 结构物化拷贝与 5 元素点积，索引计算成本远高于其唯一的一次访存（占 ≈81.3% 样本）；同时归约本身以标量补偿求和 + isinf 守卫执行，累加器因 volatile 形参驻留栈上，无 RVV 加宽/寄存器内累加载体（占 ≈17.1%）。",
+  "changes": [
+    {
+      "filePath": "src/operator/tensor/broadcast_reduce-inl.h",
+      "action": "modify",
+      "rationale": "ndim=5 的 broadcast sum 归约内核在每个 reduce 元素上重复执行 5 维索引分解（5 div + 5 rem）、40 字节 Shape<5> 结构物化拷贝与 5 元素点积，索引计算成本远高于其唯一的一次访存（占 ≈81.3% 样本）；同时归约本身以标量补偿求和 + isinf 守卫执行，累加器因 volatile 形参驻留栈上，无 RVV 加宽/寄存器内累加载体（占 ≈17.1%）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/operator/mxnet_op.h",
+      "action": "modify",
+      "rationale": "ndim=5 的 broadcast sum 归约内核在每个 reduce 元素上重复执行 5 维索引分解（5 div + 5 rem）、40 字节 Shape<5> 结构物化拷贝与 5 元素点积，索引计算成本远高于其唯一的一次访存（占 ≈81.3% 样本）；同时归约本身以标量补偿求和 + isinf 守卫执行，累加器因 volatile 形参驻留栈上，无 RVV 加宽/寄存器内累加载体（占 ≈17.1%）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "3rdparty/mshadow/mshadow/base.h",
+      "action": "modify",
+      "rationale": "ndim=5 的 broadcast sum 归约内核在每个 reduce 元素上重复执行 5 维索引分解（5 div + 5 rem）、40 字节 Shape<5> 结构物化拷贝与 5 元素点积，索引计算成本远高于其唯一的一次访存（占 ≈81.3% 样本）；同时归约本身以标量补偿求和 + isinf 守卫执行，累加器因 volatile 形参驻留栈上，无 RVV 加宽/寄存器内累加载体（占 ≈17.1%）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 src/operator/tensor/broadcast_reduce-inl.h, src/operator/mxnet_op.h, 3rdparty/mshadow/mshadow/base.h 来解决 blueprint bp-mxnet-category-nn-basic-003。"
+}

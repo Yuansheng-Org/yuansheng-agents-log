@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-opperf-category-misc-002",
+  "blueprintId": "bp-mxnet-opperf-category-misc-002",
+  "createdAt": "2026-09-21T08:06:38.282Z",
+  "objective": "为 mshadow 最近邻上采样（UpSamplingNearestExp）forward 路径新增 RVV 1.0 intrinsic 实现，消除逐输出元素的 x/scale_ 整数除法与逐元素标量 gather/store，改为一次调用内预计算水平源 byte-offset 表 + vluxei32 gather + 连续 vse32 store，并保留原标量 fallback，使 category-misc 中 rank 002 热点（MapPlan<saveto, Tensor<cpu,4,float>, UpSamplingNearestExp>）不再主导样本。",
+  "changes": [
+    {
+      "filePath": "3rdparty/mshadow/mshadow/extension/spatial_upsampling_nearest.h",
+      "action": "modify",
+      "rationale": "在 UpSamplingNearestExp 的 Plan 内暴露 scale_/new_height_/src_height_ 及底层源 Plan 的只读访问器，并新增 RVV 1.0 最近邻上采样 kernel mshadow_rvv_upsampling_nearest_f32：一次调用预计算 wByte[x]=(x/scale_)*4 水平 offset 表（跨所有输出行/通道复用），主循环用 __riscv_vluxei32_v_f32m4 gather + __riscv_vse32_v_f32m4 连续 store，runtime vsetvl 处理 tail；整段用 __riscv_v_intrinsic/__riscv_vector 宏 guard，非 RVV 构建行为不变。",
+      "instructions": [
+        "为 Plan<UpSamplingNearestExp> 增加 public 只读访问器 scale()/new_height()/src_height()/src_plan()，不改动 Eval 语义。",
+        "新增 free function mshadow_rvv_upsampling_nearest_f32(src,dst,planes,src_height,src_width,scale)，在 #if defined(__riscv_v_intrinsic) || defined(__riscv_vector) 内实现并 #include <riscv_vector.h>；offset 表用 std::vector<uint32_t> 一次性预计算，逐行 vluxei32 gather + vse32 store。",
+        "保持 floor(x/scale_)、floor(y/scale_) 坐标语义与逐元素写一次；scale>=1；src_width*4 需能放入 u32，超出时由调用方回退标量。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/operator/nn/upsampling-inl.h",
+      "action": "modify",
+      "rationale": "在 UpSamplingForward 的单输入 nearest forward 路径（benchmark 命中路径）中，当 xpu==cpu、DType==float、req==kWriteTo、输入/输出均连续且输出尺寸恰为输入*scale 时，直接分派到 RVV kernel；否则维持原有 Assign(upsampling_nearest(...)) 表达式路径（多输入、slice、非 write、非 float、非连续等场景语义不变）。",
+      "instructions": [
+        "仅在 param.num_args==1 的 else 分支增加 RVV fast-path 判定与调用，位于 Assign 之前；条件不满足时原样调用 Assign。",
+        "fast-path 判定包含 req[up_enum::kOut]==kWriteTo、out/data CheckContiguous、out.size(2)==data.size(2)*scale、out.size(3)==data.size(3)*scale，以及 src_width 不溢出 u32。",
+        "使用 std::is_same<xpu,cpu>/<DType,float> 与 #if defined(__riscv_v_intrinsic) || defined(__riscv_vector) 双层 guard，保证 gpu 与非 RVV 构建语义不变。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "spatial_upsampling_nearest.h 新增 RVV nearest 上采样 kernel 与 Plan 只读访问器（宏 guard + 标量 fallback）；upsampling-inl.h 在单输入 nearest/write/float/连续 且尺寸匹配时把表达式求值分派到该 RVV kernel，其余路径保持原 Assign/upsampling_nearest。无公共 API、坐标语义、OpenMP 行分块与标量 fallback 破坏。"
+}
