@@ -7,7 +7,7 @@
 ## 1. 当前资料概述
 
 - 资料登记日期：2026-09-08至2026-09-24。
-- 总表尚未逐项关联实际用例、函数和上游链接；本分支的已筛选产物及当前状态见 [caffe 记录](records/caffe/README.md)。
+- 18 款软件的已筛选产物已按“测试用例 → 函数”归档，共 85 个函数目录；Faiss 目前只有软件级 README。下方历史总表尚未逐行关联实际用例、函数和上游链接，具体已归档内容见各软件 README。
 
 19款软件的测试原始记录为：测试用例 **545**、分析热点函数 **2229**、Craft成功生成补丁 **534**。
 
@@ -142,13 +142,40 @@
 | 119 | 待分配（预留）                                                | 待补充  | 待补充  | 待补充      | 待补充        | 预留，不计入有效数   | 待补充      |
 | 120 | 待分配（预留）                                                | 待补充  | 待补充  | 待补充      | 待补充        | 预留，不计入有效数   | 待补充      |
 
-## 3. 日志目录与记录模板
+## 3. 已筛选产物索引
+
+下表按当前归档目录计数；它与历史总表中的“专家复核有效补丁”统计口径不同。Pixman 和 OpenBLAS 整理分支分别保留 5 项、7 项，均少于对应 `add-*` 分支的 6 项、9 项。
+
+| 软件 | 已归档函数目录 | 软件记录 |
+| --- | ---: | --- |
+| Caffe | 3 | [记录](records/caffe/README.md) |
+| FFmpeg/H264/H265 | 11 | [记录](records/ffmpeg-h264-h265/README.md) |
+| Glibc | 4 | [记录](records/glibc/README.md) |
+| Go | 3 | [记录](records/golang/README.md) |
+| MariaDB | 1 | [记录](records/mariadb/README.md) |
+| MNN | 1 | [记录](records/mnn/README.md) |
+| MXNet | 15 | [记录](records/mxnet/README.md) |
+| oneDNN | 12 | [记录](records/onednn/README.md) |
+| ONNX Runtime | 2 | [记录](records/onnxruntime/README.md) |
+| OpenBLAS | 7 | [记录](records/openblas/README.md) |
+| OpenCV | 10 | [记录](records/opencv/README.md) |
+| OpenJDK | 1 | [记录](records/openjdk/README.md) |
+| OpenSSL | 3 | [记录](records/openssl/README.md) |
+| Pixman | 5 | [记录](records/pixman/README.md) |
+| PostgreSQL | 2 | [记录](records/postgresql/README.md) |
+| PyTorch | 1 | [记录](records/pytorch/README.md) |
+| Redis | 3 | [记录](records/redis/README.md) |
+| vLLM | 1 | [记录](records/vllm/README.md) |
+| Faiss | 0 | [记录](records/faiss/README.md) |
+
+## 4. 日志目录与记录模板
 
 ```text
 README.md                              # 本说明及19软件历史汇总索引
 records/<software>/README.md           # 软件级索引和统计口径
 records/<software>/<testcase>/<function>/
-  trace/                               # 函数级 perf 证据、诊断日志和 Blueprint
-  craft/                               # Plan、Candidate、Diff 和 AI review
-  review/ 或 reviews/                  # 已筛选的复核结果
+  trace/                               # 原始 Trace 证据或 Blueprint bundle
+  craft/                               # 原始 Craft 补丁、协议和 AI review（来源存在时）
+  review/ 或 reviews/                  # 已筛选的专家复核结果
+  provenance/                          # 补丁版本不同时保留的旧版文件（来源存在时）
 ```
