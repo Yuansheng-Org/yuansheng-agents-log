@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-pixman-affine-bench-bilinear-scale-2x-002",
+  "blueprintId": "bp-pixman-affine-bench-bilinear-scale-2x-002",
+  "createdAt": "2026-09-09T06:30:36.601Z",
+  "objective": "RVV-capable 目标上 bilinear 重采样垂直插值 pass 未向量化（build 未开启 v 且无 RVV kernel），标量双行 load + 定点插值链 + 字节打包主导样本，循环内另有索引归纳变量与 limit/基址重载的循环控制开销。",
+  "changes": [
+    {
+      "filePath": "fast_fetch_bilinear_cover（bilinear fetch 垂直插值 pass，源文件名待 DWARF 定位）",
+      "action": "modify",
+      "rationale": "RVV-capable 目标上 bilinear 重采样垂直插值 pass 未向量化（build 未开启 v 且无 RVV kernel），标量双行 load + 定点插值链 + 字节打包主导样本，循环内另有索引归纳变量与 limit/基址重载的循环控制开销。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "pixman 构建配置（meson.build riscv64 -march 开启 v）",
+      "action": "modify",
+      "rationale": "RVV-capable 目标上 bilinear 重采样垂直插值 pass 未向量化（build 未开启 v 且无 RVV kernel），标量双行 load + 定点插值链 + 字节打包主导样本，循环内另有索引归纳变量与 limit/基址重载的循环控制开销。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 fast_fetch_bilinear_cover（bilinear fetch 垂直插值 pass，源文件名待 DWARF 定位）, pixman 构建配置（meson.build riscv64 -march 开启 v） 来解决 blueprint bp-pixman-affine-bench-bilinear-scale-2x-002。"
+}

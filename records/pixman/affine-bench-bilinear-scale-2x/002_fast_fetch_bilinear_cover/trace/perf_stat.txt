@@ -1,0 +1,33 @@
+21-PIXMAN-BENCHMARK affine-bench-bilinear-scale-2x RISC-V perf stat
+===================================================================
+
+Source CSV: /workspace/results/21-pixman-benchmark_results.csv
+TestName: affine-bench-bilinear-scale-2x
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 3,360,708,044 |
+| task_clock | 3,363,755,867 |
+| cpu_cycle | 7,395,610,179 |
+| instruction | 20,387,394,068 |
+| IPC | 2.756689 |
+| status | PASSED |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 3.360708 |
+
+perf stat style summary
+-----------------------
+         3,360,708,044  duration_time
+         3,363,755,867  task_clock
+         7,395,610,179  cpu_cycle
+        20,387,394,068  instruction
+              2.756689  IPC
+                PASSED  status
+              3.360708  duration_s

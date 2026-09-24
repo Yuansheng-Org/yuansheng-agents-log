@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-pc-bp-pixman-lowlevel-blt-bilinear-022-022-001",
+  "patchCandidateId": "pc-bp-pixman-lowlevel-blt-bilinear-022-022-001",
+  "reviewedAt": "2026-09-09T06:12:34.000Z",
+  "reviewer": "yuansheng-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "verification_status=compile-only; 新增 RVV 内核：interior mask 区分内外、vluxei64 4-tap gather + SWAR 插值、边界 lane 标量重算逐 tap 置零；仅注册 NONE+8888 子集"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": []
+}

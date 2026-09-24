@@ -1,0 +1,121 @@
+diff --git a/pixman/pixman-access.c b/pixman/pixman-access.c
+index ca8872d..e7aceb3 100644
+--- a/pixman/pixman-access.c
++++ b/pixman/pixman-access.c
+@@ -1768,7 +1768,12 @@ setup_accessors (bits_image_t *image)
+ 	    image->fetch_pixel_float = info->fetch_pixel_float;
+ 	    image->store_scanline_32 = info->store_scanline_32;
+ 	    image->store_scanline_float = info->store_scanline_float;
+-	    
++
++#ifdef USE_RVV
++	    if (image->format == PIXMAN_a8 && _pixman_have_rvv)
++		image->fetch_scanline_32 = _pixman_rvv_fetch_scanline_a8;
++#endif
++
+ 	    return;
+ 	}
+ 	
+diff --git a/pixman/pixman-private.h b/pixman/pixman-private.h
+index 1416eb4..dfb1d49 100644
+--- a/pixman/pixman-private.h
++++ b/pixman/pixman-private.h
+@@ -658,6 +658,19 @@ _pixman_implementation_create_vmx (pixman_implementation_t *fallback);
+ #ifdef USE_RVV
+ pixman_implementation_t *
+ _pixman_implementation_create_rvv (pixman_implementation_t *fallback);
++
++/* RISC-V RVV source-fetch hook. _pixman_have_rvv is set to TRUE once the RVV
++   implementation has been created (i.e. runtime CPU detection passed),
++   signalling that the vectorized fetch below is safe to call. */
++extern pixman_bool_t _pixman_have_rvv;
++
++void
++_pixman_rvv_fetch_scanline_a8 (bits_image_t *   image,
++                               int              x,
++                               int              y,
++                               int              width,
++                               uint32_t *       buffer,
++                               const uint32_t * mask);
+ #endif
+ 
+ pixman_bool_t
+diff --git a/pixman/pixman-riscv.c b/pixman/pixman-riscv.c
+index 3a5604e..b7916ef 100644
+--- a/pixman/pixman-riscv.c
++++ b/pixman/pixman-riscv.c
+@@ -119,6 +119,10 @@ detect_cpu_features (void)
+ 
+ #endif
+ 
++/* Set to TRUE once the RVV implementation is created (runtime CPU detection
++   passed), signalling that vectorized source-fetch kernels are safe to use. */
++pixman_bool_t _pixman_have_rvv = FALSE;
++
+ pixman_implementation_t *
+ _pixman_riscv_get_implementations (pixman_implementation_t *imp)
+ {
+@@ -126,6 +130,7 @@ _pixman_riscv_get_implementations (pixman_implementation_t *imp)
+     if (!_pixman_disabled ("rvv") && (detect_cpu_features () & RVV))
+     {
+ 	imp = _pixman_implementation_create_rvv (imp);
++	_pixman_have_rvv = TRUE;
+     }
+ #endif
+     return imp;
+diff --git a/pixman/pixman-rvv.c b/pixman/pixman-rvv.c
+index 570799c..0953403 100644
+--- a/pixman/pixman-rvv.c
++++ b/pixman/pixman-rvv.c
+@@ -3092,6 +3092,51 @@ static const pixman_fast_path_t rvv_fast_paths[] = {
+     {PIXMAN_OP_NONE},
+ };
+ 
++/* A8 -> ARGB32 source scanline fetch, vectorized.
++ *
++ * The scalar reference (pixman-access.c: fetch_scanline_a8) expands each
++ * source byte alpha into a 32-bit a8r8g8b8 pixel: (alpha << 24) with the RGB
++ * channels zero. Here the same expansion is batched with RVV:
++ *
++ *   vle8.v      load alpha bytes (SEW=8, m1)
++ *   vzext.vf4   zero-extend each byte to a 32-bit lane (SEW=32, m4)
++ *   vsll.vi 24  place alpha in the top byte
++ *   vse32.v     store the packed a8r8g8b8 pixels
++ *
++ * The mask argument is unused, matching the generated accessor contract.
++ */
++void
++_pixman_rvv_fetch_scanline_a8 (bits_image_t *   image,
++                               int              x,
++                               int              y,
++                               int              width,
++                               uint32_t *       buffer,
++                               const uint32_t * mask)
++{
++    const uint8_t *bits;
++    size_t         n;
++    size_t         vl;
++
++    bits = (const uint8_t *)(image->bits + y * image->rowstride) + x;
++    n    = (size_t)width;
++
++    while (n > 0)
++    {
++	vuint8m1_t  src;
++	vuint32m4_t dst;
++
++	vl  = __riscv_vsetvl_e8m1 (n);
++	src = __riscv_vle8_v_u8m1 (bits, vl);
++	dst = __riscv_vzext_vf4_u32m4 (src, vl);
++	dst = __riscv_vsll_vx_u32m4 (dst, 24, vl);
++	__riscv_vse32_v_u32m4 (buffer, dst, vl);
++
++	bits   += vl;
++	buffer += vl;
++	n      -= vl;
++    }
++}
++
+ pixman_implementation_t *
+ _pixman_implementation_create_rvv (pixman_implementation_t *fallback)
+ {

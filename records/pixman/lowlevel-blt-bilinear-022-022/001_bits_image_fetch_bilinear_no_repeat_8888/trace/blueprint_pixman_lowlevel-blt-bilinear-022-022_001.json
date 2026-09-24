@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-pixman-lowlevel-blt-bilinear-022-022-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T11:21:22.780Z",
+    "software": "pixman",
+    "testcaseIds": [
+      "lowlevel-blt-bilinear-022-022"
+    ],
+    "diagnosisId": "diag-20260908T112122780Z-077fbb58",
+    "targetHardware": "SpacemiT X100 (SpacemiT K3, RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://gitlab.freedesktop.org/pixman/pixman.git",
+    "testBranch": "master",
+    "commitHash": "14735ced17e0053abbb925f9cf18c05ed9f52378"
+  },
+  "problem": {
+    "summary": "lowlevel-blt-bilinear-022-022 基准中 bits_image_fetch_bilinear_no_repeat_8888 是 rank 001 热点（2136 samples）：hot loop 0x39f66-0x3a0ac 全标量逐像素 bilinear 重采样（每像素重算 16.16 定点坐标、4 次数据相关 scalar gather、8+ 次固定点权重插值乘法、成组栈 spill/reload），而硬件暴露 RVV 1.0（VLEN 256）但 build Tag_RISCV_arch 不含 v，导致向量化在编译层被完全禁止。",
+    "evidence": [
+      "perf annotate: bits_image_fetch_bilinear_no_repeat_8888 共 2136 samples（cycles:u, local period），hot loop 0x39f66-0x3a0ac 占函数局部样本约 95%+",
+      "hot loop 全 scalar：`3a00c: mul t0,t0,s7` 5.38%、`3a07c: mul t6,s7,t6` 6.04%、`3a070: ld a0,-216(s0)` 6.32%（栈 spill reload）、`39f9a/39fe0: lw`（scalar gather）",
+      "build Tag_RISCV_arch = rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_zicsr2p0_zifencei2p0_zmmul1p0_zaamo1p0_zalrsc1p0_zca1p0_zcd1p0（无 v），硬件 SpacemiT X100 暴露 RVV 1.0（vlenb=32）→ L0 baseline mismatch：binary 不可能含 RVV 指令",
+      "perf stat: cpu_cycle 156.5G / instruction 353.4G / IPC 2.257969（全 workload，无 cache/memory/branch counter）"
+    ]
+  },
+  "rootCause": {
+    "summary": "build 缺 v（config_mismatch）使 bilinear fetch 无法向量化：全标量逐像素重采样（坐标重算 + scalar gather + 固定点插值乘加 + 栈 spill/reload）独占 hot loop，vector unit 完全未参与。",
+    "candidateFiles": [
+      "pixman/pixman-bits-image.c",
+      "meson.build"
+    ],
+    "performanceFactors": [
+      "RVV Resampling Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)",
+      "Register Pressure and Save/Restore Optimization"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "no_repeat border 语义（坐标越界走 zero-fill/memset 路径，对应分支 3a22a/3a258）",
+      "16.16 定点坐标与 8.8 权重（256-fx）的 arithmetic order 与 reference 逐位一致",
+      "8888 通道 mask 拆解-合成顺序（0xff0000ff/0x00ff00ff 形态常量）",
+      "vluxei32 index 必须为 byte offset，大图不得截断 32-bit offset"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "lowlevel-blt-bilinear-022-022"
+    ],
+    "regressionCommand": "agent1 patch_regression --case lowlevel-blt-bilinear-022-022"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "overallConfidence 0.72 < 0.80，且 pixman 源码上下文缺失（source_context_gap：无 debug symbols，candidateFiles 路径基于源码布局知识），需人工确认后转发",
+    "reasoning": "perf annotate 显示该函数 hot loop（0x39f66-0x3a0ac，函数内局部样本 ≈95%+）为全标量 bilinear 重采样：逐像素 sraiw 坐标提取、4 次数据相关 scalar lw gather、mul/mulw 固定点权重插值（5.38%/6.04% 行）与成组栈 ld/sd spill reload（6.32% 行），命中 RVV Resampling Kernels pattern（route High）。perf stat IPC=2.257969 指示 compute-ish，但无 cache/memory counter 无法确认 memory-bound 份额（impact Medium）。L0 baseline 判定：hardware 暴露 RVV 1.0（VLEN 256）而 build Tag_RISCV_arch 无 v，二进制不可能含 RVV 指令——这是置顶根因，MNN/OpenCV 的 RVV 重采样迁移案例（Related PRs）支持 vluxei32+权重插值的向量化修复方向。因无 ARM 对比与执行时序数据，指标层证据仅有 IPC 与函数内样本份额。",
+    "rootCauseType": "config_mismatch",
+    "alternativeExplanations": [
+      "即使 build 启用 v，bilinear 的数据相关 gather 与 no_repeat border 分支可能使 autovectorization 失败，需手写/intrinsic RVV kernel（code_path 备选）",
+      "若真实 bound 在 memory latency（缺 cache counter 无法排除），向量化收益可能低于 lane 数上限",
+      "pixman fast-path dispatch 若存在未达成的 rvv 实现，问题可能部分是 kernel-selection（源码不可见，四证未核实）"
+    ],
+    "currentGaps": "缺 cache/memory/branch counter → bound type 未定；percent=local period 且函数级 workload 贡献未知 → 无 workload 级收益上界；sampling IP precision 未知；无 debug symbols → candidateFiles 路径基于 pixman 源码布局知识、dispatch/policy 四证未核实；单架构 RISC-V 基准，无 ARM 对比/执行时序数据",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 pixman 源码中 bits_image_fetch_bilinear_no_repeat_8888 的实际文件位置与 fast-path dispatch 结构；确认 X100 工具链对含 v 的精确 -march 支持",
+    "affectedTarget": "RV + lowlevel-blt-bilinear-022-022",
+    "recommendedFirstAction": "在 pixman 构建配置（meson.build）启用含 v 的精确 -march（X100 实测验证的 rv64gcv 等价集）重建 libpixman；随后在 pixman/pixman-bits-image.c 的 bits_image_fetch_bilinear_no_repeat_8888 实现 RVV bilinear fetch（预计算 x0/x1 byte offset 与水平权重，vluxei32 4-tap indexed load + 固定点 widening 插值，no_repeat border 保持）",
+    "recommendedVerification": "重新运行 lowlevel-blt-bilinear-022-022 并对该函数重跑 perf annotate：确认 hot loop 出现 vsetvli/vluxei*/vse*，scalar gather（39f9a/39fe0）与栈 spill 行（3a070/3a04e）占比消失；短/中/长 row 与 no_repeat 边界样本对照 reference 逐位一致",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 2.257969,
+        "anomalyNote": "全 workload IPC 2.26 偏高，指示 compute-ish；无 cache/memory counter，无法确认 memory-bound 份额"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "bits_image_fetch_bilinear_no_repeat_8888",
+        "fileModule": "pixman/pixman-bits-image.c（无 debug symbols，基于 pixman 源码布局）",
+        "rvvPattern": "RVV Resampling Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.95,
+        "note": "2D 图像 bilinear 重采样 fetch（整数定点插值 + 数据相关 gather，内存+计算混合）；rank 001/17，2136 samples，hot loop 0x39f66-0x3a0ac 占函数局部样本约 95%+"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "pixman/pixman-bits-image.c: bits_image_fetch_bilinear_no_repeat_8888（函数名级定位，无 debug symbols）",
+      "relatedKnowledge": "https://github.com/alibaba/MNN/pull/4053, https://github.com/alibaba/MNN/commit/f4fcff3436a9d95c5367699b1c53d4eb1cbc3b7d, https://github.com/opencv/opencv/pull/22179, https://github.com/opencv/opencv/pull/22520, https://github.com/opencv/opencv/pull/27160",
+      "evidenceExplanation": "MNN #4053/f4fcff3 提供 RVV resize/interpolation kernel 的 vluxei 向量化实证，OpenCV 系列 PR 提供 scalar/固定宽度 SIMD → scalable RVV 的迁移范式，与本次 scalar gather 热点（rvv_resampling_kernels 与 no-vectorization pattern）的修复方向一致"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+21-PIXMAN-BENCHMARK lowlevel-blt-bilinear-068-068 RISC-V perf stat
+==================================================================
+
+Source CSV: /workspace/results/21-pixman-benchmark_results.csv
+TestName: lowlevel-blt-bilinear-068-068
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 96,769,400,050 |
+| task_clock | 96,695,271,283 |
+| cpu_cycle | 212,683,642,051 |
+| instruction | 486,516,951,595 |
+| IPC | 2.287515 |
+| status | PASSED |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 96.769400 |
+
+perf stat style summary
+-----------------------
+         96,769,400,050  duration_time
+         96,695,271,283  task_clock
+        212,683,642,051  cpu_cycle
+        486,516,951,595  instruction
+               2.287515  IPC
+                 PASSED  status
+              96.769400  duration_s

@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-pixman-lowlevel-blt-bilinear-094-094-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T09:25:30.333Z",
+    "software": "pixman",
+    "testcaseIds": [
+      "lowlevel-blt-bilinear-094-094"
+    ],
+    "diagnosisId": "diag-20260908T092530333Z-f99a165d",
+    "targetHardware": "SpacemiT K3 (spacemit-x100, RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://gitlab.freedesktop.org/pixman/pixman.git",
+    "testBranch": "master",
+    "commitHash": "14735ced17e0053abbb925f9cf18c05ed9f52378"
+  },
+  "problem": {
+    "summary": "RISC-V 上 pixman 的 OVER/solid→8888 mask→8888 dest 合成 fast path（rvv_composite_over_n_8888_8888_ca）占全程序 78.49% 的 cycles:u 样本，成为绝对热点。该已向量化 kernel 每 32-pixel chunk 发射 15 条 vsetvli（76.20% 的函数局部样本集中在 55592/555da 两条 vsetvli 上，相同 e8/m4 与 e16/m8 状态在同一无 clobber 基本块内被重复建立 4-6 次），并因 3 个并发 e16/m8 widening 累加器把峰值 live set 推到 32 groups 整满而将 vsrc 反复以 128B 栈往返 spill/reload（vl4r.v 占 14.83%）。整体低 IPC（0.547）与 vsetvli 重配置 + 栈往返的 stall-bound 画像一致。",
+    "evidence": [
+      "perf stat（whole-test）：duration 18.626536s，cycles 40,949,136,151，instructions 22,393,248,020，IPC=0.546855 — 低 IPC、stall/latency-prone",
+      "perf report（cycles:u）：rvv_composite_over_n_8888_8888_ca 占全程序 78.49% samples（1436 samples，event=cycles:u，percent=local period）",
+      "annotate：50.46% 样本落在 555da vsetvli zero,a5,e8,m4,ta,ma；25.74% 落在 55592 vsetvli zero,a5,e16,m8,ta,ma — 两行合计 76.20%",
+      "annotate：14.83% 样本落在 555ce vl4r.v v20,(t2)（每 chunk 128B vector spill reload，对应 55570 vs4r.v 存栈）",
+      "源码 pixman-rvv.c:2443-2453：内层循环为 UN8x4 逐字节通道合成（vwmaccu widening + 255-division + vsaddu 饱和），宏 helpers 在 pixman-rvv.c:921-1043"
+    ]
+  },
+  "rootCause": {
+    "summary": "已向量化的 OVER 合成 kernel 每 32-pixel chunk 重复建立 15 次 vtype 状态（完全相同 e8/m4,vl=128 与 e16/m8,vl=128 状态在同一无 clobber 基本块内被重建 4/6 次），并因 3 个并发 e16/m8 widening 累加器使峰值 live set 达到 32 groups 整满而把 vsrc 逐 chunk 128B 栈往返 spill/reload，造成 vsetvli 重配置与栈流量主导热点区间。",
+    "candidateFiles": [
+      "pixman/pixman-rvv.c"
+    ],
+    "performanceFactors": [
+      "RVV Vector-State Management",
+      "RVV Register-Group Utilization and LMUL Sizing"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "UN8x4 逐字节通道合成语义（out = dst*(255 - m*srca/255)/255 + m*vsrc/255）",
+      "像素级输出与 baseline 逐元素一致",
+      "(x + x>>8 + ONE_HALF)>>8 的 255-division 近似（G_SHIFT=8, ONE_HALF=128）与 vsaddu 饱和语义",
+      "像素内通道字节序（A/R/G/B）与 chunk vl 精确性（ta 尾随 lane 不被读取）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "lowlevel-blt-bilinear-094-094"
+    ],
+    "regressionCommand": "agent1 patch_regression --case lowlevel-blt-bilinear-094-094"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.62,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "两独立根因的修复需人工确认方向并做 frontier 实测后转发；impact 定量受 sampling metadata（percent-type=local-period）与 sampling IP precision 缺口限制",
+    "reasoning": "perf stat 显示全测试 IPC=0.546855，指示 stall/latency-bound；perf report 显示 rvv_composite_over_n_8888_8888_ca 占全程序 78.49% 样本。annotate 中 vsetvli 家族占函数局部样本约 79.1%（top-2 指令 555da 50.46% + 55592 25.74% = 76.20%），且反汇编证明完全相同状态（e8/m4,vl=128、e16/m8,vl=128）在同一无 call/无 clobber 基本块 55586-55630 内被重复建立 4/6 次（555f6→55602→5560a 相隔 2 条指令重建同一 e16/m8 状态），命中 RVV Vector-State Management（route=Medium，无 compiler pass 证据）。同时逐指令 live-interval 核算显示 555e2/5560e 两处峰值达 32 groups 整满（3× m8 累加器 + 3× m4 源/结果），vsrc 被迫 vs4r.v/vl4r.v 栈往返（vl4r.v 14.83%），命中 RVV Register-Group Utilization and LMUL Sizing（route=High，spill 为直接反汇编事实）。两机制地址段不相交、可分离验证，为 independent findings。代码知识证据（vsetvli 合并/状态失效点选择与 LMUL live-set 预算相关 PR）支持同一修复方向：vtype 分相 + live-range 收缩。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "vsetvli 高占比可能是前序 vle32.v 访存 stall 的采样 skid（precise_ip 未知未排除）——若为真，第一杠杆是访存 ILP/展开而非 vtype 批处理",
+      "compiler autovec 扰动（rvv_intrinsic_kernel_autovectorization_control row）因无 -fopt-info/Rpass 证据未确认；若确认则修复方向变为 kernel 作用域收窄关闭 autovec",
+      "annotate percent-type=local-period 且为单次运行窗口，存在采样噪声/窗口偏差风险"
+    ],
+    "currentGaps": "热点 object libpixman-1.so.0.46.5 的 Tag_RISCV_arch attribute 未直接提供（bench ELF attribute 无 v，但 hot object disassembly 含 RVV 1.0 指令）；无 cache/memory/branch counter，bound type 未完全分类；precise_ip/Exact-IP 未知（单指令归因不可用，结论锚定 interval 55586-55630）；annotate percent-type=local-period（无法给出 workload 级 Amdahl 上界）；无 compiler pass dump（-fopt-info-vec/-Rpass）",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认两独立根因（vtype 状态重复重建 + vector spill）的修复方向与风险：vtype 分相重构不得改变 UN8x4 像素级输出；live-range 收缩候选需按 m1/m2/m4/m8×unroll frontier 实测选定，不预设 m8 或固定收益倍数",
+    "affectedTarget": "RV + lowlevel-blt-bilinear-094-094（纯 RISC-V profile 诊断，无 ARM 对照数据）",
+    "recommendedFirstAction": "pixman/pixman-rvv.c:2443-2453：将 rvv_composite_over_n_8888_8888_ca 内层循环重构为 vtype 分相结构（load → 两个仅依赖 m 的 e8 vwmaccu 批处理 → e16 rounding → narrow+vnot → d_out vwmaccu → 最终 narrow+vsaddu+store），目标每 chunk vsetvli 从 15 条降到约 6 条；并将 s_wide 的 e16 中间值提前 narrow（缩短 live range）以消除 vsrc 的 vs4r.v/vl4r.v 栈往返",
+    "recommendedVerification": "以相同 -march/-O2 重建 pixman 后重跑 lowlevel-blt-bilinear-094-094：perf annotate 验证 55592/555da 占比显著下降、hot interval vsetvli 计数 15→约6、555ce vl4r.v/55570 vs4r.v 消失；输出与 baseline 逐像素一致；IPC 较 0.547 提升",
+    "metricEvidence": [
+      {
+        "metric": "Duration(s)",
+        "rv": 18.626536,
+        "anomalyNote": "whole-test duration（perf stat duration_time 18,626,536,458）；无 ARM 对照（纯 RISC-V profile 诊断）"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.546855,
+        "anomalyNote": "cycles 40.95G / instructions 22.39G；低 IPC 指示 stall/latency-bound，与 vsetvli 重配置 + spill 栈往返的样本分布一致"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "rvv_composite_over_n_8888_8888_ca",
+        "fileModule": "pixman/pixman/pixman-rvv.c",
+        "rvvPattern": "RVV Vector-State Management",
+        "patternConfidence": "MEDIUM",
+        "benefitUpperbound": 0.791,
+        "note": "OVER/solid→a8r8g8b8 mask→a8r8g8b8/x8r8g8b8 dest 合成 kernel（UN8x4 逐字节通道算术：vwmaccu widening MAC + 255-division + vsaddu 饱和）；占全程序 78.49% samples；每 32-pixel chunk 15 条 vsetvli（家族≈79.1% 函数局部样本，top-2 指令 76.20%）"
+      },
+      {
+        "hotspotFunction": "rvv_composite_over_n_8888_8888_ca",
+        "fileModule": "pixman/pixman/pixman-rvv.c",
+        "rvvPattern": "RVV Register-Group Utilization and LMUL Sizing",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.151,
+        "note": "同一函数；3× e16/m8 widening 累加器 + 3× m4 group 峰值 live 32 groups 整满 → vsrc 每 chunk 128B 栈往返（vl4r.v 555ce 14.83% + vs4r.v 55570 0.28%）"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "pixman/pixman-rvv.c:2443-2453（rvv_composite_over_n_8888_8888_ca 内层循环）；helpers pixman-rvv.c:921-948（rvv_UN8_MUL_UN8_vv_m4 的 vwmaccu+vsrl+vnsrl 255-division 链）",
+      "relatedKnowledge": "https://github.com/v8/v8/commit/c81ffb7a356dc408940d479fbbec1d048181be71 https://github.com/qemu/qemu/commit/d57dfe4b37ae542cec84a0cf751ecef313614cb6 https://github.com/qemu/qemu/commit/944b6dfd3d67236882f2bc09d1d30ed923268e16 https://github.com/qemu/qemu/commit/25669d275ce70346b94e3d5e4475d619eb979f5e https://github.com/qemu/qemu/commit/bd2c82283d21e3400d7d89676a221935904c2fe6 https://github.com/qemu/qemu/commit/81b9ef995a3b2fa5b08fab0615a1c9ed7cbe053e https://github.com/qemu/qemu/commit/949b6bcb27295eb04350afac32a45b698fc50104 https://github.com/qemu/qemu/commit/b8e1f32cda7805236c2bd497106a9356431c2d60 https://github.com/llvm/llvm-project/pull/148246 https://github.com/llvm/llvm-project/commit/d0554ae4cf264dd05024a753c66e15e4d16bf6e8 https://github.com/llvm/llvm-project/pull/118285 https://github.com/llvm/llvm-project/pull/123878 https://github.com/llvm/llvm-project/commit/f59307bfdc01c584bfa7cd31a55226831bf5590f https://github.com/opencv/opencv/pull/26318 https://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5 https://github.com/opencv/opencv/pull/25586 https://github.com/torvalds/linux/commit/a4348546332c9fae12b29acb514535e0a52b9b3c https://github.com/torvalds/linux/commit/a894e8ed09c6c7fa239711819db83b8c050eb7b0 https://github.com/torvalds/linux/commit/c2a658d419246108c9bf065ec347355de5ba8a05 https://github.com/openjdk/jdk/commit/bdd37b0e5eaa984e2ad2e9010af37dcd612cc05e https://github.com/OpenMathLib/OpenBLAS/commit/cc1b5794a0409493ed470f4cced313ea0b560870 https://github.com/OpenMathLib/OpenBLAS/commit/d69be17b6ff7eea5371b03a199db9c112aa6dc4b https://github.com/OpenMathLib/OpenBLAS/commit/4a12cf53ec116c06e5d74073b54a3bca6046cb17 https://github.com/OpenMathLib/OpenBLAS/commit/240695862984d4de845f1c42821a883946932df7 https://github.com/v8/v8/commit/3844339936068c529170dcb4f2aa160654d25943 https://github.com/vllm-project/vllm/pull/47538",
+      "evidenceExplanation": "本 kernel 的 vsetvli 重复状态重建（同一 e16/m8,vl=128 在基本块内 4 次重建）对应 V8/QEMU/LLVM 的 vector-state 失效点选择与 VSETVLI 合并优化；峰值 live set 超 32-group 预算导致的 vector spill 对应 OpenCV/Linux kernel/OpenBLAS 的 LMUL live-range 控制与 register-group 预算落地——两类相关提交均指向同一修复方向：vtype 分相 + live-range 收缩，与 annotate 样本分布（76.20%+14.83%）吻合"
+    }
+  }
+}

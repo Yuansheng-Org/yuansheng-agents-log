@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-pc-bp-pixman-radial-perf-full-001",
+  "patchCandidateId": "pc-bp-pixman-radial-perf-full-001",
+  "reviewedAt": "2026-09-09T06:22:48.000Z",
+  "reviewer": "yuansheng-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "verification_status=compile-only; 新增 RVV 批量求根内核：int64 递推+double discr/sqrt/t0/t1+掩码根选择，输出 t 与 valid；walker 写留标量"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": []
+}

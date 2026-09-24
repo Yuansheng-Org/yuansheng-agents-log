@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-pixman-lowlevel-blt-bilinear-068-068-007",
+  "blueprintId": "bp-pixman-lowlevel-blt-bilinear-068-068-007",
+  "createdAt": "2026-09-08T13:12:50.066Z",
+  "objective": "A8→ARGB32 取数循环以逐像素标量形态执行且二进制构建不含 v，导致 RVV 1.0 向量单元完全未参与该 97.5% 函数内份额的热循环；需先修正 build ISA，再按 layout/channel packing 形态向量化扩位转换。",
+  "changes": [
+    {
+      "filePath": "fetch_scanline_a8",
+      "action": "modify",
+      "rationale": "A8→ARGB32 取数循环以逐像素标量形态执行且二进制构建不含 v，导致 RVV 1.0 向量单元完全未参与该 97.5% 函数内份额的热循环；需先修正 build ISA，再按 layout/channel packing 形态向量化扩位转换。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 fetch_scanline_a8 来解决 blueprint bp-pixman-lowlevel-blt-bilinear-068-068-007。"
+}

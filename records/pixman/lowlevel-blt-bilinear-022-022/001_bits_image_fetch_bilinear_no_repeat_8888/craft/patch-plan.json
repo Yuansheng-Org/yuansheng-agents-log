@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-pixman-lowlevel-blt-bilinear-022-022-001",
+  "blueprintId": "bp-pixman-lowlevel-blt-bilinear-022-022-001",
+  "createdAt": "2026-09-09T06:12:34.202Z",
+  "objective": "build 缺 v（config_mismatch）使 bilinear fetch 无法向量化：全标量逐像素重采样（坐标重算 + scalar gather + 固定点插值乘加 + 栈 spill/reload）独占 hot loop，vector unit 完全未参与。",
+  "changes": [
+    {
+      "filePath": "pixman/pixman-bits-image.c",
+      "action": "modify",
+      "rationale": "build 缺 v（config_mismatch）使 bilinear fetch 无法向量化：全标量逐像素重采样（坐标重算 + scalar gather + 固定点插值乘加 + 栈 spill/reload）独占 hot loop，vector unit 完全未参与。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "meson.build",
+      "action": "modify",
+      "rationale": "build 缺 v（config_mismatch）使 bilinear fetch 无法向量化：全标量逐像素重采样（坐标重算 + scalar gather + 固定点插值乘加 + 栈 spill/reload）独占 hot loop，vector unit 完全未参与。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 pixman/pixman-bits-image.c, meson.build 来解决 blueprint bp-pixman-lowlevel-blt-bilinear-022-022-001。"
+}

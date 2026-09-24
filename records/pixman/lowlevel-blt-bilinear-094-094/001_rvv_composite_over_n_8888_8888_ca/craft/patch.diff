@@ -1,0 +1,56 @@
+diff --git a/pixman/pixman-rvv.c b/pixman/pixman-rvv.c
+index 570799c..c741f46 100644
+--- a/pixman/pixman-rvv.c
++++ b/pixman/pixman-rvv.c
+@@ -2421,6 +2421,7 @@ rvv_composite_over_n_8888_8888_ca (pixman_implementation_t *__restrict__ imp,
+     int         dst_stride, mask_stride;
+     uint32_t    src, srca;
+     vuint32m4_t vsrc;
++    const size_t vlmax = __riscv_vsetvlmax_e32m4 ();
+ 
+     src = _pixman_image_get_solid (imp, src_image, dest_image->bits.format);
+     if (src == 0)
+@@ -2440,16 +2441,34 @@ rvv_composite_over_n_8888_8888_ca (pixman_implementation_t *__restrict__ imp,
+ 	mask = mask_line;
+ 	mask_line += mask_stride;
+ 
+-	RVV_FOREACH_2 (width, vl, e32m4, mask, dst)
+ 	{
+-	    vuint32m4_t m = __riscv_vle32_v_u32m4 (mask, vl);
+-	    __riscv_vse32 (
+-		dst,
+-		rvv_UN8x4_MUL_UN8x4_ADD_UN8x4_vvv_m4 (
+-		    __riscv_vle32_v_u32m4 (dst, vl),
+-		    __riscv_vnot (rvv_UN8x4_MUL_UN8_vx_m4 (m, srca, vl), vl),
+-		    rvv_UN8x4_MUL_UN8x4_vv_m4 (m, vsrc, vl), vl),
+-		vl);
++	    size_t n = (size_t)width;
++	    while (n >= vlmax)
++	    {
++		vuint32m4_t m = __riscv_vle32_v_u32m4 (mask, vlmax);
++		__riscv_vse32 (
++		    dst,
++		    rvv_UN8x4_MUL_UN8x4_ADD_UN8x4_vvv_m4 (
++			__riscv_vle32_v_u32m4 (dst, vlmax),
++			__riscv_vnot (rvv_UN8x4_MUL_UN8_vx_m4 (m, srca, vlmax), vlmax),
++			rvv_UN8x4_MUL_UN8x4_vv_m4 (m, vsrc, vlmax), vlmax),
++		    vlmax);
++		mask += vlmax;
++		dst += vlmax;
++		n -= vlmax;
++	    }
++	    if (n > 0)
++	    {
++		size_t vl = __riscv_vsetvl_e32m4 (n);
++		vuint32m4_t m = __riscv_vle32_v_u32m4 (mask, vl);
++		__riscv_vse32 (
++		    dst,
++		    rvv_UN8x4_MUL_UN8x4_ADD_UN8x4_vvv_m4 (
++			__riscv_vle32_v_u32m4 (dst, vl),
++			__riscv_vnot (rvv_UN8x4_MUL_UN8_vx_m4 (m, srca, vl), vl),
++			rvv_UN8x4_MUL_UN8x4_vv_m4 (m, vsrc, vl), vl),
++		    vl);
++	    }
+ 	}
+     }
+ }

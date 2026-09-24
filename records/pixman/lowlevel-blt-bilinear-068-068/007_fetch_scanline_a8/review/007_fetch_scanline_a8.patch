@@ -1,0 +1,81 @@
+From 66176220ab1ce8b17dc507cdbde9241c885e495d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E7=94=B0=E5=AE=81?= <tianning24@iscas.ac.cn>
+Date: Thu, 10 Sep 2026 14:49:40 +0800
+Subject: [PATCH] rvv: Add vectorized A8 source scanline fetch
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Add an RVV source iterator for untransformed A8 images. The iterator follows the existing rvv_iters[] dispatch architecture and expands alpha bytes to a8r8g8b8 pixels with a VLA loop. This keeps the generic accessor table unchanged while covering the common ID-transform, narrow source path.
+
+Performance data from the remote Spacemit X100 K3 at 2.2 GHz, pinned to CPU 2. Official lowlevel-blt-bench was run three times in baseline/patched interleaved order under flock -x /home/tiann/.pixman-benchmark.lock. Values are MPix/s, higher is better; each row lists L1, L2, M, HT, VT, R and RT.
+
+src_8_0565 median: baseline 355.537, 325.690, 302.949, 165.714, 122.234, 82.3582, 28.8145; patched 373.946, 351.513, 321.952, 215.603, 157.977, 108.608, 36.2890; change +5.18%, +7.93%, +6.27%, +30.11%, +29.24%, +31.87%, +25.94%.
+
+src_8_8888 median: baseline 2178.090, 1482.210, 1235.920, 319.966, 183.630, 166.731, 38.0380; patched 3239.240, 2175.980, 1677.240, 382.303, 227.956, 199.129, 47.1975; change +48.72%, +46.81%, +35.71%, +19.48%, +24.14%, +19.43%, +24.08%.
+
+Validation: release build PASS; Pixman test suite 35/35 PASS; target path is registered in rvv_iters[] for PIXMAN_a8 and exercised by the A8 source benchmark; related A8 source cases show no regression.
+
+Signed-off-by: 田宁 <tianning24@iscas.ac.cn>
+---
+ pixman/pixman-rvv.c | 37 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
+
+diff --git a/pixman/pixman-rvv.c b/pixman/pixman-rvv.c
+index 2d9da5b1..3c69ecfb 100644
+--- a/pixman/pixman-rvv.c
++++ b/pixman/pixman-rvv.c
+@@ -3019,6 +3019,35 @@ rvv_blt (pixman_implementation_t *__restrict__ imp,
+     return TRUE;
+ }
+ 
++static uint32_t *
++rvv_fetch_a8 (pixman_iter_t *iter, const uint32_t *mask)
++{
++    int       width = iter->width;
++    uint8_t  *src   = iter->bits;
++    uint32_t *dst   = iter->buffer;
++
++    /* The iterator contract advances the source by one image row after each
++     * scanline.  A8 pixels expand to ARGB32 with the source byte in alpha,
++     * exactly as fetch_scanline_a8() does. */
++    iter->bits += iter->stride;
++
++    while (width > 0)
++    {
++	size_t      vl = __riscv_vsetvl_e8m1 (width);
++	vuint8m1_t  alpha = __riscv_vle8_v_u8m1 (src, vl);
++	vuint32m4_t pixel = __riscv_vzext_vf4_u32m4 (alpha, vl);
++
++	pixel = __riscv_vsll_vx_u32m4 (pixel, 24, vl);
++	__riscv_vse32_v_u32m4 (dst, pixel, vl);
++
++	src += vl;
++	dst += vl;
++	width -= vl;
++    }
++
++    return iter->buffer;
++}
++
+ static uint32_t *
+ rvv_fetch_r5g6b5 (pixman_iter_t *iter, const uint32_t *mask)
+ {
+@@ -3287,6 +3316,14 @@ rvv_fetch_bilinear_affine_cover (pixman_iter_t  *iter,
+ 
+ // clang-format off
+ static const pixman_iter_info_t rvv_iters[] = {
++    { PIXMAN_a8,
++      (FAST_PATH_STANDARD_FLAGS                 |
++       FAST_PATH_ID_TRANSFORM                   |
++       FAST_PATH_BITS_IMAGE                     |
++       FAST_PATH_SAMPLES_COVER_CLIP_NEAREST),
++      ITER_NARROW | ITER_SRC,
++      _pixman_iter_init_bits_stride, rvv_fetch_a8, NULL
++    },
+     { PIXMAN_r5g6b5,
+       (FAST_PATH_STANDARD_FLAGS                 |
+        FAST_PATH_ID_TRANSFORM                   |
+-- 
+2.34.1
+
