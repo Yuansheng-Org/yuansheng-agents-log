@@ -1,0 +1,14 @@
+diff --git a/aten/src/ATen/cpu/vec/rvv/vec_float.h b/aten/src/ATen/cpu/vec/rvv/vec_float.h
+index b477830e298..f9a814f3769 100644
+--- a/aten/src/ATen/cpu/vec/rvv/vec_float.h
++++ b/aten/src/ATen/cpu/vec/rvv/vec_float.h
+@@ -152,7 +152,8 @@ class Vectorized<float> {
+   }
+ 
+   void store(void* ptr, int64_t count = size()) const {
+-    std::memcpy(ptr, this->values, count * sizeof(float));
++    vfloat32m2_t v = __riscv_vle32_v_f32m2(this->values, VFLOAT32_VL);
++    __riscv_vse32_v_f32m2(reinterpret_cast<float*>(ptr), v, count);
+   }
+ 
+   const float& operator[](int idx) const = delete;
