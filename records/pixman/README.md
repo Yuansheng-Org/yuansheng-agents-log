@@ -10,7 +10,7 @@
 
 ## 已筛选补丁的产物归档
 
-本分支沿用 `add-pixman` 已筛选的 6 个补丁目录，并从 `yuansheng-agent-debug` 补齐对应函数的 Trace 和 Craft 中间产物；未归档该仓库中的其他 pixman 函数。目录按 `records/pixman/<测试用例>/<函数>/` 组织，测试用例名称取自对应 Blueprint 的 `source.testcaseIds`。
+本分支沿用 `add-pixman` 已筛选的 5 个补丁目录，并从 `yuansheng-agent-debug` 补齐对应函数的 Trace 和 Craft 中间产物；未归档该仓库中的其他 pixman 函数。目录按 `records/pixman/<测试用例>/<函数>/` 组织，测试用例名称取自对应 Blueprint 的 `source.testcaseIds`。
 
 | 补丁目录 | 原始测试用例 | Blueprint ID |
 | --- | --- | --- |
