@@ -1,0 +1,248 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-openssl-ecdhp256-009",
+  "blueprintId": "bp-openssl-ecdhp256-009",
+  "createdAt": "2026-09-10T12:55:51.980Z",
+  "objective": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+  "changes": [
+    {
+      "filePath": "prologue/epilogue",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "BN_usub/bn_sub_words/bn_wexpand/BN_get_flags",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "17981a/179828",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "179730/1797cc/179800/179884/17993e/179956/179986",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "nistp256/nistz256",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "EC_POINT_add/dbl",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "compute/latency-bound",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "crypto/ec/ec_curve.c",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "Save/Restore",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "A/B",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "memory/branch",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "EC_GFp_mont/nist/simple",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "oneDNN/OpenJDK/OpenBLAS",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "RV/ARM",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "crypto/ec/ecp_smpl.c",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "generic/reference",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "Configure",
+      "action": "modify",
+      "rationale": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应围绕 prologue/epilogue, BN_usub/bn_sub_words/bn_wexpand/BN_get_flags, 17981a/179828, 179730/1797cc/179800/179884/17993e/179956/179986, nistp256/nistz256, EC_POINT_add/dbl, compute/latency-bound, crypto/ec/ec_curve.c, Save/Restore, A/B, memory/branch, EC_GFp_mont/nist/simple, oneDNN/OpenJDK/OpenBLAS, RV/ARM, crypto/ec/ecp_smpl.c, generic/reference, Configure 解决 blueprint bp-openssl-ecdhp256-009 指出的根因。允许涉及 构建系统、平台适配、构建参数、注册入口；源码实现、汇编/kernel/intrinsic/SIMD/vector 后端、分发表。"
+}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-openssl-ed448-sign-001",
+  "patchCandidateId": "pc-bp-openssl-ed448-sign-001",
+  "reviewedAt": "2026-09-10T13:45:00Z",
+  "reviewer": "opencode-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 判定 archSpecific=true（rvv-intrinsic + riscv-macro）。补丁仅用基础 RVV 1.0（vsetvl/vle8/vand.vx/vor.vv/vse8，e8/m8），均在 SpacemiT X100 (RVV 1.0, VLEN=256) ISA 内；vsetvl_e8m8 strip-mining 以 j+=vl 精确推进无越界，VLEN 无关；mask 行内不变量经 vand.vx 应用与标量 select 逐字节一致；#if defined(__riscv_vector) 编译期 gate 保留标量回退；无 x86/ARM 混入。已用 riscv64-linux-gnu-gcc -march=rv64gcv 交叉编译并在 qemu vlen=256 下 20k 随机测试（rowsize/numrows/idx 含下溢）验证向量/标量逐字节一致；真实 K3 回归未执行，作为风险披露。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "f-001",
+      "file": "include/internal/constant_time.h",
+      "evidence": "blueprint rootCause.candidateFiles 指向 include/crypto/constant_time.h，但 constant_time_lookup 实际定义于 include/internal/constant_time.h（patch.diff hunk @@ -453,6 +457,33 @@）；本次补丁已正确落在该文件。",
+      "severity": "suggestion",
+      "category": "blueprint-data-quality",
+      "suggestion": "Trace 侧修正 candidateFiles 指向 include/internal/constant_time.h；不影响补丁正确性。"
+    }
+  ]
+}

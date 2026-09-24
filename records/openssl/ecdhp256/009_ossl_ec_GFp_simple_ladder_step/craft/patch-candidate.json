@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "WARNING: 本补丁未检测到 RISC-V 架构相关代码（汇编/inline-asm/RVV intrinsic/ISA 特性），已跳过架构专项审核，仅做通用质量审核。",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-openssl-ecdhp256-009",
+  "patchPlanId": "pp-bp-openssl-ecdhp256-009",
+  "createdAt": "2026-09-10T12:56:08.320Z",
+  "changedFiles": [
+    "Configure"
+  ],
+  "gitDiff": "diff --git a/Configure b/Configure\nindex 75f1f6b67b..4898c43a3a 100755\n--- a/Configure\n+++ b/Configure\n@@ -635,7 +635,6 @@ our %disabled = ( # \"what\"         => \"comment\"\n                   \"h3demo\"              => \"default\",\n                   \"hqinterop\"           => \"default\",\n                   \"ec_explicit_curves\" => \"default\",\n-                  \"ec_nistp_64_gcc_128\" => \"default\",\n                   \"egd\"                 => \"default\",\n                   \"engine\"              => \"default\",\n                   \"external-tests\"      => \"default\",\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

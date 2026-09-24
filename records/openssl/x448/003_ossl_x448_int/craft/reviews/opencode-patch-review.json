@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-openssl-x448-003",
+  "patchCandidateId": "pc-bp-openssl-x448-003",
+  "reviewedAt": "2026-09-10T14:15:00Z",
+  "reviewer": "opencode-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 判定 archSpecific=true（rvv-intrinsic + riscv-macro）。补丁仅用基础 RVV 1.0（vsetvl/vle64/vse64/vsrl.vx/vslide1up.vx/vand.vx/vadd.vv/vadd.vx/vsub.vv/vxor.vv，e64/m2），均在 SpacemiT X100 (RVV 1.0, VLEN=256) ISA 内；vsetvl_e64m2(8) 在 VLEN=256 下 VLMAX=8 单趟覆盖，VLEN<256 回退标量；gf_weak_reduce 用 vslide1up 注入 tmp 到 lane0 与标量 a[0]=(a[0]&mask)+tmp 一致；gf_sub_RAW 全 limb +co1 后 lane4 -=2 与标量 (i==4?co2:co1) 一致；gf_cond_swap vxor/vand/vxor 与 constant_time_cond_swap_64 逐位一致且无数据相关分支；无 x86/ARM 混入。已用 riscv64-linux-gnu-gcc -march=rv64gcv -fsyntax-only 编译通过，qemu vlen=256 下 gf_sub_RAW/gf_cond_swap 各 300k 随机 limb 逐位一致；真实 K3 回归未执行，作为风险披露。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "f-001",
+      "file": "crypto/ec/curve448/field.h",
+      "evidence": "blueprint recommendedVerification 要求重跑 x448/ed448 KAT 与 annotate 复核（vrgather 消失、vl=4/8）；本环境无 K3 板卡未执行，且 vslide1up 相对 vrgather 实机吞吐需 A/B。",
+      "severity": "suggestion",
+      "category": "回归验证缺口",
+      "suggestion": "发布前在 K3 硬件跑 x448/ed448 回归与 annotate 复核。"
+    }
+  ]
+}

@@ -1,0 +1,408 @@
+ Percent |	Source code & Disassembly of libcrypto.so.4 for cpu-clock (18 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000179716 <ossl_ec_GFp_simple_ladder_step>:
+         : 6      ossl_ec_GFp_simple_ladder_step():
+         : 1563   * https://hyperelliptic.org/EFD/g1p/auto-shortw-xz.html#ladder-mladd-2002-it-4
+         : 1564   */
+         : 1565   int ossl_ec_GFp_simple_ladder_step(const EC_GROUP *group,
+         : 1566   EC_POINT *r, EC_POINT *s,
+         : 1567   EC_POINT *p, BN_CTX *ctx)
+         : 1568   {
+    0.00 :   179716: addi    sp,sp,-128
+    0.00 :   179718: sd      ra,120(sp)
+    0.00 :   17971a: sd      s0,112(sp)
+    0.00 :   17971c: sd      s1,104(sp)
+    0.00 :   17971e: addi    s0,sp,128
+    0.00 :   179720: sd      s2,96(sp)
+    0.00 :   179722: sd      s4,80(sp)
+    5.56 :   179724: sd      s5,72(sp)
+    0.00 :   179726: sd      s6,64(sp)
+    0.00 :   179728: sd      s7,56(sp)
+    0.00 :   17972a: sd      s8,48(sp)
+    0.00 :   17972c: sd      s10,32(sp)
+   11.11 :   17972e: sd      s11,24(sp)
+    5.56 :   179730: mv      s2,a0
+         : 1567   int ret = 0;
+         : 1568   BIGNUM *t0, *t1, *t2, *t3, *t4, *t5, *t6 = NULL;
+         :
+         : 1570   BN_CTX_start(ctx);
+    0.00 :   179732: mv      a0,a4
+         : 1563   {
+    0.00 :   179734: mv      s1,a4
+    0.00 :   179736: mv      s4,a1
+    0.00 :   179738: mv      s5,a2
+    0.00 :   17973a: sd      a3,-120(s0)
+         : 1567   BN_CTX_start(ctx);
+    0.00 :   17973e: jal     1100b4 <BN_CTX_start>
+         : 1568   t0 = BN_CTX_get(ctx);
+    0.00 :   179742: mv      a0,s1
+    0.00 :   179744: jal     11025c <BN_CTX_get>
+    0.00 :   179748: mv      s6,a0
+         : 1569   t1 = BN_CTX_get(ctx);
+    0.00 :   17974a: mv      a0,s1
+    0.00 :   17974c: jal     11025c <BN_CTX_get>
+    0.00 :   179750: sd      a0,-128(s0)
+         : 1570   t2 = BN_CTX_get(ctx);
+    0.00 :   179754: mv      a0,s1
+    0.00 :   179756: jal     11025c <BN_CTX_get>
+    0.00 :   17975a: mv      s11,a0
+         : 1571   t3 = BN_CTX_get(ctx);
+    0.00 :   17975c: mv      a0,s1
+    0.00 :   17975e: jal     11025c <BN_CTX_get>
+    0.00 :   179762: mv      s8,a0
+         : 1572   t4 = BN_CTX_get(ctx);
+    0.00 :   179764: mv      a0,s1
+    0.00 :   179766: jal     11025c <BN_CTX_get>
+    0.00 :   17976a: mv      s7,a0
+         : 1573   t5 = BN_CTX_get(ctx);
+    0.00 :   17976c: mv      a0,s1
+    0.00 :   17976e: jal     11025c <BN_CTX_get>
+    0.00 :   179772: mv      s10,a0
+         : 1574   t6 = BN_CTX_get(ctx);
+    0.00 :   179774: mv      a0,s1
+    0.00 :   179776: jal     11025c <BN_CTX_get>
+         :
+         : 1577   if (t6 == NULL
+    0.00 :   17977a: beqz    a0,179810 <ossl_ec_GFp_simple_ladder_step+0xfa>
+         : 1577   || !group->meth->field_mul(group, t6, r->X, s->X, ctx)
+    0.00 :   17977c: ld      a5,0(s2)
+    0.00 :   179780: ld      a3,16(s5)
+    0.00 :   179784: ld      a2,16(s4)
+    0.00 :   179788: ld      a5,248(a5)
+    5.56 :   17978a: sd      s3,88(sp)
+    0.00 :   17978c: mv      a1,a0
+    0.00 :   17978e: mv      s3,a0
+    0.00 :   179790: mv      a4,s1
+    0.00 :   179792: mv      a0,s2
+    0.00 :   179794: jalr    a5
+    0.00 :   179796: beqz    a0,179834 <ossl_ec_GFp_simple_ladder_step+0x11e>
+         : 1578   || !group->meth->field_mul(group, t0, r->Z, s->Z, ctx)
+    0.00 :   179798: ld      a5,0(s2)
+    0.00 :   17979c: ld      a3,32(s5)
+    0.00 :   1797a0: ld      a2,32(s4)
+    0.00 :   1797a4: ld      a5,248(a5)
+    0.00 :   1797a6: mv      a4,s1
+    0.00 :   1797a8: mv      a1,s6
+    0.00 :   1797aa: mv      a0,s2
+    0.00 :   1797ac: jalr    a5
+    0.00 :   1797ae: beqz    a0,179834 <ossl_ec_GFp_simple_ladder_step+0x11e>
+         : 1579   || !group->meth->field_mul(group, t4, r->X, s->Z, ctx)
+    0.00 :   1797b0: ld      a5,0(s2)
+    0.00 :   1797b4: ld      a3,32(s5)
+    0.00 :   1797b8: ld      a2,16(s4)
+    0.00 :   1797bc: ld      a5,248(a5)
+    0.00 :   1797be: mv      a4,s1
+    0.00 :   1797c0: mv      a1,s7
+    0.00 :   1797c2: mv      a0,s2
+    0.00 :   1797c4: jalr    a5
+    0.00 :   1797c6: beqz    a0,179834 <ossl_ec_GFp_simple_ladder_step+0x11e>
+         : 1580   || !group->meth->field_mul(group, t3, r->Z, s->X, ctx)
+    0.00 :   1797c8: ld      a5,0(s2)
+    5.56 :   1797cc: ld      a3,16(s5)
+    0.00 :   1797d0: ld      a2,32(s4)
+    0.00 :   1797d4: ld      a5,248(a5)
+   11.11 :   1797d6: sd      s9,40(sp)
+    0.00 :   1797d8: mv      a4,s1
+    0.00 :   1797da: mv      a1,s8
+    0.00 :   1797dc: mv      a0,s2
+    0.00 :   1797de: mv      s9,s8
+    0.00 :   1797e0: jalr    a5
+    0.00 :   1797e2: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1581   || !group->meth->field_mul(group, t5, group->a, t0, ctx)
+    0.00 :   1797e4: ld      a5,0(s2)
+    0.00 :   1797e8: ld      a2,96(s2)
+    0.00 :   1797ec: mv      a4,s1
+    0.00 :   1797ee: ld      a5,248(a5)
+    0.00 :   1797f0: mv      a3,s6
+    0.00 :   1797f2: mv      a1,s10
+    0.00 :   1797f4: mv      a0,s2
+    0.00 :   1797f6: mv      s8,s10
+    0.00 :   1797f8: jalr    a5
+    0.00 :   1797fa: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1582   || !BN_mod_add_quick(t5, t6, t5, group->field)
+    0.00 :   1797fc: ld      a3,64(s2)
+    5.56 :   179800: mv      a2,s10
+    0.00 :   179802: mv      a1,s3
+    0.00 :   179804: mv      a0,s10
+    0.00 :   179806: jal     116af4 <BN_mod_add_quick>
+    0.00 :   17980a: bnez    a0,179838 <ossl_ec_GFp_simple_ladder_step+0x122>
+    0.00 :   17980c: ld      s3,88(sp)
+    0.00 :   17980e: ld      s9,40(sp)
+         : 1564   int ret = 0;
+    0.00 :   179810: li      s2,0
+         : 1621   goto err;
+         :
+         : 1623   ret = 1;
+         :
+         : 1625   err:
+         : 1626   BN_CTX_end(ctx);
+    0.00 :   179812: mv      a0,s1
+    0.00 :   179814: jal     1101dc <BN_CTX_end>
+         : 1623   return ret;
+         : 1624   }
+    0.00 :   179818: ld      ra,120(sp)
+    5.56 :   17981a: ld      s0,112(sp)
+    0.00 :   17981c: ld      s1,104(sp)
+    0.00 :   17981e: ld      s4,80(sp)
+    0.00 :   179820: ld      s5,72(sp)
+    0.00 :   179822: ld      s6,64(sp)
+    0.00 :   179824: ld      s7,56(sp)
+    0.00 :   179826: ld      s8,48(sp)
+    5.56 :   179828: ld      s10,32(sp)
+    0.00 :   17982a: ld      s11,24(sp)
+    0.00 :   17982c: mv      a0,s2
+    0.00 :   17982e: ld      s2,96(sp)
+    0.00 :   179830: addi    sp,sp,128
+    0.00 :   179832: ret
+    0.00 :   179834: ld      s3,88(sp)
+    0.00 :   179836: j       179810 <ossl_ec_GFp_simple_ladder_step+0xfa>
+         : 1583   || !BN_mod_add_quick(t6, t3, t4, group->field)
+    0.00 :   179838: ld      a3,64(s2)
+    0.00 :   17983c: mv      a2,s7
+    0.00 :   17983e: mv      a1,s9
+    0.00 :   179840: mv      a0,s3
+    0.00 :   179842: jal     116af4 <BN_mod_add_quick>
+    0.00 :   179846: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1584   || !group->meth->field_mul(group, t5, t6, t5, ctx)
+    0.00 :   179848: ld      a5,0(s2)
+    0.00 :   17984c: mv      a4,s1
+    0.00 :   17984e: mv      a3,s10
+    0.00 :   179850: ld      a5,248(a5)
+    0.00 :   179852: mv      a2,s3
+    0.00 :   179854: mv      a1,s10
+    0.00 :   179856: mv      a0,s2
+    0.00 :   179858: jalr    a5
+    0.00 :   17985a: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1585   || !group->meth->field_sqr(group, t0, t0, ctx)
+    0.00 :   17985c: ld      a5,0(s2)
+    0.00 :   179860: mv      a3,s1
+    0.00 :   179862: mv      a2,s6
+    0.00 :   179864: ld      a5,256(a5)
+    0.00 :   179868: mv      a1,s6
+    0.00 :   17986a: mv      a0,s2
+    0.00 :   17986c: jalr    a5
+    0.00 :   17986e: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1586   || !BN_mod_lshift_quick(t2, group->b, 2, group->field)
+    0.00 :   179870: ld      a3,64(s2)
+    0.00 :   179874: ld      a1,104(s2)
+    0.00 :   179878: li      a2,2
+    0.00 :   17987a: mv      a0,s11
+    0.00 :   17987c: mv      s10,s11
+    0.00 :   17987e: jal     116e62 <BN_mod_lshift_quick>
+    0.00 :   179882: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1587   || !group->meth->field_mul(group, t0, t2, t0, ctx)
+    5.56 :   179884: ld      a5,0(s2)
+    0.00 :   179888: mv      a4,s1
+    0.00 :   17988a: mv      a3,s6
+    0.00 :   17988c: ld      a5,248(a5)
+    0.00 :   17988e: mv      a2,s11
+    0.00 :   179890: mv      a1,s6
+    0.00 :   179892: mv      a0,s2
+    0.00 :   179894: jalr    a5
+    0.00 :   179896: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1588   || !BN_mod_lshift1_quick(t5, t5, group->field)
+    0.00 :   179898: ld      a2,64(s2)
+    0.00 :   17989c: mv      a1,s8
+    0.00 :   17989e: mv      a0,s8
+    0.00 :   1798a0: jal     116e1c <BN_mod_lshift1_quick>
+    0.00 :   1798a4: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1589   || !BN_mod_sub_quick(t3, t4, t3, group->field)
+    0.00 :   1798a6: ld      a3,64(s2)
+    0.00 :   1798aa: mv      a2,s9
+    0.00 :   1798ac: mv      a1,s7
+    0.00 :   1798ae: mv      a0,s9
+    0.00 :   1798b0: jal     116cb0 <BN_mod_sub_quick>
+    0.00 :   1798b4: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1591   || !group->meth->field_sqr(group, s->Z, t3, ctx)
+    0.00 :   1798b6: ld      a5,0(s2)
+    0.00 :   1798ba: ld      a1,32(s5)
+    0.00 :   1798be: mv      a3,s1
+    0.00 :   1798c0: ld      a5,256(a5)
+    0.00 :   1798c4: mv      a2,s9
+    0.00 :   1798c6: mv      a0,s2
+    0.00 :   1798c8: jalr    a5
+    0.00 :   1798ca: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1592   || !group->meth->field_mul(group, t4, s->Z, p->X, ctx)
+    0.00 :   1798cc: ld      a4,-120(s0)
+    0.00 :   1798d0: ld      a5,0(s2)
+    0.00 :   1798d4: ld      a2,32(s5)
+    0.00 :   1798d8: ld      a3,16(a4)
+    0.00 :   1798da: ld      a5,248(a5)
+    0.00 :   1798dc: mv      a4,s1
+    0.00 :   1798de: mv      a1,s7
+    0.00 :   1798e0: mv      a0,s2
+    0.00 :   1798e2: jalr    a5
+    0.00 :   1798e4: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1593   || !BN_mod_add_quick(t0, t0, t5, group->field)
+    0.00 :   1798e6: ld      a3,64(s2)
+    0.00 :   1798ea: mv      a2,s8
+    0.00 :   1798ec: mv      a1,s6
+    0.00 :   1798ee: mv      a0,s6
+    0.00 :   1798f0: jal     116af4 <BN_mod_add_quick>
+    0.00 :   1798f4: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1595   || !BN_mod_sub_quick(s->X, t0, t4, group->field)
+    0.00 :   1798f6: ld      a0,16(s5)
+    0.00 :   1798fa: ld      a3,64(s2)
+    0.00 :   1798fe: mv      a2,s7
+    0.00 :   179900: mv      a1,s6
+    0.00 :   179902: jal     116cb0 <BN_mod_sub_quick>
+    0.00 :   179906: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1596   || !group->meth->field_sqr(group, t4, r->X, ctx)
+    0.00 :   17990a: ld      a5,0(s2)
+    0.00 :   17990e: ld      a2,16(s4)
+    0.00 :   179912: mv      a3,s1
+    0.00 :   179914: ld      a5,256(a5)
+    0.00 :   179918: mv      a1,s7
+    0.00 :   17991a: mv      a0,s2
+    0.00 :   17991c: jalr    a5
+    0.00 :   17991e: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1597   || !group->meth->field_sqr(group, t5, r->Z, ctx)
+    0.00 :   179922: ld      a5,0(s2)
+    0.00 :   179926: ld      a2,32(s4)
+    0.00 :   17992a: mv      a3,s1
+    0.00 :   17992c: ld      a5,256(a5)
+    0.00 :   179930: mv      a1,s8
+    0.00 :   179932: mv      a0,s2
+    0.00 :   179934: jalr    a5
+    0.00 :   179936: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1598   || !group->meth->field_mul(group, t6, t5, group->a, ctx)
+    0.00 :   17993a: ld      a5,0(s2)
+    5.56 :   17993e: ld      a3,96(s2)
+    0.00 :   179942: mv      a4,s1
+    0.00 :   179944: ld      a5,248(a5)
+    0.00 :   179946: mv      a2,s8
+    0.00 :   179948: mv      a1,s3
+    0.00 :   17994a: mv      a0,s2
+    0.00 :   17994c: jalr    a5
+    0.00 :   17994e: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1599   || !BN_mod_add_quick(t1, r->X, r->Z, group->field)
+    0.00 :   179952: ld      s11,-128(s0)
+    5.56 :   179956: ld      a3,64(s2)
+    0.00 :   17995a: ld      a2,32(s4)
+    0.00 :   17995e: ld      a1,16(s4)
+    0.00 :   179962: mv      a0,s11
+    0.00 :   179964: jal     116af4 <BN_mod_add_quick>
+    0.00 :   179968: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1600   || !group->meth->field_sqr(group, t1, t1, ctx)
+    0.00 :   17996c: ld      a5,0(s2)
+    0.00 :   179970: mv      a3,s1
+    0.00 :   179972: mv      a2,s11
+    0.00 :   179974: ld      a5,256(a5)
+    0.00 :   179978: mv      a1,s11
+    0.00 :   17997a: mv      a0,s2
+    0.00 :   17997c: jalr    a5
+    0.00 :   17997e: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1601   || !BN_mod_sub_quick(t1, t1, t4, group->field)
+    0.00 :   179982: ld      a3,64(s2)
+    5.56 :   179986: mv      a2,s7
+    0.00 :   179988: mv      a1,s11
+    0.00 :   17998a: mv      a0,s11
+    0.00 :   17998c: jal     116cb0 <BN_mod_sub_quick>
+    0.00 :   179990: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1602   || !BN_mod_sub_quick(t1, t1, t5, group->field)
+    0.00 :   179994: ld      a3,64(s2)
+    0.00 :   179998: mv      a2,s8
+    0.00 :   17999a: mv      a1,s11
+    0.00 :   17999c: mv      a0,s11
+    5.56 :   17999e: jal     116cb0 <BN_mod_sub_quick>
+    0.00 :   1799a2: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1603   || !BN_mod_sub_quick(t3, t4, t6, group->field)
+    0.00 :   1799a6: ld      a3,64(s2)
+    0.00 :   1799aa: mv      a2,s3
+    0.00 :   1799ac: mv      a1,s7
+    0.00 :   1799ae: mv      a0,s9
+    0.00 :   1799b0: jal     116cb0 <BN_mod_sub_quick>
+    0.00 :   1799b4: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1604   || !group->meth->field_sqr(group, t3, t3, ctx)
+    0.00 :   1799b8: ld      a5,0(s2)
+    0.00 :   1799bc: mv      a3,s1
+    0.00 :   1799be: mv      a2,s9
+    0.00 :   1799c0: ld      a5,256(a5)
+    0.00 :   1799c4: mv      a1,s9
+    0.00 :   1799c6: mv      a0,s2
+    0.00 :   1799c8: jalr    a5
+    0.00 :   1799ca: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1605   || !group->meth->field_mul(group, t0, t5, t1, ctx)
+    0.00 :   1799ce: ld      a5,0(s2)
+    0.00 :   1799d2: mv      a4,s1
+    0.00 :   1799d4: mv      a3,s11
+    0.00 :   1799d6: ld      a5,248(a5)
+    0.00 :   1799d8: mv      a2,s8
+    0.00 :   1799da: mv      a1,s6
+    0.00 :   1799dc: mv      a0,s2
+    0.00 :   1799de: jalr    a5
+    0.00 :   1799e0: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1606   || !group->meth->field_mul(group, t0, t2, t0, ctx)
+    0.00 :   1799e4: ld      a5,0(s2)
+    0.00 :   1799e8: mv      a4,s1
+    0.00 :   1799ea: mv      a3,s6
+    0.00 :   1799ec: ld      a5,248(a5)
+    0.00 :   1799ee: mv      a2,s10
+    0.00 :   1799f0: mv      a1,s6
+    0.00 :   1799f2: mv      a0,s2
+    0.00 :   1799f4: jalr    a5
+    0.00 :   1799f6: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1608   || !BN_mod_sub_quick(r->X, t3, t0, group->field)
+    0.00 :   1799fa: ld      a3,64(s2)
+    0.00 :   1799fe: ld      a0,16(s4)
+    0.00 :   179a02: mv      a2,s6
+    0.00 :   179a04: mv      a1,s9
+    0.00 :   179a06: jal     116cb0 <BN_mod_sub_quick>
+    0.00 :   179a0a: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1609   || !BN_mod_add_quick(t3, t4, t6, group->field)
+    0.00 :   179a0e: ld      a3,64(s2)
+    0.00 :   179a12: mv      a2,s3
+    0.00 :   179a14: mv      a1,s7
+    0.00 :   179a16: mv      a0,s9
+    0.00 :   179a18: jal     116af4 <BN_mod_add_quick>
+    0.00 :   179a1c: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1610   || !group->meth->field_sqr(group, t4, t5, ctx)
+    0.00 :   179a20: ld      a5,0(s2)
+    0.00 :   179a24: mv      a2,s8
+    0.00 :   179a26: mv      a3,s1
+    0.00 :   179a28: ld      a5,256(a5)
+    0.00 :   179a2c: mv      a1,s7
+    0.00 :   179a2e: mv      a0,s2
+    0.00 :   179a30: jalr    a5
+    0.00 :   179a32: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1611   || !group->meth->field_mul(group, t4, t4, t2, ctx)
+    0.00 :   179a36: ld      a5,0(s2)
+    0.00 :   179a3a: mv      a3,s10
+    0.00 :   179a3c: mv      a4,s1
+    0.00 :   179a3e: ld      a5,248(a5)
+    0.00 :   179a40: mv      a2,s7
+    0.00 :   179a42: mv      a1,s7
+    0.00 :   179a44: mv      a0,s2
+    0.00 :   179a46: jalr    a5
+   11.11 :   179a48: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1612   || !group->meth->field_mul(group, t1, t1, t3, ctx)
+    0.00 :   179a4c: ld      a5,0(s2)
+    0.00 :   179a50: mv      a3,s9
+    0.00 :   179a52: mv      a4,s1
+    0.00 :   179a54: ld      a5,248(a5)
+    0.00 :   179a56: mv      a2,s11
+    0.00 :   179a58: mv      a1,s11
+    0.00 :   179a5a: mv      a0,s2
+    0.00 :   179a5c: jalr    a5
+    0.00 :   179a5e: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1613   || !BN_mod_lshift1_quick(t1, t1, group->field)
+    0.00 :   179a62: ld      a2,64(s2)
+    0.00 :   179a66: mv      a1,s11
+    0.00 :   179a68: mv      a0,s11
+    0.00 :   179a6a: jal     116e1c <BN_mod_lshift1_quick>
+    0.00 :   179a6e: beqz    a0,17980c <ossl_ec_GFp_simple_ladder_step+0xf6>
+         : 1615   || !BN_mod_add_quick(r->Z, t4, t1, group->field))
+    0.00 :   179a72: ld      a3,64(s2)
+    0.00 :   179a76: ld      a0,32(s4)
+    0.00 :   179a7a: mv      a2,s11
+    0.00 :   179a7c: mv      a1,s7
+    0.00 :   179a7e: jal     116af4 <BN_mod_add_quick>
+    0.00 :   179a82: snez    s2,a0
+    0.00 :   179a86: ld      s3,88(sp)
+    0.00 :   179a88: ld      s9,40(sp)
+    0.00 :   179a8a: j       179812 <ossl_ec_GFp_simple_ladder_step+0xfc>

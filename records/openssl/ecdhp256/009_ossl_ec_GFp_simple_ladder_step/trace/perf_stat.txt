@@ -1,0 +1,55 @@
+1-OPENSSL-BENCHMARK ecdhp256 RISC-V perf stat
+=============================================
+
+Source CSV: /workspace/results/1-openssl-benchmark_results.csv
+TestName: ecdhp256
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 9,619,404,357 |
+| task_clock | 9,611.6500000000 |
+| cpu_cycle | 21,138,668,189 |
+| instruction | 55,093,958,267 |
+| cache_references | <not |
+| cache_misses | <not |
+| branches | 3,508,930,897 |
+| branch_misses | 24,059,321 |
+| L1_dcache_loads | 10,422,961,485 |
+| L1_dcache_load_misses | 3,957,647 |
+| LLC_load_misses | <not |
+| LLC_loads | <not |
+| IPC | 2.6060000000 |
+| iterations | 5,000 |
+| throughput_ops_per_second | 519.7827032150 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 9.619404 |
+| branch_miss_rate | 0.686% |
+| L1_dcache_load_miss_rate | 0.038% |
+
+perf stat style summary
+-----------------------
+           9,619,404,357  duration_time
+        9,611.6500000000  task_clock
+          21,138,668,189  cpu_cycle
+          55,093,958,267  instruction
+                    <not  cache_references
+                    <not  cache_misses
+           3,508,930,897  branches
+              24,059,321  branch_misses
+          10,422,961,485  L1_dcache_loads
+               3,957,647  L1_dcache_load_misses
+                    <not  LLC_load_misses
+                    <not  LLC_loads
+            2.6060000000  IPC
+                   5,000  iterations
+          519.7827032150  throughput_ops_per_second
+                9.619404  duration_s
+                  0.686%  branch_miss_rate
+                  0.038%  L1_dcache_load_miss_rate

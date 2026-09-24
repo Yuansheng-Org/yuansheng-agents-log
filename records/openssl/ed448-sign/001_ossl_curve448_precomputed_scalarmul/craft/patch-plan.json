@@ -1,0 +1,136 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-openssl-ed448-sign-001",
+  "blueprintId": "bp-openssl-ed448-sign-001",
+  "createdAt": "2026-09-10T12:51:22.945Z",
+  "objective": "constant_time_lookup 内层 j-loop 以逐字节标量实现 masked select + OR 累加（每字节 8 条动态指令、3 次内存操作），硬件与 build 均支持 RVV 1.0（VLEN=256，SEW=8/LMUL=8 时 VLMAX=256≥192，整行一次向量迭代即可覆盖）但该循环未被编译器自动向量化（autovec 覆盖缺口，constant_time.h 的 value_barrier 空 asm 与循环结构为候选阻碍），RVV 执行能力在承担全部局部样本的此循环中闲置。",
+  "changes": [
+    {
+      "filePath": "157/157",
+      "action": "modify",
+      "rationale": "constant_time_lookup 内层 j-loop 以逐字节标量实现 masked select + OR 累加（每字节 8 条动态指令、3 次内存操作），硬件与 build 均支持 RVV 1.0（VLEN=256，SEW=8/LMUL=8 时 VLMAX=256≥192，整行一次向量迭代即可覆盖）但该循环未被编译器自动向量化（autovec 覆盖缺口，constant_time.h 的 value_barrier 空 asm 与循环结构为候选阻碍），RVV 执行能力在承担全部局部样本的此循环中闲置。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "vsetivli/vle64.v/vadd.vv/vrgather.vv/vse64.v",
+      "action": "modify",
+      "rationale": "constant_time_lookup 内层 j-loop 以逐字节标量实现 masked select + OR 累加（每字节 8 条动态指令、3 次内存操作），硬件与 build 均支持 RVV 1.0（VLEN=256，SEW=8/LMUL=8 时 VLMAX=256≥192，整行一次向量迭代即可覆盖）但该循环未被编译器自动向量化（autovec 覆盖缺口，constant_time.h 的 value_barrier 空 asm 与循环结构为候选阻碍），RVV 执行能力在承担全部局部样本的此循环中闲置。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "vsetivli/vle64.v/vadd.vv/vrgather.vv/vse64",
+      "action": "modify",
+      "rationale": "constant_time_lookup 内层 j-loop 以逐字节标量实现 masked select + OR 累加（每字节 8 条动态指令、3 次内存操作），硬件与 build 均支持 RVV 1.0（VLEN=256，SEW=8/LMUL=8 时 VLMAX=256≥192，整行一次向量迭代即可覆盖）但该循环未被编译器自动向量化（autovec 覆盖缺口，constant_time.h 的 value_barrier 空 asm 与循环结构为候选阻碍），RVV 执行能力在承担全部局部样本的此循环中闲置。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "patterns/rvv_contiguous_elementwise_arithmetic_kernels.md",
+      "action": "modify",
+      "rationale": "constant_time_lookup 内层 j-loop 以逐字节标量实现 masked select + OR 累加（每字节 8 条动态指令、3 次内存操作），硬件与 build 均支持 RVV 1.0（VLEN=256，SEW=8/LMUL=8 时 VLMAX=256≥192，整行一次向量迭代即可覆盖）但该循环未被编译器自动向量化（autovec 覆盖缺口，constant_time.h 的 value_barrier 空 asm 与循环结构为候选阻碍），RVV 执行能力在承担全部局部样本的此循环中闲置。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "crypto/ec/curve448/curve448.c",
+      "action": "modify",
+      "rationale": "constant_time_lookup 内层 j-loop 以逐字节标量实现 masked select + OR 累加（每字节 8 条动态指令、3 次内存操作），硬件与 build 均支持 RVV 1.0（VLEN=256，SEW=8/LMUL=8 时 VLMAX=256≥192，整行一次向量迭代即可覆盖）但该循环未被编译器自动向量化（autovec 覆盖缺口，constant_time.h 的 value_barrier 空 asm 与循环结构为候选阻碍），RVV 执行能力在承担全部局部样本的此循环中闲置。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "include/crypto/constant_time.h",
+      "action": "modify",
+      "rationale": "constant_time_lookup 内层 j-loop 以逐字节标量实现 masked select + OR 累加（每字节 8 条动态指令、3 次内存操作），硬件与 build 均支持 RVV 1.0（VLEN=256，SEW=8/LMUL=8 时 VLMAX=256≥192，整行一次向量迭代即可覆盖）但该循环未被编译器自动向量化（autovec 覆盖缺口，constant_time.h 的 value_barrier 空 asm 与循环结构为候选阻碍），RVV 执行能力在承担全部局部样本的此循环中闲置。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "memory/branch",
+      "action": "modify",
+      "rationale": "constant_time_lookup 内层 j-loop 以逐字节标量实现 masked select + OR 累加（每字节 8 条动态指令、3 次内存操作），硬件与 build 均支持 RVV 1.0（VLEN=256，SEW=8/LMUL=8 时 VLMAX=256≥192，整行一次向量迭代即可覆盖）但该循环未被编译器自动向量化（autovec 覆盖缺口，constant_time.h 的 value_barrier 空 asm 与循环结构为候选阻碍），RVV 执行能力在承担全部局部样本的此循环中闲置。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "-fopt-info-vec/-Rpass",
+      "action": "modify",
+      "rationale": "constant_time_lookup 内层 j-loop 以逐字节标量实现 masked select + OR 累加（每字节 8 条动态指令、3 次内存操作），硬件与 build 均支持 RVV 1.0（VLEN=256，SEW=8/LMUL=8 时 VLMAX=256≥192，整行一次向量迭代即可覆盖）但该循环未被编译器自动向量化（autovec 覆盖缺口，constant_time.h 的 value_barrier 空 asm 与循环结构为候选阻碍），RVV 执行能力在承担全部局部样本的此循环中闲置。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "include/crypto/constant_time.h:",
+      "action": "modify",
+      "rationale": "constant_time_lookup 内层 j-loop 以逐字节标量实现 masked select + OR 累加（每字节 8 条动态指令、3 次内存操作），硬件与 build 均支持 RVV 1.0（VLEN=256，SEW=8/LMUL=8 时 VLMAX=256≥192，整行一次向量迭代即可覆盖）但该循环未被编译器自动向量化（autovec 覆盖缺口，constant_time.h 的 value_barrier 空 asm 与循环结构为候选阻碍），RVV 执行能力在承担全部局部样本的此循环中闲置。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应围绕 157/157, vsetivli/vle64.v/vadd.vv/vrgather.vv/vse64.v, vsetivli/vle64.v/vadd.vv/vrgather.vv/vse64, patterns/rvv_contiguous_elementwise_arithmetic_kernels.md, crypto/ec/curve448/curve448.c, include/crypto/constant_time.h, memory/branch, -fopt-info-vec/-Rpass, include/crypto/constant_time.h: 解决 blueprint bp-openssl-ed448-sign-001 指出的根因。允许涉及 构建系统、平台适配、构建参数、注册入口；源码实现、汇编/kernel/intrinsic/SIMD/vector 后端、分发表。"
+}

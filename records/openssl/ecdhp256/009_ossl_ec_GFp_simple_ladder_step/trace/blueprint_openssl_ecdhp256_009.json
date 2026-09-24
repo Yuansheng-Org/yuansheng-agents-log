@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-openssl-ecdhp256-009",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T12:04:40.393Z",
+    "software": "openssl",
+    "testcaseIds": [
+      "ecdhp256"
+    ],
+    "diagnosisId": "diag-20260908T120440393Z-fe83fd9e",
+    "targetHardware": "SpacemiT X100 (K3, spacemit-x100, RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://github.com/openssl/openssl.git",
+    "testBranch": "master",
+    "commitHash": "2924476b5591e691e904c4baf57894c526c4b8de"
+  },
+  "problem": {
+    "summary": "ossl_ec_GFp_simple_ladder_step（ecdhp256 热点 rank 009）是通用 EC_GFp_mont_method 的 Montgomery ladder 步函数，P-256 ECDH 请求落入了这条 generic 路径而非仓库中已存在的专用实现：18 个 cpu-clock samples 全部是该编排层的调用开销（prologue/epilogue 13 槽保存恢复 44.4%、参数搬运 38.9%、调用点 16.7%）。根因是构建配置未启用 P-256 专用方法（ec_nistp_64_gcc_128 default 禁用），ladder 每 bit 执行约 23 次 generic BN 库调用（bn_mul_mont/BN_mod_* round-trip），并连带使 BN_usub/bn_sub_words/bn_wexpand/BN_get_flags 成为热点。L0 baseline finding：hardware 含 v（RVV 1.0）而 build Tag_RISCV_arch 无 v。",
+    "evidence": [
+      "cpu-clock annotate（18 samples, local period）：prologue 保存组 179724 sd s5 5.56% + 17972e sd s11 11.11% + 17978a sd s3 5.56% + 1797d6 sd s9 11.11% = 33.3%；epilogue 恢复组 17981a/179828 各 5.56% = 11.1%；参数搬运组（179730/1797cc/179800/179884/17993e/179956/179986 各 5.56%）= 38.9%；调用点 17999e jal BN_mod_sub_quick 5.56% + 179a48 beqz 11.11% = 16.7%",
+      "结构性证据：ecp_mont.c:76 将 ossl_ec_GFp_simple_ladder_step 注册为 EC_GFp_mont_method 的 ladder_step；ec_local.h:776-788 规定仅 meth->ladder_step != NULL 时调用它（专用 nistp256/nistz256 方法 ladder_step=0，走 EC_POINT_add/dbl fallback）——该函数出现在 P-256 热点中即证明 group 走通用方法",
+      "ec_curve.c:2575-2585：P-256 条目在 ECP_NISTZ256_ASM（RISC-V 无）与 S390X 均不成立、且 OPENSSL_NO_EC_NISTP_64_GCC_128 时 method=0 → ec_group_new_from_data（ec_curve.c:2917）回退 EC_GROUP_new_curve_GFp = EC_GFp_mont_method",
+      "Configure:621-638：ec_nistp_64_gcc_128 位于 disabled-by-default 列表（CHANGES.md:11695 确认需显式 enable-ec_nistp_64_gcc_128）；仓库存在专用实现 EC_GFp_nistp256_method（ecp_nistp256.c，ec_curve.c:2581 指定）",
+      "perf stat：IPC 2.606、branch_miss_rate 0.686%、L1_dcache_load_miss_rate 0.038% → compute/latency-bound",
+      "L0 baseline finding：hardware ISA rv64imafdcvh_... 含 v（RVV 1.0, VLEN=256），build Tag_RISCV_arch 无 v"
+    ]
+  },
+  "rootCause": {
+    "summary": "P-256 ECDH 在本 build 落入通用 EC_GFp_mont_method 路径（ec_nistp_64_gcc_128 默认禁用导致 ec_curve.c 的 P-256 条目 method=0 回退），每 ladder bit 执行约 23 次 generic BN field 调用；本函数的 18 samples 全部是该 generic 编排层的保存/恢复（44.4%）与参数搬运（38.9%）开销，而仓库中指定的专用实现 EC_GFp_nistp256_method 未被选择。",
+    "candidateFiles": [
+      "Configure",
+      "crypto/ec/ec_curve.c"
+    ],
+    "performanceFactors": [
+      "Kernel Selection and Runtime Specialization",
+      "Register Pressure and Save/Restore Optimization"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "Montgomery ladder 的常量时间结构（ECDH 私钥标量处理，ec_mult.c 的 ladder 循环与 CSWAP 逻辑）",
+      "EC 点运算语义与 P-256 曲线参数行为（EC_GROUP_new_by_curve_name 结果一致性）",
+      "EC_GFp_nistp256_method 对 __uint128_t 与小端序的依赖（RV64 GCC 支持，需确认未定义 OPENSSL_NO_EC_NISTP_64_GCC_128）",
+      "BN_CTX_start/end 的临时管理语义与错误路径（field_mul 等失败时返回 0）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "ecdhp256",
+      "bntest",
+      "ectest"
+    ],
+    "regressionCommand": "agent1 patch_regression --case ecdhp256"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.8,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "本 build 的 configdata 未直接核对（OPENSSL_NO_EC_NISTP_64_GCC_128 状态由 profile 中 simple ladder 的存在 + Configure default 推断）；收益幅度受 baseline_gap: sampling metadata/IP precision 限制且无 nistp256 vs mont 的 A/B 实测；方法切换是构建级变更，需人工确认配置假设与优先级。",
+    "reasoning": "perf stat 显示 compute/latency-bound（IPC 2.606、L1D miss 0.038%），排除 memory/branch 竞争瓶颈；ossl_ec_GFp_simple_ladder_step 的 annotate（18 samples）全部落在 generic 编排开销上（prologue+epilogue 44.4%、参数搬运 38.9%、调用点 16.7%），而源码链路证明：该函数被 P-256 热点调用 ⇒ group 为 EC_GFp_mont/nist/simple 通用方法（ecp_mont.c:76 注册、ec_local.h:776-788 仅通用方法调用它）⇒ ec_curve.c:2575-2585 的 P-256 专用方法分支（ECP_NISTZ256_ASM/S390X/EC_NISTP_64_GCC_128）均未生效 ⇒ ec_nistp_64_gcc_128 为 Configure default 禁用（Configure:638）——三类证据共同指向 kernel-selection 根因：专用实现 EC_GFp_nistp256_method（ecp_nistp256.c）存在但未被构建选择；pattern 的 Related PRs（oneDNN/OpenJDK/OpenBLAS 的实现优先级与选择修复）为该形态可修复提供先例。因 configdata 为推断、无 A/B 实测且采样缺口限制幅度表述，故 recommendToCraft=conditional。",
+    "rootCauseType": "config_mismatch",
+    "alternativeExplanations": [
+      "构建可能显式配置了 EC_GFp_mont_method（而非默认回退），此时根因是基准构建方案选择而非配置疏漏——需 configdata.pm 定案",
+      "若启用 EC_GFp_nistp256_method 后 ECDH 走 EC_POINT_add/dbl fallback（ladder_step=0），其常量时间 ladder 结构与性能需实测；nistp256 points_mul 为变时间窗口 comb，在要求常量时间的 ECDH 路径下未必被采用",
+      "RISC-V 上 __uint128_t 的 mul 扩展为 mulh+mul 指令对，nistp256 方法的实际收益需与 generic Montgomery 在本 target 上 A/B 实测确认"
+    ],
+    "currentGaps": "未直接核对本 build configdata（source_context_gap: build configdata）——OPENSSL_NO_EC_NISTP_64_GCC_128 状态由 profile+Configure default 推断；无 precise_ip/Exact-IP（baseline_gap: sampling IP precision）；percent type=local period 且函数 workload 级贡献未知（baseline_gap: sampling metadata）；无 nistp256 vs mont 在本 target 的 A/B benchmark；本 worker 无 ys-trace-execution-summary 的 RV/ARM duration ratio 数据。",
+    "needsHumanReview": true,
+    "humanReviewFocus": "核对本 build 的 configdata.pm（ec_nistp_64_gcc_128 / OPENSSL_NO_EC_NISTP_64_GCC_128 实际状态），并决定是否以 enable-ec_nistp_64_gcc_128 重建做 A/B：确认 P-256 改用 EC_GFp_nistp256_method 后 ossl_ec_GFp_simple_ladder_step 与 generic BN 链（bn_sub_words/BN_usub 等）份额下降、ecdhp256 吞吐上升。",
+    "affectedTarget": "RV / ecdhp256",
+    "recommendedFirstAction": "Configure（ec_nistp_64_gcc_128，Configure:638）与 crypto/ec/ec_curve.c:2575-2585（P-256 方法选择链）：先核对本 build configdata 确认 OPENSSL_NO_EC_NISTP_64_GCC_128 已定义；若确认，以 enable-ec_nistp_64_gcc_128 重建（不修改任何函数语义），重测 ecdhp256 吞吐并重采 annotate，确认 P-256 改用 EC_GFp_nistp256_method（ladder 走 EC_POINT_add/dbl fallback）且 ossl_ec_GFp_simple_ladder_step 不再出现在热点中；若 A/B 不达预期再评估 RISC-V nistz256 式 fused ladder 移植。",
+    "recommendedVerification": "重建后重跑 perf annotate 确认 ossl_ec_GFp_simple_ladder_step 样本归零、nistp256 point/field 函数样本出现、generic BN 链（BN_usub/bn_sub_words/bn_wexpand/BN_get_flags）份额下降；重跑 agent1 patch_regression --case ecdhp256 与 bntest/ectest 确认行为与常量时间 ladder 语义不变；对比 enable-ec_nistp_64_gcc_128 前后 throughput（基线 519.78 ops/s）。",
+    "metricEvidence": [
+      {
+        "metric": "Throughput (ops/s)",
+        "rv": 519.782703215,
+        "anomalyNote": "ecdhp256 基准基线吞吐（iterations 5000）；方法切换后应上升，幅度待 A/B 实测"
+      },
+      {
+        "metric": "IPC",
+        "rv": 2.606,
+        "anomalyNote": "compute/latency-bound：IPC 2.606 较高，结合极低缓存 miss，瓶颈在计算/延迟链而非访存带宽"
+      },
+      {
+        "metric": "Branch miss rate(%)",
+        "rv": 0.686,
+        "anomalyNote": "分支预测健康，排除 branch-bound 分类"
+      },
+      {
+        "metric": "L1 D-cache load miss rate(%)",
+        "rv": 0.038,
+        "anomalyNote": "极低（3.96M/10.42G），排除 memory-bound，实现选择/codegen fix 方向不被内存瓶颈反驳"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "ossl_ec_GFp_simple_ladder_step",
+        "fileModule": "crypto/ec/ecp_smpl.c",
+        "rvvPattern": "Kernel Selection and Runtime Specialization",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 1,
+        "note": "EC 点运算编排层（密码学/ECDH P-256 路径，rank 009/28）；通用 EC_GFp_mont_method 的 Montgomery ladder 步，每 bit 约 23 次 generic BN field 调用；本函数全部 18 samples 为 generic 路径编排开销（supporting finding 的保存/恢复组占其中 44.4%）；方法切换后整个函数从 P-256 热点中消失"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "crypto/ec/ecp_smpl.c:1560（ossl_ec_GFp_simple_ladder_step 定义）；ecp_mont.c:76（通用方法注册）；ec_curve.c:2575-2585（P-256 方法选择链）；Configure:638（ec_nistp_64_gcc_128 default 禁用）",
+      "relatedKnowledge": "https://github.com/uxlfoundation/oneDNN/commit/cc92e4b292403096ddd78046914eec0d61147727, https://github.com/uxlfoundation/oneDNN/commit/9233aa44f24630b959e72417b8ecccabbec4c6a5, https://github.com/uxlfoundation/oneDNN/pull/4463, https://github.com/uxlfoundation/oneDNN/commit/e19dc70ec1fb50dc23203386ce09e6e537a4b0b7, https://github.com/uxlfoundation/oneDNN/pull/4363, https://github.com/uxlfoundation/oneDNN/commit/276cb7cd00e868e4a7e1e34c5848efbd09be4efd, https://github.com/uxlfoundation/oneDNN/pull/5453, https://github.com/uxlfoundation/oneDNN/commit/b2f18637a7da6e2bd2739b84f1db6cd529396de4, https://github.com/uxlfoundation/oneDNN/commit/ec2bfa1254336d52fc95af71ea6dcbe7e8231766, https://github.com/openjdk/jdk/pull/21083, https://github.com/openjdk/jdk/commit/580eb62dc097efeb51c76b095c1404106859b673, https://github.com/OpenMathLib/OpenBLAS/commit/ef8e7d0279dfd1f9d9bec32b514a853d10bfdda7, https://github.com/OpenMathLib/OpenBLAS/commit/bef47917bd72f35c151038fee0cf485445476863, https://github.com/OpenMathLib/OpenBLAS/commit/03a83778bb9b8a869dc934511f1d13bba80d09a7, https://github.com/OpenMathLib/OpenBLAS/commit/64401b4417585711b6a6876171a9eed4fd547a26, https://github.com/uxlfoundation/oneDNN/pull/4620, https://github.com/uxlfoundation/oneDNN/pull/4945, https://github.com/uxlfoundation/oneDNN/pull/5403",
+      "evidenceExplanation": "annotate 证明 generic ladder 编排层（本函数）在 P-256 workload 中执行其全部 18 samples，源码链路（ecp_mont.c:76 注册、ec_local.h:776-788 仅通用方法调用、ec_curve.c:2575-2585 P-256 专用方法分支均未生效、Configure:638 default 禁用）证明专用实现 EC_GFp_nistp256_method 存在但未被构建选择——请求进入 generic/reference fallback 而仓库存在满足合同的专用实现；pattern 的 Related PRs（oneDNN 实现优先级/注册选择、OpenJDK 向量 stub ABI 路由、OpenBLAS target 内核绑定）为该实现选择形态的可修复性提供先例。"
+    }
+  }
+}

@@ -1,0 +1,55 @@
+1-OPENSSL-BENCHMARK ed448-sign RISC-V perf stat
+===============================================
+
+Source CSV: /workspace/results/1-openssl-benchmark_results.csv
+TestName: ed448-sign
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 2,611,684,903 |
+| task_clock | 2,608.7400000000 |
+| cpu_cycle | 5,737,516,871 |
+| instruction | 16,233,413,040 |
+| cache_references | <not |
+| cache_misses | <not |
+| branches | 1,567,312,259 |
+| branch_misses | 8,414,356 |
+| L1_dcache_loads | 3,694,648,963 |
+| L1_dcache_load_misses | 639,810 |
+| LLC_load_misses | <not |
+| LLC_loads | <not |
+| IPC | 2.8290000000 |
+| iterations | 5,000 |
+| throughput_ops_per_second | 1,914.4729114361 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 2.611685 |
+| branch_miss_rate | 0.537% |
+| L1_dcache_load_miss_rate | 0.017% |
+
+perf stat style summary
+-----------------------
+           2,611,684,903  duration_time
+        2,608.7400000000  task_clock
+           5,737,516,871  cpu_cycle
+          16,233,413,040  instruction
+                    <not  cache_references
+                    <not  cache_misses
+           1,567,312,259  branches
+               8,414,356  branch_misses
+           3,694,648,963  L1_dcache_loads
+                 639,810  L1_dcache_load_misses
+                    <not  LLC_load_misses
+                    <not  LLC_loads
+            2.8290000000  IPC
+                   5,000  iterations
+        1,914.4729114361  throughput_ops_per_second
+                2.611685  duration_s
+                  0.537%  branch_miss_rate
+                  0.017%  L1_dcache_load_miss_rate
