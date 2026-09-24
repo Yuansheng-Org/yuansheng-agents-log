@@ -14,7 +14,6 @@
 
 | 补丁目录 | 原始测试用例 | Blueprint ID |
 | --- | --- | --- |
-| [001_bits_image_fetch_bilinear_affine_normal_a8r8g8b8](affine-bench-bilinear-rotate-30deg/001_bits_image_fetch_bilinear_affine_normal_a8r8g8b8/) | `affine-bench-bilinear-rotate-30deg` | `bp-pixman-affine-bench-bilinear-rotate-30deg-001` |
 | [001_bits_image_fetch_bilinear_no_repeat_8888](lowlevel-blt-bilinear-022-022/001_bits_image_fetch_bilinear_no_repeat_8888/) | `lowlevel-blt-bilinear-022-022` | `bp-pixman-lowlevel-blt-bilinear-022-022-001` |
 | [001_radial_write_color](radial-perf-full/001_radial_write_color/) | `radial-perf-full` | `bp-pixman-radial-perf-full-001` |
 | [001_rvv_composite_over_n_8888_8888_ca](lowlevel-blt-bilinear-094-094/001_rvv_composite_over_n_8888_8888_ca/) | `lowlevel-blt-bilinear-094-094` | `bp-pixman-lowlevel-blt-bilinear-094-094-001` |
@@ -23,4 +22,3 @@
 
 每个补丁目录中，`trace/` 保留 Agent Debug 的函数级原始文件；`craft/` 保留原有 `patch.diff`，新增 `patch-plan.json`、`patch-candidate.json` 和 `reviews/` 中的 AI 审核产物；顶层 `review/*.patch` 是 `add-pixman` 已有的专家调整后补丁。归档时核对了原有 `craft/patch.diff` 与 Agent Debug 对应文件的字节内容，以及 Blueprint → Plan → Candidate → AI Review 的 ID 引用。
 
-上表列出 6 个已筛选目录；历史汇总中的“开源专家复核后补丁数量”仍为 5。两者统计口径尚未逐项核实，因此本次只补齐产物，不改动历史汇总，也不把 AI 审核通过视为编译、回归或社区接收的证明。
