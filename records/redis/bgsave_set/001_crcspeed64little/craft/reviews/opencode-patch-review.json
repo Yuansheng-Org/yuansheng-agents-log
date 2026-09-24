@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-bp-redis-bgsave-set-001-r2",
+  "patchCandidateId": "pc-bp-redis-bgsave-set-001",
+  "reviewedAt": "2026-09-23T15:20:00.000Z",
+  "reviewer": "comet-review (独立只读)",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "clmul/clmulh 属 Zbc，目标 ISA 含 zbc（blueprint targetHardware + metadata cpuinfo），qemu 实测通过；hwprobe 分派与内核 UAPI 一致，缺头文件回退块补齐 struct；无向量代码；无 x86/ARM 混入；端序防御检查已加。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F-001-FIXED",
+      "file": "src/crcspeed.c",
+      "evidence": "v2 patch.diff 原文：+struct riscv_hwprobe { long key; unsigned long value; }; 与 +#define RISCV_HWPROBE_EXT_ZBC (1ULL << 7)（独立守卫）；缺 <asm/hwprobe.h> 模拟编译通过。",
+      "severity": "suggestion",
+      "category": "compile-portability",
+      "suggestion": "F-001 已修复并验证；无需进一步改动。"
+    },
+    {
+      "id": "F-002-NOTED",
+      "file": "src/crcspeed.c",
+      "evidence": "PatchCandidate notes 字段已包含 set_crc64_cutoffs 语义披露（候选产物与 patch.diff 同目录落盘）。",
+      "severity": "suggestion",
+      "category": "test-semantics",
+      "suggestion": "测试语义变化已在 notes 中披露，无需代码改动。"
+    },
+    {
+      "id": "F-003-INFO",
+      "file": "src/crcspeed.c",
+      "evidence": "v2 patch.diff 原文：+    __asm__ volatile(\".insn r 0x33, 0x1, 0x5, %0, %1, %2\"",
+      "severity": "suggestion",
+      "category": "toolchain-compat",
+      "suggestion": ".insn 需要 binutils >= 2.28；目标工具链满足，仅记录。"
+    }
+  ]
+}

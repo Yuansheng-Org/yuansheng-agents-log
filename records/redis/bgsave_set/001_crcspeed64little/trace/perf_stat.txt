@@ -1,0 +1,31 @@
+21-REDIS-BENCHMARK bgsave_set RISC-V perf stat
+==============================================
+
+Source CSV: /workspace/results/21-redis-benchmark_results.csv
+TestName: bgsave_set
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| requests_per_second | 15,457.14 |
+| avg_latency_ms | 2.732 |
+| p50_latency_ms | 2.351 |
+| p95_latency_ms | 4.583 |
+| p99_latency_ms | 10.703 |
+| max_latency_ms | 210.047 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+
+perf stat style summary
+-----------------------
+        15,457.14  requests_per_second
+            2.732  avg_latency_ms
+            2.351  p50_latency_ms
+            4.583  p95_latency_ms
+           10.703  p99_latency_ms
+          210.047  max_latency_ms

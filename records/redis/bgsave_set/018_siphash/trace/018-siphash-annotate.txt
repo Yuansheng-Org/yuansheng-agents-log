@@ -1,0 +1,387 @@
+ Percent |	Source code & Disassembly of redis-server for cpu-clock:u (6 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000001d8854 <siphash>:
+         : 6      siphash():
+    0.00 :   1d8854: addi    sp,sp,-32
+         : 127    v1 ^= v2;                                                              \
+         : 128    v2 = ROTL(v2, 32);                                                     \
+         : 129    } while (0)
+         :
+         : 131    NO_SANITIZE("alignment")
+         : 132    uint64_t siphash(const uint8_t *in, const size_t inlen, const uint8_t *k) {
+    0.00 :   1d8856: sd      s0,16(sp)
+    0.00 :   1d8858: sd      s1,8(sp)
+    0.00 :   1d885a: sd      ra,24(sp)
+    0.00 :   1d885c: addi    s0,sp,32
+         : 136    #endif
+         : 137    uint64_t v0 = 0x736f6d6570736575ULL;
+         : 138    uint64_t v1 = 0x646f72616e646f6dULL;
+         : 139    uint64_t v2 = 0x6c7967656e657261ULL;
+         : 140    uint64_t v3 = 0x7465646279746573ULL;
+         : 141    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d885e: lbu     t1,1(a2)
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+   16.67 :   1d8862: lbu     a7,9(a2)
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d8866: lbu     t4,0(a2)
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d886a: lbu     t3,8(a2)
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d886e: lbu     a6,2(a2)
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d8872: lbu     a5,10(a2)
+    0.00 :   1d8876: lbu     a4,11(a2)
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d887a: lbu     a3,3(a2)
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d887e: lbu     t6,12(a2)
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d8882: slli    t1,t1,0x8
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d8884: slli    a7,a7,0x8
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d8886: or      t1,t1,t4
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d888a: or      a7,a7,t3
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d888e: lbu     t0,4(a2)
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d8892: lbu     t5,13(a2)
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d8896: slli    a6,a6,0x10
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d8898: slli    a5,a5,0x10
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d889a: or      a6,a6,t1
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d889e: or      a5,a5,a7
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d88a2: lbu     t4,5(a2)
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d88a6: lbu     t1,14(a2)
+    0.00 :   1d88aa: slli    a4,a4,0x18
+    0.00 :   1d88ac: or      a4,a4,a5
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d88ae: lbu     t3,6(a2)
+    0.00 :   1d88b2: slli    a3,a3,0x18
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d88b4: slli    t6,t6,0x20
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d88b6: or      a3,a3,a6
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d88ba: or      t6,t6,a4
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d88be: lbu     a6,7(a2)
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d88c2: lbu     a5,15(a2)
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d88c6: slli    t0,t0,0x20
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d88c8: slli    t5,t5,0x28
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d88ca: or      t0,t0,a3
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d88ce: or      t5,t5,t6
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d88d2: slli    t4,t4,0x28
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d88d4: slli    t1,t1,0x30
+         : 143    uint64_t m;
+         : 144    const uint8_t *end = in + inlen - (inlen % sizeof(uint64_t));
+         : 145    const int left = inlen & 7;
+         : 146    uint64_t b = ((uint64_t)inlen) << 56;
+         : 147    v3 ^= k1;
+         : 148    v2 ^= k0;
+    0.00 :   1d88d6: lui     a2,0x6c796
+         : 145    v1 ^= k1;
+         : 146    v0 ^= k0;
+    0.00 :   1d88da: lui     a3,0x736f7
+         : 142    v3 ^= k1;
+    0.00 :   1d88de: lui     a4,0x3a32b
+         : 144    v1 ^= k1;
+    0.00 :   1d88e2: lui     a7,0x646f7
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d88e6: or      t4,t4,t0
+    0.00 :   1d88ea: slli    t3,t3,0x30
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d88ec: or      t1,t1,t5
+         : 143    v2 ^= k0;
+    0.00 :   1d88f0: addi    a2,a2,1893 # 6c796765 <__BSS_END__+0x6c258695>
+    0.00 :   1d88f4: lui     s1,0x6e657
+         : 145    v0 ^= k0;
+    0.00 :   1d88f8: addi    a3,a3,-667 # 736f6d65 <__BSS_END__+0x731b8c95>
+    0.00 :   1d88fc: lui     t2,0x70736
+         : 142    v3 ^= k1;
+    0.00 :   1d8900: addi    a4,a4,561 # 3a32b231 <__BSS_END__+0x39ded161>
+    0.00 :   1d8904: lui     t0,0x79746
+         : 144    v1 ^= k1;
+    0.00 :   1d8908: addi    a7,a7,609 # 646f7261 <__BSS_END__+0x641b9191>
+    0.00 :   1d890c: lui     t5,0x6e647
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d8910: or      t4,t3,t4
+         : 143    v2 ^= k0;
+    0.00 :   1d8914: slli    a2,a2,0x20
+         : 145    v0 ^= k0;
+    0.00 :   1d8916: slli    a3,a3,0x20
+         : 142    v3 ^= k1;
+    0.00 :   1d8918: slli    a4,a4,0x21
+         : 139    const uint8_t *end = in + inlen - (inlen % sizeof(uint64_t));
+    0.00 :   1d891a: andi    t3,a1,-8
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d891e: slli    a6,a6,0x38
+         : 143    v2 ^= k0;
+    0.00 :   1d8920: addi    s1,s1,609 # 6e657261 <__BSS_END__+0x6e119191>
+         : 145    v0 ^= k0;
+    0.00 :   1d8924: addi    t2,t2,1397 # 70736575 <__BSS_END__+0x701f84a5>
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d8928: slli    a5,a5,0x38
+         : 142    v3 ^= k1;
+    0.00 :   1d892a: addi    t0,t0,1395 # 79746573 <__BSS_END__+0x792084a3>
+         : 144    v1 ^= k1;
+    0.00 :   1d892e: slli    a7,a7,0x20
+    0.00 :   1d8930: addi    t5,t5,-147 # 6e646f6d <__BSS_END__+0x6e108e9d>
+         : 136    uint64_t k0 = U8TO64_LE(k);
+    0.00 :   1d8934: or      a6,a6,t4
+         : 143    v2 ^= k0;
+    0.00 :   1d8938: add     t6,a2,s1
+         : 137    uint64_t k1 = U8TO64_LE(k + 8);
+    0.00 :   1d893c: or      a5,a5,t1
+         : 145    v0 ^= k0;
+    0.00 :   1d8940: add     a2,a3,t2
+         : 139    const uint8_t *end = in + inlen - (inlen % sizeof(uint64_t));
+    0.00 :   1d8944: add     t3,t3,a0
+         : 142    v3 ^= k1;
+    0.00 :   1d8946: add     a3,a4,t0
+         : 144    v1 ^= k1;
+    0.00 :   1d894a: add     a4,a7,t5
+         : 143    v2 ^= k0;
+    0.00 :   1d894e: xor     t6,a6,t6
+         : 142    v3 ^= k1;
+    0.00 :   1d8952: xor     a3,a3,a5
+         : 140    const int left = inlen & 7;
+   16.67 :   1d8954: andi    t4,a1,7
+         : 145    v0 ^= k0;
+    0.00 :   1d8958: xor     a6,a6,a2
+         : 144    v1 ^= k1;
+    0.00 :   1d895c: xor     a5,a5,a4
+         : 141    uint64_t b = ((uint64_t)inlen) << 56;
+    0.00 :   1d895e: slli    a1,a1,0x38
+         :
+         : 148    for (; in != end; in += 8) {
+    0.00 :   1d8960: beq     a0,t3,1d8a04 <siphash+0x1b0>
+         : 148    m = U8TO64_LE(in);
+    0.00 :   1d8964: lbu     a4,1(a0)
+    0.00 :   1d8968: lbu     a2,0(a0)
+    0.00 :   1d896c: lbu     a7,2(a0)
+    0.00 :   1d8970: lbu     t5,3(a0)
+    0.00 :   1d8974: lbu     t1,4(a0)
+    0.00 :   1d8978: slli    a4,a4,0x8
+    0.00 :   1d897a: or      a4,a4,a2
+    0.00 :   1d897c: slli    a7,a7,0x10
+    0.00 :   1d897e: lbu     a2,5(a0)
+    0.00 :   1d8982: or      a7,a7,a4
+    0.00 :   1d8986: slli    t5,t5,0x18
+    0.00 :   1d8988: lbu     a4,6(a0)
+    0.00 :   1d898c: or      t5,t5,a7
+    0.00 :   1d8990: slli    t1,t1,0x20
+    0.00 :   1d8992: lbu     a7,7(a0)
+   16.67 :   1d8996: or      t1,t1,t5
+    0.00 :   1d899a: slli    a2,a2,0x28
+    0.00 :   1d899c: or      a2,a2,t1
+    0.00 :   1d89a0: slli    a4,a4,0x30
+    0.00 :   1d89a2: or      a4,a4,a2
+    0.00 :   1d89a4: slli    a7,a7,0x38
+    0.00 :   1d89a6: or      a7,a7,a4
+         : 149    v3 ^= m;
+    0.00 :   1d89aa: xor     a4,a7,a3
+         :
+         : 152    SIPROUND;
+    0.00 :   1d89ae: srli    a3,a4,0x30
+    0.00 :   1d89b2: slli    a2,a4,0x10
+   16.67 :   1d89b6: srli    t1,a5,0x33
+    0.00 :   1d89ba: add     a2,a2,a3
+    0.00 :   1d89bc: slli    a3,a5,0xd
+    0.00 :   1d89c0: add     a4,a4,t6
+    0.00 :   1d89c2: add     a5,a5,a6
+    0.00 :   1d89c4: add     a3,a3,t1
+    0.00 :   1d89c6: xor     a2,a2,a4
+    0.00 :   1d89c8: srli    t1,a5,0x20
+    0.00 :   1d89cc: slli    a6,a5,0x20
+    0.00 :   1d89d0: xor     a5,a5,a3
+    0.00 :   1d89d2: add     a4,a4,a5
+    0.00 :   1d89d4: srli    t5,a2,0x2b
+    0.00 :   1d89d8: slli    a3,a2,0x15
+    0.00 :   1d89dc: add     a6,a6,t1
+    0.00 :   1d89de: srli    t1,a5,0x2f
+    0.00 :   1d89e2: slli    a5,a5,0x11
+    0.00 :   1d89e4: add     a6,a6,a2
+    0.00 :   1d89e6: add     a3,a3,t5
+    0.00 :   1d89e8: srli    a2,a4,0x20
+   16.67 :   1d89ec: slli    t6,a4,0x20
+    0.00 :   1d89f0: add     a5,a5,t1
+         : 147    for (; in != end; in += 8) {
+   16.67 :   1d89f2: addi    a0,a0,8
+         : 151    SIPROUND;
+    0.00 :   1d89f4: xor     a3,a6,a3
+    0.00 :   1d89f8: add     t6,t6,a2
+         :
+         : 154    v0 ^= m;
+    0.00 :   1d89fa: xor     a6,a7,a6
+         : 151    SIPROUND;
+    0.00 :   1d89fe: xor     a5,a5,a4
+         : 147    for (; in != end; in += 8) {
+    0.00 :   1d8a00: bne     t3,a0,1d8964 <siphash+0x110>
+         : 156    }
+         :
+         : 158    switch (left) {
+    0.00 :   1d8a04: auipc   a2,0xf3
+    0.00 :   1d8a08: addi    a2,a2,-52 # 2cb9d0 <CSWTCH.523+0x18>
+    0.00 :   1d8a0c: slli    t4,t4,0x2
+    0.00 :   1d8a0e: add     t4,t4,a2
+    0.00 :   1d8a10: lw      a4,0(t4)
+    0.00 :   1d8a14: add     a4,a4,a2
+    0.00 :   1d8a16: jr      a4
+         : 157    case 7: b |= ((uint64_t)in[6]) << 48; /* fall-thru */
+    0.00 :   1d8a18: lbu     a4,6(t3)
+    0.00 :   1d8a1c: slli    a4,a4,0x30
+    0.00 :   1d8a1e: or      a1,a1,a4
+         : 158    case 6: b |= ((uint64_t)in[5]) << 40; /* fall-thru */
+    0.00 :   1d8a20: lbu     a4,5(t3)
+    0.00 :   1d8a24: slli    a4,a4,0x28
+    0.00 :   1d8a26: or      a1,a1,a4
+         : 159    case 5: b |= ((uint64_t)in[4]) << 32; /* fall-thru */
+    0.00 :   1d8a28: lbu     a4,4(t3)
+    0.00 :   1d8a2c: slli    a4,a4,0x20
+    0.00 :   1d8a2e: or      a1,a1,a4
+         : 160    case 4: b |= ((uint64_t)in[3]) << 24; /* fall-thru */
+    0.00 :   1d8a30: lbu     a4,3(t3)
+    0.00 :   1d8a34: slli    a4,a4,0x18
+    0.00 :   1d8a36: or      a1,a1,a4
+         : 161    case 3: b |= ((uint64_t)in[2]) << 16; /* fall-thru */
+    0.00 :   1d8a38: lbu     a4,2(t3)
+    0.00 :   1d8a3c: slli    a4,a4,0x10
+    0.00 :   1d8a3e: or      a1,a1,a4
+         : 162    case 2: b |= ((uint64_t)in[1]) << 8; /* fall-thru */
+    0.00 :   1d8a40: lbu     a4,1(t3)
+    0.00 :   1d8a44: slli    a4,a4,0x8
+    0.00 :   1d8a46: or      a1,a1,a4
+         : 163    case 1: b |= ((uint64_t)in[0]); break;
+    0.00 :   1d8a48: lbu     a4,0(t3)
+    0.00 :   1d8a4c: or      a1,a1,a4
+         : 167    case 0: break;
+         : 168    }
+         :
+         : 170    v3 ^= b;
+    0.00 :   1d8a4e: xor     a3,a3,a1
+         :
+         : 170    SIPROUND;
+    0.00 :   1d8a50: srli    a4,a3,0x30
+    0.00 :   1d8a54: slli    a2,a3,0x10
+    0.00 :   1d8a58: srli    a0,a5,0x33
+    0.00 :   1d8a5c: add     a2,a2,a4
+    0.00 :   1d8a5e: slli    a4,a5,0xd
+    0.00 :   1d8a62: add     a4,a4,a0
+    0.00 :   1d8a64: add     a5,a5,a6
+    0.00 :   1d8a66: add     a3,a3,t6
+    0.00 :   1d8a68: xor     a2,a2,a3
+    0.00 :   1d8a6a: srli    a7,a5,0x20
+    0.00 :   1d8a6e: slli    a0,a5,0x20
+    0.00 :   1d8a72: xor     a5,a5,a4
+    0.00 :   1d8a74: add     a3,a3,a5
+    0.00 :   1d8a76: srli    a6,a2,0x2b
+    0.00 :   1d8a7a: slli    a4,a2,0x15
+    0.00 :   1d8a7e: add     a0,a0,a7
+    0.00 :   1d8a80: add     a0,a0,a2
+    0.00 :   1d8a82: srli    a7,a3,0x20
+    0.00 :   1d8a86: add     a4,a4,a6
+    0.00 :   1d8a88: slli    a2,a3,0x20
+    0.00 :   1d8a8c: srli    a6,a5,0x2f
+    0.00 :   1d8a90: slli    a5,a5,0x11
+    0.00 :   1d8a92: xor     a4,a4,a0
+    0.00 :   1d8a94: add     a2,a2,a7
+    0.00 :   1d8a96: add     a5,a5,a6
+    0.00 :   1d8a98: xor     a5,a5,a3
+         :
+         : 175    v0 ^= b;
+         : 176    v2 ^= 0xff;
+         :
+         : 178    SIPROUND;
+    0.00 :   1d8a9a: srli    a6,a4,0x30
+         : 171    v0 ^= b;
+    0.00 :   1d8a9e: xor     a1,a1,a0
+         : 172    v2 ^= 0xff;
+    0.00 :   1d8aa0: xori    a2,a2,255
+         : 174    SIPROUND;
+    0.00 :   1d8aa4: slli    a0,a4,0x10
+    0.00 :   1d8aa8: add     a1,a1,a5
+    0.00 :   1d8aaa: add     a4,a4,a2
+    0.00 :   1d8aac: srli    a3,a5,0x33
+    0.00 :   1d8ab0: add     a0,a0,a6
+    0.00 :   1d8ab2: slli    a5,a5,0xd
+    0.00 :   1d8ab4: xor     a0,a0,a4
+    0.00 :   1d8ab6: srli    a7,a1,0x20
+    0.00 :   1d8aba: slli    a2,a1,0x20
+    0.00 :   1d8abe: add     a5,a5,a3
+    0.00 :   1d8ac0: srli    a6,a0,0x2b
+    0.00 :   1d8ac4: xor     a5,a5,a1
+    0.00 :   1d8ac6: slli    a3,a0,0x15
+    0.00 :   1d8aca: add     a2,a2,a7
+    0.00 :   1d8acc: add     a4,a4,a5
+    0.00 :   1d8ace: add     a2,a2,a0
+    0.00 :   1d8ad0: srli    a1,a5,0x2f
+    0.00 :   1d8ad4: add     a3,a3,a6
+    0.00 :   1d8ad6: slli    a5,a5,0x11
+    0.00 :   1d8ad8: xor     a3,a3,a2
+    0.00 :   1d8ada: srli    a7,a4,0x20
+    0.00 :   1d8ade: slli    a0,a4,0x20
+    0.00 :   1d8ae2: add     a5,a5,a1
+    0.00 :   1d8ae4: xor     a5,a5,a4
+         : 175    SIPROUND;
+    0.00 :   1d8ae6: srli    a6,a3,0x30
+    0.00 :   1d8aea: slli    a1,a3,0x10
+         : 174    SIPROUND;
+    0.00 :   1d8aee: add     a0,a0,a7
+         : 175    SIPROUND;
+    0.00 :   1d8af0: add     a3,a3,a0
+    0.00 :   1d8af2: slli    a4,a5,0xd
+    0.00 :   1d8af6: srli    a0,a5,0x33
+    0.00 :   1d8afa: add     a1,a1,a6
+    0.00 :   1d8afc: xor     a1,a1,a3
+    0.00 :   1d8afe: add     a2,a2,a5
+    0.00 :   1d8b00: add     a4,a4,a0
+    0.00 :   1d8b02: xor     a4,a4,a2
+    0.00 :   1d8b04: srli    a0,a1,0x2b
+    0.00 :   1d8b08: slli    a1,a1,0x15
+    0.00 :   1d8b0a: add     a5,a4,a3
+         : 184    U64TO8_LE(out, b);
+         : 185    return hash;
+         : 186    #else
+         : 187    return b;
+         : 188    #endif
+         : 189    }
+    0.00 :   1d8b0e: ld      ra,24(sp)
+    0.00 :   1d8b10: ld      s0,16(sp)
+         : 175    SIPROUND;
+    0.00 :   1d8b12: add     a3,a0,a1
+    0.00 :   1d8b16: srli    a2,a4,0x2f
+    0.00 :   1d8b1a: slli    a4,a4,0x11
+         : 177    b = v0 ^ v1 ^ v2 ^ v3;
+    0.00 :   1d8b1c: xor     a3,a3,a5
+         : 175    SIPROUND;
+    0.00 :   1d8b1e: srli    a0,a5,0x20
+    0.00 :   1d8b22: add     a4,a4,a2
+    0.00 :   1d8b24: slli    a5,a5,0x20
+         : 177    b = v0 ^ v1 ^ v2 ^ v3;
+    0.00 :   1d8b26: xor     a4,a4,a3
+         : 175    SIPROUND;
+    0.00 :   1d8b28: add     a0,a0,a5
+         : 184    }
+    0.00 :   1d8b2a: ld      s1,8(sp)
+    0.00 :   1d8b2c: xor     a0,a0,a4
+    0.00 :   1d8b2e: addi    sp,sp,32
+    0.00 :   1d8b30: ret

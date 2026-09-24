@@ -1,0 +1,31 @@
+21-REDIS-BENCHMARK incr RISC-V perf stat
+========================================
+
+Source CSV: /workspace/results/21-redis-benchmark_results.csv
+TestName: incr
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| requests_per_second | 24,740.23 |
+| avg_latency_ms | 1.146 |
+| p50_latency_ms | 1.015 |
+| p95_latency_ms | 1.631 |
+| p99_latency_ms | 4.503 |
+| max_latency_ms | 14.351 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+
+perf stat style summary
+-----------------------
+        24,740.23  requests_per_second
+            1.146  avg_latency_ms
+            1.015  p50_latency_ms
+            1.631  p95_latency_ms
+            4.503  p99_latency_ms
+           14.351  max_latency_ms
