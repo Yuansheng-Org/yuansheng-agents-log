@@ -12,7 +12,7 @@
 
 本分支仅整理 `add-ffmpeg` 已筛选的 11 个函数目录，按 `records/ffmpeg-h264-h265/<测试用例>/<函数>/` 归档。来源为 `yuansheng-patches/ffmpeg-1d7b14f61d66fdf18f15204c613df9d65396c319/20260914` 的同名测例与函数目录；`20260915` 批次没有本分支已筛选的函数。原有专家复核文件保留。
 
-| 测试用例 | 函数目录 | Blueprint ID | 交付候选补丁 |
+| 测试用例 | 函数目录 | Blueprint ID | 来源交付候选（未重复归档） |
 | --- | --- | --- | --- |
 | `aac_decode_sbr_ps` | [001_ff_tx_mdct_inv_float_c](aac_decode_sbr_ps/001_ff_tx_mdct_inv_float_c/) | `bp-ffmpeg-aac_decode_sbr_ps-001` | `candidate-027a7c08ee.patch` |
 | `checkasm_h264chroma` | [003_avg_h264_chroma_mc4_16_c](checkasm_h264chroma/003_avg_h264_chroma_mc4_16_c/) | `bp-ffmpeg-checkasm_h264chroma-003` | `candidate-7a8e946abb.patch` |
@@ -26,7 +26,7 @@
 | `vp9_decode` | [005_idct_idct_8x8_add_c](vp9_decode/005_idct_idct_8x8_add_c/) | `bp-ffmpeg-vp9_decode-005` | `candidate-6292f0ace8.patch` |
 | `vp9_decode` | [018_idct_idct_16x16_add_c.part.0](vp9_decode/018_idct_idct_16x16_add_c.part.0/) | `bp-ffmpeg-vp9_decode-018` | `candidate-f3c9afcaf1.patch` |
 
-`trace/` 保留来源 `blueprint/` 的全部内容；`craft/candidate-*.patch` 是来源批次的交付候选补丁。若来源函数目录存在逐函数 `craft/`，则 `craft/patch.diff`、Plan、Candidate 和 AI 审核文件也原样归档。`006_pix_abs16_xy2_c` 的来源目录没有逐函数 Craft 协议文件，因此本目录仅保留原有 `patch.diff`、交付候选和 Trace，不补造 Plan/Candidate/AI 审核。
+`trace/` 保留来源 `blueprint/` 的全部内容；每个函数的 `craft/` 只保留一份 `patch.diff`。上表列出的交付候选文件仍在上述 `yuansheng-patches` 来源批次的同名测例与函数目录，不在本仓库重复归档。若来源函数目录存在逐函数 `craft/`，则 `craft/patch.diff`、Plan、Candidate 和 AI 审核文件也原样归档。`006_pix_abs16_xy2_c` 的来源目录没有逐函数 Craft 协议文件，因此本目录仅保留原有 `patch.diff` 和 Trace，不补造 Plan/Candidate/AI 审核。
 
 **补丁版本溯源：**来源 `summary.json.delivery_refs` 的 Blueprint 与交付候选 SHA-256 已逐项核验；对 10 项有逐函数 Craft 协议的记录，`patch-candidate.json.gitDiff` 与归档的 `craft/patch.diff` 完全一致。下列三项在 `add-ffmpeg` 中的 `craft/patch.diff` 与该原始 Craft diff 不同；原 `add-ffmpeg` 文件已另存到各目录的 `provenance/add-branch-patch.diff`，没有丢弃。
 
