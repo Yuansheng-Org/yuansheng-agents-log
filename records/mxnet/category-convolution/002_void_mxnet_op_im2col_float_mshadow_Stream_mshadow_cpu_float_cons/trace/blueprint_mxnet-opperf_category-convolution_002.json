@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-opperf-category-convolution-002",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T03:43:36.487Z",
+    "software": "mxnet-opperf",
+    "testcaseIds": [
+      "category-convolution"
+    ],
+    "diagnosisId": "diag-20260921T034336487Z-3484f951",
+    "targetHardware": "SOPHGO SG2044 / XuanTie C920v2 (RVV 1.0, VLEN=128, OoO)",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede"
+  },
+  "problem": {
+    "summary": "mxnet-opperf category-convolution 中 im2col<float> 函数在 RVV-capable 的 SG2044/C920v2（硬件与 build 均含 v、VLEN=128）上以纯标量代码运行：hot loop（12af550-12af586）占函数内 98.85% 样本，每移动 4 字节约需 11 条标量指令（地址生成、interior/border 边界分支、默认零物化、tap load、连续 store、索引步进），且每轮重复从栈 reload loop-invariant 的 stride 值（ld a2,-136(s0) 占 32.92%）。",
+    "evidence": [
+      "Duration(s): RV=94.613674（perf stat duration_time 94,613,674,023 ns）— 无 ARM 对比基线（本批次仅提供 RISC-V perf stat）",
+      "IPC=0.639251（OoO 核上偏低，标量指令 issue/latency-bound 特征）；L1_dcache_load_miss_rate=0.628%（数据高度 L1 驻留，非 memory-bandwidth-bound）",
+      "hot loop 12af550-12af586 占 im2col<float> 函数 98.85% 样本（cpu-clock，2245 samples，local period），hot interval 内 zero v* 且存在每轮 ld a2,-136(s0) 栈 reload（32.92%）",
+      "根因对应 pattern：RVV Spatial Convolution and Pooling Kernels（primary，route High / impact Medium），supporting：No vectorization、Register Pressure and Save/Restore"
+    ]
+  },
+  "rootCause": {
+    "summary": "im2col_cpu 卷积 patch 抽取循环（src/operator/nn/im2col.h L88-138）在 RVV-capable 目标上完全未向量化：固定 stencil 邻域地址生成 + is_a_ge_zero_and_a_lt_b 边界分支 + data_col 连续写全为标量实现，interior/border 混在主循环，且因标量 live set 压力把 loop-invariant stride 每轮 spill/reload。",
+    "candidateFiles": [
+      "src/operator/nn/im2col.h"
+    ],
+    "performanceFactors": [
+      "RVV Spatial Convolution and Pooling Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)",
+      "Register Pressure and Save/Restore"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "low",
+    "mustPreserve": [
+      "data_col 输出布局与标量路径逐元素 bit-identical（channels × kernel_h × kernel_w × output_h × output_w）",
+      "padding 位置精确写 0，含 input_row 越界整行写 0 的语义（im2col.h L118-121）",
+      "公共 im2col 函数签名、调用语义与 mshadow Stream<cpu> 参数契约不变",
+      "data_im 与 data_col 不 alias（mshadow 独立 buffer）的既有契约"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-convolution"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-convolution"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.85,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=0.639251 且 L1_dcache_load_miss_rate=0.628%（LLC_load_miss_rate=14.894%），说明热点循环是标量指令 issue/latency-bound 而非 memory-bandwidth-bound，为向量化减指令数提供直接空间；perf annotate 定位到 im2col<float> 的 hot loop 12af550-12af586 占函数内 98.85% 样本，interval 内 zero v*（硬件与 build 均含 v1p0，无 build-flag 缺口），逐行证据（bgeu 边界分支=is_a_ge_zero_and_a_lt_b 编译产物、flw/fsw=patch 抽取、ld -136(s0)=loop-invariant stride 每轮栈 reload 占 32.92%）命中 RVV Spatial Convolution and Pooling Kernels pattern（route High）；知识侧 Related PRs（oneDNN/MNN/OpenCV 的 RVV 空间卷积/池化 kernel）证明该算子族在其它项目中以 RVV 实现并可向量化，其中 OpenCV 5be158a2b6ed 展示 fixed-stride deinterleave 换 vlse32 的事后 oracle 经验。综上根因为 im2col 卷积数据布局抽取未向量化（scalar 实现 + 边界分支混入主循环 + register-pressure spill），属 code_path 层面可修复问题。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "编译器 autovec 因 bounds-checked strided 抽取形态（逐元素分支 + 非连续读）判定不可/不盈利而放弃向量化，而非项目有意选择 scalar 实现——但 build 已含 v1p0，与 pattern 的 zero-vector 事实不冲突",
+      "若 category-convolution 全局 workload 中 im2col 占比远低于本函数内份额（缺 global-period 采样语义），实际 workload 级收益可能小于函数内 98.85% 份额的暗示",
+      "vlse32（strided load）在 C920v2 的吞吐未知，若 strided load 实测低效，stride_w>1 路径可能需改走 gather/多通道连续路径（OpenCV oracle 仅为参考，非普遍最优）"
+    ],
+    "currentGaps": "采样语义不完整（percent type=local period 非 global-period、im2col 的 workload 级贡献未知），无法声明 workload 级 Amdahl 上界；Sampling IP precision（precise_ip/Exact-IP）未知，单指令占比仅锚定 loop interval；无 ARM 对比基线（批次仅提供 RISC-V perf stat）；vlse32 在 C920v2 的实测吞吐与 VLEN=128 下小 output_w 的配置开销拐点未验证；cache_miss_rate=100% 为 counter 别名伪影未采用。",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + category-convolution",
+    "recommendedFirstAction": "在 src/operator/nn/im2col.h 的 im2col_cpu 内层 output_col 循环（L124-131）实现 RVV 向量化路径：按 interior/border 显式分离（im2col.h L118-131），interior 区间沿连续 output_col 位置向量化，stride_w==1 用 __riscv_vle32_v_f32m1、否则 __riscv_vlse32_v_f32m1（byte_stride=stride_w*4）加载、__riscv_vse32_v_f32m1 连续写 data_col，runtime vl 处理 tail；border（左右越界列）与整行越界保留 scalar 零填充路径，不构造越界指针依赖 mask。",
+    "recommendedVerification": "重新运行 mxnet-opperf category-convolution 并对 im2col<float> 重新 perf annotate：12af566-12af586 标量流（ld -136(s0)/flw/fsw/bgeu 等）样本份额应显著下降，出现 vsetvli/vle32/vlse32/vse32；A/B 对比标量 reference 与向量路径的 cycles/output，覆盖 kernel/stride/dilation/padding 组合与全部 tail 长度；随后运行 agent1 patch_regression --case category-convolution 确认无回归。",
+    "metricEvidence": [
+      {
+        "metric": "Duration(s)",
+        "rv": 94.613674,
+        "anomalyNote": "RISC-V 侧整体运行时长 94.61s（perf stat duration_time 94,613,674,023 ns）；无 ARM 对比基线，本批次仅提供 RISC-V perf stat"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.639251,
+        "anomalyNote": "OoO 超标量核上 IPC<1，结合 L1 miss 0.628% 指向标量指令 issue/latency-bound 而非 memory-bandwidth-bound"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.628,
+        "anomalyNote": "数据高度 L1 驻留（0.628% 极低），排除 memory-bandwidth 主导，支撑向量化减指令数的收益方向"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 14.894,
+        "anomalyNote": "LLC miss 14.894%，未达 memory-bound 主导判据；cache_miss_rate=100% 系 counter 别名伪影（cache_references≈cache_misses），未采用"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void mxnet::op::im2col<float>(mshadow::Stream<mshadow::cpu>*, float const*, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, mxnet::TShape const&, float*) [clone .isra.0]",
+        "fileModule": "src/operator/nn/im2col.h",
+        "rvvPattern": "RVV Spatial Convolution and Pooling Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.9885,
+        "note": "卷积 im2col 数据布局抽取（固定 stencil 邻域 gather + padding 边界分支 + data_col 连续写），内存密集/数据布局类算子；hot loop 12af550-12af586 占函数内 98.85% 样本，全标量 zero v*"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/operator/nn/im2col.h:124",
+      "relatedKnowledge": "https://github.com/uxlfoundation/oneDNN/pull/5506; https://github.com/uxlfoundation/oneDNN/commit/8208c6a731edff86af37b1ede3208775cd46aaef; https://github.com/uxlfoundation/oneDNN/commit/4f915a57ce2fd600b9ca04bf5a312c365a4b1830; https://github.com/uxlfoundation/oneDNN/commit/563c5fcfcf8ad591b43d3dc7e0bc9292102eeba0; https://github.com/uxlfoundation/oneDNN/commit/56a75b311f2e9fdb176b3ca30a007c7fcdc641de; https://github.com/uxlfoundation/oneDNN/commit/a4c4855a9f4c478177e7fc799f64ac1457553ad7; https://github.com/uxlfoundation/oneDNN/pull/4323; https://github.com/uxlfoundation/oneDNN/commit/ce942914cb9d51c84ee0fc7f3ae253d6cd0121f6; https://github.com/uxlfoundation/oneDNN/commit/dd1dff668fe9194d9a955333461e299d19aefb1c; https://github.com/alibaba/MNN/pull/4042; https://github.com/alibaba/MNN/commit/672c5862392393c171f1513bf7994d3b95e2a6a1; https://github.com/alibaba/MNN/pull/4359; https://github.com/uxlfoundation/oneDNN/pull/4735; https://github.com/uxlfoundation/oneDNN/pull/5345; https://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5",
+      "evidenceExplanation": "im2col_cpu（im2col.h L88-138）是唯一的通用模板实现，无 dispatch、无向量 kernel，与 annotate 中全标量 zero v* 完全吻合；命中的 rvv_spatial_convolution_and_pooling_kernels.md 提供本函数所属算子族的 RVV 实现方式（沿输出位置向量化、interior/border 分离、固定 stride 直接访问）及其它项目（oneDNN/MNN/OpenCV）的同族 kernel 实现证据，其中 OpenCV 5be158a2b6ed 展示 fixed-stride deinterleave 改 vlse32 的直接先例，共同支撑在该函数实现 RVV 向量化路径的修复方向。"
+    }
+  }
+}

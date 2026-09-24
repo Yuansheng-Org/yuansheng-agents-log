@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-opperf-category-convolution-003",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T03:50:39.710Z",
+    "software": "mxnet-opperf",
+    "testcaseIds": [
+      "category-convolution"
+    ],
+    "diagnosisId": "diag-20260921T035039710Z-82c2ccf7",
+    "targetHardware": "SOPHGO SG2044 / XuanTie C920v2",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede"
+  },
+  "problem": {
+    "summary": "在 SG2044/C920v2 上 mxnet-opperf category-convolution 基准中，ConvolutionOp<mshadow::cpu,float>::_BackwardData 的反向数据梯度路径中 98.3% 的局部样本集中在 col2im 的标量 gather-scatter 内层循环：每元素边界分支（16.80% bgeu）+ overlap 敏感 RMW store（37.70% fsw）+ 全标量 FP 指令（interval 内 zero v*）。perf stat 显示 IPC 仅 0.639、L1 miss 0.628%，属计算/issue 受限而非内存带宽受限，RVV 向量化是第一杠杆。",
+    "evidence": [
+      "perf stat: IPC=0.6392510，L1_dcache_load_miss_rate=0.628%，LLC_load_miss_rate=14.894%，branch_miss_rate=1.070% — 计算/issue 受限而非内存带宽受限",
+      "perf annotate: hot interval 12b73a4-12b73d0 占 98.30% 局部样本（1411 samples），最高行为 37.70% fsw fa5,0(t2)（overlap-sensitive RMW store）与 16.80% bgeu a3,s2,12b73ca（每元素边界分支）",
+      "col2im_cpu（src/operator/nn/im2col.h:312-333）内层循环全标量（flw/fadd.s/fsw），interval 内 zero v*；hardware isa 与 build Tag_RISCV_arch 均含 RVV 1.0（v1p0/zvl128b1p0）"
+    ]
+  },
+  "rootCause": {
+    "summary": "反向卷积的 col2im 标量 gather-scatter RMW 内层循环未向量化：每元素边界分支 + 地址重建 + overlap 敏感读写，RVV-capable 目标上 zero v*",
+    "candidateFiles": [
+      "src/operator/nn/im2col.h",
+      "src/operator/nn/convolution-inl.h"
+    ],
+    "performanceFactors": [
+      "RVV Spatial Convolution and Pooling Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)",
+      "Loop Induction Variable Strength Reduction"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "每元素 FP 累加语义（data_im[idx] += col[k] 逐元素一致，不做跨 tap 重结合）",
+      "padding/stride/dilation 边界语义（不得越界访问，padding 偏移不得省略）",
+      "kNullOp/kAddTo 的 std::fill 清零与累加语义",
+      "非 RISC-V 平台与无 V 构建的 scalar 回退路径"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-convolution"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-convolution"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.85,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=0.639、L1_dcache_load_miss_rate 仅 0.628%，说明热点非内存带宽受限而是计算/issue 受限；perf annotate 显示 _BackwardData 的 98.3% 局部样本集中在 col2im 标量 gather-scatter 内层循环（12b73a4-12b73d0），每元素执行边界分支（16.80% bgeu a3,s2,12b73ca）与 overlap 敏感 RMW store（37.70% fsw fa5,0(t2)），interval 内 zero v*，而硬件与 build 均含 RVV 1.0（v1p0/zvl128b）；该循环对应 im2col.h:321-327 的逐元素 if 边界判断 + 累加，属 RVV Spatial Convolution and Pooling Kernels pattern 的标量失效形态，据此确定根因为 col2im 内层循环未向量化，修复方向为段边界预计算 + interior RVV 向量化。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "sampling IP precision 未知（baseline_gap: sampling IP precision），单指令 37.70% fsw 可能含 skid，但根因按 loop-interval 聚合归因不受影响",
+      "若基准输入 shape 较小，向量化 overhead（vsetvl、段头尾标量）可能部分抵消收益，需 A/B 验证",
+      "RMW overlap 在 L1 内 store→load forward 的具体 stall 占比未用 PMU 独立测量，属竞争性次因而非根因"
+    ],
+    "currentGaps": "sampling IP precision（precise_ip/Exact-IP）未提供；percent-type 为 local period 且函数 workload 级贡献未知，无法给出 workload 级 Amdahl 上界；cblas_sgemm（OpenBLAS）样本不落在本函数 annotate 内，GEMM 与 col2im 的相对耗时占比需函数级采样进一步确认",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + category-convolution",
+    "recommendedFirstAction": "在 src/operator/nn/im2col.h 的 col2im_cpu 中按 (kernel_row, kernel_col) 预计算 output_col 段边界，将内层循环拆为 left-boundary/interior/right-boundary 三段，interior 段用 __riscv_vle32_v_f32m* / __riscv_vfadd_vv_f32m* / __riscv_vse32_v_f32m* 向量化（stride_w>1 时用 __riscv_vlse32），并以 __riscv_v_intrinsic + zve32f 宏守卫保留 scalar 回退",
+    "recommendedVerification": "在 SG2044/C920v2 上重新运行 mxnet-opperf category-convolution 基准并对 _BackwardData perf record/annotate：interior 段 bgeu/flw/fadd.s/fsw 份额应显著下降并出现 vle32/vfadd.vv/vse32（stride>1 为 vlse32），backward_Convolution 平均耗时（当前 25.5695us）应下降；同时对照 scalar 参考逐元素比对结果与四边 padding 正确性",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.639251,
+        "anomalyNote": "远低于 OoO 核典型水平，计算/issue 受限特征"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.628,
+        "anomalyNote": "极低，数据基本命中 L1，非内存带宽受限"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 14.894,
+        "anomalyNote": "中等，次级因素"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 1.07,
+        "anomalyNote": "低，边界分支可预测，其成本为 issue 槽而非重定向"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "mxnet::op::ConvolutionOp<mshadow::cpu, float>::_BackwardData",
+        "fileModule": "src/operator/nn/im2col.h (col2im_cpu 内联) / src/operator/nn/convolution-inl.h",
+        "rvvPattern": "RVV Spatial Convolution and Pooling Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.983,
+        "note": "反向卷积数据梯度路径：OpenBLAS cblas_sgemm 之后的 col2im 标量 gather-scatter RMW，98.3% 局部样本集中于 output_col 内层循环（线性代数/内存密集混合）"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/operator/nn/im2col.h:312-333 (col2im_cpu 内层 output_col 循环)",
+      "relatedKnowledge": "https://github.com/uxlfoundation/oneDNN/pull/5506, https://github.com/uxlfoundation/oneDNN/commit/8208c6a731edff86af37b1ede3208775cd46aaef, https://github.com/uxlfoundation/oneDNN/commit/4f915a57ce2fd600b9ca04bf5a312c365a4b1830, https://github.com/uxlfoundation/oneDNN/commit/563c5fcfcf8ad591b43d3dc7e0bc9292102eeba0, https://github.com/uxlfoundation/oneDNN/commit/56a75b311f2e9fdb176b3ca30a007c7fcdc641de, https://github.com/uxlfoundation/oneDNN/commit/a4c4855a9f4c478177e7fc799f64ac1457553ad7, https://github.com/uxlfoundation/oneDNN/pull/4323, https://github.com/uxlfoundation/oneDNN/commit/ce942914cb9d51c84ee0fc7f3ae253d6cd0121f6, https://github.com/uxlfoundation/oneDNN/commit/dd1dff668fe9194d9a955333461e299d19aefb1c, https://github.com/uxlfoundation/oneDNN/pull/4735, https://github.com/uxlfoundation/oneDNN/pull/5345, https://github.com/alibaba/MNN/pull/4042, https://github.com/alibaba/MNN/commit/672c5862392393c171f1513bf7994d3b95e2a6a1, https://github.com/alibaba/MNN/pull/4359, https://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5",
+      "evidenceExplanation": "上述上游项目在同一固定 stencil 空间卷积/反卷积（含 col2im 类 overlap-sensitive scatter、fixed-stride deinterleave→vlse32 直读）上实施 interior 向量化与 interior/border 路径分离，与本次 col2im 标量内层循环（bgeu 边界分支 + overlap 敏感 store）的失效形态和修复方向一致"
+    }
+  }
+}

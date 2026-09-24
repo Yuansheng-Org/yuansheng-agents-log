@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-opperf-category-misc-003",
+  "blueprintId": "bp-mxnet-opperf-category-misc-003",
+  "createdAt": "2026-09-21T08:47:04.788Z",
+  "objective": "消除 cumsum_forward 前缀和 scan 的纯标量串行实现：在 RVV 1.0 (VLEN=128) 目标上把 np_cumsum-inl.h 的逐 lane 串行 scan 改写为跨 lane RVV intrinsic 批处理，使 hot j-loop 由 vle32/vfadd.vv/vse32 承担，同时保持每 lane 内逐 j 的 FP 加法顺序与 scalar reference bit-exact。",
+  "changes": [
+    {
+      "filePath": "src/operator/numpy/np_cumsum-inl.h",
+      "action": "modify",
+      "rationale": "根因所在：cumsum_forward::Map (np_cumsum-inl.h:85-101) 对每个 lane 沿 middle 轴、stride=trailing 逐 j 做串行前缀和，hot loop 全 scalar（annotate: flw 56.38% / add 23.06% / bne 14.05% / fadd.s loop-carried），zero v*。同一 left 组内连续 right 的 lane 在内存中连续，可一次向量化 VLMAX 个 lane；每 lane 内仍是严格 j=1..middle-1 的 acc=acc+x 顺序，故 bit-exact。",
+      "instructions": [
+        "新增 RVV 编译期探测宏 MXNET_NP_CUMSUM_USE_RVV（__riscv_v_intrinsic || __riscv_vector），并在启用时 include <riscv_vector.h>；同时补 <cstddef>/<type_traits>。",
+        "新增 cumsum_forward_rvv::Map(index_t chunk, float* out, const float* in, index_t middle, index_t trailing, index_t chunks_per_group)：按 chunks_per_group 把每个 left 组的 trailing 个连续 lane 切成至多 VLMAX(e32m4)=16 的连续块；块内用 vle32/vse32 初始化 acc，随后 j=1..middle-1 执行 vle32 + vfadd.vv + vse32，acc 常驻向量寄存器。",
+        "在 CumsumForwardImpl 的 MSHADOW_TYPE_SWITCH 内，当 xpu==cpu、IType==float、OType==float、trailing>1 时走 RVV 路径（Launch chunk 总数 = (out.Size()/middle/trailing)*chunks_per_group，复用 Kernel<cpu>::Launch 的 OpenMP 分片），否则保持原 Kernel<cumsum_forward> 标量路径。",
+        "不改动 cumsum_forward::Map 本身，作为非 RVV 构建与 axis=None/trailing==1 单 lane 情形的正确 fallback。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "仅修改 src/operator/numpy/np_cumsum-inl.h：新增 RVV 探测宏与 <riscv_vector.h> 引入；新增 cumsum_forward_rvv 跨 lane 批处理 kernel（e32m4，vle32/vfadd.vv/vse32）；在 CumsumForwardImpl 中为 cpu+float32+trailing>1 增加 RVV 分派，其余情形回退原标量 Map。无公共 API/签名变更，每 lane 内加法顺序不变，输出 bit-exact。"
+}

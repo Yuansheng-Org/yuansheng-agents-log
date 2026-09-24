@@ -1,0 +1,124 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-category-activation-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T02:07:56.085Z",
+    "software": "mxnet",
+    "testcaseIds": [
+      "category-activation"
+    ],
+    "diagnosisId": "diag-20260921T020756085Z-84e97c5b",
+    "targetHardware": "SOPHGO SG2044 (XuanTie C920v2, RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede"
+  },
+  "problem": {
+    "summary": "category-activation 测试中 Softmax forward 是 RISC-V 侧第一大热点（rank 001）：Softmax<softmax_fwd,false,double,float,half_t,int,2> 为未向量化的 3-pass scalar 实现（max→exp-sum→normalize），逐元素 scalar libm expf@plt 调用点合计占 83.21% 局部样本，max reduction 的 compare-branch 链占 9.51%；同时输出 FP16 转换走软件 float2half 位操作序列（约 3.8%），而硬件具备 zfhmin 原生 fcvt.h.s。硬件与 build 均含 RVV v1p0/zvl128b 但主循环零 v* 指令。",
+    "evidence": [
+      "perf annotate（cpu-clock, 5813 samples, local period）：expf@plt 调用点合计 83.21%（18dea7c 43.14% + 18deafe 40.07%）",
+      "max reduction loop 比较分支 beqz 占 9.51%（18dea50），scalar flt.s+beqz+fmv.s 合成 max 而非 fmax.s",
+      "软件 float2half FP16 转换段约 3.8%（18deb14 fmv.x.w 2.31%、18deb5e sh 0.43% 等），build ISA 缺 zfh 而 hardware cpuinfo.isa 含 zfh/zfhmin",
+      "全局 perf stat：IPC=0.562438、L1_dcache_load_miss_rate=5.158%、branch_miss_rate=2.719%、LLC_load_miss_rate=43.990%",
+      "opperf：softmax_input_0 avg_time_forward=147.6938 us（RISC-V 侧）"
+    ]
+  },
+  "rootCause": {
+    "summary": "Softmax forward 是未向量化的 3-pass scalar 归一化：逐元素 scalar libm expf 调用（83.21%）与标量 compare-branch reduction 主导，且 FP16 输出转换因 build 未启用 zfhmin 而走软件位操作序列；根因是 cross-lane normalization 未向量化（RVV Normalization Kernels）叠加 FP16 转换指令选择缺陷（ISA Extension-Specific Instruction Substitution）。",
+    "candidateFiles": [
+      "src/operator/nn/softmax.cc",
+      "CMakeLists.txt"
+    ],
+    "performanceFactors": [
+      "RVV Normalization Kernels",
+      "RISC-V ISA Extension-Specific Instruction Substitution"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "Softmax 数值语义：稳定减 max、NaN/±Inf/全相等/指数和为零/溢出下溢处理",
+      "FP16 输出 rounding 语义（RNE，与 MSHADOW_HALF_ROUND_TO_NEAREST 对齐）",
+      "公共 API 与模板签名 Softmax<OP, negate, AType, DType, OType, index_t, ndim>",
+      "temperature 参数分支语义（==1.0 快路径 vs /temperature 除法路径）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-activation"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-activation"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.75,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "primary root cause（未向量化 scalar softmax + expf 调用）证据充分，但 Sampling IP precision（precise_ip）未提供、percent=local period 无法得到 workload 级份额，且无 ARM 侧对比 perf 数据；建议人工确认后放行 Craft。",
+    "reasoning": "perf stat 显示 IPC=0.562438、L1 miss 仅 5.158%，排除 memory-bound 主导，热点为计算/transcendental 类型；perf annotate 显示 3-pass scalar softmax，expf@plt 调用点合计 83.21%（18dea7c 43.14% + 18deafe 40.07%）与 max-loop beqz 9.51% 主导局部样本；硬件（rv64imafdcv…zfh_zfhmin…）与 build（rv64…v1p0…zvl128b）均含 V，主循环却零 v* 指令，符合 RVV Normalization Kernels 的未向量化信号；输出 FP16 转换走软件 float2half（build 缺 zfh 而硬件有 zfhmin），对应 ISA Extension-Specific Instruction Substitution；pattern 的 Related PRs（oneDNN/MNN RVV softmax kernel）证明同类算子已有向量化先例，支撑根因结论。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "expf 库函数本身在 glibc 中未用 RVV 加速——属库路径而非算子实现层，与 primary 根因（未向量化）正交但可能叠加",
+      "无 precise_ip 时 expf 调用点样本可能含 skid，高占比存在部分高估风险（baseline_gap: sampling IP precision）",
+      "perf stat 中 cache_references≈cache_misses（22,879,522,533/22,879,524,850）数值异常，若 LLC miss 43.99% 为真实数据则部分延迟可能来自内存层，但 annotate 本地访问为 unit-stride 顺序，不支持 memory-bound 主导"
+    ],
+    "currentGaps": "Sampling IP precision（precise_ip）未提供；percent=local period，函数 workload 级份额未知；无 ARM 侧对比 perf 数据；perf annotate 无 debug symbols，fileModule/candidateFiles 无法从 annotate 精确绑定源码行（src/operator/nn/softmax.cc 基于 apache/mxnet 仓库布局）；perf stat cache_references≈cache_misses 异常，cache 指标不可信",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + category-activation",
+    "recommendedFirstAction": "在 mxnet Softmax CPU kernel 路径（src/operator/nn/softmax.cc 调用的 mshadow softmax_fwd 模板，include/mshadow/op/nn_op.h）新增 RVV 向量化分支：max/sum reduction 用 vle32+vfredmax.vs/vfredusum.vs（seed 式分块归约），exp(x-mmax) transform 用项目已验证的向量 exp，normalize 用 vector-scalar 除法/reciprocal；同时在构建配置 CMakeLists.txt 的 -march 增补 zfhmin（rv64gcv_zfhmin）以启用 fcvt.h.s FP16 输出转换，保留无扩展时软件 float2half fallback。",
+    "recommendedVerification": "重新运行 category-activation 测试（agent1 patch_regression --case category-activation），对 Softmax<softmax_fwd,false,double,float,half_t,int,2> 重新 perf annotate：确认 18dea7c/18deafe 的 expf@plt 调用点样本显著下降或消失、出现 vle32/vfredmax/vfredusum/向量 exp/vse16 与 fcvt.h.s；核对 softmax 输出数值误差（全相等/极端 logits/NaN/Inf/±0/指数和为零/FP16 RNE rounding）与 reference 一致；对比 forward 延迟（基线 avg 147.69 us）观察 ratio 改善。",
+    "metricEvidence": [
+      {
+        "metric": "avg_time_forward_Softmax_us",
+        "rv": 147.6938,
+        "anomalyNote": "RISC-V 侧 softmax forward 平均延迟，为 category-activation 中 forward 类算子最高值之一，与 expf 调用点 83.21% 热点一致"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.562438,
+        "anomalyNote": "低于计算密集负载理想值，反映 scalar expf 调用、compare-branch 链与软件 float2half 的指令低效"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 5.158,
+        "anomalyNote": "L1 缺失率低，说明本地 unit-stride 顺序访问健康，非 memory-bound 主导"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 2.719,
+        "anomalyNote": "分支缺失率，max loop 的 flt.s+beqz 条件链为潜在来源"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 43.99,
+        "anomalyNote": "LLC 缺失率较高，但 perf stat 中 cache_references≈cache_misses 数值异常，该指标可信度存疑"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>",
+        "fileModule": "unknown",
+        "rvvPattern": "RVV Normalization Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.83,
+        "note": "Softmax forward：cross-lane normalization（max→exp-sum→normalize 三遍扫描），scalar 未向量化，scalar libm expf 调用点 83.21% 与标量 compare-branch reduction 9.51% 主导，属计算密集（transcendental）热点"
+      },
+      {
+        "hotspotFunction": "void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>",
+        "fileModule": "unknown",
+        "rvvPattern": "RISC-V ISA Extension-Specific Instruction Substitution",
+        "patternConfidence": "MEDIUM",
+        "benefitUpperbound": 0.038,
+        "note": "同函数内软件 float2half FP16 转换段（18deb14–18deb5e，build 缺 zfh 而硬件有 zfhmin）与 max 的 flt.s+beqz+fmv.s 合成序列"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/operator/nn/softmax.cc（mxnet Softmax CPU kernel 入口；annotate 无 debug symbols，基于仓库布局定位）",
+      "relatedKnowledge": "https://github.com/uxlfoundation/oneDNN/commit/7ad03324c2d17480e40cc20114576584888373ce, https://github.com/uxlfoundation/oneDNN/commit/3c8c37bab64f67bbdebcdb76330db0dcb25b31af, https://github.com/uxlfoundation/oneDNN/pull/4734, https://github.com/alibaba/MNN/pull/4044, https://github.com/alibaba/MNN/commit/b7268aa3dab754190ed7d86dc16b9bab02e73d12",
+      "evidenceExplanation": "oneDNN/MNN 的 RVV softmax kernel（Related PRs：RVV Softmax kernel optimization 系列）证明 Softmax 同语义算子可向量化为 vfredmax/vfredusum + 向量 exp，支撑『当前 scalar expf 调用与 compare-branch reduction 是未向量化实现选择所致』的根因结论；其验证数据（cycles/row 改善）为本蓝图的验证预测提供先例"
+    }
+  }
+}

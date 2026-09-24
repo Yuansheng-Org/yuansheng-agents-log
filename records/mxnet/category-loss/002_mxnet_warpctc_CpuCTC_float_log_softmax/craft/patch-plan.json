@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mxnet-category-loss-002",
+  "blueprintId": "bp-mxnet-category-loss-002",
+  "createdAt": "2026-09-21T13:48:45Z",
+  "objective": "Vectorize mxnet_warpctc::CpuCTC<float>::log_softmax with the RISC-V Vector (RVV 1.0) ISA so that the three scalar hot loops (branchy max reduction, per-element expf denom reduction, per-element logf output pass) execute on the vector unit, while preserving LogSoftmax semantics and keeping the existing scalar loops as a fallback for non-RVV builds.",
+  "changes": [
+    {
+      "filePath": "3rdparty/ctc_include/detail/cpu_ctc.h",
+      "action": "modify",
+      "rationale": "The perf annotate of mxnet_warpctc::CpuCTC<float>::log_softmax shows three scalar-only hot intervals with zero v* instructions: a branchy max reduction (flt.s + beqz + redundant fmv.s, ~58.8% local samples), a per-element expf@plt denom reduction, and a per-element logf@plt + fsw output pass (~99.2% combined). The frozen hardware profile (XuanTie C920v2, RVV 1.0, VLEN=128) and the libmxnet.so Tag_RISCV_arch (v1p0 + zvl128b1p0) both confirm vector capability is present but unused. The fix belongs in the CpuCTC<float>::log_softmax template body in cpu_ctc.h, which is the diagnosed source of the three scalar loops.",
+      "instructions": [
+        "Add a guarded RVV include: `#if defined(__riscv) && defined(__riscv_v)` + `#include <riscv_vector.h>` at the top of the header; also add `#include <type_traits>` for std::is_same.",
+        "Add a self-contained inline helper (ctc_rvv::exp_f32) that evaluates vector exp with range reduction: clamp x, k = round(x * log2e) as i32, kf = float(k), r = x - kf*ln2_hi - kf*ln2_lo (both ln2 terms scaled by the integer k), degree-6 Horner polynomial evaluated with vfmadd, and scaling by 2^k through the IEEE-754 exponent field.",
+        "Add an inline helper (ctc_rvv::log_softmax_f32) implementing the three LogSoftmax stages with e32m4 vectors: stage 1 max via vle32 + vfredmax.vs seeded by a scalar running max; stage 2 vle32 -> vfsub.vf(max) -> exp_f32 -> vfredusum.vs seeded denominator; stage 3 act - max - log(denom) with log(denom) evaluated once on the scalar denominator and broadcast through vfsub.vf before vse32 stores.",
+        "Use a fixed-VL main loop (vsetvlmax_e32m4) plus a runtime-VL tail (vsetvl_e32m4) so every alphabet_size_ is handled; keep the vector code inside `#if defined(__riscv) && defined(__riscv_v)`.",
+        "In CpuCTC<ProbT>::log_softmax, after computing col_offset, dispatch to the RVV helper when `if constexpr (std::is_same<ProbT, float>::value)` and `continue`; otherwise fall through to the unmodified scalar three-loop implementation.",
+        "Do not change the function signature, the OMP parallel-for structure, or any public behavior; do not touch unrelated code."
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "cpu_ctc.h gains a guarded <riscv_vector.h> include, a self-contained range-reduced RVV float exp helper, and an RVV three-stage float LogSoftmax helper (e32m4 fixed-VL main loop + runtime-VL tail). CpuCTC<ProbT>::log_softmax dispatches to the RVV helper for ProbT==float via `if constexpr`; the original scalar three-loop body is retained unchanged as the non-RVV / non-float fallback. No signature or public API change."
+}

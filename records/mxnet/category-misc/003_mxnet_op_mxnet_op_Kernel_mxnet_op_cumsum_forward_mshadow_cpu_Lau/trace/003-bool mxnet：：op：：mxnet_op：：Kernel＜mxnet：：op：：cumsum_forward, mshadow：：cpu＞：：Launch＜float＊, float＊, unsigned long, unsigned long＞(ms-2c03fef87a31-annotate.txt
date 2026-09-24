@@ -1,0 +1,102 @@
+ Percent |	Source code & Disassembly of libmxnet.so for cpu-clock (2086 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3       Disassembly of section .text:
+         :
+         : 5       00000000028da4fe <bool mxnet::op::mxnet_op::Kernel<mxnet::op::cumsum_forward, mshadow::cpu>::Launch<float*, float*, unsigned long, unsigned long>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, unsigned long, unsigned long) [clone ._omp_fn.0]>:
+         : 6       bool mxnet::op::mxnet_op::Kernel<mxnet::op::cumsum_forward, mshadow::cpu>::Launch<float*, float*, unsigned long, unsigned long>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, unsigned long, unsigned long) [clone ._omp_fn.0]:
+         : 1021    if (omp_threads < 2) {
+         : 1022    for (size_t i = 0; i < N; ++i) {
+         : 1023    OP::Map(i, args...);
+         : 1024    }
+         : 1025    } else {
+         : 1026    #pragma omp parallel for num_threads(omp_threads)
+    0.00 :   28da4fe:        addi    sp,sp,-48
+    0.00 :   28da500:        sd      ra,40(sp)
+    0.00 :   28da502:        sd      s0,32(sp)
+    0.00 :   28da504:        sd      s1,24(sp)
+    0.00 :   28da506:        sd      s2,16(sp)
+    0.00 :   28da508:        sd      s3,8(sp)
+    0.00 :   28da50a:        addi    s0,sp,48
+         : 1022    for (index_t i = 0; i < static_cast<index_t>(N); ++i) {
+    0.00 :   28da50c:        ld      s1,0(a0)
+         : 1021    #pragma omp parallel for num_threads(omp_threads)
+    0.00 :   28da50e:        mv      s2,a0
+    0.00 :   28da510:        auipc   ra,0xfdcc5
+    0.00 :   28da514:        jalr    -1520(ra) # 59ef20 <omp_get_num_threads@plt>
+    0.00 :   28da518:        mv      s3,a0
+    0.00 :   28da51a:        auipc   ra,0xfdcc5
+    0.00 :   28da51e:        jalr    -394(ra) # 59f390 <omp_get_thread_num@plt>
+    0.00 :   28da522:        rem     a5,s1,s3
+    0.00 :   28da526:        div     t1,s1,s3
+    0.00 :   28da52a:        blt     a0,a5,28da5ac <bool mxnet::op::mxnet_op::Kernel<mxnet::op::cumsum_forward, mshadow::cpu>::Launch<float*, float*, unsigned long, unsigned long>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, unsigned long, unsigned long) [clone ._omp_fn.0]+0xae>
+    0.00 :   28da52e:        mul     a6,t1,a0
+    0.00 :   28da532:        add     a6,a6,a5
+    0.00 :   28da534:        add     t1,t1,a6
+    0.00 :   28da536:        bge     a6,t1,28da59e <bool mxnet::op::mxnet_op::Kernel<mxnet::op::cumsum_forward, mshadow::cpu>::Launch<float*, float*, unsigned long, unsigned long>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, unsigned long, unsigned long) [clone ._omp_fn.0]+0xa0>
+    0.00 :   28da53a:        ld      a7,32(s2)
+    0.00 :   28da53e:        ld      t5,16(s2)
+    0.00 :   28da542:        ld      t4,8(s2)
+         : 1023    OP::Map(i, args...);
+    0.00 :   28da546:        ld      a0,24(s2)
+    0.00 :   28da54a:        slli    a1,a7,0x2
+         : 1026    void mxnet::op::cumsum_forward::Map<float, float>(long, float*, float const*, long, long):
+         : 88      index_t left = i / trailing, right = i % trailing;
+         : 89      index_t offset       = left * middle * trailing + right;
+         : 90      const IType* lane_in = in + offset;
+         : 91      OType* lane_out      = out + offset;
+         : 92      lane_out[0]          = OType(lane_in[0]);
+         : 93      for (index_t j = 1; j < middle; ++j) {
+    0.00 :   28da54e:        li      t3,1
+         : 83      index_t left = i / trailing, right = i % trailing;
+    0.00 :   28da550:        div     a5,a6,a7
+    0.00 :   28da554:        rem     a4,a6,a7
+         : 84      index_t offset       = left * middle * trailing + right;
+    0.00 :   28da558:        mul     a5,a5,a0
+    0.00 :   28da55c:        mul     a5,a5,a7
+    0.00 :   28da560:        add     a5,a5,a4
+         : 85      const IType* lane_in = in + offset;
+    0.00 :   28da562:        slli    a5,a5,0x2
+    0.00 :   28da564:        add     a4,t5,a5
+         : 87      lane_out[0]          = OType(lane_in[0]);
+    0.00 :   28da568:        flw     fa5,0(a4)
+         : 86      OType* lane_out      = out + offset;
+    0.00 :   28da56c:        add     a5,a5,t4
+         : 87      lane_out[0]          = OType(lane_in[0]);
+    0.00 :   28da56e:        fsw     fa5,0(a5)
+         : 88      for (index_t j = 1; j < middle; ++j) {
+    0.05 :   28da572:        bge     t3,a0,28da598 <bool mxnet::op::mxnet_op::Kernel<mxnet::op::cumsum_forward, mshadow::cpu>::Launch<float*, float*, unsigned long, unsigned long>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, unsigned long, unsigned long) [clone ._omp_fn.0]+0x9a>
+    0.00 :   28da576:        add     a4,a4,a1
+    0.00 :   28da578:        li      a3,1
+         : 89      lane_out[j * trailing] = lane_out[(j - 1) * trailing] + OType(lane_in[j * trailing]);
+    0.38 :   28da57a:        flw     fa5,0(a5)
+   56.38 :   28da57e:        flw     fa4,0(a4)
+    4.75 :   28da582:        add     a2,a5,a1
+         : 88      for (index_t j = 1; j < middle; ++j) {
+    0.00 :   28da586:        addi    a3,a3,1
+         : 89      lane_out[j * trailing] = lane_out[(j - 1) * trailing] + OType(lane_in[j * trailing]);
+    0.00 :   28da588:        fadd.s  fa5,fa5,fa4
+         : 88      for (index_t j = 1; j < middle; ++j) {
+    0.00 :   28da58c:        mv      a5,a2
+   23.06 :   28da58e:        add     a4,a4,a1
+         : 89      lane_out[j * trailing] = lane_out[(j - 1) * trailing] + OType(lane_in[j * trailing]);
+    1.34 :   28da590:        fsw     fa5,0(a2)
+         : 88      for (index_t j = 1; j < middle; ++j) {
+   14.05 :   28da594:        bne     a3,a0,28da57a <bool mxnet::op::mxnet_op::Kernel<mxnet::op::cumsum_forward, mshadow::cpu>::Launch<float*, float*, unsigned long, unsigned long>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, unsigned long, unsigned long) [clone ._omp_fn.0]+0x7c>
+    0.00 :   28da598:        addi    a6,a6,1
+    0.00 :   28da59a:        bne     t1,a6,28da550 <bool mxnet::op::mxnet_op::Kernel<mxnet::op::cumsum_forward, mshadow::cpu>::Launch<float*, float*, unsigned long, unsigned long>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, unsigned long, unsigned long) [clone ._omp_fn.0]+0x52>
+         : 90      bool mxnet::op::mxnet_op::Kernel<mxnet::op::cumsum_forward, mshadow::cpu>::Launch<float*, float*, unsigned long, unsigned long>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, unsigned long, unsigned long) [clone ._omp_fn.0]:
+         : 1021    #pragma omp parallel for num_threads(omp_threads)
+    0.00 :   28da59e:        ld      ra,40(sp)
+    0.00 :   28da5a0:        ld      s0,32(sp)
+    0.00 :   28da5a2:        ld      s1,24(sp)
+    0.00 :   28da5a4:        ld      s2,16(sp)
+    0.00 :   28da5a6:        ld      s3,8(sp)
+    0.00 :   28da5a8:        addi    sp,sp,48
+    0.00 :   28da5aa:        ret
+    0.00 :   28da5ac:        addi    t1,t1,1
+         : 1022    for (index_t i = 0; i < static_cast<index_t>(N); ++i) {
+    0.00 :   28da5ae:        li      a5,0
+    0.00 :   28da5b0:        j       28da52e <bool mxnet::op::mxnet_op::Kernel<mxnet::op::cumsum_forward, mshadow::cpu>::Launch<float*, float*, unsigned long, unsigned long>(mshadow::Stream<mshadow::cpu>*, unsigned long, float*, float*, unsigned long, unsigned long) [clone ._omp_fn.0]+0x30>

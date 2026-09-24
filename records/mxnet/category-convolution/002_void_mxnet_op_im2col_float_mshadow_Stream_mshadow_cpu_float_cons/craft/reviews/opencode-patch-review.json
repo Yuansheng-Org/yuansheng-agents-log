@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-mxnet-opperf-category-convolution-002",
+  "patchCandidateId": "pc-bp-mxnet-opperf-category-convolution-002",
+  "reviewedAt": "2026-09-21T06:10:00.000Z",
+  "reviewer": "opencode independent read-only reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan archSpecific=true（riscv-macro）。补丁使用的 vsetvli/vle32.v/vlse32.v/vse32.v（SEW=32,LMUL=1）属 RVV 1.0 基础指令，与 diaglog 记录的 build Tag_RISCV_arch（含 v1p0/zvl128b）及 blueprint source.targetHardware（SG2044/C920v2, VLEN=128）一致；vtype 与数据流匹配，tail 由 vl 截断，未构造越界指针，无 x86/ARM 指令混入。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "src/operator/nn/im2col.h",
+      "evidence": "+  if (std::is_same<DType, float>::value) {",
+      "severity": "minor",
+      "category": "code-style",
+      "suggestion": "运行期分支而非 if constexpr，非 float 实例化仍会编译 RVV 分支；建议改 if constexpr（C++17）或类型特化以避免死代码。不影响正确性。"
+    },
+    {
+      "id": "F2",
+      "file": "src/operator/nn/im2col.h",
+      "evidence": "+      const ptrdiff_t byte_stride = static_cast<ptrdiff_t>(stride) * static_cast<ptrdiff_t>(sizeof(float));",
+      "severity": "suggestion",
+      "category": "portability",
+      "suggestion": "使用非限定 ptrdiff_t；建议改为 std::ptrdiff_t 以保证跨标准库可移植。"
+    },
+    {
+      "id": "F3",
+      "file": "src/operator/nn/im2col.h",
+      "evidence": "+        size_t vl = __riscv_vsetvl_e32m1(static_cast<size_t>(n - i));",
+      "severity": "suggestion",
+      "category": "performance",
+      "suggestion": "interior 循环每轮调用 vsetvl；长 run 可先取 vlmax 对齐块复用以减少 vsetvli 开销。不构成正确性问题。"
+    }
+  ]
+}

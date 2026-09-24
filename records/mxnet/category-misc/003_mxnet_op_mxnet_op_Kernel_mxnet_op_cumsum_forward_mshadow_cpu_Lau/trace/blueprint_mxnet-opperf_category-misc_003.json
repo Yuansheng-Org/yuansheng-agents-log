@@ -1,0 +1,112 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-opperf-category-misc-003",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T03:52:11.544Z",
+    "software": "mxnet-opperf",
+    "testcaseIds": [
+      "category-misc"
+    ],
+    "diagnosisId": "diag-20260921T035211544Z-efae34d3",
+    "targetHardware": "SOPHGO SG2044 / T-Head XuanTie C920v2 (RVV 1.0, VLEN=128, OoO, 64 cores)",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede"
+  },
+  "problem": {
+    "summary": "mxnet-opperf category-misc 中 cumsum 前向热点（rank 003）在支持 RVV 1.0（VLEN=128）的 SG2044/C920v2 上仍为纯标量串行前缀和实现：Kernel<cumsum_forward>::Launch 的 OMP lane 分片内逐 lane、逐 j 执行 loop-carried fadd 依赖链，hot loop 全 scalar、zero v*，函数级样本份额约 15.4%，存在显著向量化空间。",
+    "evidence": [
+      "perf annotate：函数 2086 samples（cpu-clock）；hot j-loop 全 scalar、zero v*；flw fa4,0(a4) 56.38%、add a4,a4,a1 23.06%、bne 14.05%、fadd.s fa5,fa5,fa4 0.00%（loop-carried 前缀链）",
+      "函数级样本份额 ≈15.4%（2086/13578，同一运行窗口，fallback report 由 perf script 合成）",
+      "硬件 ISA rv64imafdcv…（含 v）与 build Tag_RISCV_arch rv64i2p1…v1p0…zvl128b1p0（含 v）均支持 RVV 1.0，无 hardware/build mismatch",
+      "opperf_cumsum avg_time_forward_cumsum_us（RV）：input_0=24.3254 / input_1=27.3332 / input_2=28.5100"
+    ]
+  },
+  "rootCause": {
+    "summary": "cumsum_forward 前缀和 scan 在 RVV 1.0 硬件上仍为纯标量串行实现：每 lane 沿 middle 轴、stride=trailing 逐 j 累加，loop-carried fadd 依赖链 + 逐元素 flw/add/fsw/bne 开销，hot loop 未利用 VLEN=128 向量单元（autovec 无法向量化 loop-carried scan，需跨 lane 结构改写）。",
+    "candidateFiles": [
+      "src/operator/numpy/np_cumsum-inl.h"
+    ],
+    "performanceFactors": [
+      "No vectorization"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "cumsum_forward::Map 的每 lane 前缀和语义（inclusive prefix sum）与每 lane 内逐 j 的 FP 加法顺序（与 scalar reference bit-exact，不引入 reassociation）",
+      "Kernel<cpu>::Launch 的 OpenMP lane 分片并行结构与 mxnet 算子调度接口",
+      "axis=None（扁平扫描，trailing=1 单 lane）与带 axis（trailing>1 多 lane）两种 shape 的正确性，含 trailing<VLEN 的边界块"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-misc"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-misc"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf annotate 显示该热点函数 hot j-loop 全标量（flw 56.38%、add a4,a4,a1 23.06%、bne 14.05%、fadd.s 0.00%），zero v*；函数级样本份额约 15.4%（2086/13578）。perf stat 全测试 IPC 0.658 偏低，与串行 scan 的 latency-bound 特征一致（cache_references≈cache_misses 为 counter 异常，LLC 38.85% 非第一瓶颈）。源码 np_cumsum-inl.h:76-92 确认为逐 lane 串行前缀和（loop-carried fadd），mxnet_op.h:1013-1032 为 OMP lane 分片；硬件（rv64imafdcv…含 v）与 build（v1p0/zvl128b1p0 含 v）均支持 RVV 1.0 而无 mismatch，且 RVV Widening Reduction pattern 明确排除前缀依赖扫描，故 hot 标量 scan 归类为 No vectorization（route High），指向跨 lane RVV 批处理改写（vle32/vfadd.vv/vse32，VLEN=128 时 m1=4 lane/组、m4=16 lane/组）。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "cache/内存行为主导：LLC_load_miss_rate 38.85% 可能放大成本，但输入为流式单次遍历、L1 缺失率仅 2.57%，且 cache_references≈cache_misses 为计数器异常，向量化仍是第一杠杆（impact 已因 bound-type 部分证据降为 Medium）",
+      "未来编译器 autovec 改进可能自行向量化，但 loop-carried scan 结构上难以自动跨 lane 向量化，仍需结构改写",
+      "若测试输入 shape 为 axis=None（trailing=1，单 lane），跨 lane 批处理退化为单 lane 串行，需改用沿 scan 轴的并行 scan（如 Hillis-Steele），收益与方案取决于实测 shape"
+    ],
+    "currentGaps": "sampling IP precision 未知（precise_ip/Exact-IP 未提供），单行占比仅锚定 loop interval；cache_references≈cache_misses 为 counter 异常，bound type 由 IPC 与指令形态推断而非 per-function perf stat；opperf cumsum 输入 shape（trailing/middle）未公开，边界块与 axis=None 退化路径需按实测 shape 验证；全运行样本份额来自 fallback report（perf script 合成），为近似值",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + testcase=category-misc",
+    "recommendedFirstAction": "在 src/operator/numpy/np_cumsum-inl.h 的 cumsum_forward::Map 与 CumsumForwardImpl 中，将 per-lane 串行 scan 改写为跨 lane RVV intrinsic 批处理（vle32/vfadd.vv/vse32，SEW=32，LMUL 按 acc+x 两向量 live budget 选 m1/m2/m4），保留每 lane 内逐 j 加法顺序；trailing<VLEN 边界块按组 clamp/回退，axis=None 单 lane 用并行 scan 算法",
+    "recommendedVerification": "重新运行 category-misc（agent1 patch_regression --case category-misc）确认 cumsum forward 时间下降且与 scalar reference bit-exact；对同一函数重新 perf annotate，确认 hot loop 出现 vsetvli/vle32/vse32/vfadd.vv 且 flw/add 标量份额大幅下降；覆盖 trailing<VLEN、trailing>=VLEN、axis=None 三种 shape 与 m1/m2/m4 crossover",
+    "metricEvidence": [
+      {
+        "metric": "opperf_cumsum avg_time_forward_cumsum_us (RV, input_2)",
+        "rv": 28.51,
+        "anomalyNote": "RV 侧三个输入形状 cumsum 前向平均耗时 24.3254–28.5100 us；无 ARM 侧对比数据"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.658032,
+        "anomalyNote": "全测试 IPC 0.658 偏低，与标量串行 scan 的 latency-bound 特征一致"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 2.57,
+        "anomalyNote": "L1 缺失率 2.57%，非带宽主导"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 38.853,
+        "anomalyNote": "LLC 缺失率 38.85% 偏高，但输入流式单次遍历，非热点 loop 第一瓶颈"
+      },
+      {
+        "metric": "cache_miss_rate(%)",
+        "rv": 100,
+        "anomalyNote": "cache_references(5.3614e9)≈cache_misses(5.3614e9) 为计数器别名/异常，不能作为真实缺失率"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "bool mxnet::op::mxnet_op::Kernel<mxnet::op::cumsum_forward, mshadow::cpu>::Launch<float*, float*, unsigned long, unsigned long> (._omp_fn.0)",
+        "fileModule": "src/operator/numpy/np_cumsum-inl.h",
+        "rvvPattern": "No vectorization",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.154,
+        "note": "cumsum 前缀和 scan：OMP lane 分片内逐 lane 串行 loop-carried fadd 依赖链，hot loop 全标量（flw 56.38% / add 23.06% / bne 14.05%），未利用 VLEN=128 向量单元；跨 lane 批处理理论上限 m1=4×、m4=16×"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/operator/numpy/np_cumsum-inl.h:76-92 (cumsum_forward::Map)；src/operator/mxnet_op.h:1013-1032 (Kernel<cpu>::Launch 的 omp parallel for)",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/22179; https://github.com/opencv/opencv/pull/22520; https://github.com/opencv/opencv/pull/23980; https://github.com/opencv/opencv/pull/24058; https://github.com/opencv/opencv/pull/24132; https://github.com/opencv/opencv/pull/24166; https://github.com/opencv/opencv/pull/24301; https://github.com/opencv/opencv/pull/24325; https://github.com/opencv/opencv/pull/27160; https://github.com/opencv/opencv/pull/27119; https://github.com/opencv/opencv/pull/27097; https://github.com/opencv/opencv/pull/27007; https://github.com/opencv/opencv/pull/26958; https://github.com/opencv/opencv/pull/26865; https://github.com/opencv/opencv/commit/b902a8e792e1702b40f19dbd48dff0bfdca8b36d; https://github.com/opencv/opencv/commit/2c16f3b7d2b28f6cac444046b8f95b40d9266a6a; https://github.com/opencv/opencv/commit/e06502a254f79f9d3184de2803d087c6914b7706; https://github.com/opencv/opencv/commit/a2d784b6f53aa1fdfde21ab8e3787a93b59af24f; https://github.com/opencv/opencv/commit/83104bed32093ff0c5c935e8920c72b6b74ae07a",
+      "evidenceExplanation": "热点源码 np_cumsum-inl.h:76-92 的 per-lane 串行前缀和循环（loop-carried fadd）与 annotate 中 28da57e flw/28da588 fadd.s 的依赖链一致；硬件的 v 与 build 的 v1p0 证明缺的不是编译配置而是实现结构；no-vectorization.md 的 Related PRs 均为把标量/固定宽度循环改写为 scalable RVV 的上游实例，支撑跨 lane RVV 批处理这一修复方向，且不改变每 lane 内 FP 顺序（bit-exact）"
+    }
+  }
+}

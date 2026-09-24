@@ -1,0 +1,133 @@
+ Percent |	Source code & Disassembly of libmxnet.so for cpu-clock (2446 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3       Disassembly of section .text:
+         :
+         : 5       0000000001a172d0 <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 4, float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 4, float>, mshadow::cpu, 4, float>*, mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float> const&) [clone ._omp_fn.0]>:
+         : 6       void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 4, float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 4, float>, mshadow::cpu, 4, float>*, mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float> const&) [clone ._omp_fn.0]:
+         : 173     inline void MapPlan(TRValue<R, cpu, dim, DType> *dst,
+         : 174     const expr::Plan<E, DType> &plan) {
+         : 175     Shape<2> shape = expr::ShapeCheck<dim, R>::Check(dst->self()).FlatTo2D();
+         : 176     expr::Plan<R, DType> dplan = expr::MakePlan(dst->self());
+         : 177     #ifndef __CUDACC__
+         : 178     #pragma omp parallel for
+    0.00 :   1a172d0:        addi    sp,sp,-48
+    0.00 :   1a172d2:        sd      ra,40(sp)
+    0.00 :   1a172d4:        sd      s0,32(sp)
+    0.00 :   1a172d6:        sd      s1,24(sp)
+    0.00 :   1a172d8:        sd      s2,16(sp)
+    0.00 :   1a172da:        sd      s3,8(sp)
+    0.00 :   1a172dc:        sd      s4,0(sp)
+    0.00 :   1a172de:        addi    s0,sp,48
+         : 176     #endif
+         : 177     // temp remove openmp, as default setting throttles CPU
+         : 178     for (openmp_index_t y = 0; y < shape[0]; ++y) {
+    0.00 :   1a172e0:        ld      s4,8(a0)
+         : 173     #pragma omp parallel for
+    0.00 :   1a172e4:        mv      s3,a0
+    0.00 :   1a172e6:        auipc   ra,0xfeb88
+    0.00 :   1a172ea:        jalr    -966(ra) # 59ef20 <omp_get_num_threads@plt>
+         : 176     for (openmp_index_t y = 0; y < shape[0]; ++y) {
+    0.00 :   1a172ee:        ld      s1,0(s4)
+    0.00 :   1a172f2:        mv      s2,a0
+    0.00 :   1a172f4:        auipc   ra,0xfeb88
+    0.00 :   1a172f8:        jalr    156(ra) # 59f390 <omp_get_thread_num@plt>
+    0.00 :   1a172fc:        rem     a7,s1,s2
+    0.00 :   1a17300:        div     t1,s1,s2
+    0.00 :   1a17304:        blt     a0,a7,1a1738e <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 4, float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 4, float>, mshadow::cpu, 4, float>*, mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float> const&) [clone ._omp_fn.0]+0xbe>
+    0.00 :   1a17308:        mul     a0,t1,a0
+    0.00 :   1a1730c:        add     a7,a7,a0
+    0.00 :   1a1730e:        add     t1,t1,a7
+    0.00 :   1a17310:        bge     a7,t1,1a1737e <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 4, float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 4, float>, mshadow::cpu, 4, float>*, mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float> const&) [clone ._omp_fn.0]+0xae>
+         : 177     for (index_t x = 0; x < shape[1]; ++x) {
+    0.00 :   1a17314:        ld      a0,8(s4)
+    0.00 :   1a17318:        blez    a0,1a1737e <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 4, float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 4, float>, mshadow::cpu, 4, float>*, mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float> const&) [clone ._omp_fn.0]+0xae>
+         : 179     // trust your compiler! -_- they will optimize it
+         : 180     Saver::template Save<DType>(dplan.REval(y, x), plan.Eval(y, x));
+    0.00 :   1a1731c:        ld      a5,0(s3)
+    0.00 :   1a17320:        ld      a4,16(s3)
+    0.00 :   1a17324:        ld      t3,24(a5)
+    0.00 :   1a17328:        ld      t0,8(a4)
+    0.00 :   1a1732c:        ld      a1,16(a5)
+    0.00 :   1a1732e:        ld      a6,0(a5)
+    0.00 :   1a17332:        ld      t6,32(a5)
+    0.00 :   1a17336:        ld      t5,8(a5)
+    0.00 :   1a1733a:        ld      t4,0(a4)
+         : 187     mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float>::Eval(long, long) const:
+         : 74      scale_(e.scale_),
+         : 75      new_height_(e.shape_[srcdim - 2]),
+         : 76      src_height_(static_cast<index_t>(e.shape_[srcdim - 2] / e.scale_)) {}
+         : 77      MSHADOW_XINLINE DType Eval(index_t i, index_t j) const {
+         : 78      const index_t x = j;
+         : 79      const index_t y = i % new_height_;
+    0.65 :   1a1733e:        rem     a5,a7,t3
+         : 81      void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 4, float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 4, float>, mshadow::cpu, 4, float>*, mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float> const&) [clone ._omp_fn.0]:
+         : 177     for (index_t x = 0; x < shape[1]; ++x) {
+    0.00 :   1a17342:        li      a4,0
+         : 179     mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float>::Eval(long, long) const:
+         : 75      const index_t c = i / new_height_;
+    0.00 :   1a17344:        div     a2,a7,t3
+         : 76      const index_t h = static_cast<index_t>(y / scale_);
+    0.08 :   1a17348:        div     a5,a5,a1
+         : 78      const index_t w = static_cast<index_t>(x / scale_);
+         : 79      return src_.Eval(c * src_height_ + h, w);
+    1.68 :   1a1734c:        mul     a2,a2,t6
+         : 81      mshadow::expr::Plan<mshadow::Tensor<mshadow::cpu, 4, float>, float>::REval(long, long):
+         : 74      public:
+         : 75      explicit Plan(const Tensor<Device, dim, DType> &t)
+         : 76      : dptr_(t.dptr_), stride_(t.stride_) {}
+         : 77      // for RValue, the return type should be reference
+         : 78      MSHADOW_XINLINE DType &REval(index_t y, index_t x) {
+         : 79      return dptr_[y * stride_ + x];
+    0.00 :   1a17350:        mul     a3,a7,t0
+         : 81      mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float>::Eval(long, long) const:
+    1.68 :   1a17354:        add     a2,a2,a5
+         : 79      mshadow::expr::Plan<mshadow::Tensor<mshadow::cpu, 4, float>, float>::Eval(long, long) const:
+         : 78      }
+         : 79      // const evaluation
+         : 80      MSHADOW_XINLINE const DType &Eval(index_t y, index_t x) const {
+         : 81      return dptr_[y * stride_ + x];
+    0.00 :   1a17356:        mul     a2,a2,t5
+    5.64 :   1a1735a:        slli    a3,a3,0x2
+    0.70 :   1a1735c:        add     a3,a3,t4
+         : 85      void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 4, float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 4, float>, mshadow::cpu, 4, float>*, mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float> const&) [clone ._omp_fn.0]:
+    0.57 :   1a1735e:        addi    a3,a3,4
+         : 178     mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float>::Eval(long, long) const:
+         : 77      const index_t w = static_cast<index_t>(x / scale_);
+    0.00 :   1a17360:        div     a5,a4,a1
+         : 79      void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 4, float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 4, float>, mshadow::cpu, 4, float>*, mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float> const&) [clone ._omp_fn.0]:
+    0.00 :   1a17364:        addi    a4,a4,1
+         : 178     mshadow::expr::Plan<mshadow::Tensor<mshadow::cpu, 4, float>, float>::Eval(long, long) const:
+    0.33 :   1a17366:        add     a5,a5,a2
+         : 79      mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float>::Eval(long, long) const:
+         : 78      return src_.Eval(c * src_height_ + h, w);
+    0.00 :   1a17368:        slli    a5,a5,0x2
+    1.10 :   1a1736a:        add     a5,a5,a6
+   19.50 :   1a1736c:        flw     fa5,0(a5)
+         : 82      void mshadow::sv::saveto::Save<float>(float&, float):
+         : 684     /*! \brief save to saver: = */
+         : 685     struct saveto {
+         : 686     /*! \brief save b to a using save method */
+         : 687     template<typename DType>
+         : 688     MSHADOW_XINLINE static void Save(DType &a, DType b) { // NOLINT(*)
+         : 689     a = b;
+   66.43 :   1a17370:        fsw     fa5,-4(a3)
+         : 691     void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 4, float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 4, float>, mshadow::cpu, 4, float>*, mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float> const&) [clone ._omp_fn.0]:
+    1.59 :   1a17374:        bne     a4,a0,1a1735e <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 4, float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 4, float>, mshadow::cpu, 4, float>*, mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float> const&) [clone ._omp_fn.0]+0x8e>
+    0.00 :   1a17378:        addi    a7,a7,1
+    0.04 :   1a1737a:        bne     t1,a7,1a1733e <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 4, float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 4, float>, mshadow::cpu, 4, float>*, mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float> const&) [clone ._omp_fn.0]+0x6e>
+         : 173     #pragma omp parallel for
+    0.00 :   1a1737e:        ld      ra,40(sp)
+    0.00 :   1a17380:        ld      s0,32(sp)
+    0.00 :   1a17382:        ld      s1,24(sp)
+    0.00 :   1a17384:        ld      s2,16(sp)
+    0.00 :   1a17386:        ld      s3,8(sp)
+    0.00 :   1a17388:        ld      s4,0(sp)
+    0.00 :   1a1738a:        addi    sp,sp,48
+    0.00 :   1a1738c:        ret
+    0.00 :   1a1738e:        addi    t1,t1,1
+         : 176     for (openmp_index_t y = 0; y < shape[0]; ++y) {
+    0.00 :   1a17390:        li      a7,0
+    0.00 :   1a17392:        j       1a17308 <void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu, 4, float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4> >(mshadow::TRValue<mshadow::Tensor<mshadow::cpu, 4, float>, mshadow::cpu, 4, float>*, mshadow::expr::Plan<mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu, 4, float>, float, 4>, float> const&) [clone ._omp_fn.0]+0x38>

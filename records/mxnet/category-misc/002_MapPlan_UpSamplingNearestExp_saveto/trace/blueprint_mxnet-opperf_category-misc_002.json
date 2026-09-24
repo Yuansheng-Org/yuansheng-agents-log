@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mxnet-opperf-category-misc-002",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-21T03:43:56.969Z",
+    "software": "mxnet-opperf",
+    "testcaseIds": [
+      "category-misc"
+    ],
+    "diagnosisId": "diag-20260921T034356969Z-14256d41",
+    "targetHardware": "SOPHGO SG2044 (T-Head XuanTie C920v2, RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/apache/mxnet.git",
+    "testBranch": "master",
+    "commitHash": "b84609d3fc73d20929c114eab95faaa56e6c5ede"
+  },
+  "problem": {
+    "summary": "category-misc 基准中 mshadow::MapPlan<saveto, Tensor<cpu,4,float>, UpSamplingNearestExp<...>> 最近邻上采样内核（rank 002）在 RVV 1.0 硬件（build 含 v1p0+zvl128b）上完全以标量双循环执行，每输出元素执行一次 x/scale_ 整数除法与逐元素地址重建，并做一次 gather load + store。annotate 显示 flw+fsw 占局部样本约 86%（fsw 66.43%、flw 19.50%），该函数占整个 category-misc 运行样本的 18.27%（13386 samples 中 2446），是典型的未向量化 resampling 数据搬运热点。",
+    "evidence": [
+      "perf annotate（rank 002，cpu-clock，2446 samples，local period）：fsw fa5,-4(a3) = 66.43%，flw fa5,0(a5) = 19.50%，inner loop 每元素 div a5,a4,a1（x/scale_）",
+      "perf report 全局份额：该函数占 category-misc 总样本（13386）的 18.27%",
+      "perf stat：IPC 0.658；L1_dcache_load_miss_rate 2.570%；LLC_load_miss_rate 38.853%；branch_miss_rate 1.461%",
+      "hot loop 全 scalar、zero 标准 v* 与 th.v*，而 hardware（rv64imafdcv_...含 v）与 build（v1p0+zvl128b）均支持 RVV 1.0"
+    ]
+  },
+  "rootCause": {
+    "summary": "最近邻上采样 resampling 内核在 RVV-capable（VLEN=128）构建上未向量化：运行期 scale_ 除法与逐元素地址重建使坐标/索引开销逐元素摊开，标量 gather load + store 主导局部样本（约 86%），输出写流量刚性（scale=2 时输出约 4x 输入）使 store 份额 66.43% 成为主要热点。",
+    "candidateFiles": [
+      "3rdparty/mshadow/mshadow/extension/spatial_upsampling_nearest.h",
+      "src/operator/nn/upsampling-inl.h"
+    ],
+    "performanceFactors": [
+      "RVV Resampling Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "floor(x/scale_)、floor(y/scale_) 最近邻坐标语义与 Plan::Eval 逐元素一致",
+      "每输出元素恰好写一次（saveto / req=write 语义）",
+      "OpenMP 行分块行为、公共 API 与标量 fallback 保留"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "category-misc"
+    ],
+    "regressionCommand": "agent1 patch_regression --case category-misc"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.7,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "根因路由明确（resampling 未向量化），但收益上界受 store 写带宽刚性（memory-bound 竞争）与 vluxei32 在 C920v2 上吞吐未实测影响，需人工确认向量化实现的实际收益后再自动转发",
+    "reasoning": "perf annotate 显示热点由标量 gather load（flw 19.50%）与 store（fsw 66.43%）构成，flw+fsw 局部份额约 0.859；perf stat 的 IPC 0.658 与 LLC_load_miss_rate 38.853% 佐证该数据搬运内核的 memory 分量；源码 spatial_upsampling_nearest.h 的 Plan::Eval 是运行期 scale_ 驱动的坐标映射（w=x/scale_），符合 resampling pattern 的坐标/index 合同，且 hot loop 零 v*（hardware 与 build 均含 RVV 1.0）。知识侧 MNN RVV resize 实现（PR #4053）证明 indexed-load 向量化形态可行。故根因是 L1 语义分派层的 resampling 未向量化（含 L4 标量坐标/地址低效作为 supporting）。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "store 写带宽饱和主导（输出约 200MB 级，IPC 0.658），向量化实际收益可能低于指令数减少所暗示的幅度",
+      "编译器 autovec 因运行期 scale_ 除法与数据相关索引未通过 profitability/合法性判定而放弃向量化"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision（cpu-clock 无 precise_ip 声明，单指令 cycle 归因不可得）；bound type 为混合（store 写带宽刚性、LLC miss 38.85%），收益上界存在 memory-bound 竞争；本批次无 RV vs ARM duration ratio（未提供 execution summary）；vluxei32 在 C920v2 上的吞吐与 wByte 预计算开销未实测",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认向量化（预计算 wByte + vluxei32 gather + vse32 连续 store）在 category-misc 大 shape（input_0 约 50MB）下相对标量的实际收益，及 gather 吞吐/预计算开销是否摊薄",
+    "affectedTarget": "RV + category-misc",
+    "recommendedFirstAction": "在 3rdparty/mshadow/mshadow/extension/spatial_upsampling_nearest.h 的 Plan<UpSamplingNearestExp>::Eval 对应 forward 路径新增 RVV intrinsic 实现：预计算水平 byte-offset 数组 wByte[x]=(x/scale_)*4（跨行/通道复用），fixed-VL main loop 用 __riscv_vluxei32_v_f32m2 gather + __riscv_vse32_v_f32m2 连续 store，runtime-VL tail 处理剩余列，__riscv_v_intrinsic 宏 guard 并保留标量 fallback",
+    "recommendedVerification": "重跑 category-misc benchmark，观察 opperf_UpSampling_input_*_avg_time_forward_UpSampling_us（当前 35.46/19.85 us）下降与该函数全局份额（18.27%）回落；perf annotate 确认 vluxei32/vse32 出现、flw/fsw 与 div 份额下降；与标量 reference 逐元素对比覆盖 0/小宽/vl 整倍数/全部 tail 长度",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.658,
+        "anomalyNote": "中等 IPC，函数内 86% 局部样本落在 flw/fsw，store 主导的数据搬运形态"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 2.57,
+        "anomalyNote": "L1 命中良好，热点不在 L1 miss 路径"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 38.853,
+        "anomalyNote": "LLC miss 偏高，工作集（输入约 50MB、输出约 200MB）远超 cache 份额，memory 分量显著"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 1.461,
+        "anomalyNote": "分支预测良好，非 branch-bound"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void mshadow::MapPlan<mshadow::sv::saveto, mshadow::Tensor<mshadow::cpu,4,float>, 4, float, mshadow::expr::UpSamplingNearestExp<mshadow::Tensor<mshadow::cpu,4,float>, float, 4>>(...) [clone ._omp_fn.0]",
+        "fileModule": "3rdparty/mshadow/mshadow/extension/spatial_upsampling_nearest.h",
+        "rvvPattern": "RVV Resampling Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.859,
+        "note": "最近邻上采样（resampling）数据搬运内核：每输出元素一次坐标除法 + gather load + store；flw 19.50% + fsw 66.43% 局部样本份额，标量未向量化，memory 密集"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "3rdparty/mshadow/mshadow/extension/spatial_upsampling_nearest.h:72-79（Plan<UpSamplingNearestExp>::Eval 坐标变换与 gather）",
+      "relatedKnowledge": "https://github.com/alibaba/MNN/pull/4053; https://github.com/alibaba/MNN/commit/f4fcff3436a9d95c5367699b1c53d4eb1cbc3b7d",
+      "evidenceExplanation": "MNN 的 RVV resize kernel（indexed-load 向量化形态）证明运行期坐标驱动的 resampling 可通过预计算 index + vluxei* 向量化；与本函数源码的坐标合同（w=x/scale_、h=y/scale_）及 annotate 中逐元素 scalar gather 证据指向同一修复方向"
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-mxnet-category-activation-003",
+  "patchCandidateId": "pc-bp-mxnet-category-activation-003",
+  "reviewedAt": "2026-09-21T05:39:13Z",
+  "reviewer": "opencode-cpp-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan archSpecific=true (rules: riscv-macro, march-flag, vlenb). Specialized RVV review against SOPHGO SG2044 (RVV 1.0, VLEN=128, vlenb=16) and Build ISA rv64...v1p0...zvl128b: all used instructions belong to base V (zve32x/zve32f) plus vfncvt.f.f.w from zvfhmin, which the patch enables via -march=rv64gcv_zfhmin_zvfhmin; hardware cpuinfo.isa already carries zfh/zfhmin/zvfhmin. vsetvl/vtype consistent (uniform e32m1, mf2 for f16 narrowing, no register-group overlap); tail-agnostic accumulators + vlmax reductions are correct; scalar<->vector boundary uses vfmv seed/extract; dispatch gating is conservative with scalar fallback retained. exp range reduction verified: r = x - n*ln2_hi - n*ln2_lo with BOTH ln2 terms scaled by the integer n via vfnmsac.vf (vd - rs1*vs2), i.e. the prior same-family critical bug (ln2_hi not scaled by k) is NOT reproduced. negate applied exactly once per vector (vfneg.v) in each of the three passes, preserving softmin = softmax(-x) semantics. No x86/ARM instructions. Only residual: no RISC-V cross toolchain available in this environment, so configure/build/runtime was not executed."
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "src/operator/nn/softmax-inl.h",
+      "evidence": "diff: '+    vsum            = __riscv_vfadd_vv_f32m1(vsum, VecExp(v, vl), vl);' and '+  const float sum = __riscv_vfmv_f_s_f32m1_f32(__riscv_vfredusum_vs_f32m1_f32m1(' ; scalar reference accumulates AType sum = double with ordered += and divides in double (softmax_fwd::Map double overload), while the vector path uses f32 accumulation + unordered vfredusum + f32 division. diaglog Phase 4 explicitly flags 'vfredusum 改变 FP 结合顺序（AType=double 合同）'.",
+      "severity": "minor",
+      "category": "numerical-correctness",
+      "suggestion": "Record the FP reordering tolerance for the AType=double contract; for OType=half_t the deviation is far below FP16 resolution (~1e-3), but if bit-closer agreement is required consider vfredosum or double accumulation."
+    },
+    {
+      "id": "F2",
+      "file": "src/operator/nn/softmax-inl.h",
+      "evidence": "diff: '+  vfloat32m1_t xc = __riscv_vfmax_vv_f32m1(' and '+      x, __riscv_vfmv_v_f_f32m1(-87.33654475f, vl), vl);' clamps x, so exp(-Inf) becomes the smallest normal (~1.175e-38) instead of exact 0 as produced by reference expf(-Inf)=0.",
+      "severity": "suggestion",
+      "category": "numerical-correctness",
+      "suggestion": "For OType=half_t the value underflows to 0 (no observable difference); for OType=float, add a vmerge that maps -Inf input to 0.0 if bit-exact agreement is required."
+    },
+    {
+      "id": "F3",
+      "file": "src/operator/nn/softmax-inl.h",
+      "evidence": "diff: '+  // exp(r) on |r| <= ln2/2 via a degree-7 Horner polynomial.' ; for x in [~88.376, 88.722839] rint(x*log2e)=128 is clamped to 127 so r can reach ~ln2, outside the polynomial design interval, raising truncation error to ~6.6e-7 (~11 ULP).",
+      "severity": "suggestion",
+      "category": "numerical-correctness",
+      "suggestion": "softmin always has x <= 0 so this defensive branch is currently unreachable; if VecExp is reused for general exp, tighten the upper clamp or reduce r further for the clamped band."
+    },
+    {
+      "id": "F4",
+      "file": "src/operator/nn/softmax-inl.h",
+      "evidence": "diff: '+  vint32m1_t n   = __riscv_vfcvt_x_f_v_i32m1(t, vl);  // round-to-nearest-even' ; the intrinsic uses the dynamic rounding mode frm (default RNE) rather than a hard-coded RNE.",
+      "severity": "suggestion",
+      "category": "numerical-correctness",
+      "suggestion": "Document the frm==RNE precondition; mxnet does not modify frm, so risk is low."
+    },
+    {
+      "id": "F5",
+      "file": "CMakeLists.txt",
+      "evidence": "diff: '+        set(CMAKE_CXX_FLAGS \"${CMAKE_CXX_FLAGS} -march=rv64gcv_zfhmin_zvfhmin\")' ; GCC/Clang honor the last -march, so appending can discard an existing richer -march (e.g. zba/zbb/zbc) set by toolchain or environment. check_*_compiler_flag only validates that the flag compiles, not that it preserves existing extensions.",
+      "severity": "minor",
+      "category": "build-configuration",
+      "suggestion": "Append only when no -march is already present, or gate via a detected existing value / add_compile_options with a guard."
+    },
+    {
+      "id": "F6",
+      "file": "src/operator/nn/softmax-inl.h",
+      "evidence": "diff: '+  vbool32_t isnan = __riscv_vmfne_vv_f32m1_b32(x, x, vl);' ; the reference initializes mmax from the first element and ignores NaN via 'if (mmax < val)', which differs from IEEE maxNum vfmax when the first element is NaN; the all-NaN output coincides because the NaN propagates through vsum, but this equivalence is not pinned by tests.",
+      "severity": "suggestion",
+      "category": "test-coverage",
+      "suggestion": "Add explicit NaN / +Inf / -Inf / all-equal cases to the category-activation regression to fix the intended NaN policy."
+    },
+    {
+      "id": "F7",
+      "file": "CMakeLists.txt",
+      "evidence": "diff: '+    check_cxx_compiler_flag(\"-march=rv64gcv_zfhmin_zvfhmin\" MXNET_RISCV_HAS_GCV_ZFHMIN)' ; CheckCXXCompilerFlag is included earlier at CMakeLists.txt:244 so the macro is available and the logic is self-consistent, but no RISC-V cross toolchain exists in this review environment so configure/build/run was not executed.",
+      "severity": "suggestion",
+      "category": "verification-gap",
+      "suggestion": "Run the blueprint regression 'agent1 patch_regression --case category-activation' and re-check perf annotate for vle32/vfneg.v/vfredmax/vfredusum/vector exp/vse16 with fsub.s@19a6680 and auipc@19a670a samples reduced or gone."
+    }
+  ]
+}

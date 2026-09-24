@@ -1,0 +1,498 @@
+ Percent |	Source code & Disassembly of libmxnet.so for cpu-clock (5813 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3       Disassembly of section .text:
+         :
+         : 5       00000000018de944 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]>:
+         : 6       void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+         : 91      Shape<ndim> sshape = shape;
+         : 92      sshape[axis]       = 1;
+         : 93      index_t sa         = stride[axis];
+         :
+         : 95      if (length == nullptr) {
+         : 96      #pragma omp parallel for
+    0.00 :   18de944:        addi    sp,sp,-208
+    0.00 :   18de946:        sd      ra,200(sp)
+    0.00 :   18de948:        sd      s0,192(sp)
+    0.00 :   18de94a:        sd      s1,184(sp)
+    0.00 :   18de94c:        sd      s2,176(sp)
+    0.00 :   18de94e:        sd      s3,168(sp)
+    0.00 :   18de950:        addi    s0,sp,208
+    0.00 :   18de952:        sd      s8,128(sp)
+    0.00 :   18de954:        ld      s1,24(a0)
+    0.00 :   18de956:        mv      s2,a0
+    0.00 :   18de958:        auipc   ra,0xfecc0
+    0.00 :   18de95c:        jalr    1480(ra) # 59ef20 <omp_get_num_threads@plt>
+    0.00 :   18de960:        mv      s3,a0
+    0.00 :   18de962:        auipc   ra,0xfecc1
+    0.00 :   18de966:        jalr    -1490(ra) # 59f390 <omp_get_thread_num@plt>
+    0.00 :   18de96a:        rem     a6,s1,s3
+    0.00 :   18de96e:        div     a5,s1,s3
+    0.00 :   18de972:        blt     a0,a6,18ded04 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x3c0>
+    0.00 :   18de976:        mul     a0,a5,a0
+    0.00 :   18de97a:        add     s8,a0,a6
+    0.00 :   18de97e:        add     a0,a5,s8
+    0.00 :   18de982:        bge     s8,a0,18deb8c <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x248>
+         : 93      for (index_t i = 0; i < N; ++i) {
+         : 94      index_t base = unravel_dot(i, sshape, stride);
+    0.00 :   18de986:        ld      a4,32(s2)
+    0.00 :   18de98a:        ld      a5,40(s2)
+    0.00 :   18de98e:        ld      a7,48(s2)
+         : 98      long mxnet::op::mxnet_op::unravel_dot<2>(long, mshadow::Shape<2> const&, mshadow::Shape<2> const&):
+         : 710     const Shape<ndim>& stride) {
+         : 711     index_t ret = 0;
+         : 712     #pragma unroll
+         : 713     for (index_t i = ndim - 1, j = idx; i >= 0; --i) {
+         : 714     auto tmp = j / shape[i];
+         : 715     ret += (j - tmp * shape[i]) * stride[i];
+    0.00 :   18de992:        ld      a3,8(a4)
+    0.00 :   18de994:        ld      a4,0(a4)
+    0.00 :   18de996:        sd      s11,104(sp)
+    0.00 :   18de998:        fsd     fs1,80(sp)
+    0.00 :   18de99a:        sd      a4,-184(s0)
+         : 709     auto tmp = j / shape[i];
+    0.00 :   18de99e:        ld      a4,8(a5)
+    0.00 :   18de9a0:        ld      a5,0(a5)
+    0.00 :   18de9a2:        fsd     fs2,72(sp)
+         : 713     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+         : 91      #pragma omp parallel for
+    0.00 :   18de9a4:        flw     fs1,56(s2)
+         : 93      long mxnet::op::mxnet_op::unravel_dot<2>(long, mshadow::Shape<2> const&, mshadow::Shape<2> const&):
+    0.00 :   18de9a8:        sd      a5,-176(s0)
+         : 710     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+    0.00 :   18de9ac:        ld      a5,8(s2)
+         :
+         : 98      DType mmax = negate ? -in[base] : in[base];
+         : 99      DType val;
+         : 100     for (index_t j = 1; j < M; ++j) {
+    0.00 :   18de9b0:        ld      s11,16(s2)
+    0.00 :   18de9b4:        sd      s4,160(sp)
+         : 91      #pragma omp parallel for
+    0.00 :   18de9b6:        sd      a5,-200(s0)
+    0.00 :   18de9ba:        ld      a5,0(s2)
+         : 94      mshadow::half::half_t::float2half(float const&) const:
+         : 249     #endif
+         : 250     } else if (v.si <= maxN) {
+         : 251     // Handle norms
+         : 252     #if MSHADOW_HALF_ROUND_TO_NEAREST == 1
+         : 253     // Rounding may increase the exponent, possibly creating an inf, but that's OK.
+         : 254     v.ui += (v.ui & 0x3fff) != 0x1000 ? 0x1000 : 0;
+    0.00 :   18de9be:        lui     s4,0x4
+    0.00 :   18de9c0:        sd      s9,120(sp)
+         : 257     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+    0.00 :   18de9c2:        sd      a5,-152(s0)
+    0.00 :   18de9c6:        auipc   a5,0x6a9e
+    0.00 :   18de9ca:        flw     fs2,690(a5) # 837cc78 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x10>
+    0.00 :   18de9ce:        sd      s5,152(sp)
+    0.00 :   18de9d0:        sd      s6,144(sp)
+    0.00 :   18de9d2:        sd      s7,136(sp)
+    0.00 :   18de9d4:        sd      s10,112(sp)
+    0.00 :   18de9d6:        fsd     fs0,88(sp)
+    0.00 :   18de9d8:        fsd     fs3,64(sp)
+         : 100     long mxnet::op::mxnet_op::unravel_dot<2>(long, mshadow::Shape<2> const&, mshadow::Shape<2> const&):
+         : 710     ret += (j - tmp * shape[i]) * stride[i];
+    0.00 :   18de9da:        sd      a3,-168(s0)
+         : 709     auto tmp = j / shape[i];
+    0.00 :   18de9de:        sd      a4,-160(s0)
+    0.00 :   18de9e2:        slli    s1,a7,0x1
+         : 712     mshadow::half::half_t::float2half(float const&) const:
+    0.00 :   18de9e6:        addi    s4,s4,-1 # 3fff <dmlc::moodycamel::details::thread_id()::x+0x3e6f>
+         : 250     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+         : 97      for (index_t j = 1; j < M; ++j) {
+    0.00 :   18de9e8:        sd      a0,-192(s0)
+    0.00 :   18de9ec:        sd      a7,-208(s0)
+    0.00 :   18de9f0:        slli    s9,a7,0x2
+         : 101     long mxnet::op::mxnet_op::unravel_dot<2>(long, mshadow::Shape<2> const&, mshadow::Shape<2> const&):
+    0.00 :   18de9f4:        ld      a5,-160(s0)
+         : 710     ret += (j - tmp * shape[i]) * stride[i];
+    0.00 :   18de9f8:        ld      a4,-176(s0)
+         : 709     auto tmp = j / shape[i];
+    0.00 :   18de9fc:        div     s2,s8,a5
+         : 710     ret += (j - tmp * shape[i]) * stride[i];
+    0.00 :   18dea00:        rem     a5,s8,a5
+    0.00 :   18dea04:        rem     s2,s2,a4
+    0.00 :   18dea08:        ld      a4,-168(s0)
+    0.00 :   18dea0c:        mul     a5,a5,a4
+    0.00 :   18dea10:        ld      a4,-184(s0)
+    0.00 :   18dea14:        mul     s2,s2,a4
+    0.00 :   18dea18:        add     s2,s2,a5
+         : 711     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+         : 95      DType mmax = negate ? -in[base] : in[base];
+    0.00 :   18dea1a:        ld      a5,-152(s0)
+    0.00 :   18dea1e:        slli    a3,s2,0x2
+    0.00 :   18dea22:        add     a3,a3,a5
+         : 97      for (index_t j = 1; j < M; ++j) {
+    0.00 :   18dea24:        li      a5,1
+         : 95      DType mmax = negate ? -in[base] : in[base];
+    0.00 :   18dea26:        flw     fs0,0(a3)
+         : 97      for (index_t j = 1; j < M; ++j) {
+    0.00 :   18dea2a:        bge     a5,s11,18debc0 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x27c>
+    0.00 :   18dea2e:        ld      a5,-208(s0)
+    0.00 :   18dea32:        li      a7,1
+    0.00 :   18dea34:        add     a0,s2,a5
+    0.00 :   18dea38:        ld      a5,-152(s0)
+    0.00 :   18dea3c:        slli    a0,a0,0x2
+    0.00 :   18dea3e:        add     a0,a0,a5
+         : 98      val = negate ? -in[base + j * sa] : in[base + j * sa];
+    0.00 :   18dea40:        flw     fa4,0(a0)
+    0.41 :   18dea44:        fmv.s   fa5,fs0
+         : 97      for (index_t j = 1; j < M; ++j) {
+    0.00 :   18dea48:        addi    a7,a7,1
+    0.09 :   18dea4a:        flt.s   a5,fs0,fa4
+    0.52 :   18dea4e:        add     a0,a0,s9
+    9.51 :   18dea50:        beqz    a5,18dea56 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x112>
+    0.00 :   18dea52:        fmv.s   fa5,fa4
+    0.14 :   18dea56:        fmv.s   fs0,fa5
+    0.03 :   18dea5a:        bne     s11,a7,18dea40 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0xfc>
+         :
+         : 108     AType sum = AType(0);
+         : 109     DType in_val;
+         : 110     // By default temperature is 1.0.
+         : 111     // Adding a branch here to save the CPU 'divide-by-1' computation at runtime
+         : 112     if (temperature == 1.0) {
+    0.00 :   18dea5e:        feq.s   a5,fs1,fs2
+    0.00 :   18dea62:        beqz    a5,18debce <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x28a>
+         : 103     AType sum = AType(0);
+    0.00 :   18dea66:        fmv.d.x fs3,zero
+    0.00 :   18dea6a:        mv      s7,a3
+         : 106     mshadow::half::half_t::float2half(float const&) const:
+    0.00 :   18dea6c:        mv      s10,a3
+         : 104     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+         : 108     for (index_t j = 0; j < M; ++j) {
+    0.00 :   18dea6e:        li      s3,0
+         : 110     in_val = negate ? -in[base + j * sa] : in[base + j * sa];
+         : 111     sum += std::exp(in_val - mmax);
+    0.00 :   18dea70:        flw     fa0,0(s10)
+         : 108     for (index_t j = 0; j < M; ++j) {
+    0.52 :   18dea74:        addi    s3,s3,1
+    0.00 :   18dea76:        add     s10,s10,s9
+         : 109     std::exp(float):
+         : 227     using ::exp;
+         :
+         : 229     #ifndef __CORRECT_ISO_CPP_MATH_H_PROTO
+         : 230     inline _GLIBCXX_CONSTEXPR float
+         : 231     exp(float __x)
+         : 232     { return __builtin_expf(__x); }
+    0.00 :   18dea78:        fsub.s  fa0,fa0,fs0
+   43.14 :   18dea7c:        auipc   ra,0xfecc0
+    0.00 :   18dea80:        jalr    1924(ra) # 59f200 <expf@plt>
+         : 236     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+         : 110     sum += std::exp(in_val - mmax);
+    0.00 :   18dea84:        fcvt.d.s        fa0,fa0
+    0.21 :   18dea88:        fadd.d  fs3,fs3,fa0
+         : 108     for (index_t j = 0; j < M; ++j) {
+    0.24 :   18dea8c:        bne     s11,s3,18dea70 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x12c>
+    0.00 :   18dea90:        ld      a4,-200(s0)
+    0.00 :   18dea94:        slli    a5,s2,0x1
+    0.00 :   18dea98:        lui     a0,0x80000
+    0.00 :   18dea9c:        add     s5,a4,a5
+    0.00 :   18deaa0:        not     s2,a0
+         : 113     }
+         :
+         : 115     for (index_t j = 0; j < M; ++j) {
+    0.00 :   18deaa4:        li      s6,0
+         : 117     mshadow::half::half_t::float2half(float const&) const:
+         : 220     sign >>= shiftSign;              // logical shift sign to fp16 position
+    0.00 :   18deaa6:        lui     s10,0x8
+         : 222     if (v.si <= maxZ) {
+    0.00 :   18deaa8:        lui     s3,0x33000
+    0.00 :   18deaac:        j       18deaf6 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x1b2>
+         : 227     uint32_t exp32 = v.ui >> fp32FractionBits;
+    0.00 :   18deaae:        srliw   a3,a3,0x17
+         : 228     int32_t exp16 = exp32 - expAdjust;
+    0.00 :   18deab2:        addiw   a5,a3,-112
+         : 232     uint32_t significand = fp32HiddenBit | (v.ui & fp32FractionMask);
+    0.00 :   18deab6:        lui     a1,0x800
+         : 231     uint32_t vshift = 1 - exp16;
+    0.00 :   18deaba:        li      a3,1
+    0.00 :   18deabc:        subw    a3,a3,a5
+         : 232     uint32_t significand = fp32HiddenBit | (v.ui & fp32FractionMask);
+    0.00 :   18deabe:        addi    a5,a1,-1 # 7fffff <mxnet::__mk_MXNET0::{lambda(mxnet::runtime::MXNetArgs, mxnet::runtime::MXNetRetValue*)#1}::operator()(mxnet::runtime::MXNetArgs, mxnet::runtime::MXNetRetValue*) const [clone .isra.0]+0x23b>
+    0.00 :   18deac2:        and     a5,a5,a4
+    0.00 :   18deac4:        or      a5,a5,a1
+         : 233     v.ui = significand >> vshift;
+    0.00 :   18deac6:        srlw    a5,a5,a3
+         : 243     v.ui += (v.ui & 0x3fff) != 0x1000 || (significand & 0x7ff) ? 0x1000 : 0;
+    0.00 :   18deaca:        and     a1,a5,s4
+    0.00 :   18deace:        lui     a3,0x1
+    0.00 :   18dead0:        bne     a1,a3,18deae0 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x19c>
+    0.00 :   18dead4:        andi    a3,a4,2047
+    0.00 :   18dead8:        snez    a3,a3
+    0.00 :   18deadc:        slliw   a3,a3,0xc
+    0.02 :   18deae0:        addw    a5,a5,a3
+         : 259     } else if (v.si < nanN) {
+         : 260     v.si = nanN;
+         : 261     }
+         :
+         : 263     v.ui >>= shift;
+         : 264     return sign | (v.ui & 0x7fff);
+    0.00 :   18deae2:        srliw   a5,a5,0xd
+    0.00 :   18deae6:        or      a5,a5,a2
+         : 267     mshadow::half::half_t::operator=(mshadow::half::half_t const&):
+         : 160     half_ = a.half_;
+    0.00 :   18deae8:        sh      a5,0(s5)
+         : 162     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+    0.09 :   18deaec:        addi    s6,s6,1
+    0.00 :   18deaee:        add     s7,s7,s9
+    0.00 :   18deaf0:        add     s5,s5,s1
+    0.00 :   18deaf2:        beq     s11,s6,18deb6c <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x228>
+         : 115     in_val             = negate ? -in[base + j * sa] : in[base + j * sa];
+         : 116     out[base + j * sa] = OP::Map(in_val - mmax, sum);
+    0.05 :   18deaf6:        flw     fa0,0(s7)
+         : 118     double mxnet::op::mxnet_op::softmax_fwd::Map<double>(float, double):
+         : 46      return AType(expf(a) / b);
+    0.74 :   18deafa:        fsub.s  fa0,fa0,fs0
+   40.07 :   18deafe:        auipc   ra,0xfecc0
+    0.00 :   18deb02:        jalr    1794(ra) # 59f200 <expf@plt>
+    0.00 :   18deb06:        fcvt.d.s        fa0,fa0
+         : 47      mshadow::half::half_t::float2half(float const&) const:
+    0.36 :   18deb0a:        li      a5,0
+         : 47      double mxnet::op::mxnet_op::softmax_fwd::Map<double>(float, double):
+    0.00 :   18deb0c:        fdiv.d  fa0,fa0,fs3
+         : 47      void mshadow::half::half_t::constructor<double>(double const&):
+         : 346     #if (MSHADOW_CUDA_HALF && defined(__CUDA_ARCH__))
+         : 347     cuhalf_ = __float2half(float(value));  // NOLINT(*)
+         : 348     #elif(MSHADOW_USE_F16C)
+         : 349     half_ = _cvtss_sh(static_cast<float>(value), 0);
+         : 350     #else /* !MSHADOW_CUDA_HALF && !MSHADOW_USE_F16C */
+         : 351     half_ = float2half(float(value));  // NOLINT(*)
+    0.00 :   18deb10:        fcvt.s.d        fa5,fa0
+    2.31 :   18deb14:        fmv.x.w a4,fa5
+         : 354     mshadow::half::half_t::float2half(float const&) const:
+         : 219     v.si ^= sign;                    // clear sign bit from v
+    0.00 :   18deb18:        and     a3,s2,a4
+         : 220     sign >>= shiftSign;              // logical shift sign to fp16 position
+    0.00 :   18deb1c:        srliw   a2,a4,0x10
+    0.40 :   18deb20:        sext.w  a3,a3
+    0.00 :   18deb22:        and     a2,a2,s10
+         : 222     if (v.si <= maxZ) {
+    0.10 :   18deb26:        bge     s3,a3,18deae6 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x1a2>
+         : 225     } else if (v.si < minN) {
+    0.12 :   18deb2a:        lui     a5,0x38800
+    0.00 :   18deb2e:        blt     a3,a5,18deaae <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x16a>
+         : 245     } else if (v.si <= maxN) {
+    0.00 :   18deb32:        lui     a5,0x47800
+    0.05 :   18deb36:        bge     a3,a5,18deb9c <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x258>
+         : 249     v.ui += (v.ui & 0x3fff) != 0x1000 ? 0x1000 : 0;
+    0.00 :   18deb3a:        and     a5,s4,a4
+    0.00 :   18deb3e:        sext.w  a5,a5
+    0.09 :   18deb40:        addi    a5,a5,-2048 # 477ff800 <dmlc::io::LocalFileSystem::GetInstance()::instance+0x3e0864e8>
+    0.00 :   18deb44:        addi    a5,a5,-2048
+    0.00 :   18deb48:        snez    a4,a5
+         : 251     v.ui -= expAdjust << fp32FractionBits;
+    0.21 :   18deb4c:        lui     a5,0xc8000
+         : 249     v.ui += (v.ui & 0x3fff) != 0x1000 ? 0x1000 : 0;
+    0.00 :   18deb50:        slliw   a4,a4,0xc
+         : 251     v.ui -= expAdjust << fp32FractionBits;
+    0.00 :   18deb54:        addw    a5,a5,a3
+    0.10 :   18deb56:        addw    a5,a5,a4
+         : 259     return sign | (v.ui & 0x7fff);
+    0.00 :   18deb58:        srliw   a5,a5,0xd
+    0.00 :   18deb5c:        or      a5,a5,a2
+         : 262     mshadow::half::half_t::operator=(mshadow::half::half_t const&):
+         : 160     half_ = a.half_;
+    0.43 :   18deb5e:        sh      a5,0(s5)
+         : 162     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+         : 113     for (index_t j = 0; j < M; ++j) {
+    0.07 :   18deb62:        addi    s6,s6,1
+    0.00 :   18deb64:        add     s7,s7,s9
+    0.00 :   18deb66:        add     s5,s5,s1
+    0.00 :   18deb68:        bne     s11,s6,18deaf6 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x1b2>
+    0.00 :   18deb6c:        ld      a5,-192(s0)
+    0.00 :   18deb70:        addi    s8,s8,1
+    0.00 :   18deb72:        bne     a5,s8,18de9f4 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0xb0>
+    0.00 :   18deb76:        ld      s4,160(sp)
+    0.00 :   18deb78:        ld      s5,152(sp)
+    0.00 :   18deb7a:        ld      s6,144(sp)
+    0.00 :   18deb7c:        ld      s7,136(sp)
+    0.00 :   18deb7e:        ld      s9,120(sp)
+    0.00 :   18deb80:        ld      s10,112(sp)
+    0.00 :   18deb82:        ld      s11,104(sp)
+    0.00 :   18deb84:        fld     fs0,88(sp)
+    0.00 :   18deb86:        fld     fs1,80(sp)
+    0.00 :   18deb88:        fld     fs2,72(sp)
+    0.00 :   18deb8a:        fld     fs3,64(sp)
+         : 91      #pragma omp parallel for
+    0.00 :   18deb8c:        ld      ra,200(sp)
+    0.00 :   18deb8e:        ld      s0,192(sp)
+    0.00 :   18deb90:        ld      s1,184(sp)
+    0.00 :   18deb92:        ld      s2,176(sp)
+    0.00 :   18deb94:        ld      s3,168(sp)
+    0.00 :   18deb96:        ld      s8,128(sp)
+    0.00 :   18deb98:        addi    sp,sp,208
+    0.00 :   18deb9a:        ret
+         : 100     mshadow::half::half_t::float2half(float const&) const:
+         : 252     } else if (v.si <= infN) {
+    0.00 :   18deb9c:        lui     a5,0x8
+    0.00 :   18deb9e:        lui     a4,0x7f800
+    0.00 :   18deba2:        addi    a5,a5,-1024 # 7c00 <dmlc::moodycamel::details::thread_id()::x+0x7a70>
+    0.00 :   18deba6:        bge     a4,a3,18deae6 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x1a2>
+         : 254     } else if (v.si < nanN) {
+    0.00 :   18debaa:        lui     a4,0x7f802
+    0.00 :   18debae:        mv      a5,a3
+    0.00 :   18debb0:        bge     a3,a4,18debb6 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x272>
+    0.00 :   18debb4:        mv      a5,a4
+         : 259     return sign | (v.ui & 0x7fff);
+    0.00 :   18debb6:        slli    a4,a5,0x24
+    0.00 :   18debba:        srli    a5,a4,0x31
+    0.00 :   18debbe:        j       18deae6 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x1a2>
+         : 263     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+         : 107     if (temperature == 1.0) {
+    0.00 :   18debc0:        feq.s   a5,fs1,fs2
+    0.00 :   18debc4:        bnez    a5,18decf2 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x3ae>
+         : 118     }
+         : 119     } else {
+         : 120     for (index_t j = 0; j < M; ++j) {
+    0.00 :   18debc8:        li      a5,1
+    0.00 :   18debca:        bne     s11,a5,18deb6c <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x228>
+         : 103     AType sum = AType(0);
+    0.00 :   18debce:        fmv.d.x fs3,zero
+    0.00 :   18debd2:        mv      s5,a3
+         : 106     mshadow::half::half_t::float2half(float const&) const:
+    0.00 :   18debd4:        mv      s10,a3
+         : 104     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+         : 118     for (index_t j = 0; j < M; ++j) {
+    0.00 :   18debd6:        li      s3,0
+         : 120     in_val = negate ? -in[base + j * sa] : in[base + j * sa];
+         : 121     sum += std::exp((in_val - mmax) / temperature);
+    0.00 :   18debd8:        flw     fa0,0(s10) # 8000 <dmlc::moodycamel::details::thread_id()::x+0x7e70>
+         : 118     for (index_t j = 0; j < M; ++j) {
+    0.00 :   18debdc:        addi    s3,s3,1 # 33000001 <dmlc::io::LocalFileSystem::GetInstance()::instance+0x29886ce9>
+    0.00 :   18debde:        add     s10,s10,s9
+         : 120     sum += std::exp((in_val - mmax) / temperature);
+    0.00 :   18debe0:        fsub.s  fa0,fa0,fs0
+         : 122     std::exp(float):
+    0.00 :   18debe4:        fdiv.s  fa0,fa0,fs1
+    0.00 :   18debe8:        auipc   ra,0xfecc0
+    0.00 :   18debec:        jalr    1560(ra) # 59f200 <expf@plt>
+         : 230     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+    0.00 :   18debf0:        fcvt.d.s        fa0,fa0
+    0.00 :   18debf4:        fadd.d  fs3,fs3,fa0
+         : 118     for (index_t j = 0; j < M; ++j) {
+    0.00 :   18debf8:        bne     s11,s3,18debd8 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x294>
+    0.00 :   18debfc:        ld      a5,-200(s0)
+    0.00 :   18dec00:        slli    a4,s2,0x1
+    0.00 :   18dec04:        lui     a0,0x80000
+    0.00 :   18dec08:        add     s7,a5,a4
+    0.00 :   18dec0c:        not     s2,a0
+         : 123     }
+         :
+         : 125     for (index_t j = 0; j < M; ++j) {
+    0.00 :   18dec10:        li      s6,0
+         : 127     mshadow::half::half_t::float2half(float const&) const:
+         : 220     sign >>= shiftSign;              // logical shift sign to fp16 position
+    0.00 :   18dec12:        lui     s10,0x8
+         : 222     if (v.si <= maxZ) {
+    0.00 :   18dec14:        lui     s3,0x33000
+    0.00 :   18dec18:        j       18dec62 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x31e>
+         : 227     uint32_t exp32 = v.ui >> fp32FractionBits;
+    0.00 :   18dec1a:        srliw   a3,a3,0x17
+         : 228     int32_t exp16 = exp32 - expAdjust;
+    0.00 :   18dec1e:        addiw   a5,a3,-112 # f90 <dmlc::moodycamel::details::thread_id()::x+0xe00>
+         : 232     uint32_t significand = fp32HiddenBit | (v.ui & fp32FractionMask);
+    0.00 :   18dec22:        lui     a1,0x800
+         : 231     uint32_t vshift = 1 - exp16;
+    0.00 :   18dec26:        li      a3,1
+    0.00 :   18dec28:        subw    a3,a3,a5
+         : 232     uint32_t significand = fp32HiddenBit | (v.ui & fp32FractionMask);
+    0.00 :   18dec2a:        addi    a5,a1,-1 # 7fffff <mxnet::__mk_MXNET0::{lambda(mxnet::runtime::MXNetArgs, mxnet::runtime::MXNetRetValue*)#1}::operator()(mxnet::runtime::MXNetArgs, mxnet::runtime::MXNetRetValue*) const [clone .isra.0]+0x23b>
+    0.00 :   18dec2e:        and     a5,a5,a4
+    0.00 :   18dec30:        or      a5,a5,a1
+         : 233     v.ui = significand >> vshift;
+    0.00 :   18dec32:        srlw    a5,a5,a3
+         : 243     v.ui += (v.ui & 0x3fff) != 0x1000 || (significand & 0x7ff) ? 0x1000 : 0;
+    0.00 :   18dec36:        and     a1,a5,s4
+    0.00 :   18dec3a:        lui     a3,0x1
+    0.00 :   18dec3c:        bne     a1,a3,18dec4c <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x308>
+    0.00 :   18dec40:        andi    a3,a4,2047
+    0.00 :   18dec44:        snez    a3,a3
+    0.00 :   18dec48:        slliw   a3,a3,0xc
+    0.00 :   18dec4c:        addw    a5,a5,a3
+         : 259     return sign | (v.ui & 0x7fff);
+    0.00 :   18dec4e:        srliw   a5,a5,0xd
+    0.00 :   18dec52:        or      a5,a5,a2
+         : 262     mshadow::half::half_t::operator=(mshadow::half::half_t const&):
+         : 160     half_ = a.half_;
+    0.00 :   18dec54:        sh      a5,0(s7)
+         : 162     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+    0.00 :   18dec58:        addi    s6,s6,1
+    0.00 :   18dec5a:        add     s5,s5,s9
+    0.00 :   18dec5c:        add     s7,s7,s1
+    0.00 :   18dec5e:        beq     s11,s6,18deb6c <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x228>
+         : 125     in_val             = negate ? -in[base + j * sa] : in[base + j * sa];
+         : 126     out[base + j * sa] = OP::Map((in_val - mmax) / temperature, sum);
+    0.00 :   18dec62:        flw     fa0,0(s5)
+    0.00 :   18dec66:        fsub.s  fa0,fa0,fs0
+         : 129     double mxnet::op::mxnet_op::softmax_fwd::Map<double>(float, double):
+         : 46      return AType(expf(a) / b);
+    0.00 :   18dec6a:        fdiv.s  fa0,fa0,fs1
+    0.00 :   18dec6e:        auipc   ra,0xfecc0
+    0.00 :   18dec72:        jalr    1426(ra) # 59f200 <expf@plt>
+    0.00 :   18dec76:        fcvt.d.s        fa0,fa0
+         : 47      mshadow::half::half_t::float2half(float const&) const:
+    0.00 :   18dec7a:        li      a5,0
+         : 47      double mxnet::op::mxnet_op::softmax_fwd::Map<double>(float, double):
+    0.00 :   18dec7c:        fdiv.d  fa0,fa0,fs3
+         : 47      void mshadow::half::half_t::constructor<double>(double const&):
+         : 346     half_ = float2half(float(value));  // NOLINT(*)
+    0.00 :   18dec80:        fcvt.s.d        fa5,fa0
+    0.00 :   18dec84:        fmv.x.w a4,fa5
+         : 349     mshadow::half::half_t::float2half(float const&) const:
+         : 219     v.si ^= sign;                    // clear sign bit from v
+    0.00 :   18dec88:        and     a3,s2,a4
+         : 220     sign >>= shiftSign;              // logical shift sign to fp16 position
+    0.00 :   18dec8c:        srliw   a2,a4,0x10
+    0.00 :   18dec90:        sext.w  a3,a3
+    0.00 :   18dec92:        and     a2,a2,s10
+         : 222     if (v.si <= maxZ) {
+    0.00 :   18dec96:        bge     s3,a3,18dec52 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x30e>
+         : 225     } else if (v.si < minN) {
+    0.00 :   18dec9a:        lui     a5,0x38800
+    0.00 :   18dec9e:        blt     a3,a5,18dec1a <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x2d6>
+         : 245     } else if (v.si <= maxN) {
+    0.00 :   18deca2:        lui     a5,0x47800
+    0.00 :   18deca6:        bge     a3,a5,18decce <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x38a>
+         : 249     v.ui += (v.ui & 0x3fff) != 0x1000 ? 0x1000 : 0;
+    0.00 :   18decaa:        and     a5,s4,a4
+    0.00 :   18decae:        sext.w  a5,a5
+    0.00 :   18decb0:        addi    a5,a5,-2048 # 477ff800 <dmlc::io::LocalFileSystem::GetInstance()::instance+0x3e0864e8>
+    0.00 :   18decb4:        addi    a5,a5,-2048
+    0.00 :   18decb8:        snez    a4,a5
+         : 251     v.ui -= expAdjust << fp32FractionBits;
+    0.00 :   18decbc:        lui     a5,0xc8000
+         : 249     v.ui += (v.ui & 0x3fff) != 0x1000 ? 0x1000 : 0;
+    0.00 :   18decc0:        slliw   a4,a4,0xc
+         : 251     v.ui -= expAdjust << fp32FractionBits;
+    0.00 :   18decc4:        addw    a5,a5,a3
+    0.00 :   18decc6:        addw    a5,a5,a4
+         : 259     return sign | (v.ui & 0x7fff);
+    0.00 :   18decc8:        srliw   a5,a5,0xd
+    0.00 :   18deccc:        j       18dec52 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x30e>
+         : 252     } else if (v.si <= infN) {
+    0.00 :   18decce:        lui     a5,0x8
+    0.00 :   18decd0:        lui     a4,0x7f800
+    0.00 :   18decd4:        addi    a5,a5,-1024 # 7c00 <dmlc::moodycamel::details::thread_id()::x+0x7a70>
+    0.00 :   18decd8:        bge     a4,a3,18dec52 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x30e>
+         : 254     } else if (v.si < nanN) {
+    0.00 :   18decdc:        lui     a4,0x7f802
+    0.00 :   18dece0:        mv      a5,a3
+    0.00 :   18dece2:        bge     a3,a4,18dece8 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x3a4>
+    0.00 :   18dece6:        mv      a5,a4
+         : 259     return sign | (v.ui & 0x7fff);
+    0.00 :   18dece8:        slli    a4,a5,0x24
+    0.00 :   18decec:        srli    a5,a4,0x31
+    0.00 :   18decf0:        j       18dec52 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x30e>
+         : 263     void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]:
+         : 108     for (index_t j = 0; j < M; ++j) {
+    0.00 :   18decf2:        li      a5,1
+    0.00 :   18decf4:        beq     s11,a5,18dea66 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x122>
+    0.00 :   18decf8:        ld      a5,-192(s0)
+    0.00 :   18decfc:        addi    s8,s8,1
+    0.00 :   18decfe:        bne     a5,s8,18de9f4 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0xb0>
+    0.00 :   18ded02:        j       18deb76 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x232>
+    0.00 :   18ded04:        addi    a5,a5,1
+         : 91      #pragma omp parallel for
+    0.00 :   18ded06:        li      a6,0
+    0.00 :   18ded08:        j       18de976 <void mxnet::op::mxnet_op::Softmax<mxnet::op::mxnet_op::softmax_fwd, false, double, float, mshadow::half::half_t, int, 2>(mshadow::Stream<mshadow::cpu>*, float*, mshadow::half::half_t*, int*, mshadow::Shape<2>, int, float) [clone ._omp_fn.0]+0x32>
