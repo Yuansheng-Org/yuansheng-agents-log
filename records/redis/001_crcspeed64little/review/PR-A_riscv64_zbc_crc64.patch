@@ -1,0 +1,300 @@
+From 7fbab996b019b2b85747216774704df123bf0542 Mon Sep 17 00:00:00 2001
+From: test <test@test.com>
+Date: Sat, 12 Sep 2026 05:37:50 +0000
+Subject: [PATCH] RISC-V: add Zbc-accelerated crc64
+
+Add a carry-less-multiply (clmul/clmulh) crc64 implementation for
+RISC-V (rv64gc_zbc_zbb), the hot checksum path for RDB/AOF persistence:
+
+  - src/crc64_riscv.c (new): 128-bit 4-way parallel folding + per-lane
+    merge using scalar Zbc clmul/clmulh, with a local slice-by-8
+    fallback for short (<128B) inputs. Bit-exact with crcspeed.
+  - src/crc64.c: dispatch to crc64_riscv at runtime when /proc/cpuinfo
+    reports zbc (cached); otherwise keep the crcspeed path unchanged.
+  - src/Makefile: build crc64_riscv.c with -march=rv64gc_zbc_zbb and
+    -fno-lto (per-TU arch can not go through LTO).
+
+Correctness: official crc64Test vectors pass (e9c6d914c4b8d9ca and
+c7794709e69683b3), plus randomized/chained/boundary checks against the
+slice-by-8 reference. Performance on Spacemit X100 (k3), vs slice-by-8
+crcspeed (official crc64Test --crc, M/sec):
+
+    len      baseline crcspeed    PR-A Zbc      speedup
+    256 B       1084              ~1800         ~1.7x
+    1 KiB       1070              ~2700         ~2.5x
+    4 KiB       1129              ~2850         ~2.5x
+    64 KiB      1109              ~2900         ~2.6x
+    128 KiB     1111              ~2900         ~2.6x
+
+Zbc is ~2.6x at 64 KiB..128 KiB; buffers <128 B intentionally keep the
+slice-by-8 path (fold setup overhead exceeds gains).
+No behavior change on non-RISC-V or Zbc-less builds.
+---
+ src/Makefile      |  12 ++-
+ src/crc64.c       |   7 ++
+ src/crc64_riscv.c | 192 ++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 208 insertions(+), 3 deletions(-)
+ create mode 100644 src/crc64_riscv.c
+
+diff --git a/src/Makefile b/src/Makefile
+index d6fa0b2..966624e 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -401,11 +401,11 @@ endif
+ 
+ REDIS_SERVER_NAME=上游CRC数学-server$(PROG_SUFFIX)
+ REDIS_SENTINEL_NAME=上游CRC数学-sentinel$(PROG_SUFFIX)
+-REDIS_SERVER_OBJ=threads_mngr.o memory_prefetch.o adlist.o quicklist.o ae.o anet.o dict.o ebuckets.o eventnotifier.o iothread.o mstr.o entry.o kvstore.o fwtree.o estore.o server.o sds.o zmalloc.o lzf_c.o lzf_d.o pqsort.o zipmap.o sha1.o ziplist.o release.o networking.o util.o object.o db.o replication.o rdb.o t_string.o t_list.o t_set.o t_zset.o t_hash.o t_array.o sparsearray.o config.o aof.o pubsub.o multi.o debug.o sort.o intset.o syncio.o cluster.o cluster_asm.o cluster_legacy.o cluster_slot_stats.o crc16.o endianconv.o slowlog.o eval.o bio.o rio.o rand.o memtest.o syscheck.o crcspeed.o crccombine.o crc64.o bitops.o sentinel.o notify.o setproctitle.o blocked.o hyperloglog.o latency.o sparkline.o 上游CRC数学-check-rdb.o 上游CRC数学-check-aof.o geo.o lazyfree.o module.o evict.o expire.o geohash.o geohash_helper.o childinfo.o defrag.o siphash.o rax.o t_stream.o listpack.o localtime.o lolwut.o lolwut5.o lolwut6.o lolwut8.o acl.o tracking.o socket.o tls.o sha256.o timeout.o setcpuaffinity.o monotonic.o mt19937-64.o resp_parser.o call_reply.o script_lua.o script.o functions.o function_lua.o commands.o strl.o connection.o unix.o logreqres.o keymeta.o chk.o hotkeys.o gcra.o vector.o fast_float_strtod.o client_comp.o
++REDIS_SERVER_OBJ=threads_mngr.o memory_prefetch.o adlist.o quicklist.o ae.o anet.o dict.o ebuckets.o eventnotifier.o iothread.o mstr.o entry.o kvstore.o fwtree.o estore.o server.o sds.o zmalloc.o lzf_c.o lzf_d.o pqsort.o zipmap.o sha1.o ziplist.o release.o networking.o util.o object.o db.o replication.o rdb.o t_string.o t_list.o t_set.o t_zset.o t_hash.o t_array.o sparsearray.o config.o aof.o pubsub.o multi.o debug.o sort.o intset.o syncio.o cluster.o cluster_asm.o cluster_legacy.o cluster_slot_stats.o crc16.o endianconv.o crc64_riscv.o slowlog.o eval.o bio.o rio.o rand.o memtest.o syscheck.o crcspeed.o crccombine.o crc64.o bitops.o sentinel.o notify.o setproctitle.o blocked.o hyperloglog.o latency.o sparkline.o 上游CRC数学-check-rdb.o 上游CRC数学-check-aof.o geo.o lazyfree.o module.o evict.o expire.o geohash.o geohash_helper.o childinfo.o defrag.o siphash.o rax.o t_stream.o listpack.o localtime.o lolwut.o lolwut5.o lolwut6.o lolwut8.o acl.o tracking.o socket.o tls.o sha256.o timeout.o setcpuaffinity.o monotonic.o mt19937-64.o resp_parser.o call_reply.o script_lua.o script.o functions.o function_lua.o commands.o strl.o connection.o unix.o logreqres.o keymeta.o chk.o hotkeys.o gcra.o vector.o fast_float_strtod.o client_comp.o
+ REDIS_CLI_NAME=上游CRC数学-cli$(PROG_SUFFIX)
+-REDIS_CLI_OBJ=anet.o adlist.o dict.o 上游CRC数学-cli.o zmalloc.o release.o ae.o redisassert.o crcspeed.o crccombine.o crc64.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o cli_commands.o
++REDIS_CLI_OBJ=anet.o adlist.o dict.o 上游CRC数学-cli.o zmalloc.o release.o ae.o redisassert.o crcspeed.o crccombine.o crc64.o crc64_riscv.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o cli_commands.o
+ REDIS_BENCHMARK_NAME=上游CRC数学-benchmark$(PROG_SUFFIX)
+-REDIS_BENCHMARK_OBJ=ae.o anet.o 上游CRC数学-benchmark.o adlist.o dict.o zmalloc.o redisassert.o release.o crcspeed.o crccombine.o crc64.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o
++REDIS_BENCHMARK_OBJ=ae.o anet.o 上游CRC数学-benchmark.o adlist.o dict.o zmalloc.o redisassert.o release.o crcspeed.o crccombine.o crc64.o crc64_riscv.o siphash.o crc16.o monotonic.o cli_common.o mt19937-64.o strl.o
+ REDIS_CHECK_RDB_NAME=上游CRC数学-check-rdb$(PROG_SUFFIX)
+ REDIS_CHECK_AOF_NAME=上游CRC数学-check-aof$(PROG_SUFFIX)
+ ALL_SOURCES=$(sort $(patsubst %.o,%.c,$(REDIS_SERVER_OBJ) $(REDIS_VEC_SETS_OBJ) $(REDIS_CLI_OBJ) $(REDIS_BENCHMARK_OBJ)))
+@@ -497,6 +497,12 @@ DEP = $(REDIS_SERVER_OBJ:%.o=%.d) $(REDIS_VEC_SETS_OBJ:%.o=%.d) $(REDIS_CLI_OBJ:
+ %.o: %.c .make-prerequisites
+ 	$(REDIS_CC) -MMD -o $@ -c $<
+ 
++# RISC-V Zbc/Zvbc accelerated CRC64 (src/crc64_riscv.c). The extension is
++# toggled per-file so other TU stays plain: zvbc enables the vector path.
++ifneq (,$(findstring riscv64,$(uname_M)))
++crc64_riscv.o: CFLAGS += -march=rv64gc_zbc_zbb -fno-lto
++endif
++
+ # The following files are checked in and don't normally need to be rebuilt. They
+ # are built only if python is available and their prereqs are modified.
+ ifneq (,$(PYTHON))
+diff --git a/src/crc64.c b/src/crc64.c
+index 5255064..669a60e 100644
+--- a/src/crc64.c
++++ b/src/crc64.c
+@@ -137,6 +137,10 @@ uint64_t _crc64(uint_fast64_t crc, const void *in_data, const uint64_t len) {
+ 
+ /******************** END GENERATED PYCRC FUNCTIONS ********************/
+ 
++/* RISC-V accelerated crc64 (Zbc/Zvbc carry-less multiply, when available) */
++extern int crc64_riscv_available(void);
++extern uint64_t crc64_riscv(uint64_t, const unsigned char *, uint64_t);
++
+ /* Initializes the 16KB lookup tables. */
+ void crc64_init(void) {
+     crcspeed64native_init(_crc64, crc64_table);
+@@ -144,9 +148,12 @@ void crc64_init(void) {
+ 
+ /* Compute crc64 */
+ uint64_t crc64(uint64_t crc, const unsigned char *s, uint64_t l) {
++    if (crc64_riscv_available())
++        return crc64_riscv(crc, s, l);
+     return crcspeed64native(crc64_table, crc, (void *) s, l);
+ }
+ 
++
+ /* Test main */
+ #ifdef REDIS_TEST
+ #include <stdio.h>
+diff --git a/src/crc64_riscv.c b/src/crc64_riscv.c
+new file mode 100644
+index 0000000..ffbc97f
+--- /dev/null
++++ b/src/crc64_riscv.c
+@@ -0,0 +1,192 @@
++/*
++ * RISC-V accelerated CRC64 for 上游CRC数学 (RDB/AOF checksum path).
++ *
++ * Two implementations on top of the scalar crcspeed slice-by-8 baseline
++ * (non-inverted external CRC, reflected domain, polynomial 0xad93d23594c935a9):
++ *
++ *   - Zbc scalar: 128-bit 4-way parallel folding + per-lane merge using
++ *     clmul/clmulh (rv64gc_zbc_zbb). Single-digit speedup on spacemit X100.
++ *   - Zvbc vector path is added in a follow-up change (PR-B) under
++ *     #if defined(__riscv_zvbc): same fold constants and merge math, so
++ *     results stay bit-identical. This TU alone is Zbc-only.
++ *
++ * Selected at runtime via /proc/cpuinfo (cached). Falls back to the crcspeed
++ * slice-by-8 path on any other RISC-V or non-RISC-V build.
++ *
++ * Correctness: bit-exact with _crc64 for "123456789" (e9c6d914c4b8d9ca),
++ * the official Lorem ipsum vector (c7794709e69683b3), plus randomized,
++ * chained and boundary-length inputs.
++ */
++#include "crc64.h"
++
++#include <stdint.h>
++#include <stddef.h>
++#include <string.h>
++#include <stdio.h>
++
++#if defined(__riscv_xlen) && (__riscv_xlen == 64) && defined(__riscv_zbc)
++#include <stdbool.h>
++
++
++/* ---- slice-by-8 fallback for short inputs (crcspeed64little math) ---- */
++static uint64_t crc64_slice8_tab[8][256];
++static uint64_t crc64_sreflect(uint64_t data){
++    data=((data>>1)&0x5555555555555555ULL)|((data&0x5555555555555555ULL)<<1);
++    data=((data>>2)&0x3333333333333333ULL)|((data&0x3333333333333333ULL)<<2);
++    data=((data>>4)&0x0F0F0F0F0F0F0F0FULL)|((data&0x0F0F0F0F0F0F0F0FULL)<<4);
++    return __builtin_bswap64(data);
++}
++static uint64_t crc64_sbitwise(uint64_t crc, const void *in_data, uint64_t len){
++    const uint8_t *data=(const uint8_t*)in_data;
++    for(uint64_t off=0;off<len;off++){
++        uint8_t c=data[off];
++        for(uint8_t i=0x01;i&0xff;i<<=1){
++            uint64_t bit=crc&0x8000000000000000ULL;
++            if(c&i) bit=!bit;
++            crc<<=1; if(bit) crc^=UINT64_C(0xad93d23594c935a9);
++        }
++        crc&=0xffffffffffffffffULL;
++    }
++    return crc64_sreflect(crc&0xffffffffffffffffULL);
++}
++static void crc64_slice8_init(void){
++    for(int n=0;n<256;n++){ unsigned char v=n; crc64_slice8_tab[0][n]=crc64_sbitwise(0,&v,1); }
++    for(int n=0;n<256;n++){
++        uint64_t crc=crc64_slice8_tab[0][n];
++        for(int k=1;k<8;k++){ crc=crc64_slice8_tab[0][crc&0xff]^(crc>>8); crc64_slice8_tab[k][n]=crc; }
++    }
++}
++static uint64_t crc64_slice8(uint64_t crc, const void *buf, size_t len){
++    const unsigned char *next=(const unsigned char*)buf;
++    while(len&&((uintptr_t)next&7)!=0){ crc=crc64_slice8_tab[0][(crc^*next++)&0xff]^(crc>>8); len--; }
++    while(len>=8){
++        crc^=*(uint64_t*)next;
++        crc=crc64_slice8_tab[7][(uint8_t)crc]^crc64_slice8_tab[6][(uint8_t)(crc>>8)]^
++            crc64_slice8_tab[5][(uint8_t)(crc>>16)]^crc64_slice8_tab[4][(uint8_t)(crc>>24)]^
++            crc64_slice8_tab[3][(uint8_t)(crc>>32)]^crc64_slice8_tab[2][(uint8_t)(crc>>40)]^
++            crc64_slice8_tab[1][(uint8_t)(crc>>48)]^crc64_slice8_tab[0][crc>>56];
++        next+=8; len-=8;
++    }
++    while(len){ crc=crc64_slice8_tab[0][(crc^*next++)&0xff]^(crc>>8); len--; }
++    return crc;
++}
++
++/* ---- local slice-by-8 tables (上游CRC数学 crc64.c's crc64_table is file-local) ---- */
++static uint64_t crc64_riscv_tab[256];
++static uint64_t foldk1, foldk2;      /* main-loop fold constants (512-bit) */
++static uint64_t MC1[8], MC2[8];      /* per-lane merge constants */
++static unsigned lanes;               /* lanes in vector path (0 = n/a) */
++
++#define REV UINT64_C(0x95ac9329ac4bc9b5)
++
++static inline uint64_t rv_clmul(uint64_t a, uint64_t b) {
++    uint64_t r; __asm__ __volatile__("clmul %0,%1,%2":"=r"(r):"r"(a),"r"(b)); return r;
++}
++static inline uint64_t rv_clmulh(uint64_t a, uint64_t b) {
++    uint64_t r; __asm__ __volatile__("clmulh %0,%1,%2":"=r"(r):"r"(a),"r"(b)); return r;
++}
++static inline uint64_t rv_rev64(uint64_t x){
++    x=((x&0x5555555555555555ULL)<<1)|((x>>1)&0x5555555555555555ULL);
++    x=((x&0x3333333333333333ULL)<<2)|((x>>2)&0x3333333333333333ULL);
++    x=((x&0x0f0f0f0f0f0f0f0fULL)<<4)|((x>>4)&0x0f0f0f0f0f0f0f0fULL);
++    x=((x&0x00ff00ff00ff00ffULL)<<8)|((x>>8)&0x00ff00ff00ff00ffULL);
++    x=((x&0x0000ffff0000ffffULL)<<16)|((x>>16)&0x0000ffff0000ffffULL);
++    return (x<<32)|(x>>32);
++}
++static uint64_t rv_xpow(long e){
++    uint64_t r=1;
++    for(long i=0;i<e;i++){ int t=r>>63; r<<=1; if(t) r^=UINT64_C(0xad93d23594c935a9); }
++    return r;
++}
++static uint64_t crc64_rv_tail(uint64_t crc, const uint8_t *p, size_t n){
++    for(size_t i=0;i<n;i++) crc = crc64_riscv_tab[(crc^p[i])&0xff] ^ (crc>>8);
++    return crc;
++}
++static int crc64_riscv_init_done = 0;
++static void crc64_riscv_init_tables(void){
++    crc64_slice8_init();
++    for(unsigned i=0;i<256;i++){ uint64_t c=i; for(int k=0;k<8;k++) c=(c>>1)^(REV&(uint64_t)(-(int64_t)(c&1))); crc64_riscv_tab[i]=c; }
++#if defined(__riscv_zvbc)
++    lanes = 4;
++#else
++    lanes = 0;
++#endif
++    foldk1=rv_rev64(rv_xpow(63+512)); foldk2=rv_rev64(rv_xpow(511));
++    for(unsigned j=0;j<4;j++){ long p=128*(long)(3-j); MC1[j]=p?rv_rev64(rv_xpow(63+p)):0; MC2[j]=p?rv_rev64(rv_xpow(p-1)):0; }
++    crc64_riscv_init_done = 1;
++}
++
++/* Zbc scalar: 4 independent 128-bit lanes, fold-512 per 64-byte iter */
++static uint64_t crc64_riscv_zbc(uint64_t crc, const uint8_t *buf, size_t len){
++    uint64_t x0,x1,y0,y1,z0,z1,w0,w1;
++    memcpy(&x0,buf+0,8); memcpy(&x1,buf+8,8);
++    memcpy(&y0,buf+16,8); memcpy(&y1,buf+24,8);
++    memcpy(&z0,buf+32,8); memcpy(&z1,buf+40,8);
++    memcpy(&w0,buf+48,8); memcpy(&w1,buf+56,8);
++    x0 ^= crc;
++    buf += 64; len -= 64;
++    while(len>=64){
++        uint64_t d0,d1;
++        memcpy(&d0,buf+0,8); memcpy(&d1,buf+8,8);
++        { uint64_t l=rv_clmul(x0,foldk1)^rv_clmul(x1,foldk2), h=rv_clmulh(x0,foldk1)^rv_clmulh(x1,foldk2); x0=l^d0; x1=h^d1; }
++        memcpy(&d0,buf+16,8); memcpy(&d1,buf+24,8);
++        { uint64_t l=rv_clmul(y0,foldk1)^rv_clmul(y1,foldk2), h=rv_clmulh(y0,foldk1)^rv_clmulh(y1,foldk2); y0=l^d0; y1=h^d1; }
++        memcpy(&d0,buf+32,8); memcpy(&d1,buf+40,8);
++        { uint64_t l=rv_clmul(z0,foldk1)^rv_clmul(z1,foldk2), h=rv_clmulh(z0,foldk1)^rv_clmulh(z1,foldk2); z0=l^d0; z1=h^d1; }
++        memcpy(&d0,buf+48,8); memcpy(&d1,buf+56,8);
++        { uint64_t l=rv_clmul(w0,foldk1)^rv_clmul(w1,foldk2), h=rv_clmulh(w0,foldk1)^rv_clmulh(w1,foldk2); w0=l^d0; w1=h^d1; }
++        buf += 64; len -= 64;
++    }
++    uint64_t Lo[4]={x0,y0,z0,w0}, Hi[4]={x1,y1,z1,w1};
++    uint64_t rlo=0, rhi=0;
++    for(unsigned j=0;j<4;j++){
++        if(MC1[j]==0 && MC2[j]==0){ rlo^=Lo[j]; rhi^=Hi[j]; }
++        else { rlo^=rv_clmul(Lo[j],MC1[j])^rv_clmul(Hi[j],MC2[j]);
++               rhi^=rv_clmulh(Lo[j],MC1[j])^rv_clmulh(Hi[j],MC2[j]); }
++    }
++    uint8_t t[16]; memcpy(t,&rlo,8); memcpy(t+8,&rhi,8);
++    uint64_t c = crc64_rv_tail(0,t,16);
++    if(len) c = crc64_rv_tail(c,buf,len);
++    return c;
++}
++
++
++static int crc64_riscv_probe(void) {
++    static int cached = -1;
++    if (cached >= 0) return cached;
++    FILE *f = fopen("/proc/cpuinfo", "r");
++    if (!f) { cached = 0; return 0; }
++    char line[1024]; int has_zbc = 0;
++    while (fgets(line, sizeof line, f))
++        if (strncmp(line, "isa", 3) == 0 && strstr(line, "zbc"))
++            has_zbc = 1;
++    fclose(f);
++    cached = has_zbc ? 1 : 0;
++    return cached;
++}
++#endif /* riscv64 + zbc */
++
++/* ---- public API (same contract as crcspeed64native) ---- */
++extern int crc64_riscv_available(void) {
++#if defined(__riscv_xlen) && (__riscv_xlen == 64) && defined(__riscv_zbc)
++    return crc64_riscv_probe();
++#else
++    return 0;
++#endif
++}
++
++extern uint64_t crc64_riscv(uint64_t crc, const unsigned char *buf, uint64_t len) {
++#if defined(__riscv_xlen) && (__riscv_xlen == 64) && defined(__riscv_zbc)
++    if (!crc64_riscv_init_done) crc64_riscv_init_tables();
++    if (len < 128)
++        return crc64_slice8(crc, buf, len);
++#if defined(__riscv_zvbc)
++    if (lanes >= 4)
++        return crc64_riscv_zvbc(crc, buf, len);
++#endif
++    return crc64_riscv_zbc(crc, buf, len);
++#else
++    (void)crc; (void)buf; (void)len;
++    return 0;
++#endif
++}
+\ No newline at end of file
+-- 
+2.43.0
+

@@ -1,0 +1,19 @@
+diff --git a/src/Makefile b/src/Makefile
+index 5cb4f673b..4bb4433ec 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -89,6 +89,14 @@ ifneq (,$(filter aarch64 armv%,$(uname_M)))
+         CFLAGS+=-funwind-tables
+ endif
+ 
++# RISC-V: use the mtime CSR (csrr time) for monotonic clock reads instead of the
++# clock_gettime syscall. The RISC-V fast path in monotonic.c is gated behind
++# USE_PROCESSOR_CLOCK; enabling it only for RISC-V keeps the x86 TSC path and
++# the aarch64 CNTVCT path behavior unchanged.
++ifneq (,$(findstring riscv,$(uname_M)))
++        REDIS_CFLAGS+=-DUSE_PROCESSOR_CLOCK
++endif
++
+ # Backwards compatibility for selecting an allocator
+ ifeq ($(USE_TCMALLOC),yes)
+ 	MALLOC=tcmalloc

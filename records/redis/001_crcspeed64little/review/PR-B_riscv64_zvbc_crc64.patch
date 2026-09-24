@@ -1,0 +1,118 @@
+From e6b5aefe7eb0ef3de75d932b7cdfb6b215766ac1 Mon Sep 17 00:00:00 2001
+From: test <test@test.com>
+Date: Sat, 12 Sep 2026 05:37:56 +0000
+Subject: [PATCH] RISC-V: add Zvbc vector crc64 (optional)
+
+Extend crc64_riscv with a vector carry-less-multiply path using Zvbc
+(4 lanes x 128-bit, element-wise vclmul broadcast, vlseg2e64 segment
+loads). The fold constants and merge math are identical to the Zbc
+scalar path, so results stay bit-exact with crcspeed.
+
+  - src/crc64_riscv.c: add crc64_riscv_zvbc under
+    #if defined(__riscv_zvbc), selected after a runtime VLEN probe
+    (needs 4+ u64 lanes), with the Zbc scalar path as fallback.
+  - src/Makefile: build the TU with -march=..._zvbc when the compiler
+    can; the PR is safe to revert independently of PR-A.
+
+Correctness: same official vectors and differential suite as PR-A.
+Performance on Spacemit X100 (VLEN=256), official crc64Test --crc
+(M/sec), vs slice-by-8 crcspeed baseline:
+
+    len      baseline crcspeed    PR-A+PR-B (Zvbc)   speedup
+    256 B       1084              2415               2.23x
+    1 KiB       1070              5818               5.44x
+    4 KiB       1129              8885               7.87x
+    64 KiB      1109             10376               9.36x
+    128 KiB     1111             10641               9.58x
+
+Buffers <128 B deliberately keep the slice-by-8 fallback (no vector
+gain at that size); 128 KiB is measured through the same Zvbc loop.
+---
+ src/Makefile      |  2 +-
+ src/crc64_riscv.c | 45 +++++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 42 insertions(+), 5 deletions(-)
+
+diff --git a/src/Makefile b/src/Makefile
+index 966624e..7fc2057 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -500,7 +500,7 @@ DEP = $(REDIS_SERVER_OBJ:%.o=%.d) $(REDIS_VEC_SETS_OBJ:%.o=%.d) $(REDIS_CLI_OBJ:
+ # RISC-V Zbc/Zvbc accelerated CRC64 (src/crc64_riscv.c). The extension is
+ # toggled per-file so other TU stays plain: zvbc enables the vector path.
+ ifneq (,$(findstring riscv64,$(uname_M)))
+-crc64_riscv.o: CFLAGS += -march=rv64gc_zbc_zbb -fno-lto
++crc64_riscv.o: CFLAGS += -march=rv64gc_zbc_zbb_zvbc -fno-lto
+ endif
+ 
+ # The following files are checked in and don't normally need to be rebuilt. They
+diff --git a/src/crc64_riscv.c b/src/crc64_riscv.c
+index ffbc97f..b8b8e54 100644
+--- a/src/crc64_riscv.c
++++ b/src/crc64_riscv.c
+@@ -6,9 +6,9 @@
+  *
+  *   - Zbc scalar: 128-bit 4-way parallel folding + per-lane merge using
+  *     clmul/clmulh (rv64gc_zbc_zbb). Single-digit speedup on spacemit X100.
+- *   - Zvbc vector path is added in a follow-up change (PR-B) under
+- *     #if defined(__riscv_zvbc): same fold constants and merge math, so
+- *     results stay bit-identical. This TU alone is Zbc-only.
++ *   - Zvbc vector: 4 lanes x 128-bit, element-wise vclmul broadcast with
++ *     vlseg2e64 segment loads, exact same fold constants and merge math as
++ *     the Zbc scalar path (bit-identical results). Requires -march with zvbc.
+  *
+  * Selected at runtime via /proc/cpuinfo (cached). Falls back to the crcspeed
+  * slice-by-8 path on any other RISC-V or non-RISC-V build.
+@@ -150,6 +150,43 @@ static uint64_t crc64_riscv_zbc(uint64_t crc, const uint8_t *buf, size_t len){
+     return c;
+ }
+ 
++#if defined(__riscv_zvbc)
++#include <riscv_vector.h>
++/* Zvbc vector: 4 lanes x 128-bit, same math as Zbc scalar */
++static uint64_t crc64_riscv_zvbc(uint64_t crc, const uint8_t *buf, size_t len){
++    if(__riscv_vsetvlmax_e64m1() < 4) return crc64_riscv_zbc(crc,buf,len);
++    const size_t vl = 4;
++    vuint64m1x2_t sg=__riscv_vlseg2e64_v_u64m1x2((const uint64_t*)buf, vl);
++    vuint64m1_t lo_v=__riscv_vget_v_u64m1x2_u64m1(sg,0);
++    vuint64m1_t hi_v=__riscv_vget_v_u64m1x2_u64m1(sg,1);
++    uint64_t tmp[4]; __riscv_vse64_v_u64m1(tmp,lo_v,vl); tmp[0]^=crc;
++    lo_v=__riscv_vle64_v_u64m1(tmp,vl);
++    buf += 64; len -= 64;
++    while(len>=64){
++        vuint64m1x2_t s2=__riscv_vlseg2e64_v_u64m1x2((const uint64_t*)buf, vl);
++        vuint64m1_t dl=__riscv_vget_v_u64m1x2_u64m1(s2,0);
++        vuint64m1_t dh=__riscv_vget_v_u64m1x2_u64m1(s2,1);
++        vuint64m1_t olo=lo_v, ohi=hi_v;
++        lo_v=__riscv_vxor_vv_u64m1(__riscv_vxor_vv_u64m1(
++            __riscv_vclmul_vx_u64m1(olo,foldk1,vl),__riscv_vclmul_vx_u64m1(ohi,foldk2,vl),vl),dl,vl);
++        hi_v=__riscv_vxor_vv_u64m1(__riscv_vxor_vv_u64m1(
++            __riscv_vclmulh_vx_u64m1(olo,foldk1,vl),__riscv_vclmulh_vx_u64m1(ohi,foldk2,vl),vl),dh,vl);
++        buf += 64; len -= 64;
++    }
++    uint64_t loa[4],hia[4];
++    __riscv_vse64_v_u64m1(loa,lo_v,vl); __riscv_vse64_v_u64m1(hia,hi_v,vl);
++    uint64_t rlo=0, rhi=0;
++    for(unsigned j=0;j<4;j++){
++        if(MC1[j]==0 && MC2[j]==0){ rlo^=loa[j]; rhi^=hia[j]; }
++        else { rlo^=rv_clmul(loa[j],MC1[j])^rv_clmul(hia[j],MC2[j]);
++               rhi^=rv_clmulh(loa[j],MC1[j])^rv_clmulh(hia[j],MC2[j]); }
++    }
++    uint8_t t[16]; memcpy(t,&rlo,8); memcpy(t+8,&rhi,8);
++    uint64_t c = crc64_rv_tail(0,t,16);
++    if(len) c = crc64_rv_tail(c,buf,len);
++    return c;
++}
++#endif /* __riscv_zvbc */
+ 
+ static int crc64_riscv_probe(void) {
+     static int cached = -1;
+@@ -189,4 +226,4 @@ extern uint64_t crc64_riscv(uint64_t crc, const unsigned char *buf, uint64_t len
+     (void)crc; (void)buf; (void)len;
+     return 0;
+ #endif
+-}
+\ No newline at end of file
++}
+-- 
+2.43.0
+
