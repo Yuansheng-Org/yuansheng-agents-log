@@ -1,0 +1,241 @@
+From 74e7e53539ff3e7bd18b4730d3661146518f1ced Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E7=94=B0=E5=AE=81?= <tianning24@iscas.ac.cn>
+Date: Thu, 10 Sep 2026 11:26:06 +0800
+Subject: [PATCH] rvv: Vectorize radial gradient root solving
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Keep the exact fixed-point recurrence and stateful gradient walker
+scalar, while batching the independent non-degenerate affine root
+calculations in RVV. Fall back to the existing scalar path for masks,
+wide pixels, degenerate quadratics, projective transforms, and CPUs
+without RVV.
+
+K3, CPU2 at 2.2 GHz, ./test/radial-perf-test (seconds; lower is better):
+
+              run1      run2      run3      median
+baseline    0.008715  0.008748  0.010088  0.008748
+patched     0.005958  0.005936  0.005960  0.005958
+
+Median time is reduced by 31.89% (1.468x). The generated
+radial.png SHA-256 is identical for baseline and patched builds.
+
+Signed-off-by: 田宁 <tianning24@iscas.ac.cn>
+---
+ pixman/pixman-private.h         | 14 +++++++
+ pixman/pixman-radial-gradient.c | 47 ++++++++++++++++++++++
+ pixman/pixman-riscv.c           |  3 ++
+ pixman/pixman-rvv.c             | 71 +++++++++++++++++++++++++++++++++
+ 4 files changed, 135 insertions(+)
+
+diff --git a/pixman/pixman-private.h b/pixman/pixman-private.h
+index 5cf0c265..d8a94efb 100644
+--- a/pixman/pixman-private.h
++++ b/pixman/pixman-private.h
+@@ -668,6 +668,20 @@ _pixman_implementation_create_power9 (pixman_implementation_t *fallback);
+ #ifdef USE_RVV
+ pixman_implementation_t *
+ _pixman_implementation_create_rvv (pixman_implementation_t *fallback);
++
++extern pixman_bool_t _pixman_have_rvv;
++
++void
++_pixman_rvv_radial_solve_batch (double                    a,
++				double                    inva,
++				double                    dr,
++				double                    mindr,
++				pixman_repeat_t           repeat,
++				const double             *b,
++				const double             *c,
++				pixman_fixed_48_16_t     *t,
++				uint8_t                  *valid,
++				size_t                    n);
+ #endif
+ 
+ pixman_bool_t
+diff --git a/pixman/pixman-radial-gradient.c b/pixman/pixman-radial-gradient.c
+index 38e1052f..a15cdd24 100644
+--- a/pixman/pixman-radial-gradient.c
++++ b/pixman/pixman-radial-gradient.c
+@@ -34,6 +34,8 @@
+ #include <math.h>
+ #include "pixman-private.h"
+ 
++#define RVV_RADIAL_BATCH_SIZE 64
++
+ static inline pixman_fixed_32_32_t
+ dot (pixman_fixed_48_16_t x1,
+      pixman_fixed_48_16_t y1,
+@@ -326,6 +328,12 @@ radial_get_scanline (pixman_iter_t                 *iter,
+ 	 * we can then express B, C and det through multiple differentiation.
+ 	 */
+ 	pixman_fixed_32_32_t b, db, c, dc, ddc;
++#ifdef USE_RVV
++	double b_values[RVV_RADIAL_BATCH_SIZE];
++	double c_values[RVV_RADIAL_BATCH_SIZE];
++	pixman_fixed_48_16_t t_values[RVV_RADIAL_BATCH_SIZE];
++	uint8_t valid[RVV_RADIAL_BATCH_SIZE];
++#endif
+ 
+ 	/* warning: this computation may overflow */
+ 	v.vector[0] -= radial->c1.x;
+@@ -355,6 +363,44 @@ radial_get_scanline (pixman_iter_t                 *iter,
+ 	ddc = 2 * dot (unit.vector[0], unit.vector[1], 0,
+ 		       unit.vector[0], unit.vector[1], 0);
+ 
++	/* The exact fixed-point recurrence and stateful gradient walker remain
++	 * scalar.  RVV only batches the independent floating-point root solve. */
++#ifdef USE_RVV
++	if (_pixman_have_rvv && !mask && Bpp == 4 && radial->a != 0)
++	{
++	    while (buffer < end)
++	    {
++		size_t n = MIN ((size_t)(end - buffer),
++			       (size_t)RVV_RADIAL_BATCH_SIZE);
++		size_t i;
++
++		for (i = 0; i < n; i++)
++		{
++		    b_values[i] = b;
++		    c_values[i] = c;
++		    b += db;
++		    c += dc;
++		    dc += ddc;
++		}
++
++		_pixman_rvv_radial_solve_batch (
++		    radial->a, radial->inva, radial->delta.radius,
++		    radial->mindr, image->common.repeat, b_values, c_values,
++		    t_values, valid, n);
++
++		for (i = 0; i < n; i++)
++		{
++		    if (valid[i])
++			write_pixel (&walker, t_values[i], buffer);
++		    else
++			*buffer = 0;
++		    buffer++;
++		}
++	    }
++	}
++	else
++#endif
++	{
+ 	while (buffer < end)
+ 	{
+ 	    if (!mask || *mask++)
+@@ -375,6 +421,7 @@ radial_get_scanline (pixman_iter_t                 *iter,
+ 	    dc += ddc;
+ 	    buffer += (Bpp / 4);
+ 	}
++	}
+     }
+     else
+     {
+diff --git a/pixman/pixman-riscv.c b/pixman/pixman-riscv.c
+index 3a5604e7..c9a17e0c 100644
+--- a/pixman/pixman-riscv.c
++++ b/pixman/pixman-riscv.c
+@@ -34,6 +34,8 @@ typedef enum
+ 
+ #ifdef USE_RVV
+ 
++pixman_bool_t _pixman_have_rvv = FALSE;
++
+ #if defined(HAVE_ELF_AUX_INFO)
+ #include <sys/auxv.h>
+ 
+@@ -125,6 +127,7 @@ _pixman_riscv_get_implementations (pixman_implementation_t *imp)
+ #ifdef USE_RVV
+     if (!_pixman_disabled ("rvv") && (detect_cpu_features () & RVV))
+     {
++	_pixman_have_rvv = TRUE;
+ 	imp = _pixman_implementation_create_rvv (imp);
+     }
+ #endif
+diff --git a/pixman/pixman-rvv.c b/pixman/pixman-rvv.c
+index 2d9da5b1..62170641 100644
+--- a/pixman/pixman-rvv.c
++++ b/pixman/pixman-rvv.c
+@@ -3285,6 +3285,77 @@ rvv_fetch_bilinear_affine_cover (pixman_iter_t  *iter,
+     return iter->buffer;
+ }
+ 
++/* Solve the non-degenerate radial-gradient quadratic for a batch of pixels.
++ * The caller keeps the exact fixed-point recurrence and the stateful gradient
++ * walker; this helper only vectorizes the independent floating-point roots. */
++void
++_pixman_rvv_radial_solve_batch (double                    a,
++				double                    inva,
++				double                    dr,
++				double                    mindr,
++				pixman_repeat_t           repeat,
++				const double             *b,
++				const double             *c,
++				pixman_fixed_48_16_t     *t,
++				uint8_t                  *valid,
++				size_t                    n)
++{
++    while (n > 0)
++    {
++	size_t vl = __riscv_vsetvl_e64m4 (n);
++	vfloat64m4_t bv = __riscv_vle64_v_f64m4 (b, vl);
++	vfloat64m4_t cv = __riscv_vle64_v_f64m4 (c, vl);
++	vfloat64m4_t discr = __riscv_vfsub_vv_f64m4 (
++	    __riscv_vfmul_vv_f64m4 (bv, bv, vl),
++	    __riscv_vfmul_vf_f64m4 (cv, a, vl), vl);
++	vbool16_t discr_valid = __riscv_vmfge_vf_f64m4_b16 (discr, 0.0, vl);
++	vfloat64m4_t root = __riscv_vfsqrt_v_f64m4 (discr, vl);
++	vfloat64m4_t t0 = __riscv_vfmul_vf_f64m4 (
++	    __riscv_vfadd_vv_f64m4 (bv, root, vl), inva, vl);
++	vfloat64m4_t t1 = __riscv_vfmul_vf_f64m4 (
++	    __riscv_vfsub_vv_f64m4 (bv, root, vl), inva, vl);
++	vbool16_t t0_valid, t1_valid, any_valid;
++	vfloat64m4_t selected = __riscv_vfmv_v_f_f64m4 (0.0, vl);
++	vuint8mf2_t valid_bytes;
++
++	if (repeat == PIXMAN_REPEAT_NONE)
++	{
++	    t0_valid = __riscv_vmand_mm_b16 (
++		__riscv_vmfge_vf_f64m4_b16 (t0, 0.0, vl),
++		__riscv_vmfle_vf_f64m4_b16 (t0, pixman_fixed_1, vl), vl);
++	    t1_valid = __riscv_vmand_mm_b16 (
++		__riscv_vmfge_vf_f64m4_b16 (t1, 0.0, vl),
++		__riscv_vmfle_vf_f64m4_b16 (t1, pixman_fixed_1, vl), vl);
++	}
++	else
++	{
++	    t0_valid = __riscv_vmfge_vf_f64m4_b16 (
++		__riscv_vfmul_vf_f64m4 (t0, dr, vl), mindr, vl);
++	    t1_valid = __riscv_vmfge_vf_f64m4_b16 (
++		__riscv_vfmul_vf_f64m4 (t1, dr, vl), mindr, vl);
++	}
++
++	/* t0 is preferred whenever both roots are valid. */
++	selected = __riscv_vmerge_vvm_f64m4 (selected, t1, t1_valid, vl);
++	selected = __riscv_vmerge_vvm_f64m4 (selected, t0, t0_valid, vl);
++	any_valid = __riscv_vmand_mm_b16 (
++	    discr_valid, __riscv_vmor_mm_b16 (t0_valid, t1_valid, vl), vl);
++	valid_bytes = __riscv_vmerge_vvm_u8mf2 (
++	    __riscv_vmv_v_x_u8mf2 (0, vl),
++	    __riscv_vmv_v_x_u8mf2 (1, vl), any_valid, vl);
++
++	__riscv_vse64_v_i64m4 (
++	    t, __riscv_vfcvt_rtz_x_f_v_i64m4 (selected, vl), vl);
++	__riscv_vse8_v_u8mf2 (valid, valid_bytes, vl);
++
++	b += vl;
++	c += vl;
++	t += vl;
++	valid += vl;
++	n -= vl;
++    }
++}
++
+ // clang-format off
+ static const pixman_iter_info_t rvv_iters[] = {
+     { PIXMAN_r5g6b5,
+-- 
+2.34.1
+

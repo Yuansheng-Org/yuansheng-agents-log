@@ -1,0 +1,162 @@
+diff --git a/pixman/pixman-private.h b/pixman/pixman-private.h
+index 1416eb4..a7abef9 100644
+--- a/pixman/pixman-private.h
++++ b/pixman/pixman-private.h
+@@ -658,6 +658,18 @@ _pixman_implementation_create_vmx (pixman_implementation_t *fallback);
+ #ifdef USE_RVV
+ pixman_implementation_t *
+ _pixman_implementation_create_rvv (pixman_implementation_t *fallback);
++
++/* RISC-V RVV source-fetch hook. _pixman_have_rvv is set to TRUE once the RVV
++   implementation has been created (runtime CPU detection passed). */
++extern pixman_bool_t _pixman_have_rvv;
++
++void
++_pixman_rvv_radial_solve_batch (
++    double a, double inva, double dr, double mindr, pixman_bool_t repeat_none,
++    pixman_fixed_32_32_t b0, pixman_fixed_32_32_t db,
++    pixman_fixed_32_32_t c0, pixman_fixed_32_32_t dc,
++    pixman_fixed_32_32_t ddc,
++    pixman_fixed_48_16_t *t_out, uint8_t *valid_out, size_t n);
+ #endif
+ 
+ pixman_bool_t
+diff --git a/pixman/pixman-rvv.c b/pixman/pixman-rvv.c
+index 570799c..3967f8f 100644
+--- a/pixman/pixman-rvv.c
++++ b/pixman/pixman-rvv.c
+@@ -3092,6 +3092,134 @@ static const pixman_fast_path_t rvv_fast_paths[] = {
+     {PIXMAN_OP_NONE},
+ };
+ 
++/* Radial gradient quadratic solve, vectorized (building block).
++ *
++ * Vectorizes the dominant double FP chain of radial_write_color: the int64
++ * (b,c) affine recurrence (blocked, exact within a chunk), the discr = b^2-a*c
++ * computation, sqrt, t0/t1 = (b +/- sqrt)*inva, and the root selection with
++ * repeat NONE / repeat boundary checks. Outputs the selected root t
++ * (pixman_fixed_48_16_t) and a per-lane valid mask; the stateful walker write
++ * is left to the caller (scalar), matching the "materialize only, not advance"
++ * split. No in-tree caller yet.
++ */
++void
++_pixman_rvv_radial_solve_batch (
++    double a, double inva, double dr, double mindr, pixman_bool_t repeat_none,
++    pixman_fixed_32_32_t b0, pixman_fixed_32_32_t db,
++    pixman_fixed_32_32_t c0, pixman_fixed_32_32_t dc,
++    pixman_fixed_32_32_t ddc,
++    pixman_fixed_48_16_t *t_out, uint8_t *valid_out, size_t n)
++{
++    const size_t vlmax = __riscv_vsetvlmax_e64m4 ();
++    const double pixman_fixed_1_d = 65536.0;
++
++    while (n >= vlmax)
++    {
++	size_t vl = vlmax;
++	vuint32m4_t iu = __riscv_vid_v_u32m4 (vl);
++	vint32m4_t iv = __riscv_vreinterpret_v_u32m4_i32m4 (iu);
++	vint64m4_t iw = __riscv_vwcvt_x_x_v_i64m4 (iv, vl);
++	vint64m4_t bi, ci;
++	vfloat64m4_t bf, cf, av, b2, ac, discr, sq, t0, t1;
++	vbool16_t d_ok, v0, v1, vv;
++	vfloat64m4_t sel;
++	vint64m4_t ti;
++	vuint8mf2_t msk;
++
++	/* b_i = b0 + i*db  (int64, exact within the chunk) */
++	bi = __riscv_vwadd_wx_i64m4 (
++	    __riscv_vwmul_vx_i64m4 (iv, (int32_t)db, vl), (int64_t)b0, vl);
++	/* c_i = c0 + i*dc + (i*(i-1)/2)*ddc */
++	{
++	    vint64m4_t i2 = __riscv_vwmul_vv_i64m4 (iv, iv, vl);
++	    vint64m4_t i2mi = __riscv_vsub_vv_i64m4 (i2, iw, vl);
++	    vint64m4_t half = __riscv_vsra_vx_i64m4 (i2mi, 1, vl);
++	    ci = __riscv_vwmul_vx_i64m4 (__riscv_vncvt_x_x_w_i32m4 (half, vl), (int32_t)ddc, vl);
++	    ci = __riscv_vadd_vv_i64m4 (ci,
++		__riscv_vwadd_wx_i64m4 (__riscv_vwmul_vx_i64m4 (iv, (int32_t)dc, vl), (int64_t)c0, vl), vl);
++	}
++
++	bf = __riscv_vfcvt_f_x_v_f64m4 (bi, vl);
++	cf = __riscv_vfcvt_f_x_v_f64m4 (ci, vl);
++	av = __riscv_vfmv_v_f_f64m4 (a, vl);
++	b2 = __riscv_vfmul_vv_f64m4 (bf, bf, vl);
++	ac = __riscv_vfmul_vv_f64m4 (av, cf, vl);
++	discr = __riscv_vfsub_vv_f64m4 (b2, ac, vl);
++
++	d_ok = __riscv_vmfge_vf_f64m4_b16 (discr, 0.0, vl);
++	sq = __riscv_vfsqrt_v_f64m4 (discr, vl);
++	t0 = __riscv_vfmul_vf_f64m4 (__riscv_vfadd_vv_f64m4 (bf, sq, vl), inva, vl);
++	t1 = __riscv_vfmul_vf_f64m4 (__riscv_vfsub_vv_f64m4 (bf, sq, vl), inva, vl);
++
++	if (repeat_none)
++	{
++	    v0 = __riscv_vmand_mm_b16 (
++		__riscv_vmfge_vf_f64m4_b16 (t0, 0.0, vl),
++		__riscv_vmfle_vf_f64m4_b16 (t0, pixman_fixed_1_d, vl), vl);
++	    v1 = __riscv_vmand_mm_b16 (
++		__riscv_vmfge_vf_f64m4_b16 (t1, 0.0, vl),
++		__riscv_vmfle_vf_f64m4_b16 (t1, pixman_fixed_1_d, vl), vl);
++	}
++	else
++	{
++	    v0 = __riscv_vmfge_vf_f64m4_b16 (
++		__riscv_vfmul_vf_f64m4 (t0, dr, vl), mindr, vl);
++	    v1 = __riscv_vmfge_vf_f64m4_b16 (
++		__riscv_vfmul_vf_f64m4 (t1, dr, vl), mindr, vl);
++	}
++
++	/* selected = v0 ? t0 : (v1 ? t1 : 0) ; valid = d_ok & (v0 | v1) */
++	{
++	    vfloat64m4_t zero = __riscv_vfmv_v_f_f64m4 (0.0, vl);
++	    sel = zero;
++	    sel = __riscv_vmerge_vvm_f64m4 (sel, t1, v1, vl);
++	    sel = __riscv_vmerge_vvm_f64m4 (sel, t0, v0, vl);
++	}
++	vv = __riscv_vmand_mm_b16 (d_ok, __riscv_vmor_mm_b16 (v0, v1, vl), vl);
++
++	ti = __riscv_vfcvt_rtz_x_f_v_i64m4 (sel, vl);
++	__riscv_vse64_v_i64m4 (t_out, ti, vl);
++	msk = __riscv_vmerge_vvm_u8mf2 (
++	    __riscv_vmv_v_x_u8mf2 (0, vl), __riscv_vmv_v_x_u8mf2 (1, vl), vv, vl);
++	__riscv_vse8_v_u8mf2 (valid_out, msk, vl);
++
++	t_out += vl;
++	valid_out += vl;
++	n -= vl;
++    }
++
++    while (n-- > 0)
++    {
++	double discr, sqrtdiscr, t0v, t1v;
++	int valid = 0;
++	discr = (double)b0 * (double)b0 - a * (double)c0;
++	if (discr >= 0)
++	{
++	    sqrtdiscr = sqrt (discr);
++	    t0v = ((double)b0 + sqrtdiscr) * inva;
++	    t1v = ((double)b0 - sqrtdiscr) * inva;
++	    if (repeat_none)
++	    {
++		if (0 <= t0v && t0v <= pixman_fixed_1_d) { *t_out = (int64_t)t0v; valid = 1; }
++		else if (0 <= t1v && t1v <= pixman_fixed_1_d) { *t_out = (int64_t)t1v; valid = 1; }
++	    }
++	    else
++	    {
++		if (t0v * dr >= mindr) { *t_out = (int64_t)t0v; valid = 1; }
++		else if (t1v * dr >= mindr) { *t_out = (int64_t)t1v; valid = 1; }
++	    }
++	}
++	if (!valid)
++	    *t_out = 0;
++	*valid_out = valid;
++	b0 += db;
++	c0 += dc;
++	dc += ddc;
++	t_out++;
++	valid_out++;
++    }
++}
++
+ pixman_implementation_t *
+ _pixman_implementation_create_rvv (pixman_implementation_t *fallback)
+ {

@@ -1,0 +1,285 @@
+From ba3885a5ffdb378dd219b11e2389d2b3f69b0097 Mon Sep 17 00:00:00 2001
+From: Pixman RVV contributor <pixman-rvv@localhost>
+Date: Thu, 10 Sep 2026 16:01:51 +0800
+Subject: [PATCH] rvv: Add normal-repeat a8r8g8b8 bilinear affine fetch
+
+Use the RVV iterator path for normal-repeat a8r8g8b8 bilinear affine source fetches. Keep dispatch in rvv_iters and select 32-bit byte offsets whenever the image range permits them, with a 64-bit gather fallback for large images.
+---
+ pixman/pixman-rvv.c | 254 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 254 insertions(+)
+
+diff --git a/pixman/pixman-rvv.c b/pixman/pixman-rvv.c
+index 2d9da5b..0f65863 100644
+--- a/pixman/pixman-rvv.c
++++ b/pixman/pixman-rvv.c
+@@ -3285,6 +3285,250 @@ rvv_fetch_bilinear_affine_cover (pixman_iter_t  *iter,
+     return iter->buffer;
+ }
+ 
++/* Vectorized a8r8g8b8 PIXMAN_REPEAT_NORMAL bilinear affine fetch,
++ * equivalent to the scalar MAKE_BILINEAR_FETCHER (normal_a8r8g8b8) path
++ * from pixman-fast-path.c (bits_image_fetch_bilinear_affine).
++ *
++ * Per output pixel the scalar reference computes, in 16.16 fixed point:
++ *
++ *   x1 = x - fixed_1/2;  y1 = y - fixed_1/2;
++ *   distx = pixman_fixed_to_bilinear_weight (x1);   ((x1 >> (16-BITS)) & mask)
++ *   disty = pixman_fixed_to_bilinear_weight (y1);
++ *   x1 = pixman_fixed_to_int (x1);  x2 = x1 + 1;    (+ repeat NORMAL wrap)
++ *   y1 = pixman_fixed_to_int (y1);  y2 = y1 + 1;    (+ repeat NORMAL wrap)
++ *   buffer[i] = bilinear_interpolation (tl, tr, bl, br, distx, disty)
++ *
++ * and bilinear_interpolation (SIZEOF_LONG > 4 variant) is
++ *
++ *   distx <<= (8 - BITS);  disty <<= (8 - BITS);
++ *   wxy   = distx * disty;
++ *   wxiy  = distx * (256 - disty);
++ *   wixy  = (256 - distx) * disty;
++ *   wixiy = (256 - distx) * (256 - disty);
++ *   per channel c:  result_c = (c_tl*wixiy + c_tr*wxiy
++ *                               + c_bl*wixy + c_br*wxy) >> 16
++ *
++ * All arithmetic below is reproduced lane-for-lane in unsigned 32-bit
++ * lanes.  The four weights always sum to 256*256 = 65536, so every
++ * channel accumulator stays below 2^24 and the >> 16 rounding is exact.
++ * For PIXMAN_REPEAT_NORMAL the wrapped tap coordinates are always inside
++ * [0, width) x [0, height), so the indexed loads are always in bounds.
++ */
++static force_inline vuint32m2_t
++rvv_bilinear_affine_channel (vuint32m2_t tl, vuint32m2_t tr,
++			     vuint32m2_t bl, vuint32m2_t br,
++			     vuint32m2_t wxy, vuint32m2_t wxiy,
++			     vuint32m2_t wixy, vuint32m2_t wixiy,
++			     unsigned int shift, size_t vl)
++{
++    vuint32m2_t ctl = __riscv_vand_vx_u32m2 (
++	__riscv_vsrl_vx_u32m2 (tl, shift, vl), 0xff, vl);
++    vuint32m2_t ctr = __riscv_vand_vx_u32m2 (
++	__riscv_vsrl_vx_u32m2 (tr, shift, vl), 0xff, vl);
++    vuint32m2_t cbl = __riscv_vand_vx_u32m2 (
++	__riscv_vsrl_vx_u32m2 (bl, shift, vl), 0xff, vl);
++    vuint32m2_t cbr = __riscv_vand_vx_u32m2 (
++	__riscv_vsrl_vx_u32m2 (br, shift, vl), 0xff, vl);
++    vuint32m2_t acc = __riscv_vmul_vv_u32m2 (ctl, wixiy, vl);
++
++    acc = __riscv_vmacc_vv_u32m2 (acc, ctr, wxiy, vl);
++    acc = __riscv_vmacc_vv_u32m2 (acc, cbl, wixy, vl);
++    acc = __riscv_vmacc_vv_u32m2 (acc, cbr, wxy, vl);
++
++    return __riscv_vsrl_vx_u32m2 (acc, 16, vl);
++}
++
++static uint32_t *
++rvv_fetch_bilinear_affine_normal_a8r8g8b8 (pixman_iter_t *iter,
++					   const uint32_t *mask)
++{
++    pixman_image_t *image = iter->image;
++    uint32_t *bits = image->bits.bits;
++    int rowstride = image->bits.rowstride;
++    pixman_bool_t flipped = rowstride < 0;
++    int img_width = image->bits.width;
++    int img_height = image->bits.height;
++    pixman_fixed_t ux, uy;
++    pixman_vector_t v;
++    uint32_t xacc, yacc;
++    int i;
++
++    /* Reference point is the center of the pixel */
++    v.vector[0] = pixman_int_to_fixed (iter->x) + pixman_fixed_1 / 2;
++    v.vector[1] = pixman_int_to_fixed (iter->y) + pixman_fixed_1 / 2;
++    v.vector[2] = pixman_fixed_1;
++
++    if (!pixman_transform_point_3d (image->common.transform, &v))
++    {
++	memset (iter->buffer, 0, (size_t)iter->width * sizeof (*iter->buffer));
++	_pixman_log_error (FUNC, "Bad matrix, skipping bilinear fetch\n");
++	iter->y++;
++	return iter->buffer;
++    }
++
++    ux = image->common.transform->matrix[0][0];
++    uy = image->common.transform->matrix[1][0];
++
++    /* Indexed offsets are unsigned byte offsets.  Move the base to the
++     * lowest physical row for a negative stride and mirror the logical y
++     * coordinates below, so the gather offsets remain non-negative. */
++    if (flipped)
++    {
++	bits += (img_height - 1) * rowstride;
++	rowstride = -rowstride;
++    }
++
++    /* x1 / y1 of the first output pixel, in 16.16 fixed point */
++    xacc = (uint32_t)v.vector[0] - pixman_fixed_1 / 2;
++    yacc = (uint32_t)v.vector[1] - pixman_fixed_1 / 2;
++
++    i = 0;
++    while (i < iter->width)
++    {
++	size_t vl = __riscv_vsetvl_e32m2 (iter->width - i);
++	vuint32m2_t j = __riscv_vid_v_u32m2 (vl);
++
++	/* x1[j] = xacc + j*ux, y1[j] = yacc + j*uy (mod 2^32), which is
++	 * identical to the scalar x += ux / y += uy accumulation */
++	vuint32m2_t x1v = __riscv_vmacc_vx_u32m2 (
++	    __riscv_vmv_v_x_u32m2 (xacc, vl), (uint32_t)ux, j, vl);
++	vuint32m2_t y1v = __riscv_vmacc_vx_u32m2 (
++	    __riscv_vmv_v_x_u32m2 (yacc, vl), (uint32_t)uy, j, vl);
++
++	/* distx = pixman_fixed_to_bilinear_weight (x1) << (8 - BITS),
++	 * likewise disty; matches the SIZEOF_LONG > 4 reference */
++	vuint32m2_t dx = __riscv_vsll_vx_u32m2 (
++	    __riscv_vand_vx_u32m2 (
++		__riscv_vsrl_vx_u32m2 (x1v, 16 - BILINEAR_INTERPOLATION_BITS, vl),
++		((1 << BILINEAR_INTERPOLATION_BITS) - 1), vl),
++	    8 - BILINEAR_INTERPOLATION_BITS, vl);
++	vuint32m2_t dy = __riscv_vsll_vx_u32m2 (
++	    __riscv_vand_vx_u32m2 (
++		__riscv_vsrl_vx_u32m2 (y1v, 16 - BILINEAR_INTERPOLATION_BITS, vl),
++		((1 << BILINEAR_INTERPOLATION_BITS) - 1), vl),
++	    8 - BILINEAR_INTERPOLATION_BITS, vl);
++
++	/* pixman_fixed_to_int: arithmetic shift right by 16 */
++	vint32m2_t xi = __riscv_vsra_vx_i32m2 (
++		__riscv_vreinterpret_v_u32m2_i32m2 (x1v), 16, vl);
++	vint32m2_t yi = __riscv_vsra_vx_i32m2 (
++	    __riscv_vreinterpret_v_u32m2_i32m2 (y1v), 16, vl);
++	vint32m2_t xj = __riscv_vadd_vx_i32m2 (xi, 1, vl);
++	vint32m2_t yj = __riscv_vadd_vx_i32m2 (yi, 1, vl);
++
++	/* PIXMAN_REPEAT_NORMAL wrap: floor-modulo by the image size.
++	 * vrem keeps the sign of the dividend, so adding the size to the
++	 * negative lanes yields the same result as the scalar while-loops */
++	{
++	    vint32m2_t wx = __riscv_vmv_v_x_i32m2 (img_width, vl);
++	    vint32m2_t wh = __riscv_vmv_v_x_i32m2 (img_height, vl);
++	    vbool16_t neg;
++
++	    xi = __riscv_vrem_vv_i32m2 (xi, wx, vl);
++	    xj = __riscv_vrem_vv_i32m2 (xj, wx, vl);
++	    yi = __riscv_vrem_vv_i32m2 (yi, wh, vl);
++	    yj = __riscv_vrem_vv_i32m2 (yj, wh, vl);
++
++	    neg = __riscv_vmslt_vx_i32m2_b16 (xi, 0, vl);
++	    xi = __riscv_vadd_vx_i32m2_mu (neg, xi, xi, img_width, vl);
++	    neg = __riscv_vmslt_vx_i32m2_b16 (xj, 0, vl);
++	    xj = __riscv_vadd_vx_i32m2_mu (neg, xj, xj, img_width, vl);
++	    neg = __riscv_vmslt_vx_i32m2_b16 (yi, 0, vl);
++	    yi = __riscv_vadd_vx_i32m2_mu (neg, yi, yi, img_height, vl);
++	    neg = __riscv_vmslt_vx_i32m2_b16 (yj, 0, vl);
++	    yj = __riscv_vadd_vx_i32m2_mu (neg, yj, yj, img_height, vl);
++
++	    if (flipped)
++	    {
++		yi = __riscv_vrsub_vx_i32m2 (yi, img_height - 1, vl);
++		yj = __riscv_vrsub_vx_i32m2 (yj, img_height - 1, vl);
++	    }
++	}
++
++	/* Pixel offsets into bits[]: off = y * rowstride + x */
++	{
++	    vuint32m2_t oxi = __riscv_vreinterpret_v_i32m2_u32m2 (xi);
++	    vuint32m2_t oxj = __riscv_vreinterpret_v_i32m2_u32m2 (xj);
++	    vuint32m2_t oyi = __riscv_vreinterpret_v_i32m2_u32m2 (yi);
++	    vuint32m2_t oyj = __riscv_vreinterpret_v_i32m2_u32m2 (yj);
++	    vuint32m2_t otl = __riscv_vmacc_vx_u32m2 (oxi, (uint32_t)rowstride, oyi, vl);
++	    vuint32m2_t otr = __riscv_vmacc_vx_u32m2 (oxj, (uint32_t)rowstride, oyi, vl);
++	    vuint32m2_t obl = __riscv_vmacc_vx_u32m2 (oxi, (uint32_t)rowstride, oyj, vl);
++	    vuint32m2_t obr = __riscv_vmacc_vx_u32m2 (oxj, (uint32_t)rowstride, oyj, vl);
++	    vuint32m2_t tl, tr, bl, br;
++	    uint64_t max_offset = (uint64_t)(img_height - 1) *
++		(uint32_t)rowstride + (uint32_t)(img_width - 1);
++
++	    /* vluxei32 uses byte offsets.  The full image range is known here;
++	     * use the narrower index when it is representable and retain the
++	     * 64-bit gather for externally supplied, very large images. */
++	    otl = __riscv_vsll_vx_u32m2 (otl, 2, vl);
++	    otr = __riscv_vsll_vx_u32m2 (otr, 2, vl);
++	    obl = __riscv_vsll_vx_u32m2 (obl, 2, vl);
++	    obr = __riscv_vsll_vx_u32m2 (obr, 2, vl);
++	    if (max_offset <= UINT32_MAX / sizeof (uint32_t))
++	    {
++		tl = __riscv_vluxei32_v_u32m2 (bits, otl, vl);
++		tr = __riscv_vluxei32_v_u32m2 (bits, otr, vl);
++		bl = __riscv_vluxei32_v_u32m2 (bits, obl, vl);
++		br = __riscv_vluxei32_v_u32m2 (bits, obr, vl);
++	    }
++	    else
++	    {
++		vuint64m4_t otl64 = __riscv_vzext_vf2_u64m4 (otl, vl);
++		vuint64m4_t otr64 = __riscv_vzext_vf2_u64m4 (otr, vl);
++		vuint64m4_t obl64 = __riscv_vzext_vf2_u64m4 (obl, vl);
++		vuint64m4_t obr64 = __riscv_vzext_vf2_u64m4 (obr, vl);
++		tl = __riscv_vluxei64_v_u32m2 (bits, otl64, vl);
++		tr = __riscv_vluxei64_v_u32m2 (bits, otr64, vl);
++		bl = __riscv_vluxei64_v_u32m2 (bits, obl64, vl);
++		br = __riscv_vluxei64_v_u32m2 (bits, obr64, vl);
++	    }
++	    vuint32m2_t rdx = __riscv_vrsub_vx_u32m2 (dx, 256, vl);
++	    vuint32m2_t rdy = __riscv_vrsub_vx_u32m2 (dy, 256, vl);
++	    vuint32m2_t wxy = __riscv_vmul_vv_u32m2 (dx, dy, vl);
++	    vuint32m2_t wxiy = __riscv_vmul_vv_u32m2 (dx, rdy, vl);
++	    vuint32m2_t wixy = __riscv_vmul_vv_u32m2 (rdx, dy, vl);
++	    vuint32m2_t wixiy = __riscv_vmul_vv_u32m2 (rdx, rdy, vl);
++	    vuint32m2_t out = __riscv_vsll_vx_u32m2 (
++		rvv_bilinear_affine_channel (
++		    tl, tr, bl, br, wxy, wxiy, wixy, wixiy, 24, vl), 24, vl);
++
++	    out = __riscv_vor_vv_u32m2 (
++		out, __riscv_vsll_vx_u32m2 (
++		    rvv_bilinear_affine_channel (
++			tl, tr, bl, br, wxy, wxiy, wixy, wixiy, 16, vl), 16, vl), vl);
++	    out = __riscv_vor_vv_u32m2 (
++		out, __riscv_vsll_vx_u32m2 (
++		    rvv_bilinear_affine_channel (
++			tl, tr, bl, br, wxy, wxiy, wixy, wixiy, 8, vl), 8, vl), vl);
++	    out = __riscv_vor_vv_u32m2 (
++		out, rvv_bilinear_affine_channel (
++		    tl, tr, bl, br, wxy, wxiy, wixy, wixiy, 0, vl), vl);
++
++	    if (mask)
++	    {
++		/* Same contract as the scalar fetcher: pixels with a zero
++		 * mask byte are left untouched in the buffer */
++		vbool16_t msk = __riscv_vmsne_vx_u32m2_b16 (
++		    __riscv_vle32_v_u32m2 (mask + i, vl), 0, vl);
++		__riscv_vse32_v_u32m2_m (msk, iter->buffer + i, out, vl);
++	    }
++	    else
++	    {
++		__riscv_vse32_v_u32m2 (iter->buffer + i, out, vl);
++	    }
++	}
++
++	i += vl;
++	xacc += (uint32_t)vl * (uint32_t)ux;
++	yacc += (uint32_t)vl * (uint32_t)uy;
++    }
++
++    iter->y++;
++    return iter->buffer;
++}
++
+ // clang-format off
+ static const pixman_iter_info_t rvv_iters[] = {
+     { PIXMAN_r5g6b5,
+@@ -3316,6 +3560,16 @@ static const pixman_iter_info_t rvv_iters[] = {
+       ITER_NARROW | ITER_SRC,
+       NULL, rvv_fetch_bilinear_affine_cover, NULL
+     },
++    { PIXMAN_a8r8g8b8,
++      (FAST_PATH_NO_ALPHA_MAP                   |
++       FAST_PATH_NO_ACCESSORS                   |
++       FAST_PATH_HAS_TRANSFORM                  |
++       FAST_PATH_AFFINE_TRANSFORM               |
++       FAST_PATH_BILINEAR_FILTER                |
++       FAST_PATH_NORMAL_REPEAT),
++      ITER_NARROW | ITER_SRC,
++      NULL, rvv_fetch_bilinear_affine_normal_a8r8g8b8, NULL
++    },
+     {PIXMAN_null},
+ };
+ 
+-- 
+2.53.0
+

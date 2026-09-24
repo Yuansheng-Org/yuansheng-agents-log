@@ -1,0 +1,125 @@
+From a88176ac62e5a1023849262a4a82685194cc20b6 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E7=94=B0=E5=AE=81?= <tianning24@iscas.ac.cn>
+Date: Wed, 9 Sep 2026 18:30:27 +0800
+Subject: [PATCH] rvv: Reuse vlmax in component-alpha OVER composite
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+RVV_FOREACH_2 requests a dynamic vector length after every chunk. In
+rvv_composite_over_n_8888_8888_ca, that prevents the compiler from
+specializing full-vector iterations and adds vector state setup and
+spill/reload traffic to a hot loop.
+
+Split each row into vlmax-sized full vectors and one runtime-sized tail.
+Reuse the vlmax selected for broadcasting the solid source, so the loop
+remains vector-length agnostic and only the tail needs a dynamic vsetvl.
+
+The lowlevel-blt-bench over_n_8888_8888_ca workload uses PIXMAN_OP_OVER
+with a solid a8r8g8b8 source, an a8r8g8b8 component-alpha mask, and an
+a8r8g8b8 destination. 
+
+Performance was measured on a SpacemiT K3 X100 core, pinned to CPU 2.
+The userspace governor held the observed frequency at 2.2 GHz for every
+run. Both builds used Meson release mode with GCC 15.2.0. Baseline:
+e1f49d9e6665ce354b90a189bf7bb5bbde9a1f20.
+
+Commands:
+    taskset -c 2 ./test/lowlevel-blt-bench -c over_n_8888_8888_ca
+    taskset -c 2 ./test/lowlevel-blt-bench -b -c over_n_8888_8888_ca
+
+Five interleaved baseline and patched runs were performed. Values are
+medians in MPix/s; higher is better.
+
+Direct component-alpha OVER:
+
+Metric  Baseline  Patched   Change
+L1      364.5690  459.5790  +26.06%
+L2      352.9840  441.5550  +25.09%
+M       351.1010  439.3950  +25.15%
+HT      207.1490  232.1720  +12.08%
+VT      178.8190  185.2000   +3.57%
+R        97.2561   94.9562   -2.36%
+RT       30.9784   30.7400   -0.77%
+
+Nearly 1x bilinear source transform:
+
+Metric  Baseline  Patched   Change
+L1      367.9390  461.6340  +25.46%
+L2      352.5880  440.2140  +24.85%
+M       351.8940  439.1500  +24.80%
+HT      208.1450  233.8880  +12.37%
+VT      180.0700  188.5420   +4.70%
+R        97.6480   94.9878   -2.72%
+RT       31.3596   30.9081   -1.44%
+
+Validation:
+- RISC-V release build: PASS
+- Pixman test suite: 35/35 PASS
+- Target-path perf coverage: PASS
+
+Signed-off-by: 田宁 <tianning24@iscas.ac.cn>
+---
+ pixman/pixman-rvv.c | 26 ++++++++++++++++++++++++--
+ 1 file changed, 24 insertions(+), 2 deletions(-)
+
+diff --git a/pixman/pixman-rvv.c b/pixman/pixman-rvv.c
+index 2d9da5b..bb1b0b4 100644
+--- a/pixman/pixman-rvv.c
++++ b/pixman/pixman-rvv.c
+@@ -2420,13 +2420,15 @@ rvv_composite_over_n_8888_8888_ca (pixman_implementation_t *__restrict__ imp,
+     uint32_t *__restrict__ mask_line, *__restrict__ mask;
+     int         dst_stride, mask_stride;
+     uint32_t    src, srca;
++    size_t      vlmax;
+     vuint32m4_t vsrc;
+ 
+     src = _pixman_image_get_solid (imp, src_image, dest_image->bits.format);
+     if (src == 0)
+ 	return;
+     srca = src >> 24;
+-    vsrc = __riscv_vmv_v_x_u32m4 (src, __riscv_vsetvlmax_e32m4 ());
++    vlmax = __riscv_vsetvlmax_e32m4 ();
++    vsrc = __riscv_vmv_v_x_u32m4 (src, vlmax);
+ 
+     PIXMAN_IMAGE_GET_LINE (dest_image, dest_x, dest_y, uint32_t, dst_stride,
+ 			   dst_line, 1);
+@@ -2435,14 +2437,34 @@ rvv_composite_over_n_8888_8888_ca (pixman_implementation_t *__restrict__ imp,
+ 
+     while (height--)
+     {
++	size_t n = width;
++
+ 	dst = dst_line;
+ 	dst_line += dst_stride;
+ 	mask = mask_line;
+ 	mask_line += mask_stride;
+ 
+-	RVV_FOREACH_2 (width, vl, e32m4, mask, dst)
++	/* Keep full vectors at vlmax so the compiler can reuse vtype state. */
++	while (n >= vlmax)
+ 	{
++	    vuint32m4_t m = __riscv_vle32_v_u32m4 (mask, vlmax);
++	    __riscv_vse32 (
++		dst,
++		rvv_UN8x4_MUL_UN8x4_ADD_UN8x4_vvv_m4 (
++		    __riscv_vle32_v_u32m4 (dst, vlmax),
++		    __riscv_vnot (
++			rvv_UN8x4_MUL_UN8_vx_m4 (m, srca, vlmax), vlmax),
++		    rvv_UN8x4_MUL_UN8x4_vv_m4 (m, vsrc, vlmax), vlmax),
++		vlmax);
++	    mask += vlmax;
++	    dst += vlmax;
++	    n -= vlmax;
++	}
++	if (n)
++	{
++	    size_t vl = __riscv_vsetvl_e32m4 (n);
+ 	    vuint32m4_t m = __riscv_vle32_v_u32m4 (mask, vl);
++
+ 	    __riscv_vse32 (
+ 		dst,
+ 		rvv_UN8x4_MUL_UN8x4_ADD_UN8x4_vvv_m4 (
+-- 
+2.53.0
+
