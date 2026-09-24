@@ -1,0 +1,76 @@
+diff --git a/faiss/impl/scalar_quantizer/quantizers.h b/faiss/impl/scalar_quantizer/quantizers.h
+index 393983de9..e1449ec6e 100644
+--- a/faiss/impl/scalar_quantizer/quantizers.h
++++ b/faiss/impl/scalar_quantizer/quantizers.h
+@@ -89,7 +89,9 @@ struct QuantizerTemplate<
+         }
+     }
+ 
+-    void decode_vector(const uint8_t* code, float* x) const final {
++    // Not final: the RISCV_RVV codec-template specializations override
++    // decode_vector with RVV kernels while inheriting this scalar reference.
++    void decode_vector(const uint8_t* code, float* x) const override {
+         for (size_t i = 0; i < d; i++) {
+             float xi = Codec::decode_component(code, i);
+             x[i] = vmin + xi * vdiff;
+@@ -131,7 +133,9 @@ struct QuantizerTemplate<
+         }
+     }
+ 
+-    void decode_vector(const uint8_t* code, float* x) const final {
++    // Not final: the RISCV_RVV codec-template specializations override
++    // decode_vector with RVV kernels while inheriting this scalar reference.
++    void decode_vector(const uint8_t* code, float* x) const override {
+         for (size_t i = 0; i < d; i++) {
+             float xi = Codec::decode_component(code, i);
+             x[i] = vmin[i] + xi * vdiff[i];
+diff --git a/faiss/impl/scalar_quantizer/sq-rvv.cpp b/faiss/impl/scalar_quantizer/sq-rvv.cpp
+index e233d27de..e5537a3d9 100644
+--- a/faiss/impl/scalar_quantizer/sq-rvv.cpp
++++ b/faiss/impl/scalar_quantizer/sq-rvv.cpp
+@@ -112,6 +112,21 @@ struct QuantizerTemplate<
+         return __riscv_vfadd_vf_f32m8(
+                 __riscv_vfmul_vf_f32m8(xi, this->vdiff, vl), this->vmin, vl);
+     }
++
++    // Bit-exact with the scalar reference: vfmul and vfadd stay separate
++    // (no vfmadd fusion) so the rounding matches the scalar expression.
++    void decode_vector(const uint8_t* code, float* x) const final {
++        size_t i = 0;
++        const size_t d = this->d;
++        while (i < d) {
++            const size_t vl = __riscv_vsetvl_e32m8(d - i);
++            vfloat32m8_t xi = Codec::decode_m8_components(code, i, vl);
++            xi = __riscv_vfmul_vf_f32m8(xi, this->vdiff, vl);
++            xi = __riscv_vfadd_vf_f32m8(xi, this->vmin, vl);
++            __riscv_vse32_v_f32m8(x + i, xi, vl);
++            i += vl;
++        }
++    }
+ };
+ 
+ template <class Codec>
+@@ -137,6 +152,23 @@ struct QuantizerTemplate<
+         vfloat32m8_t vdiffv = __riscv_vle32_v_f32m8(this->vdiff + i, vl);
+         return __riscv_vfmadd_vv_f32m8(xi, vdiffv, vminv, vl);
+     }
++
++    // Bit-exact with the scalar reference: vfmul and vfadd stay separate
++    // (no vfmadd fusion) so the rounding matches the scalar expression.
++    void decode_vector(const uint8_t* code, float* x) const final {
++        size_t i = 0;
++        const size_t d = this->d;
++        while (i < d) {
++            const size_t vl = __riscv_vsetvl_e32m8(d - i);
++            vfloat32m8_t xi = Codec::decode_m8_components(code, i, vl);
++            vfloat32m8_t vminv = __riscv_vle32_v_f32m8(this->vmin + i, vl);
++            vfloat32m8_t vdiffv = __riscv_vle32_v_f32m8(this->vdiff + i, vl);
++            xi = __riscv_vfmul_vv_f32m8(xi, vdiffv, vl);
++            xi = __riscv_vfadd_vv_f32m8(xi, vminv, vl);
++            __riscv_vse32_v_f32m8(x + i, xi, vl);
++            i += vl;
++        }
++    }
+ };
+ 
+ // Codecs without an RVV decode kernel (currently the 6-bit codec above)

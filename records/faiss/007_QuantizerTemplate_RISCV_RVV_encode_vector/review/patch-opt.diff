@@ -1,0 +1,395 @@
+diff --git a/.github/workflows/build-pull-request.yml b/.github/workflows/build-pull-request.yml
+index d7ce98ab0..2cd050c63 100644
+--- a/.github/workflows/build-pull-request.yml
++++ b/.github/workflows/build-pull-request.yml
+@@ -475,7 +475,7 @@ jobs:
+             -cpu rv64,v=true,x-zvfhmin=true \
+             -L /usr/riscv64-linux-gnu \
+             build/tests/faiss_test \
+-            --gtest_filter="ScalarQuantizer.*DistancePathParity*"
++            --gtest_filter="ScalarQuantizer.*DistancePathParity*:ScalarQuantizer.*EncodePathParity*"
+ 
+       - name: Run scalar quantizer RVV parity tests (VLEN=1024, via QEMU)
+         run: |
+@@ -487,7 +487,7 @@ jobs:
+             -cpu rv64,v=true,vlen=1024,x-zvfhmin=true \
+             -L /usr/riscv64-linux-gnu \
+             build/tests/faiss_test \
+-            --gtest_filter="ScalarQuantizer.*DistancePathParity*"
++            --gtest_filter="ScalarQuantizer.*DistancePathParity*:ScalarQuantizer.*EncodePathParity*"
+ 
+   index-io-backward-compatibility:
+     needs: linux-x86_64-cmake
+diff --git a/faiss/impl/scalar_quantizer/quantizers.h b/faiss/impl/scalar_quantizer/quantizers.h
+index 8e05a7709..4a8b925f2 100644
+--- a/faiss/impl/scalar_quantizer/quantizers.h
++++ b/faiss/impl/scalar_quantizer/quantizers.h
+@@ -73,7 +73,9 @@ struct QuantizerTemplate<
+     QuantizerTemplate(size_t d_in, const std::vector<float>& trained)
+             : d(d_in), vmin(trained[0]), vdiff(trained[1]) {}
+ 
+-    void encode_vector(const float* x, uint8_t* code) const final {
++    // Not final: the RISCV_RVV codec-template specializations override
++    // encode_vector with RVV kernels while inheriting this scalar reference.
++    void encode_vector(const float* x, uint8_t* code) const override {
+         for (size_t i = 0; i < d; i++) {
+             float xi = 0;
+             if (vdiff != 0) {
+@@ -117,7 +119,9 @@ struct QuantizerTemplate<
+     QuantizerTemplate(size_t d_in, const std::vector<float>& trained)
+             : d(d_in), vmin(trained.data()), vdiff(trained.data() + d_in) {}
+ 
+-    void encode_vector(const float* x, uint8_t* code) const final {
++    // Not final: the RISCV_RVV codec-template specializations override
++    // encode_vector with RVV kernels while inheriting this scalar reference.
++    void encode_vector(const float* x, uint8_t* code) const override {
+         for (size_t i = 0; i < d; i++) {
+             float xi = 0;
+             if (vdiff[i] != 0) {
+diff --git a/faiss/impl/scalar_quantizer/sq-rvv.cpp b/faiss/impl/scalar_quantizer/sq-rvv.cpp
+index 5d87ed304..8688c67f8 100644
+--- a/faiss/impl/scalar_quantizer/sq-rvv.cpp
++++ b/faiss/impl/scalar_quantizer/sq-rvv.cpp
+@@ -31,8 +31,68 @@ namespace faiss {
+ 
+ namespace scalar_quantizer {
+ 
++namespace {
++
++// Bit-exact vector form of the scalar codecs' `(int)(x * 15.0)` /
++// `(int)(x * 63.0)` component quantization. Those literals are doubles, so
++// the scalar reference multiplies in double precision and truncates; the
++// product x * nmax is exact for a float x (24-bit significand times a <=6
++// bit constant fits in 30 bits), so it is evaluated exactly in the integer
++// domain: x = m * 2^(e - 150) with m = 2^23 + mantissa for normalized x,
++// hence floor(nmax * x) = (nmax * m) >> (150 - e). Only NaN survives the
++// caller's clamping (comparisons against NaN are false); RISC-V scalar
++// fcvt of NaN yields 0x7fffffff, so the scalar code stores nmax for NaN
++// lanes, which the final merge reproduces.
++FAISS_ALWAYS_INLINE vuint32m8_t
++quantize_component_exact(vfloat32m8_t xi, uint32_t nmax, size_t vl) {
++    vuint32m8_t bits = __riscv_vreinterpret_v_f32m8_u32m8(xi);
++    bits = __riscv_vand_vx_u32m8(bits, 0x7fffffff, vl);
++    vbool4_t is_nan = __riscv_vmsgtu_vx_u32m8_b4(bits, 0x7f800000, vl);
++    vuint32m8_t e = __riscv_vsrl_vx_u32m8(bits, 23, vl);
++    // strip the exponent before OR-ing the implicit bit: the product must
++    // be nmax * (2^23 + mantissa), not nmax * the raw float word
++    vuint32m8_t m = __riscv_vor_vx_u32m8(
++            __riscv_vand_vx_u32m8(bits, 0x7fffff, vl), 0x800000, vl);
++    vuint32m8_t a = __riscv_vmul_vx_u32m8(m, nmax, vl);
++    // inputs are in [0, 1] (or NaN), so e <= 127 and the true shift is >= 23;
++    // clamping to 31 only zeroes lanes whose exact product is below 1
++    vuint32m8_t shift =
++            __riscv_vminu_vx_u32m8(__riscv_vrsub_vx_u32m8(e, 150, vl), 31, vl);
++    vuint32m8_t q = __riscv_vsrl_vv_u32m8(a, shift, vl);
++    return __riscv_vmerge_vxm_u32m8(q, nmax, is_nan, vl);
++}
++
++// Narrow u32m8 lanes to bytes in two steps: RVV narrowing operations
++// halve SEW, so u32 -> u8 is a chain of two vnsrl (with an optional
++// pre-shift to select the byte).
++FAISS_ALWAYS_INLINE vuint8m2_t
++narrow_to_u8(vuint32m8_t v, uint32_t shift, size_t vl) {
++    vuint16m4_t w = __riscv_vnsrl_wx_u16m4(v, shift, vl);
++    return __riscv_vnsrl_wx_u8m2(w, 0, vl);
++}
++
++} // namespace
++
+ template <>
+ struct Codec8bit<SIMDLevel::RISCV_RVV> : Codec8bit<SIMDLevel::NONE> {
++    // The template's encode loop keeps chunks a multiple of this many
++    // components so that every packed byte is owned by exactly one chunk
++    // (the scalar codecs accumulate with |= into a zeroed buffer; aligned
++    // vector chunks own whole bytes and simply overwrite them).
++    static constexpr size_t encode_alignment = 1;
++
++    static FAISS_ALWAYS_INLINE void encode_m8_components(
++            vfloat32m8_t xi,
++            uint8_t* code,
++            size_t i,
++            size_t vl) {
++        // (int)(255 * x): the 255 literal is an int, so the reference
++        // multiplies in float and truncates toward zero — mirror that.
++        vfloat32m8_t t = __riscv_vfmul_vf_f32m8(xi, 255.0f, vl);
++        vuint32m8_t q = __riscv_vfcvt_rtz_xu(t, vl);
++        __riscv_vse8_v_u8m2(code + i, narrow_to_u8(q, 0, vl), vl);
++    }
++
+     static FAISS_ALWAYS_INLINE vfloat32m8_t
+     decode_m8_components(const uint8_t* code, size_t i, size_t vl) {
+         vuint8m2_t vu8 = __riscv_vle8_v_u8m2(code + i, vl);
+@@ -46,6 +106,28 @@ struct Codec8bit<SIMDLevel::RISCV_RVV> : Codec8bit<SIMDLevel::NONE> {
+ 
+ template <>
+ struct Codec4bit<SIMDLevel::RISCV_RVV> : Codec4bit<SIMDLevel::NONE> {
++    static constexpr size_t encode_alignment = 2;
++
++    static FAISS_ALWAYS_INLINE void encode_m8_components(
++            vfloat32m8_t xi,
++            uint8_t* code,
++            size_t i,
++            size_t vl) {
++        // i and vl are multiples of encode_alignment, so each output byte
++        // is fully covered by this chunk.
++        vuint32m8_t q = quantize_component_exact(xi, 15, vl);
++        const size_t byte_vl = vl >> 1;
++        vuint32m8_t even_idx =
++                __riscv_vsll_vx_u32m8(__riscv_vid_v_u32m8(byte_vl), 1, byte_vl);
++        vuint32m8_t even = __riscv_vrgather_vv_u32m8(q, even_idx, byte_vl);
++        vuint32m8_t odd = __riscv_vrgather_vv_u32m8(
++                q, __riscv_vadd_vx_u32m8(even_idx, 1, byte_vl), byte_vl);
++        vuint32m8_t w = __riscv_vor_vv_u32m8(
++                even, __riscv_vsll_vx_u32m8(odd, 4, byte_vl), byte_vl);
++        __riscv_vse8_v_u8m2(
++                code + (i >> 1), narrow_to_u8(w, 0, byte_vl), byte_vl);
++    }
++
+     static FAISS_ALWAYS_INLINE vfloat32m8_t
+     decode_m8_components(const uint8_t* code, size_t i, size_t vl) {
+         // Packed positions derive from the absolute component index:
+@@ -127,6 +209,58 @@ struct QuantizerTemplate<
+             i += vl;
+         }
+     }
++
++    // encode_vector for the public ScalarQuantizer::compute_codes() /
++    // sa_encode() API. The normalization mirrors the scalar reference
++    // exactly: the clamps are masked merges rather than vfmin/vfmax (those
++    // would resolve NaN lanes to a number; the scalar branches leave NaN
++    // untouched), and NaN flows into the codec, where both paths turn it
++    // into the fcvt all-ones code.
++    void encode_vector(const float* x, uint8_t* code) const final {
++        constexpr size_t ALIGN = Codec::encode_alignment;
++        size_t i = 0;
++        const size_t d = this->d;
++        while (i < d) {
++            size_t vl = __riscv_vsetvl_e32m8(d - i);
++            // keep chunks pack-aligned: VLMAX is a power of two >= 8, so
++            // only the final short chunk gets trimmed
++            vl -= vl % ALIGN;
++            if (vl == 0) {
++                break;
++            }
++            vfloat32m8_t xi = __riscv_vle32_v_f32m8(x + i, vl);
++            if (this->vdiff != 0) {
++                xi = __riscv_vfdiv_vf_f32m8(
++                        __riscv_vfsub_vf_f32m8(xi, this->vmin, vl),
++                        this->vdiff,
++                        vl);
++                vbool4_t m_lo = __riscv_vmflt_vf_f32m8_b4(xi, 0.0f, vl);
++                xi = __riscv_vmerge_vvm_f32m8(
++                        xi, __riscv_vfmv_v_f_f32m8(0.0f, vl), m_lo, vl);
++                vbool4_t m_hi = __riscv_vmfgt_vf_f32m8_b4(xi, 1.0f, vl);
++                xi = __riscv_vmerge_vvm_f32m8(
++                        xi, __riscv_vfmv_v_f_f32m8(1.0f, vl), m_hi, vl);
++            } else {
++                xi = __riscv_vfmv_v_f_f32m8(0.0f, vl);
++            }
++            Codec::encode_m8_components(xi, code, i, vl);
++            i += vl;
++        }
++        // pack-misaligned tail (< ALIGN components): scalar reference path
++        for (; i < d; i++) {
++            float xi = 0;
++            if (this->vdiff != 0) {
++                xi = (x[i] - this->vmin) / this->vdiff;
++                if (xi < 0) {
++                    xi = 0;
++                }
++                if (xi > 1.0) {
++                    xi = 1.0;
++                }
++            }
++            Codec::encode_component(xi, code, i);
++        }
++    }
+ };
+ 
+ template <class Codec>
+@@ -169,6 +303,56 @@ struct QuantizerTemplate<
+             i += vl;
+         }
+     }
++
++    // encode_vector for the public ScalarQuantizer::compute_codes() /
++    // sa_encode() API; same masked-merge clamping as the uniform variant
++    // above, with per-component vmin/vdiff. vmsne.vf reproduces the C !=
++    // semantics (NaN compares not-equal), so NaN vdiff lanes keep the
++    // computed value on both paths.
++    void encode_vector(const float* x, uint8_t* code) const final {
++        constexpr size_t ALIGN = Codec::encode_alignment;
++        size_t i = 0;
++        const size_t d = this->d;
++        while (i < d) {
++            size_t vl = __riscv_vsetvl_e32m8(d - i);
++            // keep chunks pack-aligned: VLMAX is a power of two >= 8, so
++            // only the final short chunk gets trimmed
++            vl -= vl % ALIGN;
++            if (vl == 0) {
++                break;
++            }
++            vfloat32m8_t xi = __riscv_vle32_v_f32m8(x + i, vl);
++            vfloat32m8_t vminv = __riscv_vle32_v_f32m8(this->vmin + i, vl);
++            vfloat32m8_t vdiffv = __riscv_vle32_v_f32m8(this->vdiff + i, vl);
++            xi = __riscv_vfdiv_vv_f32m8(
++                    __riscv_vfsub_vv_f32m8(xi, vminv, vl), vdiffv, vl);
++            vbool4_t m_lo = __riscv_vmflt_vf_f32m8_b4(xi, 0.0f, vl);
++            xi = __riscv_vmerge_vvm_f32m8(
++                    xi, __riscv_vfmv_v_f_f32m8(0.0f, vl), m_lo, vl);
++            vbool4_t m_hi = __riscv_vmfgt_vf_f32m8_b4(xi, 1.0f, vl);
++            xi = __riscv_vmerge_vvm_f32m8(
++                    xi, __riscv_vfmv_v_f_f32m8(1.0f, vl), m_hi, vl);
++            vbool4_t m_dz = __riscv_vmfne_vf_f32m8_b4(vdiffv, 0.0f, vl);
++            xi = __riscv_vmerge_vvm_f32m8(
++                    __riscv_vfmv_v_f_f32m8(0.0f, vl), xi, m_dz, vl);
++            Codec::encode_m8_components(xi, code, i, vl);
++            i += vl;
++        }
++        // pack-misaligned tail (< ALIGN components): scalar reference path
++        for (; i < d; i++) {
++            float xi = 0;
++            if (this->vdiff[i] != 0) {
++                xi = (x[i] - this->vmin[i]) / this->vdiff[i];
++                if (xi < 0) {
++                    xi = 0;
++                }
++                if (xi > 1.0) {
++                    xi = 1.0;
++                }
++            }
++            Codec::encode_component(xi, code, i);
++        }
++    }
+ };
+ 
+ // Codecs without an RVV decode kernel (currently the 6-bit codec above)
+diff --git a/tests/test_scalar_quantizer.cpp b/tests/test_scalar_quantizer.cpp
+index 2b0f5037b..d6a6e87e5 100644
+--- a/tests/test_scalar_quantizer.cpp
++++ b/tests/test_scalar_quantizer.cpp
+@@ -1092,3 +1092,124 @@ TEST(ScalarQuantizer, RVVZeroDimDistancePathParity) {
+         }
+     }
+ }
++
++// Parity between a SIMD level and the scalar (NONE) path for the encode
++// direction of one quantizer type and dimension. The RVV encode kernels
++// are bit-exact by construction, so every code byte must match exactly.
++// Extreme inputs (out-of-range, denormals, NaN, the fp16 65504 overflow
++// boundary) exercise the clamps and the float->integer conversion edges.
++void check_sq_encode_path_parity(
++        faiss::SIMDLevel level,
++        faiss::ScalarQuantizer::QuantizerType qtype,
++        size_t d) {
++    ScopedSIMDLevel scoped(level);
++    const size_t n = 64;
++    std::vector<float> xb = make_normalized_vectors(n, d);
++
++    std::vector<float> xq(d);
++    const std::vector<float> extremes = {
++            0.0f,
++            -0.0f,
++            1.0f,
++            -1.0f,
++            0.5f,
++            1e-44f,
++            -1e-44f,
++            65504.0f,
++            65519.0f,
++            1e30f,
++            -1e30f,
++            254.5f,
++            255.5f,
++            -0.5f,
++            NAN,
++            INFINITY,
++            -INFINITY};
++    for (size_t j = 0; j < d; j++) {
++        xq[j] = extremes[j % extremes.size()];
++    }
++
++    faiss::ScalarQuantizer sq(d, qtype);
++    sq.train(n, xb.data());
++
++    std::unique_ptr<faiss::ScalarQuantizer::SQuantizer> scalar_quant(
++            faiss::scalar_quantizer::sq_select_quantizer<
++                    faiss::SIMDLevel::NONE>(qtype, d, sq.trained));
++    std::unique_ptr<faiss::ScalarQuantizer::SQuantizer> simd_quant(
++            sq.select_quantizer());
++    ASSERT_NE(scalar_quant, nullptr);
++    ASSERT_NE(simd_quant, nullptr);
++
++    // encode_vector packs with |= into a zeroed buffer (compute_codes
++    // memsets before encoding); mirror that for both paths.
++    std::vector<uint8_t> ref(sq.code_size), out(sq.code_size);
++    for (size_t v = 0; v < n; v++) {
++        SCOPED_TRACE(testing::Message() << "vector " << v);
++        std::fill(ref.begin(), ref.end(), 0);
++        std::fill(out.begin(), out.end(), 0);
++        scalar_quant->encode_vector(xb.data() + v * d, ref.data());
++        simd_quant->encode_vector(xb.data() + v * d, out.data());
++        for (size_t b = 0; b < sq.code_size; b++) {
++            EXPECT_EQ(ref[b], out[b]) << "byte " << b;
++        }
++    }
++
++    SCOPED_TRACE("extremes");
++    std::fill(ref.begin(), ref.end(), 0);
++    std::fill(out.begin(), out.end(), 0);
++    scalar_quant->encode_vector(xq.data(), ref.data());
++    simd_quant->encode_vector(xq.data(), out.data());
++    for (size_t b = 0; b < sq.code_size; b++) {
++        EXPECT_EQ(ref[b], out[b]) << "byte " << b;
++    }
++}
++
++// RVV-versus-scalar parity for the encode direction of every quantizer
++// with RVV kernels, over dimensions around VLMAX boundaries (see
++// RVVDistancePathParity for the chunk-boundary rationale). The code bytes
++// must match the scalar reference exactly, including for the NaN /
++// out-of-range / denormal inputs injected by check_sq_encode_path_parity.
++TEST(ScalarQuantizer, RVVEncodePathParity) {
++    if (!faiss::SIMDConfig::is_simd_level_available(
++                faiss::SIMDLevel::RISCV_RVV)) {
++        GTEST_SKIP() << "RISCV_RVV not available on this machine";
++    }
++
++    const std::vector<faiss::ScalarQuantizer::QuantizerType> qtypes = {
++            faiss::ScalarQuantizer::QT_8bit,
++            faiss::ScalarQuantizer::QT_4bit,
++            // QT_6bit is absent: its RVV decode measured slower than
++            // scalar (see RVVDistancePathParity), so the 6-bit codec is a
++            // scalar marker under RISCV_RVV and both its encode and decode
++            // dispatch to the scalar implementation.
++            faiss::ScalarQuantizer::QT_8bit_uniform,
++            faiss::ScalarQuantizer::QT_4bit_uniform,
++    };
++    const std::vector<size_t> dims = {
++            1,
++            7,
++            31,
++            32,
++            33,
++            63,
++            64,
++            65,
++            127,
++            128,
++            129,
++            255,
++            256,
++            257,
++            511,
++            512,
++            513};
++
++    for (auto qtype : qtypes) {
++        for (size_t d : dims) {
++            SCOPED_TRACE(
++                    testing::Message()
++                    << "qtype=" << static_cast<int>(qtype) << " d=" << d);
++            check_sq_encode_path_parity(faiss::SIMDLevel::RISCV_RVV, qtype, d);
++        }
++    }
++}

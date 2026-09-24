@@ -1,0 +1,126 @@
+diff --git a/faiss/impl/scalar_quantizer/quantizers.h b/faiss/impl/scalar_quantizer/quantizers.h
+index 393983de95678eacf07f9e4340ae013bf1744e7f..16389aba295f27d109b88c2f9981f8c0e4660033 100644
+--- a/faiss/impl/scalar_quantizer/quantizers.h
++++ b/faiss/impl/scalar_quantizer/quantizers.h
+@@ -242,9 +242,24 @@ struct QuantizerFP16<SIMDLevel::NONE> : ScalarQuantizer::SQuantizer {
+             : d(d_in) {}
+ 
+     void encode_vector(const float* x, uint8_t* code) const final {
++        // F16C / NEON hardware conversion (fp16-fp16c.h / fp16-arm.h) is a
++        // per-element hardware instruction with no software constants to set
++        // up, so it maps straight onto the plain encode_fp16 loop.
++#if defined(__F16C__) || defined(__aarch64__)
+         for (size_t i = 0; i < d; i++) {
+             ((uint16_t*)code)[i] = encode_fp16(x[i]);
+         }
++#else
++        // Scalar ryg path (fp16-inl.h). Every encode_fp16 constant is
++        // loop-invariant — including the fp16 qNaN 0x7e00 / Inf 0x7c00 bit
++        // patterns — so initialize them once per vector and reuse them for
++        // all d elements instead of re-materializing them in the loop body
++        // (on RISC-V this avoids a per-iteration lui/addi constant setup).
++        const FP16EncodeConstants c = init_fp16_encode_constants();
++        for (size_t i = 0; i < d; i++) {
++            ((uint16_t*)code)[i] = encode_fp16_component(x[i], c);
++        }
++#endif
+     }
+ 
+     void decode_vector(const uint8_t* code, float* x) const final {
+diff --git a/faiss/utils/fp16-inl.h b/faiss/utils/fp16-inl.h
+index 6c376e01619e42b713c83befd2d51dc507f673bb..e36d90e25ae156bbaa36ff5204f480e044496355 100644
+--- a/faiss/utils/fp16-inl.h
++++ b/faiss/utils/fp16-inl.h
+@@ -29,14 +29,43 @@ inline uint32_t intbits(float f) {
+ 
+ } // namespace
+ 
+-inline uint16_t encode_fp16(float f) {
++/// Precomputed, loop-invariant constants of the ryg FP32->FP16 encode
++/// below. Hot encode loops (e.g. QuantizerFP16::encode_vector) build
++/// these once per vector and reuse them for every element so the scalar
++/// loop body does not re-materialize the constants — in particular the
++/// fp16 qNaN (0x7e00) and Inf (0x7c00) bit patterns — on each iteration.
++struct FP16EncodeConstants {
++    uint32_t sign_mask;  // 0x80000000
++    uint32_t f32infty;   // 255u << 23 (0x7f800000)
++    uint32_t round_mask; // ~0xfffu (0xfffff000)
++    uint32_t magic;      // 15u << 23
++    uint32_t clamp_max;  // (31u << 23) - 0x1000u
++    uint32_t f16_qnan;   // 0x7e00
++    uint32_t f16_inf;    // 0x7c00
++};
++
++inline FP16EncodeConstants init_fp16_encode_constants() {
++    FP16EncodeConstants c;
++    c.sign_mask = 0x80000000u;
++    c.f32infty = 255u << 23;
++    c.round_mask = ~0xfffu;
++    c.magic = 15u << 23;
++    c.clamp_max = (31u << 23) - 0x1000u;
++    c.f16_qnan = 0x7e00u;
++    c.f16_inf = 0x7c00u;
++    return c;
++}
++
++/// Encode a single FP32 value with the ryg bit trick, reusing constants
++/// that the caller precomputed once (see init_fp16_encode_constants).
++/// Bit-identical to encode_fp16(float).
++inline uint16_t encode_fp16_component(float f, const FP16EncodeConstants& c) {
+     // via Fabian "ryg" Giesen.
+     // https://gist.github.com/2156668
+-    uint32_t sign_mask = 0x80000000u;
+     int32_t o;
+ 
+     uint32_t fint = intbits(f);
+-    uint32_t sign = fint & sign_mask;
++    uint32_t sign = fint & c.sign_mask;
+     fint ^= sign;
+ 
+     // NOTE all the integer compares in this function can be safely
+@@ -48,16 +77,13 @@ inline uint16_t encode_fp16(float f) {
+     // NaN->qNaN and Inf->Inf
+     // unconditional assignment here, will override with right value for
+     // the regular case below.
+-    uint32_t f32infty = 255u << 23;
+-    o = (fint > f32infty) ? 0x7e00u : 0x7c00u;
++    o = (fint > c.f32infty) ? static_cast<int32_t>(c.f16_qnan)
++                            : static_cast<int32_t>(c.f16_inf);
+ 
+     // (De)normalized number or zero
+     // update fint unconditionally to save the blending; we don't need it
+     // anymore for the Inf/NaN case anyway.
+ 
+-    const uint32_t round_mask = ~0xfffu;
+-    const uint32_t magic = 15u << 23;
+-
+     // Shift exponent down, denormalize if necessary.
+     // NOTE This represents half-float denormals using single
+     // precision denormals.  The main reason to do this is that
+@@ -76,16 +102,22 @@ inline uint16_t encode_fp16(float f) {
+     //   not a typical half-float application. Whether FP16 denormals
+     //   are rare in practice, I don't know. Whatever slow path your
+     //   HW may or may not have for denormals, this may well hit it.
+-    float fscale = floatbits(fint & round_mask) * floatbits(magic);
+-    fscale = std::min(fscale, floatbits((31u << 23) - 0x1000u));
+-    int32_t fint2 = intbits(fscale) - round_mask;
++    float fscale = floatbits(fint & c.round_mask) * floatbits(c.magic);
++    fscale = std::min(fscale, floatbits(c.clamp_max));
++    int32_t fint2 = static_cast<int32_t>(intbits(fscale) - c.round_mask);
+ 
+-    if (fint < f32infty)
++    if (fint < c.f32infty)
+         o = fint2 >> 13; // Take the bits!
+ 
+     return (o | (sign >> 16));
+ }
+ 
++inline uint16_t encode_fp16(float f) {
++    // via Fabian "ryg" Giesen.
++    // https://gist.github.com/2156668
++    return encode_fp16_component(f, init_fp16_encode_constants());
++}
++
+ inline float decode_fp16(uint16_t h) {
+     // https://gist.github.com/2144712
+     // Fabian "ryg" Giesen.
