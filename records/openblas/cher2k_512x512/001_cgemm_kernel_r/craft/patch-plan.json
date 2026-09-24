@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-openblas-cher2k_512x512-001",
+  "blueprintId": "bp-openblas-cher2k_512x512-001",
+  "createdAt": "2026-09-15T07:45:00.000Z",
+  "objective": "修复 cgemm_kernel_r（cher2k 的复数微内核）k-loop 的 interleaved-complex 布局根因：复数 MAC 采用 tmp 物化 + 16 条 vfadd.vv 分步累加（未折叠进 FMA 链），且 A 面板用成对 stride-8B 的 vlse32 gather（函数内最高单行 12.90%），每 k-step 约 32 个 LSU 事务只喂 64 个复数 MAC，IPC 仅 0.897。把复数 MAC 折叠为 16 个 ACC 上的成对 signed-FMA 直接累加，并把成对 A 字段 gather 合并为一条 vlseg2e32 段加载。",
+  "changes": [
+    {
+      "filePath": "kernel/riscv64/cgemm_kernel_8x8_zvl256b.c",
+      "action": "modify",
+      "rationale": "蓝图 rootCause.candidateFiles 记为 cgemm_kernel_r（无 debug symbols），diagnosis.currentGaps 声明源文件路径未解析。查 kernel/Makefile.L3:1154-1158，cgemm_kernel_r 由 $(CGEMMKERNEL) 以 `-UDOUBLE -DCOMPLEX -DNC` 生成；ZVL256B 的 CGEMMKERNEL（KERNEL.RISCV64_ZVL256B:140）为 cgemm_kernel_$(CGEMM_UNROLL_M)x$(CGEMM_UNROLL_N)_zvl256b.c，param.h RISCV64_ZVL256B 段 CGEMM_UNROLL=8x8，故实际文件为 kernel/riscv64/cgemm_kernel_8x8_zvl256b.c，且 annotate 内嵌源码行 114/121–152 与该文件逐行吻合。故修改此真实文件的主 M/8 k-loop 与其转置符号宏表。",
+      "instructions": [
+        "在每个转置分组的宏块（NN/NT/TN/TT、NR/NC/TR/TC、RN/RT/CN/CT、RR/RC/CR/CC）中新增 FOLD_OPA/FOLD_OPB 两个宏，取值为组 A(vfmacc,vfmacc)、组 B(vfmacc,vfnmsac)、组 C(vfnmsac,vfmacc)、组 D(vfnmsac,vfnmsac)。它们编码把 tmp 物化折叠进 ACC 所需的正确复合算子，保持 VFMACC_RR/VFMACC_RI 与 S0..S3 的共轭/转置符号约定不变。",
+        "主 M/8 pass k-loop：把 16 个累加器原来的 `tmp = vfmul(...); tmp = VFMACC_RR/RI(tmp,...); ACC = vfadd(ACC,tmp)` 三步折叠为两条命中 ACC 的 FMA——实部用同一宏连用两次 `ACC = VFMACC_RR(ACC, Bi, Ai); ACC = VFMACC_RR(ACC, Br, Ar);`（对 vfmacc 与 vfmsac 都严格等于 ACC + Br*Ar + s*Ai*Bi）；虚部用 `ACC = FOLD_OPA(ACC, Br, Ai); ACC = FOLD_OPB(ACC, Bi, Ar);`。标量 B 置 intrinsic 的 rs1 位、向量 A 置 vs2 位。",
+        "主 M/8 pass k-loop 的 A 装载：把两条分别取 real/imag 的 stride-8B `vlse32`（&A[ai+0*gvl*2] 与 &A[ai+0*gvl*2+1]）合并为一条 `vlseg2e32_v_f32m1x2` 段加载，再用 `vget_v_f32m1x2_f32m1` 取出 field0/field1；packed A 为 interleaved (r,i) 二字段，字段分离结果与两条 vlse32 逐元素一致。",
+        "不变项（constraints.mustPreserve）：复数乘加 FMA 分组与累加顺序不变（折叠后每列仍按原升序消耗 k-step，且代数严格等价）；Hermitian 共轭符号语义（VFMACC_RR/RI 与 S0..S3）与 alpha 缩放不变；packing 布局与 kernel 消费顺序不变；公共 API 与数值输出合同不变（折叠仅改末位 FP rounding 顺序）。不改 tail（M&4/M&2/M&1、N&4/N&2/N&1）与 epilogue 结构。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "修改 kernel/riscv64/cgemm_kernel_8x8_zvl256b.c：4 个转置宏块各新增 2 个折叠算子宏；主 M/8 k-loop 将 16 个复accumulator 的 tmp+vfmul+VFMACC+vadd 三步（每 k-step 48 条向量 FP）折叠为 32 条 signed-FMA 直接累加，并把 2 条 stride-8B vlse32 合并为 1 条 vlseg2e32 段加载。tail 路径、epilogue、packing 合同与分发表均不变。"
+}

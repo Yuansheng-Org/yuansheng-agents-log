@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-openblas-zher2k-512x512-001-1",
+  "patchCandidateId": "pc-bp-openblas-zher2k-512x512-001",
+  "reviewedAt": "2026-09-15T07:36:33.000Z",
+  "reviewer": "opencode-comet-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "被诊断符号 zgemm_kernel_r 由 Makefile.L3:1196-1206 以 -DDOUBLE -DCOMPLEX -DNC 编译自 kernel/riscv64/zgemm_kernel_8x4_zvl256b.c（NR/NC/TR/TC 宏组）。新增 vlseg2e64_v_f64m1x2/vget_v_f64m1x2_f64m1 与 vfmacc/vfmsac/vfnmsac 折叠均在 RVV 1.0 内，SEW=64/LMUL=m1（gvl=4，m1x2 对寄存器组预算内）。折叠恒等式 vfmsac(x,u,v)=u*v-x 与 vfmsac(vfmsac(a,u,v),w,y)=a+w*y-u*v 逐组核对，FOLD_OPA/FOLD_OPB 取值与该批次已审核的 cgemm 补丁一致。16 个转置宏全部 -fsyntax-only 通过；qemu-riscv64 -cpu max,vlen=256 对 HEAD 原始与补丁内核做整数输入随机差分（16 宏 × 400 例，M,N∈[1,13]、K∈[1,3]），输出 C 逐位一致 fail=0。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "kernel/riscv64/zgemm_kernel_8x4_zvl256b.c",
+      "line": 183,
+      "evidence": "patch.diff hunk @@ -172,60 +180,56 @@ 中 `-                A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );` 被替换为 `+                    vfloat64m1x2_t Aseg0 = __riscv_vlseg2e64_v_f64m1x2( &A[ai+0*gvl*2], gvl );`；蓝图 problem.evidence 记录 k-loop 76.2% samples、最高单行 6.35% vlse64.v。本环境无 X100 硬件，仅 qemu 功能等价验证。",
+      "severity": "minor",
+      "category": "verification",
+      "suggestion": "在 SpacemiT X100 上重跑 zher2k_512x512 并 perf annotate --percent-type=global-period：确认 vlse64.v gather 与 k-loop 的 vfadd 序列消失、k-loop 样本份额下降、IPC/gflops 提升。"
+    },
+    {
+      "id": "F2",
+      "file": "kernel/riscv64/zgemm_kernel_8x4_zvl256b.c",
+      "line": 172,
+      "evidence": "patch.diff hunk 仅覆盖 `for(BLASLONG k=1; k<K; k++)` 循环体；C update phase（`ci=n_top*ldc+m_top;` 之后的 16×vlse64+16×vsse64）未改动，蓝图 diagnosis.hotspotEvidence 第二项记录该 phase 占 15/63 samples（23.8%）。",
+      "severity": "suggestion",
+      "category": "scope",
+      "suggestion": "本补丁聚焦 k-loop（主热点）；C-phase 的 stride-16 gather/scatter 与地址链可作为后续独立补丁（推荐动作已给出 vlseg2e64/vsseg2e64 + 归纳更新），并单独做 A/B 验证。"
+    },
+    {
+      "id": "F3",
+      "file": "kernel/riscv64/zgemm_kernel_8x4_zvl256b.c",
+      "line": 51,
+      "evidence": "patch.diff hunk @@ -49,6 +49,8 @@（及其余三处宏组 hunk）新增 `+    #define FOLD_OPA __riscv_vfmacc` / `+    #define FOLD_OPB __riscv_vfmacc` 等；折叠式与原 tmp+vfadd 式代数等价但一般浮点输入下舍入次序不同。",
+      "severity": "suggestion",
+      "category": "correctness",
+      "suggestion": "与该批次 cgemm 折叠补丁保持一致的容差语义；若需与参考 BLAS 逐位对齐，应在回归中显式声明容差（整数输入下本补丁已验证逐位一致）。"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-bp-openblas-sgemv_2048x2048-002",
+  "patchCandidateId": "pc-bp-openblas-sgemv-2048x2048-002",
+  "reviewedAt": "2026-09-17T17:00:00Z",
+  "reviewer": "OpenCode independent patch reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan archSpecific=true (rvv-intrinsic). Fixed-VL main loop (epr=vsetvlmax_e*m8) + 4-column register blocking; LMUL stays m8, peak live <= 2 groups (<=32 regs), no vector spills; runtime-VL tail; SGEMVNKERNEL selects gemv_n_vector.c; target SpacemiT X100 RV64GCV VLEN=256."
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "kernel/riscv64/gemv_n_vector.c",
+      "line": 50,
+      "evidence": "diff hunk: `+#define GEMV_N_BLOCK            4` 与 register-blocked main loop `+        for (j = 0; j + GEMV_N_BLOCK <= n; j += GEMV_N_BLOCK) {`",
+      "severity": "suggestion",
+      "category": "performance",
+      "suggestion": "在 SpacemiT X100 上对 sgemv_2048x2048 做补丁前后 A/B 实测，确认固定 VL + 4 列 blocking 的净收益。"
+    },
+    {
+      "id": "F2",
+      "file": "kernel/riscv64/gemv_n_vector.c",
+      "line": 57,
+      "evidence": "diff 仅改动 `if (inc_y == 1) {` 分支；`} else {` 的 strided y 路径未变更",
+      "severity": "suggestion",
+      "category": "performance",
+      "suggestion": "inc_y!=1 的 strided 路径保持原实现；若目标负载使用非单位 inc_y 可后续单独优化。"
+    },
+    {
+      "id": "F3",
+      "file": "kernel/riscv64/gemv_n_vector.c",
+      "line": 63,
+      "evidence": "diff hunk 中新增固定 VL 主循环 `+            for (i = 0; i + epr <= m; i += epr) {` 与 runtime-VL tail `+            if (i < m) {`",
+      "severity": "suggestion",
+      "category": "verification",
+      "suggestion": "功能 bit-exact 已由 15126 组对拍覆盖；建议补充极端尺寸/未对齐 lda 的性能表征。"
+    }
+  ]
+}

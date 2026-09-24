@@ -1,0 +1,65 @@
+14-OPENBLAS-BENCHMARK sgemv_2048x2048 RISC-V perf stat
+======================================================
+
+Source CSV: /workspace/results/14-openblas-benchmark_results.csv
+TestName: sgemv_2048x2048
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 267,722,867 |
+| task_clock | 263.9000000000 |
+| cpu_cycle | 580,429,361 |
+| instruction | 390,067,702 |
+| cache_references | NA |
+| cache_misses | NA |
+| branches | 49,409,648 |
+| branch_misses | 198,810 |
+| L1_dcache_loads | 111,139,319 |
+| L1_dcache_load_misses | 285,490 |
+| LLC_load_misses | NA |
+| LLC_loads | NA |
+| IPC | 0.6720330000 |
+| benchmark_ms | 2.2110000000 |
+| gflops | 3.7943700000 |
+| gbps | NA |
+| official_mflops | 3,794.3700000000 |
+| official_mbytes_per_sec | NA |
+| checksum | NA |
+| threads | 1 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 0.267723 |
+| branch_miss_rate | 0.402% |
+| L1_dcache_load_miss_rate | 0.257% |
+
+perf stat style summary
+-----------------------
+             267,722,867  duration_time
+          263.9000000000  task_clock
+             580,429,361  cpu_cycle
+             390,067,702  instruction
+                      NA  cache_references
+                      NA  cache_misses
+              49,409,648  branches
+                 198,810  branch_misses
+             111,139,319  L1_dcache_loads
+                 285,490  L1_dcache_load_misses
+                      NA  LLC_load_misses
+                      NA  LLC_loads
+            0.6720330000  IPC
+            2.2110000000  benchmark_ms
+            3.7943700000  gflops
+                      NA  gbps
+        3,794.3700000000  official_mflops
+                      NA  official_mbytes_per_sec
+                      NA  checksum
+                       1  threads
+                0.267723  duration_s
+                  0.402%  branch_miss_rate
+                  0.257%  L1_dcache_load_miss_rate

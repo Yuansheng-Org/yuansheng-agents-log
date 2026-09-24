@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-openblas-sger-2048x2048-002",
+  "blueprintId": "bp-openblas-sger_2048x2048-002",
+  "createdAt": "2026-09-17T08:28:36.067Z",
+  "objective": "saxpy_k 主循环 LMUL=m2 未达合法候选边界（峰值 live=2 vectors，m4/m8 均合法且无 spill），迭代/循环控制开销按 64 次迭代累积，标量地址算术占 45.45% 样本，寄存器组预算欠利用。",
+  "changes": [
+    {
+      "filePath": "4044/4062",
+      "action": "modify",
+      "rationale": "saxpy_k 主循环 LMUL=m2 未达合法候选边界（峰值 live=2 vectors，m4/m8 均合法且无 spill），迭代/循环控制开销按 64 次迭代累积，标量地址算术占 45.45% 样本，寄存器组预算欠利用。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "kernel/riscv64/axpy_vector.c",
+      "action": "modify",
+      "rationale": "saxpy_k 主循环 LMUL=m2 未达合法候选边界（峰值 live=2 vectors，m4/m8 均合法且无 spill），迭代/循环控制开销按 64 次迭代累积，标量地址算术占 45.45% 样本，寄存器组预算欠利用。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "m4/m8",
+      "action": "modify",
+      "rationale": "saxpy_k 主循环 LMUL=m2 未达合法候选边界（峰值 live=2 vectors，m4/m8 均合法且无 spill），迭代/循环控制开销按 64 次迭代累积，标量地址算术占 45.45% 样本，寄存器组预算欠利用。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "m1/m2/m4/m8",
+      "action": "modify",
+      "rationale": "saxpy_k 主循环 LMUL=m2 未达合法候选边界（峰值 live=2 vectors，m4/m8 均合法且无 spill），迭代/循环控制开销按 64 次迭代累积，标量地址算术占 45.45% 样本，寄存器组预算欠利用。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "A/B",
+      "action": "modify",
+      "rationale": "saxpy_k 主循环 LMUL=m2 未达合法候选边界（峰值 live=2 vectors，m4/m8 均合法且无 spill），迭代/循环控制开销按 64 次迭代累积，标量地址算术占 45.45% 样本，寄存器组预算欠利用。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "compute/latency-bound",
+      "action": "modify",
+      "rationale": "saxpy_k 主循环 LMUL=m2 未达合法候选边界（峰值 live=2 vectors，m4/m8 均合法且无 spill），迭代/循环控制开销按 64 次迭代累积，标量地址算术占 45.45% 样本，寄存器组预算欠利用。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "v2/v4",
+      "action": "modify",
+      "rationale": "saxpy_k 主循环 LMUL=m2 未达合法候选边界（峰值 live=2 vectors，m4/m8 均合法且无 spill），迭代/循环控制开销按 64 次迭代累积，标量地址算术占 45.45% 样本，寄存器组预算欠利用。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "m2/m4/m8",
+      "action": "modify",
+      "rationale": "saxpy_k 主循环 LMUL=m2 未达合法候选边界（峰值 live=2 vectors，m4/m8 均合法且无 spill），迭代/循环控制开销按 64 次迭代累积，标量地址算术占 45.45% 样本，寄存器组预算欠利用。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "kernel/riscv64/axpy_vector.c:31-45",
+      "action": "modify",
+      "rationale": "saxpy_k 主循环 LMUL=m2 未达合法候选边界（峰值 live=2 vectors，m4/m8 均合法且无 spill），迭代/循环控制开销按 64 次迭代累积，标量地址算术占 45.45% 样本，寄存器组预算欠利用。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "LMUL/register-group",
+      "action": "modify",
+      "rationale": "saxpy_k 主循环 LMUL=m2 未达合法候选边界（峰值 live=2 vectors，m4/m8 均合法且无 spill），迭代/循环控制开销按 64 次迭代累积，标量地址算术占 45.45% 样本，寄存器组预算欠利用。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应围绕 4044/4062, kernel/riscv64/axpy_vector.c, m4/m8, m1/m2/m4/m8, A/B, compute/latency-bound, v2/v4, m2/m4/m8, kernel/riscv64/axpy_vector.c:31-45, LMUL/register-group 解决 blueprint bp-openblas-sger_2048x2048-002 指出的根因。允许涉及 构建系统、平台适配、构建参数、注册入口；源码实现、汇编/kernel/intrinsic/SIMD/vector 后端、分发表。"
+}

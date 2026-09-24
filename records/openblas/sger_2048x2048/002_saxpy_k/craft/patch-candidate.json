@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "WARNING: 本补丁未检测到 RISC-V 架构相关代码（汇编/inline-asm/RVV intrinsic/ISA 特性），已跳过架构专项审核，仅做通用质量审核。",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-openblas-sger-2048x2048-002",
+  "patchPlanId": "pp-bp-openblas-sger-2048x2048-002",
+  "createdAt": "2026-09-17T08:28:54.855Z",
+  "changedFiles": [
+    "kernel/riscv64/axpy_vector.c"
+  ],
+  "gitDiff": "diff --git a/kernel/riscv64/axpy_vector.c b/kernel/riscv64/axpy_vector.c\nindex c77a18afa..041f797a6 100644\n--- a/kernel/riscv64/axpy_vector.c\n+++ b/kernel/riscv64/axpy_vector.c\n@@ -29,7 +29,7 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n #include \"common.h\"\n \n #ifdef RISCV64_ZVL256B\n-#       define LMUL m2\n+#       define LMUL m4\n #       if defined(DOUBLE)\n #               define ELEN 64\n #       else\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

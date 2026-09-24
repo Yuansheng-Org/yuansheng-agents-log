@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-openblas-cblas_sgemm_512x512-001-1",
+  "patchCandidateId": "pc-bp-openblas-cblas-sgemm-512x512-001",
+  "reviewedAt": "2026-09-15T06:10:00.000Z",
+  "reviewer": "opencode-comet-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "RVV 1.0 指令集合规（vle32.v/vfmacc.vf/vsetivli/flw）；vfloat32m2_t/sew=32/vl=16 未变，新增 A0/A1 两条 m2 后 10×m2=20 向量寄存器在 32 预算内；-O3 -S 反汇编确认向量 spill 计数与原文件同为 1（既有 spill 非本补丁引入），展开体约 38 条/2 k-step 对比原 40 条；紧循环内未新增 vsetvl，未改 KERNEL.RISCV64_ZVL256B 分发表；16 个转置宏 -fsyntax-only 全部通过。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "kernel/riscv64/sgemm_kernel_16x8_zvl256b.c",
+      "line": 2173,
+      "evidence": "patch.diff hunk @@ -2170,7 +2170,57 @@ 新增 `+            for (k = K; k > 2; k -= 2) {`、`+                vfloat32m2_t A0 = __riscv_vle32_v_f32m2( A, 16 );`、`+                vfloat32m2_t A1 = __riscv_vle32_v_f32m2( A + 16, 16 );`。蓝图 diagnosis.alternativeExplanations 指出候选 A 收益可能低于预期（~5%），currentGaps 记录无 X100 微架构 PMU/latency-resource 模型，problem 的 ~84% datapath 占用为推断值。",
+      "severity": "minor",
+      "category": "performance",
+      "suggestion": "重建后在 X100 上重跑 cblas_sgemm.goto 512 512 1，采集 perf stat cycles/instructions 与 annotate，核对 k-loop 每迭代由 ~19.1 降至 ~16–17 cycles、flw/addi/bnez 局部样本缩小、loop 内无新增 vsetvli/spill。"
+    },
+    {
+      "id": "F2",
+      "file": "kernel/riscv64/sgemm_kernel_16x8_zvl256b.c",
+      "line": 2174,
+      "evidence": "patch.diff 仅改 M/16 主 pass（hunk @@ -2170,7 +2170,57 @@），未改 M_TAIL/M_TAIL_ONE 的同类 k-loop（如文件 1960 行）。蓝图 constraints.mustPreserve 要求 M 非 16 倍数与 N 非 8 倍数的 edge/tail kernel 正确处理。",
+      "severity": "minor",
+      "category": "verification",
+      "suggestion": "主/尾路径指令形态不一致；无 X100 硬件时无法运行 M%16≠0 数值回归，建议后续实机对 M%16 与 N%8 edge shapes 做回归与 FP 数值对照。"
+    },
+    {
+      "id": "F3",
+      "file": "kernel/riscv64/sgemm_kernel_16x8_zvl256b.c",
+      "line": 2170,
+      "evidence": "patch.diff 采用蓝图候选 A（2× K-unroll + A 双缓冲）；未实现候选 B（32 行 m-block + m4 + 4 列/趟共享 A）。蓝图 diagnosis.humanReviewFocus 要求确认候选 A/候选 B 取舍。",
+      "severity": "suggestion",
+      "category": "scope",
+      "suggestion": "候选 B 需重构 epilogue 并处理 M 非 32 倍数，风险高于本补丁；建议作为独立后续项在实机 A/B benchmark 后再评估。"
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-openblas-cblas_cgemm_512x512-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-15T01:50:53.235Z",
+    "software": "openblas",
+    "testcaseIds": [
+      "cblas_cgemm_512x512"
+    ],
+    "diagnosisId": "diag-20260915T015053235Z-94234bfc",
+    "targetHardware": "SpacemiT X100 (spacemit-x100)",
+    "repositoryUrl": "https://github.com/OpenMathLib/OpenBLAS.git",
+    "testBranch": "develop",
+    "commitHash": "70c2410f17b60575f34dbb7eac88d16a9f485861"
+  },
+  "problem": {
+    "summary": "OpenBLAS 单线程 cblas_cgemm_512x512 在 SpacemiT X100（RVV 1.0, VLEN=256）上 GFLOPS 仅 16.57、IPC≈1.03，热点集中在 cgemm_kernel_n 主 k-loop：packed A 的 interleaved 复数布局迫使每 k 步两条 vlse32 跨步 gather（单条指令占 23.09% 局部样本），且 k-loop 采用 tmp 物化式复数 MAC 模板（每轮 48 条向量 FP 指令，可压缩到 32 条直接 FMA）。两者共同使指令发射/执行资源饱和（IPC≈1.03、L1 miss 仅 1.81%）。",
+    "evidence": [
+      "perf stat: duration_time=1,058,383,334 ns; benchmark_ms=972.166; GFLOPS=16.567; IPC=1.026447（compute/issue-bound）",
+      "annotate: 23.09% :  17c5e:  vlse32.v  v1,(t2),a4（A0i 跨步 gather，stride=8B；load path 合计≈39.4%）",
+      "annotate: k-loop 每轮 48 条向量 FP 指令（16 vfmul + 16 vfmacc/vfmsac + 16 vfadd）实现 64 复数 MAC；FP path 合计≈45%，脚手架（vfmul+vfadd）≈24.8%",
+      "perf stat: L1_dcache_load_miss_rate=1.806%、branch_miss_rate=0.255%：非 memory-bound、非 branch-bound"
+    ]
+  },
+  "rootCause": {
+    "summary": "cgemm_kernel_n 主 k-loop 双主因：(1) cgemm_oncopy 以 interleaved (r,i) 复数对打包 A，迫使内核每 k 步两条 stride=8B 的 vlse32 gather（≈23.1% 局部份额）；(2) k-loop 采用 tmp 物化式复数 MAC（vfmul+vfmacc+vfadd 三连，48 ops/轮）而非直接命中 ACC 的 4-FMA 结构（32 ops/轮）。在 IPC≈1.03 的发射受限 OoO 内核上，LSU gather 元素代价与冗余 FP 指令共同构成瓶颈。",
+    "candidateFiles": [
+      "kernel/riscv64/cgemm_kernel_n.c",
+      "kernel/riscv64/cgemm_oncopy.c"
+    ],
+    "performanceFactors": [
+      "Weight Repacking for Vectorized GEMM",
+      "RVV Floating-Point Matmul and GEMV Kernels",
+      "RVV Complex Arithmetic Kernels (supporting)"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "复数 (r,i) 配对语义与 C 矩阵内存交错布局不变",
+      "cgemm 数值输出在 OpenBLAS 既有 FP 误差合同内不变（含 NaN/Inf/±0 行为声明）",
+      "公共 BLAS API、alpha/beta 缩放语义与 K=0 路径不变",
+      "oncopy/otcopy 打包布局必须与所有消费 kernel 的读取顺序严格一致（含 M/N 尾块路径）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "cblas_cgemm_512x512"
+    ],
+    "regressionCommand": "agent1 patch_regression --case cblas_cgemm_512x512"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC≈1.03、L1 miss 1.81%、branch miss 0.26%，将 workload 定性为 compute/issue-bound（非 memory/branch-bound），本地 RVV/布局修复是第一杠杆。annotate 显示热点集中于 cgemm_kernel_n 主 k-loop：17c5e 单条 vlse32（A 虚部跨步 gather）占 23.09%，与 16 条 flw 构成 load path≈39.4%；16 vfmul+16 vfmacc/vfmsac+16 vfadd 构成 FP path≈45%。两条独立机制分别命中 Weight Repacking for Vectorized GEMM（interleaved A 布局强制 gather，packed A 由 cgemm_oncopy 产出）与 RVV Floating-Point Matmul and GEMV Kernels（tmp 物化式复数 MAC 模板，48→32 ops 可直接累加；复数 r/i 累加形态由 RVV Complex Arithmetic Kernels 提供 supporting 结构）。OpenBLAS/oneDNN/llama.cpp 同类 RVV 复数与 repack 提交证实该根因链在 RVV 上成立。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "X100 向量 LSU 对 stride 8B gather 的实现代价若与假设不同（例如实际按连续化处理），23.09% 单行份额可能部分来自 PMU skid 在循环头聚集；则该行仍锚定 A 装载 interval，根因权重需按区间聚合重估",
+      "若编译器对直接累加结构（16 个 ACC 长 live range）产生 vector spill/reload，Finding 2 的 FP 指令削减收益可能被 spill 抵消，需 A/B 实测确认"
+    ],
+    "currentGaps": "build ISA 缺失（无 ELF，readelf -A 不可用，metadata binaries={}）；采样为 local period 且函数级全局份额未知，无法给出 workload 级 Amdahl 上界；Sampling IP precision 未知，单行占比按 interval 归因；本 run 仅 RISC-V 侧数据，无 ys-trace-execution-summary 的 RV/ARM 对比；工作区无 OpenBLAS 源码树，candidateFiles 路径按仓库 kernel/riscv64/ 布局推断，需在 commit 70c2410f 下确认实际文件名。",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV / cblas_cgemm_512x512",
+    "recommendedFirstAction": "修改 kernel/riscv64/cgemm_kernel_n.c 的主 k-loop（0x17c56–0x17d6a 对应源码）：将 tmp 物化式复数 MAC 改为 4 条 FMA 直接命中 ACC_r/ACC_i（vfmacc.vf/vfnmsac.vf，每轮 48→32 ops），保持 epilogue alphar/alphai 符号折叠语义；配对修改 kernel/riscv64/cgemm_oncopy.c 打包布局为 r/i split-plane 并在内核侧改用 vle32 连续装载 A0r/A0i，同时更新 M&4/M&2/N&4/N&2/M&1 尾块对打包布局的消费。",
+    "recommendedVerification": "在 SpacemiT X100 重跑 cblas_cgemm_512x512：perf annotate 确认 17c5e vlse32 与 k-loop vfmul/vfadd 消失、出现 vle32 与 32 条直接 FMA；perf stat 确认指令数下降约 1/4、GFLOPS 由 16.57 提升；对照 reference 验证 512×512 及 M/N 余数形状（513/511/4/2/1 尾）数值在误差合同内。",
+    "metricEvidence": [
+      {
+        "metric": "Duration (ms)",
+        "rv": 1058.38,
+        "anomalyNote": "duration_time=1,058,383,334 ns，单线程 cgemm 512×512 基准总耗时"
+      },
+      {
+        "metric": "benchmark_ms",
+        "rv": 972.166,
+        "anomalyNote": "基准报告耗时，与 GFLOPS=16.567 对应"
+      },
+      {
+        "metric": "GFLOPS",
+        "rv": 16.567,
+        "anomalyNote": "单线程性能，受 k-loop 指令发射冗余与 gather LSU 代价限制"
+      },
+      {
+        "metric": "IPC",
+        "rv": 1.026,
+        "anomalyNote": "接近 1.0，发射/执行资源接近饱和，定性 compute/issue-bound"
+      },
+      {
+        "metric": "L1 dcache load miss rate (%)",
+        "rv": 1.806,
+        "anomalyNote": "miss 率低，排除 memory-bound；高占比来自 gather 的 LSU 元素代价而非缓存缺失"
+      },
+      {
+        "metric": "branch miss rate (%)",
+        "rv": 0.255,
+        "anomalyNote": "分支预测良好，排除 branch-bound"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "cgemm_kernel_n",
+        "fileModule": "cgemm_kernel_n",
+        "rvvPattern": "Weight Repacking for Vectorized GEMM",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.231,
+        "note": "CGEMM N 内核（线性代数，8×8 复数 tile）；A 操作数跨步 gather 为最大单点（17c5e=23.09%），packed A 由 cgemm_oncopy 以 interleaved (r,i) 布局产出"
+      },
+      {
+        "hotspotFunction": "cgemm_kernel_n",
+        "fileModule": "cgemm_kernel_n",
+        "rvvPattern": "RVV Floating-Point Matmul and GEMV Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.248,
+        "note": "同一主 k-loop 的 FP 脚手架（16 vfmul+16 vfadd 可删，≈24.8% 局部份额）；tmp 物化式复数 MAC 模板 48 ops/轮，直接累加可降至 32 ops/轮"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "cgemm_kernel_n（函数名；无 debug symbols，精确 file:line 无法定位）",
+      "relatedKnowledge": "https://github.com/ggml-org/llama.cpp/pull/19121；https://github.com/alibaba/MNN/pull/3813；https://github.com/alibaba/MNN/commit/6afcf99fedaec90b5b363ce4c78317800f291443；https://github.com/alibaba/MNN/pull/4426；https://github.com/alibaba/MNN/pull/4433；https://github.com/OpenMathLib/OpenBLAS/commit/0a967797a15617239523053633bf14be7895b25a；https://github.com/OpenMathLib/OpenBLAS/commit/0acb60aab3c0134e879a68292904d8346dcd50ef；https://github.com/OpenMathLib/OpenBLAS/commit/1cc377ef61d498b75c852aa4b9b042fe9422c347；https://github.com/OpenMathLib/OpenBLAS/commit/2d82d144e2791e37d7a314237b638d85b156a2ec；https://github.com/OpenMathLib/OpenBLAS/commit/809e1cba8f1f3f89972581e8b82f2ec52e51eadb；https://github.com/OpenMathLib/OpenBLAS/commit/376d3a138faa0fe483a8fa8d4fa1ab0d395acf；https://github.com/OpenMathLib/OpenBLAS/commit/2ae019161a85333a35018b517d4b34474a7694e9；https://github.com/OpenMathLib/OpenBLAS/commit/d3bf5a5401e623e107a23fb70151c7102cbd14c7；https://github.com/OpenMathLib/OpenBLAS/commit/18d7afe69daa196902cd68b63cc381aaafc9d26e；https://github.com/OpenMathLib/OpenBLAS/commit/63cf4d01668f8f6c73a05039bc36785ba78b0940；https://github.com/ggml-org/llama.cpp/pull/17318；https://github.com/ggml-org/llama.cpp/pull/17448；https://github.com/ggml-org/llama.cpp/pull/17314；https://github.com/ggml-org/llama.cpp/pull/17161；https://github.com/ggml-org/llama.cpp/pull/18199；https://github.com/ggml-org/llama.cpp/pull/20627；https://github.com/uxlfoundation/oneDNN/commit/d6f82a2d0d0db41e6daaf20fbb4fd352843aac64；https://github.com/uxlfoundation/oneDNN/commit/3bac96b8bc1fc9c348c986f38f65285693943d2f；https://github.com/uxlfoundation/oneDNN/commit/8b48a77091062ce78959ccb96e43a8ee4e97022d；https://github.com/uxlfoundation/oneDNN/commit/8c52facbe61845d86062c76280b4bc515160c03e；https://github.com/uxlfoundation/oneDNN/commit/b73fc3172d3e3230cf24ae29cbb6a07a09507a43；https://github.com/uxlfoundation/oneDNN/commit/bd984d09dc5985a19fb427ac46d19d2cbd5558dd；https://github.com/uxlfoundation/oneDNN/commit/d2a44b9b855706a0df33f9b6d4fb84f5420fdeaf；https://github.com/uxlfoundation/oneDNN/commit/d6107ddb8be72041dade165a233c0de69f7a1387；https://github.com/uxlfoundation/oneDNN/commit/fe04323ab0b4bba79ee60109fc391bb36052e43c；https://github.com/uxlfoundation/oneDNN/pull/4410；https://github.com/uxlfoundation/oneDNN/pull/4414；https://github.com/uxlfoundation/oneDNN/pull/4545；https://github.com/uxlfoundation/oneDNN/pull/4620；https://github.com/uxlfoundation/oneDNN/pull/4770；https://github.com/uxlfoundation/oneDNN/pull/4824；https://github.com/uxlfoundation/oneDNN/pull/4840；https://github.com/uxlfoundation/oneDNN/pull/4850；https://github.com/uxlfoundation/oneDNN/pull/4945；https://github.com/uxlfoundation/oneDNN/pull/5157；https://github.com/uxlfoundation/oneDNN/pull/5294；https://github.com/uxlfoundation/oneDNN/pull/5403；https://github.com/uxlfoundation/oneDNN/pull/5405；https://github.com/vllm-project/vllm/pull/44324",
+      "evidenceExplanation": "annotate 直接显示 k-loop 的 vlse32 跨步 gather（interleaved A）与 48-op 复数 MAC 脚手架；OpenBLAS 复数/FP matmul 提交（d3bf5a54、0a967797 等）与 llama.cpp/MNN/oneDNN 的 RVV 重排与 FP matmul 实现证明：split-plane 打包 + 直接 FMA 累加是 RVV 复数 GEMM 的既有最优结构，与当前根因链（打包布局 + microkernel FMA 结构）一致。"
+    }
+  }
+}

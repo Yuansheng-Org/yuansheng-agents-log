@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-openblas-cblas_zgemm_512x512-001-1",
+  "patchCandidateId": "pc-bp-openblas-cblas-zgemm-512x512-001",
+  "reviewedAt": "2026-09-15T06:55:00.000Z",
+  "reviewer": "opencode-comet-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "RVV 1.0 指令集合规（vlseg2e64/vget/vfmacc/vfmsac/vfnmsac/vsetvl_e64m1）；vfloat64m1_t/sew=64/vl=4 未变，vlseg2e64 m1x2 与两条 vlse64 目标寄存器组一致；-O3 -S 确认无向量 spill（vse64.v ...,(sp) 计数 0，与修改前一致），折叠消除 16 个 tmp 向量；所有 FMA 宏调用标量 B 置 rs1、向量 A 置 vs2，符合 _vf 签名；未改 KERNEL.RISCV64_ZVL256B 分发表。16 个转置宏 -fsyntax-only 通过，且 16 宏 × 6 形状 qemu 与原始文件逐元素比对全部 bit-exact。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "kernel/riscv64/zgemm_kernel_8x4_zvl256b.c",
+      "line": 202,
+      "evidence": "patch.diff hunk @@ -172,60 +180,57 @@ 新增 `+                ACC0r = VFMACC_RR( ACC0r, B0i, A0i, gvl);` / `+                ACC0r = VFMACC_RR( ACC0r, B0r, A0r, gvl);` / `+                ACC0i = FOLD_OPA( ACC0i, B0r, A0i, gvl);` 等折叠行。蓝图 diagnosis.alternativeExplanations 指出若 X100 FP64 向量 FMA 仅 2 lanes/cycle 则 8.3 GFLOPS 可能已近峰值；currentGaps 记录无 readelf -A 与 PMU 证据。",
+      "severity": "minor",
+      "category": "performance",
+      "suggestion": "重建后在 X100 重跑 cblas_zgemm_512x512（OPENBLAS_LOOPS=15）与 perf annotate，核对 16 条 vfadd 消失、k-loop 份额自 77% 下降、GFLOPS 上升。"
+    },
+    {
+      "id": "F2",
+      "file": "kernel/riscv64/zgemm_kernel_8x4_zvl256b.c",
+      "line": 175,
+      "evidence": "patch.diff hunk @@ -172,60 +180,57 @@ 把 tmp 物化+vfadd 折叠为 2 条 FMA，改变 FP rounding 顺序；蓝图 constraints.mustPreserve 声明折叠累加需通过 GEMM checksum/相对误差测试。本审核在 qemu 仿真下 16 宏 × 6 形状 bit-exact，但非 X100 实测。",
+      "severity": "minor",
+      "category": "verification",
+      "suggestion": "后续在真机运行 OpenBLAS level3 zgemm 正确性套件与 GEMM checksum/相对误差对照，确认在误差合同内。"
+    },
+    {
+      "id": "F3",
+      "file": "kernel/riscv64/zgemm_kernel_8x4_zvl256b.c",
+      "line": 194,
+      "evidence": "patch.diff 采用 MAC 折叠 + vlseg2e64，未实现蓝图 recommendedFirstAction 的“A load pre-issue”与对 C-tile epilogue 的 prefetch.w（epilogue 占函数样本 23%、执行频率仅 k-loop 的 1/512）。",
+      "severity": "suggestion",
+      "category": "scope",
+      "suggestion": "A 显式预取与 epilogue prefetch.w 建议作为独立后续项评估，避免扩大本补丁的寄存器/风险面。"
+    }
+  ]
+}

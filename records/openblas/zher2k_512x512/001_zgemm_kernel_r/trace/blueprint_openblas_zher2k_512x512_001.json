@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-openblas-zher2k_512x512-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-15T02:57:39.630Z",
+    "software": "openblas",
+    "testcaseIds": [
+      "zher2k_512x512"
+    ],
+    "diagnosisId": "diag-20260915T025739630Z-81618e88",
+    "targetHardware": "SpacemiT X100 (K3)",
+    "repositoryUrl": "https://github.com/OpenMathLib/OpenBLAS.git",
+    "testBranch": "develop",
+    "commitHash": "70c2410f17b60575f34dbb7eac88d16a9f485861"
+  },
+  "problem": {
+    "summary": "zher2k_512x512 在 SpacemiT X100（RVV 1.0，VLEN=256）上单线程仅 8.53 GFLOPS、IPC 0.8875，处于 issue/latency-bound。热点 zgemm_kernel_r 是 intrinsic C 生成的复数 GEMM RVV microkernel：interleaved-complex 的 A/C 用 4×vlse64.v（stride 16B）逐字段 gather 分离实/虚部、B 用 8 条 fld 逐标量取，复数 MAC 采用 tmp+vfmul+vfadd 三段式累加，k-loop 每迭代约 66 条指令仅产出 128 flops（2.7 flops/vector-FP-instr）；C update phase 的 32 条 stride-16 gather/scatter 与链式地址计算仅占 ~0.3% 指令却吃掉 ~24% 样本。",
+    "evidence": [
+      "perf stat: IPC=0.8875（490,349,095 cycles / 435,191,502 instructions），gflops=8.53，threads=1",
+      "k-loop（0x72de–0x73e2）占 48/63 samples（76.2%）：interleaved-complex 用 4×vlse64.v（16B stride）逐字段 gather + 8×fld 取 B + 48 条 vector FP/迭代（2.7 flops/instr）",
+      "C update phase（0x73e6–0x7536）仅占函数指令 ~0.3% 却占 15/63 samples（23.8%）：16×vlse64.v + 16×vsse64.v stride-16 gather/scatter + 链式地址计算",
+      "L1-dcache-load-miss-rate=1.253%、branch-miss-rate=0.790% → 非 cache/branch-bound，为 FP/LSU 指令吞吐主导的 issue-bound"
+    ]
+  },
+  "rootCause": {
+    "summary": "zgemm_kernel_r 对 interleaved-complex 布局使用 stride-16 gather 逐字段 de-interleave（A 4×vlse64、C 32×vlse/vsse64）并以 tmp+vfmul+vfadd 三段式累加执行复数 MAC，导致 k-loop FP 指令通胀 1.5×（48 vs 32 条/迭代）与 LSU 元素访存可削减，C-phase 的 strided gather/scatter 与串行地址链以 0.3% 指令吃下 24% 样本。",
+    "candidateFiles": [
+      "zgemm_kernel_r（run 无 ELF/debug symbols，无法定位源码文件路径；按 OpenBLAS 惯例位于 kernel/riscv64/ 下）"
+    ],
+    "performanceFactors": [
+      "RVV Complex Arithmetic Kernels",
+      "RVV Floating-Point Matmul and GEMV Kernels"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "zher2k/zgemm 数值结果：共轭符号规则（Hermitian 路径被共轭 operand 及 ±Ai·Br 符号）、NaN/Inf/±0/subnormal 语义",
+      "复数 [re,im] 交织布局与 ldc 行 stride 合同（含 ldc≠N 的 padding 行）",
+      "公共 BLAS Level-3 API 语义与调用契约",
+      "FMA contraction 与 FP 累加顺序既有行为（若改动须声明容差并对照参考实现）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "zher2k_512x512"
+    ],
+    "regressionCommand": "agent1 patch_regression --case zher2k_512x512"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.8,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "route 证据 HIGH 且 perf stat 确认 issue-bound，但 baseline_gap: build ISA（run 无 ELF）与 baseline_gap: sampling IP precision 使单指令归因停留在区间级，且无 ARM 侧对比与 workload 级样本份额；需人工确认后转发 Craft。",
+    "reasoning": "perf stat 显示 IPC=0.8875、L1-dcache-load-miss-rate 仅 1.253%、branch-miss 0.790%，排除 cache/branch-bound，指认 FP/LSU 指令吞吐为瓶颈；annotate 显示 k-loop（0x72de–0x73e2）占 48/63（76.2%）样本且最高单行为 6.35% 的 vlse64.v stride-16 gather（72f6），C-phase（0x73e6–0x7536）以 ~0.3% 指令占 23.8% 样本，命中 RVV Complex Arithmetic Kernels pattern（interleaved-complex 固定二字段 strided 访问 + tmp/vfadd 三段累加）；知识证据中 OpenBLAS RISC-V complex Level-3 kernel 演进 PR（d3bf5a5401e6、18d7afe69daa、63cf4d01668f）与该 kernel 结构同源，支撑『改为 segmented/unit-stride 访存 + 直接配对 FMA 累加』的修复方向。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "采样噪声：63 samples（cpu-clock local period）量级较小，72f6 单行 6.35% 可能含噪声，但 k-loop 76.2% 与 C-phase 23.8% 的区间聚合结论稳健",
+      "微架构实现细节：spacemit-x100 对 stride-16 gather/scatter 与 segment 指令的具体拆分/吞吐未确认，segmented 方案的收益幅度需实机 A/B 验证",
+      "packing/driver 层更优解：A 面板若改为 split real/imag 布局（两条 unit-stride 流）可从源头消除 gather，但 packing 层源码在本 run 不可见，属于需 driver 同步的更大改动",
+      "FP 管线假设：若 X100 的 256-bit FP FMA 吞吐低于 8 flops/cycle 假设，指令削减带来的收益比例会相应变化"
+    ],
+    "currentGaps": "baseline_gap: build ISA（run 未收集 ELF，无法核对 Tag_RISCV_arch）；baseline_gap: sampling IP precision（无 precise_ip/Exact-IP）；workload 级 sample share 未知（percent type=local period）；无 ARM 侧 duration/ratio 对比数据（本 run 为 RISC-V-only perf 采集）；packing/driver 层源码不可见（candidateFiles 无法定位真实文件路径）；spacemit-x100 向量 LSU 对 strided/segment 指令的行为未确认",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 OpenBLAS 仓库中 zgemm_kernel_r 实际源码文件位置（kernel/riscv64/ 下具体 .c 文件）与 packing 层布局，以及是否接受 FP 累加顺序变化（Hermitian 共轭符号正确性需人工复核）",
+    "affectedTarget": "RV + zher2k_512x512",
+    "recommendedFirstAction": "在 zgemm_kernel_r 的 k-loop（0x72de–0x73e2）将 A 的 4×vlse64.v（stride 16B）gather 改为 vlseg2e64.v 复数对载入（或配合 driver 将 A 面板改为 split real/imag 两条 unit-stride 流），并把 tmp=vfmul→vfmacc/vfmsac→ACC=vfadd 三段累加改为直接对 ACC 的配对 FMA（acc_r=vfmacc(Br,Ar); acc_r=vfnmsac(Bi,Ai); acc_i=vfmacc(Bi,Ar); acc_i=vfmacc(Br,Ai)），同时将 C-phase（0x73e6–0x7536）的 16×vlse64.v+16×vsse64.v 改为 vlseg2e64.v/vsseg2e64.v 并把 8 行基址改为归纳更新",
+    "recommendedVerification": "重新运行 zher2k_512x512 benchmark 并重采 perf annotate --stdio -l -s zgemm_kernel_r --percent-type=global-period：预期 k-loop vfadd.vv 由 16 条/迭代降至 0、vlse64.v gather 消失、C-phase 样本占比从 ~24% 显著下降、IPC 与 gflops 提升；同时对照 OpenBLAS 参考实现验证共轭符号与数值容差",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.8875,
+        "anomalyNote": "OoO 256-bit 核上偏低（0.89），配合低 L1 miss 指向 FP/LSU 指令吞吐瓶颈"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 1.253,
+        "anomalyNote": "低 → 非 cache-miss-bound，排除 memory-bound 解释"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.79,
+        "anomalyNote": "低 → 非 branch-bound，排除分支预测瓶颈"
+      },
+      {
+        "metric": "gflops",
+        "rv": 8.53,
+        "anomalyNote": "zher2k 512×512 单线程实测，与 IPC 0.8875 一致地偏低"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "zgemm_kernel_r",
+        "fileModule": "zgemm_kernel_r（run 无 ELF/debug symbols，fileModule 不可得）",
+        "rvvPattern": "RVV Complex Arithmetic Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.762,
+        "note": "复数 GEMM/L3 线性代数 microkernel（zher2k 路径）；k-loop（0x72de–0x73e2）48/63 samples，interleaved-complex de-interleave 与三段式累加导致 FP/LSU 指令通胀"
+      },
+      {
+        "hotspotFunction": "zgemm_kernel_r",
+        "fileModule": "zgemm_kernel_r（run 无 ELF/debug symbols，fileModule 不可得）",
+        "rvvPattern": "RVV Complex Arithmetic Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.238,
+        "note": "C update phase（0x73e6–0x7536）15/63 samples；stride-16 gather/scatter 与串行地址链以 ~0.3% 指令吃下 ~24% 样本"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "zgemm_kernel_r（annotate 无源码文件路径；k-loop 0x72de–0x73e2，C-phase 0x73e6–0x7536）",
+      "relatedKnowledge": "https://github.com/OpenMathLib/OpenBLAS/commit/d3bf5a5401e623e107a23fb70151c7102cbd14c7 ; https://github.com/OpenMathLib/OpenBLAS/commit/18d7afe69daa196902cd68b63cc381aaafc9d26e ; https://github.com/OpenMathLib/OpenBLAS/commit/63cf4d01668f8f6c73a05039bc36785ba78b0940",
+      "evidenceExplanation": "被分析函数为 OpenBLAS 仓库（commit 70c2410f17b6）的 RISC-V 复数 kernel；rvv_complex_arithmetic_kernels 的关联提交（复数对称/Hermitian matvec kernel 18d7afe69daa、RISC-V complex Level-3 kernels 63cf4d01668f、复数归约融合 d3bf5a5401e6）证明该项目正沿『real/imag 共享 traversal + 配对 accumulator』方向演进，与本次诊断的『segmented/unit-stride 访存 + 直接配对 FMA 累加』修复方向一致，且其实现均基于同一 intrinsic kernel 体系"
+    }
+  }
+}

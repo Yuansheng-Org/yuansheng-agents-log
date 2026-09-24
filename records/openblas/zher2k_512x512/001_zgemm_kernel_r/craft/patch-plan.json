@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-openblas-zher2k-512x512-001",
+  "blueprintId": "bp-openblas-zher2k_512x512-001",
+  "createdAt": "2026-09-15T07:36:33.000Z",
+  "objective": "消除 zher2k conjugate 复数 GEMM 微内核 zgemm_kernel_r（kernel/riscv64/zgemm_kernel_8x4_zvl256b.c，-DNC）k-loop 中 interleaved-complex A 的 4×vlse64.v stride-16 gather 与 tmp=vfmul→VFMACC→ACC=vfadd 三段式 MAC：改用 vlseg2e64 复数对载入，并把 MAC 直接折叠进累加器（每累加器两条配对 FMA），保持数值合同。",
+  "changes": [
+    {
+      "filePath": "kernel/riscv64/zgemm_kernel_8x4_zvl256b.c",
+      "action": "modify",
+      "rationale": "蓝图 hotspotEvidence 指向 zgemm_kernel_r 的 k-loop（0x72de–0x73e2，48/63 samples）与 C-phase；仓库中该符号由 kernel/Makefile.L3:1196-1206 的 zgemm_kernel_r 规则编译（-DDOUBLE -DCOMPLEX -DNC），对应 kernel/riscv64/zgemm_kernel_8x4_zvl256b.c 的 NR/NC/TR/TC 宏组。根因是因 interleaved-complex A/C 的 stride-16 gather 与 tmp/vfadd 材料化造成的 FP/LSU 指令通胀；修复方向与该批次已审核的 cgemm 补丁（001_cgemm_kernel_n / 001_cgemm_kernel_r）一致：segmented 载入 + 直接配对 FMA。",
+      "instructions": [
+        "在 4 个转置宏组（NN/NT/TN/TT、NR/NC/TR/TC、RN/RT/CN/CT、RR/RC/CR/CC）各补一对 FOLD_OPA/FOLD_OPB 定义，取值与该批次 cgemm 补丁逐组一致（vfmacc/vfmacc、vfmacc/vfnmsac、vfnmsac/vfmacc、vfnmsac/vfnmsac）。",
+        "将主 pass（N/4）k=1..K-1 循环内的 4×vlse64.v（A0r/A0i/A1r/A1i，stride sizeof(FLOAT)*2）替换为 2×vlseg2e64_v_f64m1x2 + vget，按复数对（re,im 交织）一次载入 4 个复数。",
+        "将该循环内 tmp=vfmul→VFMACC_RR/RI→ACC=vfadd 的三段式 MAC 折叠为每累加器两条配对 FMA（实部 VFMACC_RR(ACCr,Bi,Ai); VFMACC_RR(ACCr,Br,Ar)；虚部 FOLD_OPA(ACCi,Br,Ai); FOLD_OPB(ACCi,Bi,Ar)），8 个累加器 ACC0..ACC7 与 A0/A1×B0..B3 的对应关系与原 tmp 映射严格一致。",
+        "保持 sgemm tail（M&4/2/1 与 N&2/N&1）路径、C update phase、alphar/alphai 处理、ldc 行 stride 与公共 API 不变；k=0 剥离块与尾块保留原 tmp 实现，仅改主循环体。",
+        "本改动引用 __riscv_vlseg2e64_v_f64m1x2/vget_v_f64m1x2_f64m1，均在 RVV 1.0 内；不改变 A/B/C 布局或 ldc 语义。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "在 kernel/riscv64/zgemm_kernel_8x4_zvl256b.c 的 4 个转置宏组各新增 FOLD_OPA/FOLD_OPB（+8 行），并将主 pass k-loop 的 A gather（4×vlse64）与 tmp/vfadd 三段式 MAC 改为 vlseg2e64 复数对载入与直接配对 FMA（净 ~-4 行）。16 个转置宏全部 -fsyntax-only 通过；以 qemu-riscv64(VLEN=256) 对原始/补丁内核做整数输入随机差分（16 宏 × 400 例，覆盖 M/N 非 4/8 倍数与 K∈{1..3}）逐位一致。"
+}

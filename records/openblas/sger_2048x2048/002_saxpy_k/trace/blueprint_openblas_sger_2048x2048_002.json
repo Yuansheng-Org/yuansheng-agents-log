@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-openblas-sger_2048x2048-002",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-17T04:06:29.980Z",
+    "software": "openblas",
+    "testcaseIds": [
+      "sger_2048x2048"
+    ],
+    "diagnosisId": "diag-20260917T040629980Z-466047fd",
+    "targetHardware": "SpacemiT X100 (K3)",
+    "repositoryUrl": "https://github.com/OpenMathLib/OpenBLAS.git",
+    "testBranch": "develop",
+    "commitHash": "70c2410f17b60575f34dbb7eac88d16a9f485861"
+  },
+  "problem": {
+    "summary": "sger_2048x2048 基准中 saxpy_k（BLAS level-1 axpy 内核，y=da*x+y）占 cpu-clock 全局样本 16.54%（22/133），其主循环（inc_x==1 && inc_y==1 快速路径）全部 22 个样本均落在 0x4040-0x406e 区间。热点为已向量化的 RVV 循环（e32,m2，VLEN=256 → VLMAX=16），但峰值 live vector 仅 2 个（v2/v4），LMUL*peak_live=4 远低于架构预算 32，寄存器组候选边界欠利用导致 64 次迭代反复重复标量地址算术（占区间样本 45.45%）与依赖链开销。",
+    "evidence": [
+      "perf stat (RISC-V): IPC=0.703406, cpu_cycle=581,169,346, instruction=408,798,179, L1_dcache_load_miss_rate=0.053%, branch_miss_rate=0.395%, duration_time=268,620,908 ns, gflops=3.191090",
+      "perf annotate: saxpy_k 全局样本份额 16.54%（22/133），主循环区间 0x4040-0x406e 占函数局部 100%（22/22）",
+      "主循环标量地址算术占区间样本 45.45%：405c add a2,a2,t4 (27.27%) + 4048 add a7,a2,t3 (18.18%)；vfmacc.vf (4066) 31.82%，y-load (4044/4062) 22.73%",
+      "源码确认：热点实现为 OpenBLAS kernel/riscv64/axpy_vector.c 的 RVV intrinsic 生成代码，RISCV64_ZVL256B 宏将 LMUL 定为 m2"
+    ]
+  },
+  "rootCause": {
+    "summary": "saxpy_k 主循环 LMUL=m2 未达合法候选边界（峰值 live=2 vectors，m4/m8 均合法且无 spill），迭代/循环控制开销按 64 次迭代累积，标量地址算术占 45.45% 样本，寄存器组预算欠利用。",
+    "candidateFiles": [
+      "kernel/riscv64/axpy_vector.c"
+    ],
+    "performanceFactors": [
+      "RVV Register-Group Utilization and LMUL Sizing"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "low",
+    "mustPreserve": [
+      "y[i]=da*x[i]+y[i] 的逐元素 FP 语义与 vfmacc.vf 的 FMA/rounding 行为（主循环无跨 lane 归约，无 reassociation 问题）",
+      "tail 循环 for(; j<n;) 用 runtime-VL 精确覆盖剩余元素（gvl <= n/2 分支与 tail 结构不变）",
+      "da==0 提前返回与 n<=0 返回语义",
+      "inc_x/inc_y 各 stride 特化分支路径的行为不变",
+      "公共 BLAS saxpy/sger API 语义与调用约定"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "sger_2048x2048",
+      "saxpy tail 覆盖（n 非 2*gvl 倍数、小 n、n=0）"
+    ],
+    "regressionCommand": "agent1 patch_regression --case sger_2048x2048"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.8,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示全局 IPC 0.703、L1_dcache_load_miss_rate 0.053%（工作集 L1 驻留）与 branch_miss 0.395%，将 workload 归为 compute/latency-bound 而非 memory/branch-bound；perf annotate 显示 saxpy_k 全局样本份额 16.54%，主循环区间 0x4040-0x406e 内标量地址算术占 45.45%（405c add a2,a2,t4 27.27% + 4048 add a7,a2,t3 18.18%）、vfmacc 31.82%、y-load 22.73%；反汇编 vsetvli e32,m2 与源码宏 RISCV64_ZVL256B→m2 一致，峰值 live vector 仅 v2/v4 两个，LMUL*peak_live=4≤32，m4/m8 合法无 spill，命中 RVV Register-Group Utilization and LMUL Sizing pattern（route High）。L1 miss 0.053% 排除 memory-bound，标量地址算术 45.45% 样本直接指向循环控制/迭代开销因 LMUL 欠利用而重复累积。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "OoO 核上 load→FMA→store 依赖链延迟（仅 2 条独立链）主导，而非 LMUL 欠利用——需 LMUL A/B 与 unroll frontier 实测区分",
+      "cpu-clock 采样 skid 使样本偏向标量 add（IP precision 未知），真实热点可能是 vfmacc 吞吐/依赖链而非纯循环控制"
+    ],
+    "currentGaps": "sampling IP precision 未知（cpu-clock 无 precise_ip 记录，annotate 百分比为局部份额）；build ISA 无 ELF binary 可 readelf -A 确认 Tag_RISCV_arch；本 run 仅 RISC-V 单侧采集，无 ARM 对照 duration；未做 LMUL m2/m4/m8 A/B benchmark",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV: sger_2048x2048",
+    "recommendedFirstAction": "在 kernel/riscv64/axpy_vector.c 的 LMUL 宏选择（第 31-45 行，RISCV64_ZVL256B 分支）将 e32 路径 LMUL 由 m2 提升为 m4/m8 候选，按 m1/m2/m4/m8 × unroll=1/2/4/8 frontier 枚举并检查无 vector spill 后 A/B 实测选定，保持 fixed-VL 主循环与 tail 结构不变",
+    "recommendedVerification": "重新运行 sger_2048x2048 benchmark 与 perf annotate，确认 405c/4048 标量地址算术样本占比从 45.45% 显著下降、saxpy_k 全局份额低于 16.54%、GFLOPS 提升，且 n 非 2*gvl 倍数时 tail 覆盖无回归、逐元素输出一致",
+    "metricEvidence": [
+      {
+        "metric": "duration_time(ns)",
+        "rv": 268620908,
+        "anomalyNote": "sger_2048x2048 单次运行时长 268.6 ms（RISC-V 单侧采集，无 ARM 对照）"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.703406,
+        "anomalyNote": "全局 IPC 0.70，受 libc random() 初始化占比拖累；saxpy_k 主循环为 compute/latency-bound"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 0.053,
+        "anomalyNote": "0.053%（63,356/118,502,142），工作集 L1 驻留，排除 memory-bound"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.395,
+        "anomalyNote": "0.395%（199,924/50,600,349），非 branch-bound"
+      },
+      {
+        "metric": "gflops",
+        "rv": 3.19109,
+        "anomalyNote": "3.19 GFLOPS，受热点函数 saxpy_k（16.54% 样本）循环控制开销限制"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "saxpy_k",
+        "fileModule": "kernel/riscv64/axpy_vector.c",
+        "rvvPattern": "RVV Register-Group Utilization and LMUL Sizing",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.1654,
+        "note": "sger（rank-1 update）内层调用的 BLAS level-1 axpy 内核（线性代数，y=da*x+y，L1 驻留，compute/latency-bound）；全局样本份额 16.54%，主循环区间 0x4040-0x406e 占函数局部 100%；LMUL=m2 欠利用寄存器组 frontier"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "kernel/riscv64/axpy_vector.c:31-45 (LMUL 宏) 与 :80-96 (inc_x==1&&inc_y==1 主循环)",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/26318 ; https://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5 ; https://github.com/opencv/opencv/pull/25586 ; https://github.com/torvalds/linux/commit/a4348546332c9fae12b29acb514535e0a52b9b3c ; https://github.com/torvalds/linux/commit/a894e8ed09c6c7fa239711819db83b8c050eb7b0 ; https://github.com/torvalds/linux/commit/c2a658d419246108c9bf065ec347355de5ba8a05 ; https://github.com/openjdk/jdk/commit/bdd37b0e5eaa984e2ad2e9010af37dcd612cc05e ; https://github.com/OpenMathLib/OpenBLAS/commit/cc1b5794a0409493ed470f4cced313ea0b560870 ; https://github.com/OpenMathLib/OpenBLAS/commit/d69be17b6ff7eea5371b03a199db9c112aa6dc4b ; https://github.com/OpenMathLib/OpenBLAS/commit/4a12cf53ec116c06e5d74073b54a3bca6046cb17 ; https://github.com/OpenMathLib/OpenBLAS/commit/240695862984d4de845f1c42821a883946932df7 ; https://github.com/v8/v8/commit/3844339936068c529170dcb4f2aa160654d25943 ; https://github.com/vllm-project/vllm/pull/47538",
+      "evidenceExplanation": "命中 pattern（RVV Register-Group Utilization and LMUL Sizing）的 Related PRs 表列出 OpenBLAS 自身多个 RVV LMUL/register-group 演进提交（如 cc1b5794a040 保留 LMUL2 accumulator、d69be17b6ff7 GEMM register-group 整合、4a12cf53ec11 kernel generator LMUL sizing、240695862984 VLEN-aware kernel shapes），证明在同一代码库中按 live-set 预算调整 LMUL 是被验证过的优化维度；当前 axpy_vector.c 的 RISCV64_ZVL256B 分支把 LMUL 定为 m2，而峰值 live=2 允许 m4/m8，与该系列优化方向一致。"
+    }
+  }
+}

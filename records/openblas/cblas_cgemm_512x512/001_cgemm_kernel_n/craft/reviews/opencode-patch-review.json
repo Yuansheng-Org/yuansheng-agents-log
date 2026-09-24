@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-openblas-cblas_cgemm_512x512-001-2",
+  "patchCandidateId": "pc-bp-openblas-cblas-cgemm-512x512-001",
+  "reviewedAt": "2026-09-15T05:10:00.000Z",
+  "reviewer": "opencode-comet-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "RVV 1.0 指令集合规（vlseg2e32/vget/vfmacc/vfmsac/vfnmsac/vsetvl_e32m1 均在 zve32f/RVV1.0 内）；e32,m1 的 LMUL/SEW 与数据流一致；未改 tail policy 与 KERNEL.RISCV64_ZVL256B 静态绑定；16 个转置宏 -fsyntax-only 通过。以 qemu-riscv64 对原始/补丁内核做差分：整数输入全形状（K=1/5，M/N∈{8,10,12,16,512}，含尾块）bit-exact，浮点 512^3 最大绝对差 6.5e-5（舍入）。vlseg2e32 收益存在微架构不确定性，已降级为 minor。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "kernel/riscv64/cgemm_kernel_8x8_zvl256b.c",
+      "line": 200,
+      "evidence": "patch.diff hunk @@ -186,58 +194,45 @@: `+                    A0r = __riscv_vget_v_f32m1x2_f32m1( Aseg, 0 );` 与 `+                    A0i = __riscv_vget_v_f32m1x2_f32m1( Aseg, 1 );`，替代原 `-                A0r = __riscv_vlse32_v_f32m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );`。蓝图 diagnosis.alternativeExplanations 提示 X100 对 stride 8B gather 的实现代价可能与假设不同。",
+      "severity": "minor",
+      "category": "performance",
+      "suggestion": "在 X100 上以 perf annotate 复核 0x17c5e 与 k-loop 指令形态；若 vlseg2e32 被微码拆分为多条 uop，则评估进一步改用 split-plane repack。"
+    },
+    {
+      "id": "F2",
+      "file": "kernel/riscv64/cgemm_kernel_8x8_zvl256b.c",
+      "line": 186,
+      "evidence": "patch.diff 仅含 kernel/riscv64/cgemm_kernel_8x8_zvl256b.c 一个文件；未出现 ../generic/zgemm_ncopy_8.c hunk。蓝图 constraints.mustPreserve 要求“oncopy/otcopy 打包布局必须与所有消费 kernel 的读取顺序严格一致（含 M/N 尾块路径）”。",
+      "severity": "suggestion",
+      "category": "scope",
+      "suggestion": "split-plane A 布局改造牵动多个尾块消费点，风险高于本补丁；建议作为独立后续项评估，需同步更新 M&4/M&2/M&1 与 N 尾块消费。"
+    },
+    {
+      "id": "F3",
+      "file": "kernel/riscv64/cgemm_kernel_8x8_zvl256b.c",
+      "line": 194,
+      "evidence": "patch.diff hunk @@ -186,58 +194,45 @@: `+                ACC0r = VFMACC_RR( ACC0r, B0i, A0i, gvl);` 后 `+                ACC0r = VFMACC_RR( ACC0r, B0r, A0r, gvl);`。该 real 侧写法的正确性依赖 RVV 语义 `vfmsac(x,u,v)=u*v-x`（QEMU 实测 vfmsac(acc=1,s=2,v=3)=5.0），若后续改为单次 vfmsac 则语义错误。",
+      "severity": "suggestion",
+      "category": "correctness",
+      "suggestion": "在代码中保留/补充注释，说明 real 侧必须用同一 VFMACC_RR 算子二次复合（或等价的显式带符号 FMA 组合），避免维护者误改回单次 vfmsac；回归时以整数 bit-exact 差分覆盖 16 个转置宏。"
+    }
+  ]
+}

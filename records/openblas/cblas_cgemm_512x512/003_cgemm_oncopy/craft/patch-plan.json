@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-openblas-cblas_cgemm_512x512-003",
+  "blueprintId": "bp-openblas-cblas_cgemm_512x512-003",
+  "createdAt": "2026-09-15T05:30:12.456Z",
+  "objective": "消除 cgemm_oncopy（CGEMM A 面板打包器）8 列打包循环中的寻址形态冗余：将 generic zgemm_ncopy_8 逐元素 base+offset 的装载/存储地址生成改写为 RVV 段装载+段存储，去掉每轮只服务单个访存的 add/addi，同时保持 interleaved (r,i) packed 布局与所有消费 kernel（含 M&4/M&2/M&1 尾块）的读取顺序逐字节一致。",
+  "changes": [
+    {
+      "filePath": "kernel/riscv64/zgemm_ncopy_8_rvv.c",
+      "action": "add",
+      "rationale": "蓝图 candidateFiles 命名为 kernel/riscv64/cgemm_oncopy.c，该文件在 commit 70c2410f 不存在；ZVL256B 的 CGEMMONCOPY 实际绑定 ../generic/zgemm_ncopy_8.c（CGEMM_UNROLL_N=8）。新增专门的 RVV 8 列复数打包器，沿用仓库既有 kernel/riscv64/zgemm_ncopy_4_rvv.c 的段指令模式：8 条 vlseg2e32 分离实/虚部，再用两条 stride=64B 的 vssseg8e32 写出 [r1,i1,r2,i2,r3,i3,r4,i4] 与 [r5..r8] 两组，单次块拷贝替代逐 store 的地址生成；n&4/n&2/n&1 尾块继续使用连续的 vsseg8/vsseg4/vsseg2，布局与 generic 完全一致。",
+      "instructions": [
+        "新增文件，实现与 ../generic/zgemm_ncopy_8.c 完全等价的打包函数：每个复数元素输出 16 个 float [r1,i1,...,r8,i8]。",
+        "主 n>>3 通道用 vlseg2e32 从 8 个源行取 (r,i)，组装两个 8 字段元组，分别以 vssseg8e32 写入 boffset 与 boffset+8，字节步长 16*sizeof(FLOAT)。",
+        "n&4 用 4 行 → vsseg8e32；n&2 用 2 行 → vsseg4e32；n&1 用 1 行 → vsseg2e32，均保持连续元素布局。",
+        "不改变函数签名 CNAME(m,n,a,lda,b)、lda*=2 语义、boffset/aoffset 推进方式，也不改动任何消费 kernel 或尾块读取顺序。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "kernel/riscv64/KERNEL.RISCV64_ZVL256B",
+      "action": "modify",
+      "rationale": "将 ZVL256B 的 CGEMMONCOPY 由 ../generic/zgemm_ncopy_$(CGEMM_UNROLL_N).c 切换为新增的 RVV 实现 zgemm_ncopy_8_rvv.c（本 arch 下 CGEMM_UNROLL_N 恒为 8）。仅改绑定行，不动 OBJ 名与其余分发表；CGEMMOTCOPY 保持不变以免混入其他函数的改动。",
+      "instructions": [
+        "仅将 141 行 CGEMMONCOPY 指向 zgemm_ncopy_8_rvv.c。",
+        "保留 CGEMMOTCOPY 及 CGEMMONCOPYOBJ/CGEMMOTCOPYOBJ 原样，确保单一函数聚焦。",
+        "grep 确认 CGEMMONCOPYOBJ 仍生成 cgemm_oncopy 目标对象，源码文件存在。"
+      ],
+      "risk": "low"
+    }
+  ],
+  "expectedDiffSummary": "新增 kernel/riscv64/zgemm_ncopy_8_rvv.c（约 225 行 RVV 段指令实现的复数 8 列打包器），并将 kernel/riscv64/KERNEL.RISCV64_ZVL256B 的 CGEMMONCOPY 绑定从 generic zgemm_ncopy_8.c 改为该 RVV 文件。打包输出字节序列、函数签名、尾块路径与消费 kernel 读取顺序均不变。"
+}

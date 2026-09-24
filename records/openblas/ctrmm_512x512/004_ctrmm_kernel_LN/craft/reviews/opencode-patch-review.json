@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-openblas-ctrmm_512x512-004-1",
+  "patchCandidateId": "pc-bp-openblas-ctrmm-512x512-004",
+  "reviewedAt": "2026-09-15T14:50:00.000Z",
+  "reviewer": "opencode-comet-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "RVV 1.0 指令集合规（vsetvl_e32m1、vlse32/vsse32_v_f32m1、vfmul_vf/vfadd/vfmacc/vfmsac/vfnmsac/vfnmacc）；e32,m1 与既有数据流一致，折叠后活跃向量数不增反降；未改 tail policy、尾块与 KERNEL.RISCV64_ZVL256B 绑定。16 个转置宏以真实构建宏 -fsyntax-only 全部通过；qemu-riscv64（-cpu max,vlen=256）对 HEAD 原始与补丁内核做整数差分：非 BACKWARDS 方向 1792 例、BACKWARDS 方向（-DLEFT -UTRANSA）16 宏 × 多形状，全部数值一致，仅 ±0 符号差异（无非零差值）。收益存在 X100 FMA latency 不确定性，已降级为 minor。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "kernel/riscv64/ctrmm_kernel_8x8_zvl256b.c",
+      "line": 220,
+      "evidence": "patch.diff hunk @@ -212,54 +220,38 @@：`+                ACC0r = VFMACC_RR( ACC0r, B0r, A0r, gvl);` 与 `+                ACC0i = FOLD_OPA( ACC0i, B0r, A0i, gvl);` 替代原 tmp 物化 + vfadd。蓝图 diagnosis.alternativeExplanations 提示若 kernel 实为 latency-bound，real 侧每 ACC 每 k 两条串行 FMA 可能部分抵消收益。",
+      "severity": "minor",
+      "category": "performance",
+      "suggestion": "在 X100 上重跑 ctrmm_512x512 并 perf annotate 15f0a–1601e，确认 vfadd.vv/vfmul.vf 消失、区间样本与函数指令数下降；若 latency 受限再评估插值/重排。"
+    },
+    {
+      "id": "F2",
+      "file": "kernel/riscv64/ctrmm_kernel_8x8_zvl256b.c",
+      "line": 49,
+      "evidence": "patch.diff hunk @@ -49,6 +49,8 @@ 新增 `+    #define FOLD_OPA __riscv_vfmacc` / `+    #define FOLD_OPB __riscv_vfmacc`，该映射依赖 vfmsac(x,u,v)=u*v-x 与 vfnmsac(x,u,v)=x-u*v 的精确语义。",
+      "severity": "suggestion",
+      "category": "correctness",
+      "suggestion": "保留注释说明 FOLD 分组与 RVV 带符号 FMA 语义的对应关系，避免维护者误改算子符号；回归以整数输入差分覆盖 16 个转置宏。"
+    },
+    {
+      "id": "F3",
+      "file": "kernel/riscv64/ctrmm_kernel_8x8_zvl256b.c",
+      "line": 212,
+      "evidence": "patch.diff 的唯一主体 hunk 为 @@ -212,54 +220,38 @@（main-pass M/8,N/8 k-loop）；diff 中不含 M&4/M&2/M&1 或 N&4 尾块的 k-loop hunk。蓝图 constraints.mustPreserve 要求保持尾块路径与配对布局。",
+      "severity": "suggestion",
+      "category": "scope",
+      "suggestion": "尾块（M&4/M&2/M&1、N&4）仍为 6-op tmp 链；作为独立后续项折叠，需同步在全部形状上做整数差分。"
+    },
+    {
+      "id": "F4",
+      "file": "kernel/riscv64/ctrmm_kernel_8x8_zvl256b.c",
+      "line": 220,
+      "evidence": "qemu-riscv64（-cpu max,vlen=256）整数输入差分显示 orig-vs-new 仅有 0.0/-0.0 符号差异，无非零差值（如 tok=NN M=40 K=2 off=1 bitdiff(0/-0)）。",
+      "severity": "suggestion",
+      "category": "correctness",
+      "suggestion": "±0 差异对 BLAS 数值语义无影响；若需逐位自检，比较时把 +0/-0 视为相等，或避免用零值输入构造差分。"
+    }
+  ]
+}

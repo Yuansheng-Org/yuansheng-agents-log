@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-openblas-cher2k_512x512-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-15T02:19:58.895Z",
+    "software": "openblas",
+    "testcaseIds": [
+      "cher2k_512x512"
+    ],
+    "diagnosisId": "diag-20260915T021958895Z-b0484029",
+    "targetHardware": "SpacemiT X100 (K3 SoC), riscv64, RVV 1.0, VLEN=256, out-of-order",
+    "repositoryUrl": "https://github.com/OpenMathLib/OpenBLAS.git",
+    "testBranch": "develop",
+    "commitHash": "70c2410f17b60575f34dbb7eac88d16a9f485861"
+  },
+  "problem": {
+    "summary": "openblas cher2k_512x512（复数 Hermitian rank-2k 更新，512×512×512，单线程）性能受限于 cgemm_kernel_r 内层 k-loop 的复数交织（interleaved re/im）布局访存：A 用 8-byte-stride vlse32 gather（函数内最高单行 12.90%）、B 用 16 条标量 flw/步，每 k-step 约 32 个 LSU 事务只喂 64 个复数 MAC；C 更新 epilogue 同样以 stride-8 的 vlse32/vsse32 访问输出。整机 IPC 仅 0.897 而 L1D miss 仅 1.574%，判定为 issue/LSU 事务数受限而非 cache 容量受限。",
+    "evidence": [
+      "perf annotate: cgemm_kernel_r 占 cher2k_512x512 运行 42.47%（31/73 cpu-clock samples）；k-loop 0x7354–0x7468 承载 28/31（90.3%）函数内样本",
+      "函数内最高单行 12.90% 为 0x735c: vlse32.v v1,(t2),a4（A0i strided gather，byte-stride=8）",
+      "k-loop 每步 16 条 flw（B re/im 标量 load），其中 0x7360/0x7364/0x7378(6.45%)/0x7384/0x7390/0x73d4 各占 3.23–6.45% 样本",
+      "C 更新 epilogue 的 strided gather 0x74c8(6.45%)/0x74d0(3.23%)：~0.8% 指令占比承载 9.7% 样本，单条指令成本约为 k-loop 均值 ~12 倍",
+      "perf stat: IPC=0.897337、L1D load miss rate=1.574%、branch miss rate=0.542%、GFLOPS=16.65068、duration_time=149729876ns、cycles=325009523、instructions=291643031"
+    ]
+  },
+  "rootCause": {
+    "summary": "cgemm_kernel_r 内层 k-loop 与 C 更新以 interleaved complex（re/im 交织 AoS）布局访问 packed panel 与输出矩阵，迫使 A/C 走 8-byte-stride vlse32/vsse32 gather/scatter、B 走 16 条标量 flw/步，LSU 事务数膨胀（约 32/步），在 OoO 256-bit RVV 核上形成 issue/LSU 事务瓶颈；修复方向为 split-complex（SoA）packing 配合单位步长 vle32/vlseg2e32 访问。",
+    "candidateFiles": [
+      "cgemm_kernel_r"
+    ],
+    "performanceFactors": [
+      "RVV Complex Arithmetic Kernels",
+      "RVV Floating-Point Matmul and GEMV Kernels"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "复数乘加的 FMA 分组与累加顺序（方案 A/B 不改 FMA 结构，保持 FP 舍入行为）",
+      "Hermitian 共轭符号语义（B^H 虚部取反，VFMACC_RI/vfmsac 符号）与 alpha 缩放",
+      "packing 布局与 kernel 消费顺序严格一致",
+      "公共 API 与数值输出合同（cher2k_512x512 回归必须通过）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "cher2k_512x512"
+    ],
+    "regressionCommand": "agent1 patch_regression --case cher2k_512x512"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC 仅 0.897 而 L1D load miss rate 仅 1.574%，排除 cache 容量 bound、指向 issue/LSU 事务瓶颈；perf annotate 显示 cgemm_kernel_r 占运行 42.47%，函数内 k-loop（0x7354–0x7468）承载 90.3% 样本，其中最高单行（12.90%）是 A0i 的 8-byte-stride vlse32 gather，另有 ~29% 样本分布在每步 16 条的 B 标量 flw 与复数 FMA 链，C 更新 epilogue 的 strided vlse32 以 0.8% 指令占比承载 9.7% 样本；结合 annotate 内嵌源码确认 interleaved complex 数据流与固定二字段 strided 访问，命中 rvv_complex_arithmetic_kernels pattern：LSU 事务数膨胀（约 32/步）而非 cache miss 是根因；OpenBLAS 复数 Level-3 kernel 关联提交（complex/Hermitian kernel 系列）与修复方向一致。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "采样量仅 31 个 cpu-clock sample，个别行（如 0x74c8 的 6.45%）存在统计噪声，C 更新成本可能被高估",
+      "vlse32/flw 在 SpacemiT X100 的具体每元素执行代价无公开微架构资料；若该核把 stride-8 gather 优化为 sector 合并访问，实际收益会低于 48.4% 局部份额上界",
+      "IPC 0.897 与 16.65 GFLOPS 可能同时受 benchmark 中 random()（另占 ~48% 样本）的调度影响，函数级收益需隔离测量"
+    ],
+    "currentGaps": "build ISA 的 readelf -A 文件缺失（annotate mnemonic 已证明执行 binary 为 RVV 1.0）；sampling IP precision（precise_ip）未知，单行占比只锚定 interval；kernel 源文件路径未解析（cher2k.goto 无 debug symbols，source_context_gap）；C 更新 vlse32 的 lane 映射（行/列方向）未从源码逐行确认",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + cher2k_512x512（无 ARM 对照数据，单架构诊断）",
+    "recommendedFirstAction": "在 cgemm_kernel_r 的 k-loop 中把 A 的 2×vlse32（stride=8）替换为 1×vlseg2e32.v（或配合 packing 层改 split-complex 布局后的 2×vle32），并把 C 更新的 16×vlse32/vsse32 替换为 8×vlseg2e32.v/vsseg2e32.v，保持 FMA 结构与累加顺序不变",
+    "recommendedVerification": "重跑 cher2k_512x512：perf annotate 确认 0x735c vlse32.v 与 16 条 flw 行样本消失/骤降、出现 vle32/vlseg2e32；对比 IPC（基线 0.897）与 GFLOPS（基线 16.65）；通过复杂 Hermitian 回归（含非零虚部、共轭、alpha 缩放）验证数值一致",
+    "metricEvidence": [
+      {
+        "metric": "Duration(ns)",
+        "rv": 149729876,
+        "anomalyNote": "总运行时长，其中 cgemm_kernel_r 占 42.47% 采样"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.897337,
+        "anomalyNote": "中低 IPC；256-bit RVV 复数 kernel 的 issue/LSU 事务受限特征"
+      },
+      {
+        "metric": "L1D Load Miss Rate(%)",
+        "rv": 1.574,
+        "anomalyNote": "低 miss rate，排除 cache 容量 bound，指向事务数/issue 瓶颈"
+      },
+      {
+        "metric": "Branch Miss Rate(%)",
+        "rv": 0.542,
+        "anomalyNote": "低分支失配，排除 branch bound"
+      },
+      {
+        "metric": "GFLOPS",
+        "rv": 16.65068,
+        "anomalyNote": "单线程复数 level-3 吞吐，待修复后对比"
+      },
+      {
+        "metric": "Cycles",
+        "rv": 325009523,
+        "anomalyNote": "总周期数"
+      },
+      {
+        "metric": "Instructions",
+        "rv": 291643031,
+        "anomalyNote": "总指令数"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "cgemm_kernel_r",
+        "fileModule": "cgemm_kernel_r（cher2k.goto；annotate 内嵌 __riscv_v* intrinsic 源码行，无 debug symbols，源文件路径未解析）",
+        "rvvPattern": "RVV Complex Arithmetic Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.484,
+        "note": "复数 Hermitian rank-2k 更新（cher2k）的复数 GEMM 微内核：8×8 tile、K-loop、16 个复数 accumulator；interleaved complex 布局迫使 A/C 走 stride-8 gather/scatter、B 走 16 条标量 flw/步"
+      },
+      {
+        "hotspotFunction": "cgemm_kernel_r",
+        "fileModule": "cgemm_kernel_r（cher2k.goto；同上）",
+        "rvvPattern": "RVV Floating-Point Matmul and GEMV Kernels",
+        "patternConfidence": "MEDIUM",
+        "note": "supporting：同一 k-loop 的 FP32 load/FMA 结构与 N-scalar-broadcast 微内核形态，fix 并入 primary"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "cgemm_kernel_r（annotate 内嵌源码行 80–327；OpenBLAS kernel/riscv64 复数 Level-3 kernel 族，源文件路径待 debug 信息确认）",
+      "relatedKnowledge": "https://github.com/OpenMathLib/OpenBLAS/commit/d3bf5a5401e623e107a23fb70151c7102cbd14c7;https://github.com/OpenMathLib/OpenBLAS/commit/18d7afe69daa196902cd68b63cc381aaafc9d26e;https://github.com/OpenMathLib/OpenBLAS/commit/63cf4d01668f8f6c73a05039bc36785ba78b0940",
+      "evidenceExplanation": "命中 pattern rvv_complex_arithmetic_kernels 的 OpenBLAS 关联提交（复数对称/Hermitian kernel 与 RISC-V 复数 Level-3 kernel 系列）与本次热点同属 OpenBLAS 复数 Level-3 内核路径；annotate 内嵌 intrinsic 源码行的复数乘加链（VFMACC_RR/RI）与 stride-8 re/im 访问与该 pattern 的 profile signal 逐条对应"
+    }
+  }
+}

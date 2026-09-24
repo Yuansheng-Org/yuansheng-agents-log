@@ -1,0 +1,2794 @@
+ Percent |	Source code & Disassembly of zher2k.goto for cpu-clock (63 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3    Disassembly of section .text:
+         :
+         : 5    00000000000070a0 <zgemm_kernel_r>:
+         : 6    zgemm_kernel_r():
+         : 80   #define VFMACC_RI __riscv_vfnmacc
+         : 81   #endif
+         :
+         : 83   int CNAME(BLASLONG M, BLASLONG N, BLASLONG K, FLOAT alphar, FLOAT alphai, FLOAT* A, FLOAT* B, FLOAT* C, BLASLONG ldc)
+         :
+         : 85   {
+    0.00 :   70a0:   addi    sp,sp,-384
+    0.00 :   70a2:   sd      s0,368(sp)
+    0.00 :   70a4:   sd      s4,336(sp)
+    0.00 :   70a6:   sd      s5,328(sp)
+    0.00 :   70a8:   sd      s9,296(sp)
+    0.00 :   70aa:   addi    s0,sp,384
+    0.00 :   70ac:   sd      ra,376(sp)
+    0.00 :   70ae:   sd      s1,360(sp)
+    0.00 :   70b0:   sd      s2,352(sp)
+    0.00 :   70b2:   sd      s3,344(sp)
+    0.00 :   70b4:   sd      s6,320(sp)
+    0.00 :   70b6:   sd      s7,312(sp)
+    0.00 :   70b8:   sd      s8,304(sp)
+    0.00 :   70ba:   sd      s10,288(sp)
+    0.00 :   70bc:   sd      s11,280(sp)
+    0.00 :   70be:   mv      t0,a1
+    0.00 :   70c0:   sd      a2,-120(s0)
+         : 88   BLASLONG n_top = 0;
+         :
+         :
+         : 91   // -- MAIN PASS
+         :
+         : 93   for (BLASLONG j=0; j<N/4; j+=1) {
+    0.00 :   70c4:   li      a1,3
+         : 80   {
+    0.00 :   70c6:   fmv.d   fa4,fa1
+    0.00 :   70ca:   mv      s9,a0
+    0.00 :   70cc:   mv      s4,a3
+    0.00 :   70ce:   mv      t3,a4
+    0.00 :   70d0:   mv      t5,a5
+    0.00 :   70d2:   mv      s5,a6
+         : 88   for (BLASLONG j=0; j<N/4; j+=1) {
+    0.00 :   70d4:   blt     a1,t0,70dc <zgemm_kernel_r+0x3c>
+    0.00 :   70d8:   j       8566 <zgemm_kernel_r+0x14c6>
+         : 90   m_top = 0;
+         : 91   BLASLONG gvl = __riscv_vsetvl_e64m1(4);
+    0.00 :   70dc:   vsetivli        a5,4,e8,mf8,ta,ma
+    0.00 :   70e0:   mv      a1,a2
+         :
+         :
+         : 95   for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   70e2:   srai    a3,a0,0x3f
+    0.00 :   70e6:   add     a2,a5,a6
+    0.00 :   70ea:   andi    a3,a3,7
+    0.00 :   70ec:   slli    a2,a2,0x4
+    0.00 :   70ee:   add     a3,a3,a0
+    0.00 :   70f0:   add     a2,a2,t5
+    0.00 :   70f2:   slli    a7,a5,0x4
+         : 641  Ci += result3*alphar;
+         : 642  Cr -= result3*alphai;
+         : 643  Ci += result2*alphai;
+         : 644  C[(ci+1*ldc+0)*2+0] = Cr;
+         : 645  C[(ci+1*ldc+0)*2+1] = Ci;
+         : 646  Cr = C[(ci+2*ldc+0)*2+0];
+    0.00 :   70f6:   slli    s1,a6,0x1
+    0.00 :   70fa:   sd      a2,-304(s0)
+         : 93   for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   70fe:   srai    a2,a3,0x3
+    0.00 :   7102:   add     a3,s4,a7
+    0.00 :   7106:   slli    s3,a6,0x4
+    0.00 :   710a:   sd      a3,-320(s0)
+         : 649  Ci += result5*alphar;
+         : 650  Cr -= result5*alphai;
+         : 651  Ci += result4*alphai;
+         : 652  C[(ci+2*ldc+0)*2+0] = Cr;
+         : 653  C[(ci+2*ldc+0)*2+1] = Ci;
+         : 654  Cr = C[(ci+3*ldc+0)*2+0];
+    0.00 :   710e:   add     a3,s1,a6
+    0.00 :   7112:   sd      a3,-344(s0)
+    0.00 :   7116:   add     a3,t5,s3
+    0.00 :   711a:   sd      a3,-312(s0)
+         : 88   for (BLASLONG j=0; j<N/4; j+=1) {
+    0.00 :   711e:   srai    a3,t0,0x2
+    0.00 :   7122:   sd      a3,-248(s0)
+         :
+         : 803  m_top += 8;
+         : 804  }
+         :
+         :
+         : 807  if( M & 4 ) {
+    0.00 :   7126:   andi    a3,s9,4
+    0.00 :   712a:   sd      a3,-272(s0)
+         :
+         : 888  m_top += 4;
+         : 889  }
+         :
+         :
+         : 892  if( M & 2 ) {
+    0.00 :   712e:   andi    a3,s9,2
+    0.00 :   7132:   sd      a3,-280(s0)
+         :
+         : 973  m_top += 2;
+         : 974  }
+         :
+         :
+         : 977  if( M & 1 ) {
+    0.00 :   7136:   andi    a3,s9,1
+    0.00 :   713a:   sd      a3,-288(s0)
+    0.00 :   713e:   mv      a3,a1
+    0.00 :   7140:   slli    s10,a1,0x6
+    0.00 :   7144:   slli    a3,a3,0x7
+    0.00 :   7146:   slli    a1,a1,0x3
+         : 641  Cr = C[(ci+2*ldc+0)*2+0];
+    0.00 :   7148:   sd      s1,-336(s0)
+    0.00 :   714c:   li      s1,8
+    0.00 :   714e:   slti    a4,a0,8
+    0.00 :   7152:   sd      a1,-264(s0)
+    0.00 :   7156:   sd      a3,-136(s0)
+         : 93   for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   715a:   sd      a2,-128(s0)
+    0.00 :   715e:   sd      s1,-296(s0)
+    0.00 :   7162:   add     a0,t3,s10
+    0.00 :   7166:   slli    s11,a6,0x2
+    0.00 :   716a:   addi    a1,t3,64
+    0.00 :   716e:   slli    a3,a6,0x5
+    0.00 :   7172:   bnez    a4,7178 <zgemm_kernel_r+0xd8>
+    0.00 :   7174:   j       852e <zgemm_kernel_r+0x148e>
+         : 972  if( M & 1 ) {
+    0.00 :   7178:   li      t2,8
+    0.00 :   717a:   add     a4,a3,t2
+    0.00 :   717e:   addi    a3,s4,64
+    0.00 :   7182:   sd      a3,-352(s0)
+    0.00 :   7186:   addi    a3,t3,-64
+    0.00 :   718a:   sd      a3,-328(s0)
+         : 462  gvl = __riscv_vsetvl_e64m1(2);
+    0.00 :   718e:   vsetivli        a3,2,e8,mf8,ta,ma
+    0.00 :   7192:   sd      s9,-256(s0)
+    0.00 :   7196:   sd      a3,-240(s0)
+    0.00 :   719a:   addi    a3,s4,32
+    0.00 :   719e:   sd      a4,-152(s0)
+    0.00 :   71a2:   sd      a3,-360(s0)
+    0.00 :   71a6:   sub     a4,t2,s3
+         : 93   for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   71aa:   ld      a3,-256(s0)
+    0.00 :   71ae:   sd      a4,-160(s0)
+    0.00 :   71b2:   add     a4,s3,t2
+    0.00 :   71b6:   sd      a4,-144(s0)
+    0.00 :   71ba:   sd      t0,-368(s0)
+    0.00 :   71be:   sd      t3,-376(s0)
+    0.00 :   71c2:   li      a2,7
+         : 972  if( M & 1 ) {
+    0.00 :   71c4:   li      s7,0
+    0.00 :   71c6:   li      s8,0
+         : 88   for (BLASLONG j=0; j<N/4; j+=1) {
+    0.00 :   71c8:   li      s6,0
+         : 106  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   71ca:   li      a4,16
+    0.00 :   71cc:   add     t1,a7,t2
+    0.00 :   71d0:   mv      s9,s3
+    0.00 :   71d2:   vsetivli        zero,4,e64,m1,ta,ma
+         : 93   for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   71d6:   bge     a2,a3,75aa <zgemm_kernel_r+0x50a>
+    0.00 :   71da:   ld      a2,-312(s0)
+    0.00 :   71de:   ld      s1,-304(s0)
+    0.00 :   71e2:   ld      t4,-320(s0)
+    0.00 :   71e6:   slli    a3,s7,0x4
+    0.00 :   71ea:   add     a2,a2,a3
+    0.00 :   71ec:   mv      t3,s4
+    0.00 :   71ee:   add     a3,a3,s1
+    0.00 :   71f0:   li      t0,0
+    0.00 :   71f2:   sd      s6,-168(s0)
+    0.00 :   71f6:   sd      s7,-176(s0)
+    0.00 :   71fa:   sd      s10,-184(s0)
+    0.00 :   71fe:   sd      t2,-192(s0)
+    0.00 :   7202:   sd      s11,-200(s0)
+    0.00 :   7206:   sd      s8,-208(s0)
+    0.00 :   720a:   sd      s4,-216(s0)
+    0.00 :   720e:   sd      t5,-224(s0)
+    0.00 :   7212:   sd      s5,-232(s0)
+         : 107  vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7216:   addi    a6,t3,8
+    0.00 :   721a:   vlse64.v        v2,(a6),a4
+         : 109  vfloat64m1_t A1i = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   721e:   addi    a6,t4,8
+    0.00 :   7222:   vlse64.v        v1,(a6),a4
+         : 106  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7226:   vlse64.v        v4,(t3),a4
+         : 108  vfloat64m1_t A1r = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   722a:   vlse64.v        v3,(t4),a4
+         : 97   double B0i = B[bi+0*2+1];
+    0.00 :   722e:   fld     fa1,-56(a1)
+         : 99   double B1i = B[bi+1*2+1];
+    0.00 :   7232:   fld     fa2,-40(a1)
+         : 101  double B2i = B[bi+2*2+1];
+    0.00 :   7236:   fld     fa3,-24(a1)
+         : 103  double B3i = B[bi+3*2+1];
+    0.00 :   723a:   fld     fa5,-8(a1)
+         : 115  vfloat64m1_t tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   723e:   vfmul.vf        v31,v2,fa1
+         : 119  vfloat64m1_t tmp2r = __riscv_vfmul_vf_f64m1( A0i, B1i, gvl);
+    0.00 :   7242:   vfmul.vf        v28,v2,fa2
+         : 139  tmp0r = __riscv_vfmul_vf_f64m1( A0i, B2i, gvl);
+    0.00 :   7246:   vfmul.vf        v23,v2,fa3
+         : 143  tmp2r = __riscv_vfmul_vf_f64m1( A0i, B3i, gvl);
+    0.00 :   724a:   vfmul.vf        v19,v2,fa5
+         : 117  vfloat64m1_t tmp1r = __riscv_vfmul_vf_f64m1( A1i, B0i, gvl);
+    0.00 :   724e:   vfmul.vf        v29,v1,fa1
+         : 121  vfloat64m1_t tmp3r = __riscv_vfmul_vf_f64m1( A1i, B1i, gvl);
+    0.00 :   7252:   vfmul.vf        v25,v1,fa2
+         : 141  tmp1r = __riscv_vfmul_vf_f64m1( A1i, B2i, gvl);
+    0.00 :   7256:   vfmul.vf        v21,v1,fa3
+         : 145  tmp3r = __riscv_vfmul_vf_f64m1( A1i, B3i, gvl);
+    0.00 :   725a:   vfmul.vf        v17,v1,fa5
+         : 116  vfloat64m1_t tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   725e:   vfmul.vf        v0,v4,fa1
+         : 118  vfloat64m1_t tmp1i = __riscv_vfmul_vf_f64m1( A1r, B0i, gvl);
+    0.00 :   7262:   vfmul.vf        v30,v3,fa1
+         : 120  vfloat64m1_t tmp2i = __riscv_vfmul_vf_f64m1( A0r, B1i, gvl);
+    0.00 :   7266:   vfmul.vf        v27,v4,fa2
+         : 122  vfloat64m1_t tmp3i = __riscv_vfmul_vf_f64m1( A1r, B1i, gvl);
+    0.00 :   726a:   vfmul.vf        v26,v3,fa2
+         : 140  tmp0i = __riscv_vfmul_vf_f64m1( A0r, B2i, gvl);
+    0.00 :   726e:   vfmul.vf        v24,v4,fa3
+         : 144  tmp2i = __riscv_vfmul_vf_f64m1( A0r, B3i, gvl);
+    0.00 :   7272:   vfmul.vf        v20,v4,fa5
+         : 142  tmp1i = __riscv_vfmul_vf_f64m1( A1r, B2i, gvl);
+    0.00 :   7276:   vfmul.vf        v22,v3,fa3
+         : 146  tmp3i = __riscv_vfmul_vf_f64m1( A1r, B3i, gvl);
+    0.00 :   727a:   vfmul.vf        v18,v3,fa5
+         : 96   double B0r = B[bi+0*2+0];
+    0.00 :   727e:   fld     fa1,-64(a1)
+         : 98   double B1r = B[bi+1*2+0];
+    0.00 :   7282:   fld     fa2,-48(a1)
+         : 100  double B2r = B[bi+2*2+0];
+    0.00 :   7286:   fld     fa3,-32(a1)
+         : 102  double B3r = B[bi+3*2+0];
+    0.00 :   728a:   fld     fa5,-16(a1)
+         : 164  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   728e:   ld      s1,-120(s0)
+    0.00 :   7292:   li      a6,1
+         : 123  tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   7294:   vfmacc.vf       v31,fa1,v4
+         : 127  tmp2r = VFMACC_RR( tmp2r, B1r, A0r, gvl);
+    0.00 :   7298:   vfmacc.vf       v28,fa2,v4
+         : 147  tmp0r = VFMACC_RR( tmp0r, B2r, A0r, gvl);
+    0.00 :   729c:   vfmacc.vf       v23,fa3,v4
+         : 151  tmp2r = VFMACC_RR( tmp2r, B3r, A0r, gvl);
+    0.00 :   72a0:   vfmacc.vf       v19,fa5,v4
+         : 125  tmp1r = VFMACC_RR( tmp1r, B0r, A1r, gvl);
+    0.00 :   72a4:   vfmacc.vf       v29,fa1,v3
+         : 129  tmp3r = VFMACC_RR( tmp3r, B1r, A1r, gvl);
+    0.00 :   72a8:   vfmacc.vf       v25,fa2,v3
+         : 149  tmp1r = VFMACC_RR( tmp1r, B2r, A1r, gvl);
+    0.00 :   72ac:   vfmacc.vf       v21,fa3,v3
+         : 153  tmp3r = VFMACC_RR( tmp3r, B3r, A1r, gvl);
+    0.00 :   72b0:   vfmacc.vf       v17,fa5,v3
+         : 124  tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   72b4:   vfmsac.vf       v0,fa1,v2
+         : 126  tmp1i = VFMACC_RI( tmp1i, B0r, A1i, gvl);
+    0.00 :   72b8:   vfmsac.vf       v30,fa1,v1
+         : 128  tmp2i = VFMACC_RI( tmp2i, B1r, A0i, gvl);
+    0.00 :   72bc:   vfmsac.vf       v27,fa2,v2
+         : 130  tmp3i = VFMACC_RI( tmp3i, B1r, A1i, gvl);
+    0.00 :   72c0:   vfmsac.vf       v26,fa2,v1
+         : 148  tmp0i = VFMACC_RI( tmp0i, B2r, A0i, gvl);
+    0.00 :   72c4:   vfmsac.vf       v24,fa3,v2
+         : 152  tmp2i = VFMACC_RI( tmp2i, B3r, A0i, gvl);
+    0.00 :   72c8:   vfmsac.vf       v20,fa5,v2
+         : 150  tmp1i = VFMACC_RI( tmp1i, B2r, A1i, gvl);
+    0.00 :   72cc:   vfmsac.vf       v22,fa3,v1
+         : 154  tmp3i = VFMACC_RI( tmp3i, B3r, A1i, gvl);
+    0.00 :   72d0:   vfmsac.vf       v18,fa5,v1
+         : 164  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   72d4:   bge     a6,s1,73e6 <zgemm_kernel_r+0x346>
+    0.00 :   72d8:   addi    t5,t3,128
+    0.00 :   72dc:   mv      a6,a1
+         : 176  A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    1.59 :   72de:   addi    t6,t5,8
+    0.00 :   72e2:   vlse64.v        v4,(t6),a4
+         : 177  A1r = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   72e6:   add     t6,a7,t5
+    0.00 :   72ea:   vlse64.v        v3,(t6),a4
+         : 178  A1i = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   72ee:   add     t6,t1,t5
+         : 175  A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    1.59 :   72f2:   vlse64.v        v1,(t5),a4
+         : 178  A1i = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    6.35 :   72f6:   vlse64.v        v2,(t6),a4
+         : 166  B0i = B[bi+0*2+1];
+    1.59 :   72fa:   fld     fa1,8(a6)
+         : 168  B1i = B[bi+1*2+1];
+    1.59 :   72fe:   fld     fa5,24(a6)
+         : 170  B2i = B[bi+2*2+1];
+    0.00 :   7302:   fld     fa2,40(a6)
+         : 181  tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   7306:   vfmul.vf        v5,v4,fa1
+         : 185  tmp2r = __riscv_vfmul_vf_f64m1( A0i, B1i, gvl);
+    0.00 :   730a:   vfmul.vf        v16,v4,fa5
+         : 205  tmp0r = __riscv_vfmul_vf_f64m1( A0i, B2i, gvl);
+    1.59 :   730e:   vfmul.vf        v15,v4,fa2
+         : 172  B3i = B[bi+3*2+1];
+    1.59 :   7312:   fld     fa3,56(a6)
+         : 165  B0r = B[bi+0*2+0];
+    0.00 :   7316:   fld     ft0,0(a6)
+         : 169  B2r = B[bi+2*2+0];
+    0.00 :   731a:   fld     ft1,32(a6)
+         : 182  tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    1.59 :   731e:   vfmul.vf        v11,v1,fa1
+         : 184  tmp1i = __riscv_vfmul_vf_f64m1( A1r, B0i, gvl);
+    1.59 :   7322:   vfmul.vf        v13,v3,fa1
+         : 183  tmp1r = __riscv_vfmul_vf_f64m1( A1i, B0i, gvl);
+    1.59 :   7326:   vfmul.vf        v12,v2,fa1
+         : 167  B1r = B[bi+1*2+0];
+    1.59 :   732a:   fld     fa1,16(a6)
+         : 189  tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   732e:   vfmacc.vf       v5,ft0,v1
+         : 213  tmp0r = VFMACC_RR( tmp0r, B2r, A0r, gvl);
+    0.00 :   7332:   vfmacc.vf       v15,ft1,v1
+         : 193  tmp2r = VFMACC_RR( tmp2r, B1r, A0r, gvl);
+    4.76 :   7336:   vfmacc.vf       v16,fa1,v1
+         : 209  tmp2r = __riscv_vfmul_vf_f64m1( A0i, B3i, gvl);
+    0.00 :   733a:   vfmul.vf        v14,v4,fa3
+         : 186  tmp2i = __riscv_vfmul_vf_f64m1( A0r, B1i, gvl);
+    1.59 :   733e:   vfmul.vf        v8,v1,fa5
+         : 187  tmp3r = __riscv_vfmul_vf_f64m1( A1i, B1i, gvl);
+    0.00 :   7342:   vfmul.vf        v10,v2,fa5
+         : 188  tmp3i = __riscv_vfmul_vf_f64m1( A1r, B1i, gvl);
+    4.76 :   7346:   vfmul.vf        v9,v3,fa5
+         : 171  B3r = B[bi+3*2+0];
+    0.00 :   734a:   fld     fa5,48(a6)
+         : 207  tmp1r = __riscv_vfmul_vf_f64m1( A1i, B2i, gvl);
+    0.00 :   734e:   vfmul.vf        v7,v2,fa2
+         : 208  tmp1i = __riscv_vfmul_vf_f64m1( A1r, B2i, gvl);
+    0.00 :   7352:   vfmul.vf        v6,v3,fa2
+         : 217  tmp2r = VFMACC_RR( tmp2r, B3r, A0r, gvl);
+    1.59 :   7356:   vfmacc.vf       v14,fa5,v1
+         : 197  ACC0r = __riscv_vfadd( ACC0r, tmp0r, gvl);
+    3.17 :   735a:   vfadd.vv        v31,v31,v5
+         : 201  ACC2r = __riscv_vfadd( ACC2r, tmp2r, gvl);
+    0.00 :   735e:   vfadd.vv        v28,v28,v16
+         : 206  tmp0i = __riscv_vfmul_vf_f64m1( A0r, B2i, gvl);
+    0.00 :   7362:   vfmul.vf        v5,v1,fa2
+         : 211  tmp3r = __riscv_vfmul_vf_f64m1( A1i, B3i, gvl);
+    0.00 :   7366:   vfmul.vf        v16,v2,fa3
+         : 210  tmp2i = __riscv_vfmul_vf_f64m1( A0r, B3i, gvl);
+    0.00 :   736a:   vfmul.vf        v1,v1,fa3
+         : 221  ACC4r = __riscv_vfadd( ACC4r, tmp0r, gvl);
+    0.00 :   736e:   vfadd.vv        v23,v23,v15
+         : 212  tmp3i = __riscv_vfmul_vf_f64m1( A1r, B3i, gvl);
+    0.00 :   7372:   vfmul.vf        v15,v3,fa3
+         : 192  tmp1i = VFMACC_RI( tmp1i, B0r, A1i, gvl);
+    4.76 :   7376:   vfmsac.vf       v13,ft0,v2
+         : 191  tmp1r = VFMACC_RR( tmp1r, B0r, A1r, gvl);
+    4.76 :   737a:   vfmacc.vf       v12,ft0,v3
+         : 190  tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    4.76 :   737e:   vfmsac.vf       v11,ft0,v4
+         : 195  tmp3r = VFMACC_RR( tmp3r, B1r, A1r, gvl);
+    3.17 :   7382:   vfmacc.vf       v10,fa1,v3
+         : 196  tmp3i = VFMACC_RI( tmp3i, B1r, A1i, gvl);
+    3.17 :   7386:   vfmsac.vf       v9,fa1,v2
+         : 194  tmp2i = VFMACC_RI( tmp2i, B1r, A0i, gvl);
+    4.76 :   738a:   vfmsac.vf       v8,fa1,v4
+         : 215  tmp1r = VFMACC_RR( tmp1r, B2r, A1r, gvl);
+    1.59 :   738e:   vfmacc.vf       v7,ft1,v3
+         : 216  tmp1i = VFMACC_RI( tmp1i, B2r, A1i, gvl);
+    0.00 :   7392:   vfmsac.vf       v6,ft1,v2
+         : 214  tmp0i = VFMACC_RI( tmp0i, B2r, A0i, gvl);
+    3.17 :   7396:   vfmsac.vf       v5,ft1,v4
+         : 218  tmp2i = VFMACC_RI( tmp2i, B3r, A0i, gvl);
+    1.59 :   739a:   vfmsac.vf       v1,fa5,v4
+         : 219  tmp3r = VFMACC_RR( tmp3r, B3r, A1r, gvl);
+    1.59 :   739e:   vfmacc.vf       v16,fa5,v3
+         : 220  tmp3i = VFMACC_RI( tmp3i, B3r, A1i, gvl);
+    0.00 :   73a2:   vfmsac.vf       v15,fa5,v2
+         : 164  for(BLASLONG k=1; k<K; k++) {
+    1.59 :   73a6:   addi    a6,a6,64
+         : 225  ACC6r = __riscv_vfadd( ACC6r, tmp2r, gvl);
+    0.00 :   73aa:   vfadd.vv        v19,v19,v14
+         : 200  ACC1i = __riscv_vfadd( ACC1i, tmp1i, gvl);
+    0.00 :   73ae:   vfadd.vv        v30,v30,v13
+         : 199  ACC1r = __riscv_vfadd( ACC1r, tmp1r, gvl);
+    0.00 :   73b2:   vfadd.vv        v29,v29,v12
+         : 198  ACC0i = __riscv_vfadd( ACC0i, tmp0i, gvl);
+    0.00 :   73b6:   vfadd.vv        v0,v0,v11
+         : 203  ACC3r = __riscv_vfadd( ACC3r, tmp3r, gvl);
+    0.00 :   73ba:   vfadd.vv        v25,v25,v10
+         : 204  ACC3i = __riscv_vfadd( ACC3i, tmp3i, gvl);
+    0.00 :   73be:   vfadd.vv        v26,v26,v9
+         : 202  ACC2i = __riscv_vfadd( ACC2i, tmp2i, gvl);
+    0.00 :   73c2:   vfadd.vv        v27,v27,v8
+         : 223  ACC5r = __riscv_vfadd( ACC5r, tmp1r, gvl);
+    0.00 :   73c6:   vfadd.vv        v21,v21,v7
+         : 224  ACC5i = __riscv_vfadd( ACC5i, tmp1i, gvl);
+    0.00 :   73ca:   vfadd.vv        v22,v22,v6
+         : 222  ACC4i = __riscv_vfadd( ACC4i, tmp0i, gvl);
+    0.00 :   73ce:   vfadd.vv        v24,v24,v5
+         : 226  ACC6i = __riscv_vfadd( ACC6i, tmp2i, gvl);
+    0.00 :   73d2:   vfadd.vv        v20,v20,v1
+         : 227  ACC7r = __riscv_vfadd( ACC7r, tmp3r, gvl);
+    0.00 :   73d6:   vfadd.vv        v17,v17,v16
+         : 228  ACC7i = __riscv_vfadd( ACC7i, tmp3i, gvl);
+    3.17 :   73da:   vfadd.vv        v18,v18,v15
+         : 164  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   73de:   addi    t5,t5,128
+    0.00 :   73e2:   bne     a0,a6,72de <zgemm_kernel_r+0x23e>
+         : 234  vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   73e6:   sub     s11,a2,s9
+    0.00 :   73ea:   vlse64.v        v16,(s11),a4
+         : 235  vfloat64m1_t C0i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    1.59 :   73ee:   ld      s1,-160(s0)
+         : 237  vfloat64m1_t C1r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   73f2:   sub     s8,a3,s9
+    0.00 :   73f6:   vlse64.v        v14,(s8),a4
+         : 235  vfloat64m1_t C0i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    4.76 :   73fa:   add     s10,s1,a2
+    0.00 :   73fe:   vlse64.v        v15,(s10),a4
+         : 258  C0r = __riscv_vfmacc( C0r, alphar, ACC0r, gvl );
+    1.59 :   7402:   vfmacc.vf       v16,fa0,v31
+         : 238  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7406:   add     s7,s1,a3
+         : 253  vfloat64m1_t C6i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   740a:   ld      t6,-152(s0)
+         : 247  vfloat64m1_t C4i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   740e:   ld      s1,-144(s0)
+    0.00 :   7412:   add     t5,s9,a2
+         : 259  C0i = __riscv_vfmacc( C0i, alphar, ACC0i, gvl );
+    0.00 :   7416:   vfmacc.vf       v15,fa0,v0
+         : 274  C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   741a:   vfnmsac.vf      v16,fa4,v0
+    0.00 :   741e:   add     a6,s9,a3
+         : 241  vfloat64m1_t C2i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7422:   addi    s6,a2,8
+         : 247  vfloat64m1_t C4i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7426:   add     s4,a2,s1
+         : 250  vfloat64m1_t C5i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   742a:   add     s3,a3,s1
+         : 244  vfloat64m1_t C3i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   742e:   addi    s5,a3,8
+         : 253  vfloat64m1_t C6i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7432:   add     s1,a2,t6
+         : 252  vfloat64m1_t C6r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7436:   add     s2,s9,t5
+         : 256  vfloat64m1_t C7i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   743a:   add     t6,t6,a3
+         : 255  vfloat64m1_t C7r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   743c:   add     t2,s9,a6
+         : 241  vfloat64m1_t C2i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7440:   vlse64.v        v11,(s6),a4
+         : 253  vfloat64m1_t C6i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    3.17 :   7444:   vlse64.v        v3,(s1),a4
+         : 238  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7448:   vlse64.v        v13,(s7),a4
+         : 252  vfloat64m1_t C6r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    1.59 :   744c:   vlse64.v        v4,(s2),a4
+         : 255  vfloat64m1_t C7r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    1.59 :   7450:   vlse64.v        v2,(t2),a4
+         : 246  vfloat64m1_t C4r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7454:   vlse64.v        v8,(t5),a4
+         : 249  vfloat64m1_t C5r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    1.59 :   7458:   vlse64.v        v6,(a6),a4
+         : 244  vfloat64m1_t C3i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    3.17 :   745c:   vlse64.v        v9,(s5),a4
+         : 247  vfloat64m1_t C4i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7460:   vlse64.v        v7,(s4),a4
+         : 250  vfloat64m1_t C5i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7464:   vlse64.v        v5,(s3),a4
+         : 256  vfloat64m1_t C7i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    3.17 :   7468:   vlse64.v        v1,(t6),a4
+         : 260  C1r = __riscv_vfmacc( C1r, alphar, ACC1r, gvl );
+    0.00 :   746c:   vfmacc.vf       v14,fa0,v29
+         : 240  vfloat64m1_t C2r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7470:   vlse64.v        v12,(a2),a4
+         : 275  C0i = __riscv_vfmacc ( C0i, alphai, ACC0r, gvl );
+    0.00 :   7474:   vfmacc.vf       v15,fa4,v31
+         : 243  vfloat64m1_t C3r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7478:   vlse64.v        v10,(a3),a4
+         : 293  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C0r, gvl);
+    1.59 :   747c:   vsse64.v        v16,(s11),a4
+         : 261  C1i = __riscv_vfmacc( C1i, alphar, ACC1i, gvl );
+    0.00 :   7480:   vfmacc.vf       v13,fa0,v30
+         : 276  C1r = __riscv_vfnmsac( C1r, alphai, ACC1i, gvl );
+    0.00 :   7484:   vfnmsac.vf      v14,fa4,v30
+         : 262  C2r = __riscv_vfmacc( C2r, alphar, ACC2r, gvl );
+    0.00 :   7488:   vfmacc.vf       v12,fa0,v28
+         : 263  C2i = __riscv_vfmacc( C2i, alphar, ACC2i, gvl );
+    0.00 :   748c:   vfmacc.vf       v11,fa0,v27
+         : 264  C3r = __riscv_vfmacc( C3r, alphar, ACC3r, gvl );
+    0.00 :   7490:   vfmacc.vf       v10,fa0,v25
+         : 294  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C0i, gvl);
+    0.00 :   7494:   vsse64.v        v15,(s10),a4
+         : 277  C1i = __riscv_vfmacc ( C1i, alphai, ACC1r, gvl );
+    0.00 :   7498:   vfmacc.vf       v13,fa4,v29
+         : 265  C3i = __riscv_vfmacc( C3i, alphar, ACC3i, gvl );
+    0.00 :   749c:   vfmacc.vf       v9,fa0,v26
+         : 278  C2r = __riscv_vfnmsac( C2r, alphai, ACC2i, gvl );
+    0.00 :   74a0:   vfnmsac.vf      v12,fa4,v27
+         : 279  C2i = __riscv_vfmacc ( C2i, alphai, ACC2r, gvl );
+    0.00 :   74a4:   vfmacc.vf       v11,fa4,v28
+         : 280  C3r = __riscv_vfnmsac( C3r, alphai, ACC3i, gvl );
+    0.00 :   74a8:   vfnmsac.vf      v10,fa4,v26
+         : 296  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C1r, gvl);
+    0.00 :   74ac:   vsse64.v        v14,(s8),a4
+         : 266  C4r = __riscv_vfmacc( C4r, alphar, ACC4r, gvl );
+    0.00 :   74b0:   vfmacc.vf       v8,fa0,v23
+         : 281  C3i = __riscv_vfmacc ( C3i, alphai, ACC3r, gvl );
+    0.00 :   74b4:   vfmacc.vf       v9,fa4,v25
+         : 267  C4i = __riscv_vfmacc( C4i, alphar, ACC4i, gvl );
+    0.00 :   74b8:   vfmacc.vf       v7,fa0,v24
+         : 268  C5r = __riscv_vfmacc( C5r, alphar, ACC5r, gvl );
+    0.00 :   74bc:   vfmacc.vf       v6,fa0,v21
+         : 269  C5i = __riscv_vfmacc( C5i, alphar, ACC5i, gvl );
+    0.00 :   74c0:   vfmacc.vf       v5,fa0,v22
+         : 297  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C1i, gvl);
+    0.00 :   74c4:   vsse64.v        v13,(s7),a4
+         : 282  C4r = __riscv_vfnmsac( C4r, alphai, ACC4i, gvl );
+    0.00 :   74c8:   vfnmsac.vf      v8,fa4,v24
+         : 270  C6r = __riscv_vfmacc( C6r, alphar, ACC6r, gvl );
+    0.00 :   74cc:   vfmacc.vf       v4,fa0,v19
+         : 283  C4i = __riscv_vfmacc ( C4i, alphai, ACC4r, gvl );
+    0.00 :   74d0:   vfmacc.vf       v7,fa4,v23
+         : 284  C5r = __riscv_vfnmsac( C5r, alphai, ACC5i, gvl );
+    0.00 :   74d4:   vfnmsac.vf      v6,fa4,v22
+         : 285  C5i = __riscv_vfmacc ( C5i, alphai, ACC5r, gvl );
+    0.00 :   74d8:   vfmacc.vf       v5,fa4,v21
+         : 299  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C2r, gvl);
+    0.00 :   74dc:   vsse64.v        v12,(a2),a4
+         : 271  C6i = __riscv_vfmacc( C6i, alphar, ACC6i, gvl );
+    0.00 :   74e0:   vfmacc.vf       v3,fa0,v20
+         : 286  C6r = __riscv_vfnmsac( C6r, alphai, ACC6i, gvl );
+    0.00 :   74e4:   vfnmsac.vf      v4,fa4,v20
+         : 272  C7r = __riscv_vfmacc( C7r, alphar, ACC7r, gvl );
+    0.00 :   74e8:   vfmacc.vf       v2,fa0,v17
+         : 273  C7i = __riscv_vfmacc( C7i, alphar, ACC7i, gvl );
+    0.00 :   74ec:   vfmacc.vf       v1,fa0,v18
+         : 93   for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   74f0:   addi    t0,t0,1
+         : 300  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C2i, gvl);
+    0.00 :   74f2:   vsse64.v        v11,(s6),a4
+         : 287  C6i = __riscv_vfmacc ( C6i, alphai, ACC6r, gvl );
+    0.00 :   74f6:   vfmacc.vf       v3,fa4,v19
+         : 93   for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   74fa:   addi    a2,a2,128
+         : 288  C7r = __riscv_vfnmsac( C7r, alphai, ACC7i, gvl );
+    0.00 :   74fe:   vfnmsac.vf      v2,fa4,v18
+         : 289  C7i = __riscv_vfmacc ( C7i, alphai, ACC7r, gvl );
+    0.00 :   7502:   vfmacc.vf       v1,fa4,v17
+         : 93   for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   7506:   ld      s6,-136(s0)
+         : 302  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C3r, gvl);
+    0.00 :   750a:   vsse64.v        v10,(a3),a4
+         : 93   for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   750e:   addi    a3,a3,128
+    0.00 :   7512:   add     t3,t3,s6
+    0.00 :   7514:   add     t4,t4,s6
+         : 303  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C3i, gvl);
+    0.00 :   7516:   vsse64.v        v9,(s5),a4
+         : 305  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C4r, gvl);
+    0.00 :   751a:   vsse64.v        v8,(t5),a4
+         : 306  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C4i, gvl);
+    0.00 :   751e:   vsse64.v        v7,(s4),a4
+         : 308  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C5r, gvl);
+    0.00 :   7522:   vsse64.v        v6,(a6),a4
+         : 309  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C5i, gvl);
+    0.00 :   7526:   vsse64.v        v5,(s3),a4
+         : 311  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C6r, gvl);
+    0.00 :   752a:   vsse64.v        v4,(s2),a4
+         : 312  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C6i, gvl);
+    0.00 :   752e:   vsse64.v        v3,(s1),a4
+         : 314  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C7r, gvl);
+    0.00 :   7532:   vsse64.v        v2,(t2),a4
+         : 315  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C7i, gvl);
+    0.00 :   7536:   vsse64.v        v1,(t6),a4
+         : 93   for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   753a:   ld      s1,-128(s0)
+    0.00 :   753e:   blt     t0,s1,7216 <zgemm_kernel_r+0x176>
+    0.00 :   7542:   ld      a2,-264(s0)
+    0.00 :   7546:   ld      t2,-192(s0)
+    0.00 :   754a:   ld      s6,-168(s0)
+    0.00 :   754e:   ld      s7,-176(s0)
+    0.00 :   7552:   add     t3,a2,t2
+         : 324  if( M & 4 ) {
+    0.00 :   7556:   ld      a2,-272(s0)
+    0.00 :   755a:   ld      s10,-184(s0)
+    0.00 :   755e:   ld      s11,-200(s0)
+    0.00 :   7562:   ld      s8,-208(s0)
+    0.00 :   7566:   ld      s4,-216(s0)
+    0.00 :   756a:   ld      t5,-224(s0)
+    0.00 :   756e:   ld      s5,-232(s0)
+    0.00 :   7572:   ld      a3,-296(s0)
+    0.00 :   7576:   bnez    a2,75ba <zgemm_kernel_r+0x51a>
+         : 461  if( M & 2 ) {
+    0.00 :   7578:   ld      a2,-280(s0)
+    0.00 :   757c:   bnez    a2,77a8 <zgemm_kernel_r+0x708>
+         : 598  if( M & 1 ) {
+    0.00 :   7580:   ld      a2,-288(s0)
+    0.00 :   7584:   bnez    a2,79ae <zgemm_kernel_r+0x90e>
+         : 88   for (BLASLONG j=0; j<N/4; j+=1) {
+    0.00 :   7588:   ld      a3,-248(s0)
+    0.00 :   758c:   addi    s6,s6,1
+    0.00 :   758e:   add     s8,s8,s11
+    0.00 :   7590:   mv      t2,t3
+    0.00 :   7592:   add     a1,a1,s10
+    0.00 :   7594:   add     a0,a0,s10
+    0.00 :   7596:   add     s7,s7,s11
+    0.00 :   7598:   bge     s6,a3,7b94 <zgemm_kernel_r+0xaf4>
+         : 93   for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   759c:   ld      a3,-256(s0)
+    0.00 :   75a0:   li      a2,7
+    0.00 :   75a2:   vsetivli        zero,4,e64,m1,ta,ma
+    0.00 :   75a6:   blt     a2,a3,71da <zgemm_kernel_r+0x13a>
+    0.00 :   75aa:   ld      a2,-264(s0)
+         : 89   m_top = 0;
+    0.00 :   75ae:   li      a3,0
+         : 324  if( M & 4 ) {
+    0.00 :   75b0:   add     t3,a2,t2
+    0.00 :   75b4:   ld      a2,-272(s0)
+    0.00 :   75b8:   beqz    a2,7578 <zgemm_kernel_r+0x4d8>
+         : 327  BLASLONG ai=m_top*K*2;
+    0.00 :   75ba:   ld      s1,-120(s0)
+         : 330  double B0i = B[bi+0*2+1];
+    0.00 :   75be:   fld     ft3,-56(a1)
+         : 332  double B1i = B[bi+1*2+1];
+    0.00 :   75c2:   fld     ft2,-40(a1)
+         : 327  BLASLONG ai=m_top*K*2;
+    0.00 :   75c6:   mul     a2,s1,a3
+         : 334  double B2i = B[bi+2*2+1];
+    0.00 :   75ca:   fld     ft1,-24(a1)
+         : 336  double B3i = B[bi+3*2+1];
+    0.00 :   75ce:   fld     ft0,-8(a1)
+         : 329  double B0r = B[bi+0*2+0];
+    0.00 :   75d2:   fld     fa1,-64(a1)
+         : 331  double B1r = B[bi+1*2+0];
+    0.00 :   75d6:   fld     fa2,-48(a1)
+         : 333  double B2r = B[bi+2*2+0];
+    0.00 :   75da:   fld     fa3,-32(a1)
+         : 335  double B3r = B[bi+3*2+0];
+    0.00 :   75de:   fld     fa5,-16(a1)
+         : 339  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   75e2:   slli    t6,a2,0x4
+         : 340  vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   75e6:   slli    a2,a2,0x4
+    0.00 :   75e8:   addi    a2,a2,8
+    0.00 :   75ea:   add     a2,a2,s4
+    0.00 :   75ec:   vlse64.v        v2,(a2),a4
+         : 339  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   75f0:   add     a2,s4,t6
+    0.00 :   75f4:   vlse64.v        v1,(a2),a4
+         : 370  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   75f8:   li      a2,1
+         : 345  vfloat64m1_t tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   75fa:   vfmul.vf        v17,v2,ft3
+         : 347  vfloat64m1_t tmp1r = __riscv_vfmul_vf_f64m1( A0i, B1i, gvl);
+    0.00 :   75fe:   vfmul.vf        v13,v2,ft2
+         : 346  vfloat64m1_t tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   7602:   vfmul.vf        v18,v1,ft3
+         : 348  vfloat64m1_t tmp1i = __riscv_vfmul_vf_f64m1( A0r, B1i, gvl);
+    0.00 :   7606:   vfmul.vf        v16,v1,ft2
+         : 349  vfloat64m1_t tmp2r = __riscv_vfmul_vf_f64m1( A0i, B2i, gvl);
+    0.00 :   760a:   vfmul.vf        v15,v2,ft1
+         : 350  vfloat64m1_t tmp2i = __riscv_vfmul_vf_f64m1( A0r, B2i, gvl);
+    0.00 :   760e:   vfmul.vf        v14,v1,ft1
+         : 351  vfloat64m1_t tmp3r = __riscv_vfmul_vf_f64m1( A0i, B3i, gvl);
+    0.00 :   7612:   vfmul.vf        v11,v2,ft0
+         : 352  vfloat64m1_t tmp3i = __riscv_vfmul_vf_f64m1( A0r, B3i, gvl);
+    0.00 :   7616:   vfmul.vf        v12,v1,ft0
+         : 353  tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   761a:   vfmacc.vf       v17,fa1,v1
+         : 354  tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   761e:   vfmsac.vf       v18,fa1,v2
+         : 355  tmp1r = VFMACC_RR( tmp1r, B1r, A0r, gvl);
+    0.00 :   7622:   vfmacc.vf       v13,fa2,v1
+         : 356  tmp1i = VFMACC_RI( tmp1i, B1r, A0i, gvl);
+    0.00 :   7626:   vfmsac.vf       v16,fa2,v2
+         : 357  tmp2r = VFMACC_RR( tmp2r, B2r, A0r, gvl);
+    0.00 :   762a:   vfmacc.vf       v15,fa3,v1
+         : 358  tmp2i = VFMACC_RI( tmp2i, B2r, A0i, gvl);
+    0.00 :   762e:   vfmsac.vf       v14,fa3,v2
+         : 360  tmp3i = VFMACC_RI( tmp3i, B3r, A0i, gvl);
+    0.00 :   7632:   vfmsac.vf       v12,fa5,v2
+         : 359  tmp3r = VFMACC_RR( tmp3r, B3r, A0r, gvl);
+    0.00 :   7636:   vfmacc.vf       v11,fa5,v1
+         : 370  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   763a:   bge     a2,s1,76da <zgemm_kernel_r+0x63a>
+    0.00 :   763e:   ld      a2,-352(s0)
+    0.00 :   7642:   slli    t0,t3,0x3
+    0.00 :   7646:   add     t4,t6,a2
+    0.00 :   764a:   ld      a2,-328(s0)
+    0.00 :   764e:   add     t0,t0,a2
+    0.00 :   7650:   mv      a2,a1
+         : 382  A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7652:   addi    a6,t4,8
+         : 381  A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7656:   vlse64.v        v1,(t4),a4
+         : 382  A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   765a:   vlse64.v        v2,(a6),a4
+         : 372  B0i = B[bi+0*2+1];
+    0.00 :   765e:   fld     fa1,8(a2)
+         : 374  B1i = B[bi+1*2+1];
+    0.00 :   7660:   fld     fa2,24(a2)
+         : 376  B2i = B[bi+2*2+1];
+    0.00 :   7662:   fld     fa3,40(a2)
+         : 378  B3i = B[bi+3*2+1];
+    0.00 :   7664:   fld     fa5,56(a2)
+         : 386  tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   7666:   vfmul.vf        v9,v1,fa1
+         : 385  tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   766a:   vfmul.vf        v10,v2,fa1
+         : 387  tmp1r = __riscv_vfmul_vf_f64m1( A0i, B1i, gvl);
+    0.00 :   766e:   vfmul.vf        v8,v2,fa2
+         : 388  tmp1i = __riscv_vfmul_vf_f64m1( A0r, B1i, gvl);
+    0.00 :   7672:   vfmul.vf        v7,v1,fa2
+         : 389  tmp2r = __riscv_vfmul_vf_f64m1( A0i, B2i, gvl);
+    0.00 :   7676:   vfmul.vf        v6,v2,fa3
+         : 390  tmp2i = __riscv_vfmul_vf_f64m1( A0r, B2i, gvl);
+    0.00 :   767a:   vfmul.vf        v5,v1,fa3
+         : 391  tmp3r = __riscv_vfmul_vf_f64m1( A0i, B3i, gvl);
+    0.00 :   767e:   vfmul.vf        v4,v2,fa5
+         : 392  tmp3i = __riscv_vfmul_vf_f64m1( A0r, B3i, gvl);
+    0.00 :   7682:   vfmul.vf        v3,v1,fa5
+         : 371  B0r = B[bi+0*2+0];
+    0.00 :   7686:   fld     fa1,0(a2)
+         : 373  B1r = B[bi+1*2+0];
+    0.00 :   7688:   fld     fa2,16(a2)
+         : 375  B2r = B[bi+2*2+0];
+    0.00 :   768a:   fld     fa3,32(a2)
+         : 377  B3r = B[bi+3*2+0];
+    0.00 :   768c:   fld     fa5,48(a2)
+         : 393  tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   768e:   vfmacc.vf       v10,fa1,v1
+         : 394  tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   7692:   vfmsac.vf       v9,fa1,v2
+         : 395  tmp1r = VFMACC_RR( tmp1r, B1r, A0r, gvl);
+    0.00 :   7696:   vfmacc.vf       v8,fa2,v1
+         : 396  tmp1i = VFMACC_RI( tmp1i, B1r, A0i, gvl);
+    0.00 :   769a:   vfmsac.vf       v7,fa2,v2
+         : 397  tmp2r = VFMACC_RR( tmp2r, B2r, A0r, gvl);
+    0.00 :   769e:   vfmacc.vf       v6,fa3,v1
+         : 398  tmp2i = VFMACC_RI( tmp2i, B2r, A0i, gvl);
+    0.00 :   76a2:   vfmsac.vf       v5,fa3,v2
+         : 400  tmp3i = VFMACC_RI( tmp3i, B3r, A0i, gvl);
+    0.00 :   76a6:   vfmsac.vf       v3,fa5,v2
+         : 399  tmp3r = VFMACC_RR( tmp3r, B3r, A0r, gvl);
+    0.00 :   76aa:   vfmacc.vf       v4,fa5,v1
+         : 370  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   76ae:   addi    a2,a2,64
+         : 401  ACC0r = __riscv_vfadd( ACC0r, tmp0r, gvl);
+    0.00 :   76b2:   vfadd.vv        v17,v17,v10
+         : 402  ACC0i = __riscv_vfadd( ACC0i, tmp0i, gvl);
+    0.00 :   76b6:   vfadd.vv        v18,v18,v9
+         : 403  ACC1r = __riscv_vfadd( ACC1r, tmp1r, gvl);
+    0.00 :   76ba:   vfadd.vv        v13,v13,v8
+         : 404  ACC1i = __riscv_vfadd( ACC1i, tmp1i, gvl);
+    0.00 :   76be:   vfadd.vv        v16,v16,v7
+         : 405  ACC2r = __riscv_vfadd( ACC2r, tmp2r, gvl);
+    0.00 :   76c2:   vfadd.vv        v15,v15,v6
+         : 406  ACC2i = __riscv_vfadd( ACC2i, tmp2i, gvl);
+    0.00 :   76c6:   vfadd.vv        v14,v14,v5
+         : 407  ACC3r = __riscv_vfadd( ACC3r, tmp3r, gvl);
+    0.00 :   76ca:   vfadd.vv        v11,v11,v4
+         : 408  ACC3i = __riscv_vfadd( ACC3i, tmp3i, gvl);
+    0.00 :   76ce:   vfadd.vv        v12,v12,v3
+         : 370  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   76d2:   addi    t4,t4,64
+    0.00 :   76d6:   bne     t0,a2,7652 <zgemm_kernel_r+0x5b2>
+         : 412  BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   76da:   add     a2,s8,a3
+         : 414  vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   76de:   slli    t4,a2,0x4
+    0.00 :   76e2:   add     s2,t5,t4
+    0.00 :   76e6:   vlse64.v        v1,(s2),a4
+         : 415  vfloat64m1_t C0i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   76ea:   addi    t4,t4,8
+    0.00 :   76ec:   add     s3,t5,t4
+    0.00 :   76f0:   vlse64.v        v7,(s3),a4
+         : 416  ci += ldc-gvl*0;
+    0.00 :   76f4:   add     a2,a2,s5
+         : 417  vfloat64m1_t C1r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   76f6:   slli    t0,a2,0x4
+         : 426  C0r = __riscv_vfmacc( C0r, alphar, ACC0r, gvl );
+    0.00 :   76fa:   vfmacc.vf       v1,fa0,v17
+         : 418  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   76fe:   addi    t4,t0,8
+         : 417  vfloat64m1_t C1r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7702:   add     t0,t0,t5
+    0.00 :   7704:   vlse64.v        v6,(t0),a4
+         : 427  C0i = __riscv_vfmacc( C0i, alphar, ACC0i, gvl );
+    0.00 :   7708:   vfmacc.vf       v7,fa0,v18
+         : 419  ci += ldc-gvl*0;
+    0.00 :   770c:   add     a2,a2,s5
+         : 434  C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   770e:   vfnmsac.vf      v1,fa4,v18
+         : 422  ci += ldc-gvl*0;
+    0.00 :   7712:   add     t6,s5,a2
+         : 423  vfloat64m1_t C3r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7716:   slli    t6,t6,0x4
+         : 420  vfloat64m1_t C2r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7718:   slli    a2,a2,0x4
+         : 424  vfloat64m1_t C3i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   771a:   addi    s1,t6,8
+         : 421  vfloat64m1_t C2i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   771e:   addi    a6,a2,8
+         : 434  C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   7722:   vmv1r.v v8,v1
+         : 424  vfloat64m1_t C3i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7726:   add     t2,t5,s1
+         : 420  vfloat64m1_t C2r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   772a:   add     a2,a2,t5
+         : 423  vfloat64m1_t C3r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   772c:   add     s1,t5,t6
+         : 418  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7730:   add     t4,t4,t5
+         : 421  vfloat64m1_t C2i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7732:   add     t6,t5,a6
+         : 424  vfloat64m1_t C3i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7736:   vlse64.v        v1,(t2),a4
+         : 423  vfloat64m1_t C3r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   773a:   vlse64.v        v2,(s1),a4
+         : 421  vfloat64m1_t C2i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   773e:   vlse64.v        v3,(t6),a4
+         : 420  vfloat64m1_t C2r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7742:   vlse64.v        v4,(a2),a4
+         : 418  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7746:   vlse64.v        v5,(t4),a4
+         : 435  C0i = __riscv_vfmacc ( C0i, alphai, ACC0r, gvl );
+    0.00 :   774a:   vfmacc.vf       v7,fa4,v17
+         : 445  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C0r, gvl);
+    0.00 :   774e:   vsse64.v        v8,(s2),a4
+         : 428  C1r = __riscv_vfmacc( C1r, alphar, ACC1r, gvl );
+    0.00 :   7752:   vfmacc.vf       v6,fa0,v13
+         : 431  C2i = __riscv_vfmacc( C2i, alphar, ACC2i, gvl );
+    0.00 :   7756:   vfmacc.vf       v3,fa0,v14
+         : 430  C2r = __riscv_vfmacc( C2r, alphar, ACC2r, gvl );
+    0.00 :   775a:   vfmacc.vf       v4,fa0,v15
+         : 429  C1i = __riscv_vfmacc( C1i, alphar, ACC1i, gvl );
+    0.00 :   775e:   vfmacc.vf       v5,fa0,v16
+         : 432  C3r = __riscv_vfmacc( C3r, alphar, ACC3r, gvl );
+    0.00 :   7762:   vfmacc.vf       v2,fa0,v11
+         : 446  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C0i, gvl);
+    0.00 :   7766:   vsse64.v        v7,(s3),a4
+         : 436  C1r = __riscv_vfnmsac( C1r, alphai, ACC1i, gvl );
+    0.00 :   776a:   vfnmsac.vf      v6,fa4,v16
+         : 439  C2i = __riscv_vfmacc ( C2i, alphai, ACC2r, gvl );
+    0.00 :   776e:   vfmacc.vf       v3,fa4,v15
+         : 438  C2r = __riscv_vfnmsac( C2r, alphai, ACC2i, gvl );
+    0.00 :   7772:   vfnmsac.vf      v4,fa4,v14
+         : 437  C1i = __riscv_vfmacc ( C1i, alphai, ACC1r, gvl );
+    0.00 :   7776:   vfmacc.vf       v5,fa4,v13
+         : 433  C3i = __riscv_vfmacc( C3i, alphar, ACC3i, gvl );
+    0.00 :   777a:   vfmacc.vf       v1,fa0,v12
+         : 440  C3r = __riscv_vfnmsac( C3r, alphai, ACC3i, gvl );
+    0.00 :   777e:   vfnmsac.vf      v2,fa4,v12
+         : 448  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C1r, gvl);
+    0.00 :   7782:   vsse64.v        v6,(t0),a4
+         : 457  m_top += 4;
+    0.00 :   7786:   addi    a3,a3,4
+         : 441  C3i = __riscv_vfmacc ( C3i, alphai, ACC3r, gvl );
+    0.00 :   7788:   vfmacc.vf       v1,fa4,v11
+         : 449  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C1i, gvl);
+    0.00 :   778c:   vsse64.v        v5,(t4),a4
+         : 451  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C2r, gvl);
+    0.00 :   7790:   vsse64.v        v4,(a2),a4
+         : 452  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C2i, gvl);
+    0.00 :   7794:   vsse64.v        v3,(t6),a4
+         : 454  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C3r, gvl);
+    0.00 :   7798:   vsse64.v        v2,(s1),a4
+         : 455  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C3i, gvl);
+    0.00 :   779c:   vsse64.v        v1,(t2),a4
+         : 461  if( M & 2 ) {
+    0.00 :   77a0:   ld      a2,-280(s0)
+    0.00 :   77a4:   beqz    a2,7580 <zgemm_kernel_r+0x4e0>
+         : 464  BLASLONG ai=m_top*K*2;
+    0.00 :   77a8:   ld      s1,-120(s0)
+         : 477  vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   77ac:   ld      a6,-240(s0)
+         : 467  double B0i = B[bi+0*2+1];
+    0.00 :   77b0:   fld     ft3,-56(a1)
+         : 464  BLASLONG ai=m_top*K*2;
+    0.00 :   77b4:   mul     a2,a3,s1
+         : 477  vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   77b8:   vsetvli zero,a6,e64,m1,ta,ma
+         : 469  double B1i = B[bi+1*2+1];
+    0.00 :   77bc:   fld     ft2,-40(a1)
+         : 471  double B2i = B[bi+2*2+1];
+    0.00 :   77c0:   fld     ft1,-24(a1)
+         : 473  double B3i = B[bi+3*2+1];
+    0.00 :   77c4:   fld     ft0,-8(a1)
+         : 466  double B0r = B[bi+0*2+0];
+    0.00 :   77c8:   fld     fa1,-64(a1)
+         : 468  double B1r = B[bi+1*2+0];
+    0.00 :   77cc:   fld     fa2,-48(a1)
+         : 470  double B2r = B[bi+2*2+0];
+    0.00 :   77d0:   fld     fa3,-32(a1)
+         : 472  double B3r = B[bi+3*2+0];
+    0.00 :   77d4:   fld     fa5,-16(a1)
+         : 476  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   77d8:   slli    t6,a2,0x4
+         : 477  vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   77dc:   slli    a2,a2,0x4
+    0.00 :   77de:   addi    a2,a2,8
+    0.00 :   77e0:   add     a2,a2,s4
+    0.00 :   77e2:   vlse64.v        v2,(a2),a4
+         : 476  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   77e6:   add     a2,s4,t6
+    0.00 :   77ea:   vlse64.v        v1,(a2),a4
+         : 507  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   77ee:   li      a2,1
+         : 482  vfloat64m1_t tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   77f0:   vfmul.vf        v17,v2,ft3
+         : 484  vfloat64m1_t tmp1r = __riscv_vfmul_vf_f64m1( A0i, B1i, gvl);
+    0.00 :   77f4:   vfmul.vf        v13,v2,ft2
+         : 483  vfloat64m1_t tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   77f8:   vfmul.vf        v18,v1,ft3
+         : 485  vfloat64m1_t tmp1i = __riscv_vfmul_vf_f64m1( A0r, B1i, gvl);
+    0.00 :   77fc:   vfmul.vf        v16,v1,ft2
+         : 486  vfloat64m1_t tmp2r = __riscv_vfmul_vf_f64m1( A0i, B2i, gvl);
+    0.00 :   7800:   vfmul.vf        v15,v2,ft1
+         : 487  vfloat64m1_t tmp2i = __riscv_vfmul_vf_f64m1( A0r, B2i, gvl);
+    0.00 :   7804:   vfmul.vf        v14,v1,ft1
+         : 488  vfloat64m1_t tmp3r = __riscv_vfmul_vf_f64m1( A0i, B3i, gvl);
+    0.00 :   7808:   vfmul.vf        v11,v2,ft0
+         : 489  vfloat64m1_t tmp3i = __riscv_vfmul_vf_f64m1( A0r, B3i, gvl);
+    0.00 :   780c:   vfmul.vf        v12,v1,ft0
+         : 490  tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   7810:   vfmacc.vf       v17,fa1,v1
+         : 491  tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   7814:   vfmsac.vf       v18,fa1,v2
+         : 492  tmp1r = VFMACC_RR( tmp1r, B1r, A0r, gvl);
+    0.00 :   7818:   vfmacc.vf       v13,fa2,v1
+         : 493  tmp1i = VFMACC_RI( tmp1i, B1r, A0i, gvl);
+    0.00 :   781c:   vfmsac.vf       v16,fa2,v2
+         : 494  tmp2r = VFMACC_RR( tmp2r, B2r, A0r, gvl);
+    0.00 :   7820:   vfmacc.vf       v15,fa3,v1
+         : 495  tmp2i = VFMACC_RI( tmp2i, B2r, A0i, gvl);
+    0.00 :   7824:   vfmsac.vf       v14,fa3,v2
+         : 497  tmp3i = VFMACC_RI( tmp3i, B3r, A0i, gvl);
+    0.00 :   7828:   vfmsac.vf       v12,fa5,v2
+         : 496  tmp3r = VFMACC_RR( tmp3r, B3r, A0r, gvl);
+    0.00 :   782c:   vfmacc.vf       v11,fa5,v1
+         : 507  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7830:   bge     a2,s1,78d0 <zgemm_kernel_r+0x830>
+    0.00 :   7834:   ld      a2,-360(s0)
+    0.00 :   7838:   slli    t0,t3,0x3
+    0.00 :   783c:   add     t4,t6,a2
+    0.00 :   7840:   ld      a2,-328(s0)
+    0.00 :   7844:   add     t0,t0,a2
+    0.00 :   7846:   mv      a2,a1
+         : 519  A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7848:   addi    t6,t4,8
+         : 518  A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   784c:   vlse64.v        v1,(t4),a4
+         : 519  A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7850:   vlse64.v        v2,(t6),a4
+         : 509  B0i = B[bi+0*2+1];
+    0.00 :   7854:   fld     fa1,8(a2)
+         : 511  B1i = B[bi+1*2+1];
+    0.00 :   7856:   fld     fa2,24(a2)
+         : 513  B2i = B[bi+2*2+1];
+    0.00 :   7858:   fld     fa3,40(a2)
+         : 515  B3i = B[bi+3*2+1];
+    0.00 :   785a:   fld     fa5,56(a2)
+         : 523  tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   785c:   vfmul.vf        v9,v1,fa1
+         : 522  tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   7860:   vfmul.vf        v10,v2,fa1
+         : 524  tmp1r = __riscv_vfmul_vf_f64m1( A0i, B1i, gvl);
+    0.00 :   7864:   vfmul.vf        v8,v2,fa2
+         : 525  tmp1i = __riscv_vfmul_vf_f64m1( A0r, B1i, gvl);
+    0.00 :   7868:   vfmul.vf        v7,v1,fa2
+         : 526  tmp2r = __riscv_vfmul_vf_f64m1( A0i, B2i, gvl);
+    0.00 :   786c:   vfmul.vf        v6,v2,fa3
+         : 527  tmp2i = __riscv_vfmul_vf_f64m1( A0r, B2i, gvl);
+    0.00 :   7870:   vfmul.vf        v5,v1,fa3
+         : 528  tmp3r = __riscv_vfmul_vf_f64m1( A0i, B3i, gvl);
+    0.00 :   7874:   vfmul.vf        v4,v2,fa5
+         : 529  tmp3i = __riscv_vfmul_vf_f64m1( A0r, B3i, gvl);
+    0.00 :   7878:   vfmul.vf        v3,v1,fa5
+         : 508  B0r = B[bi+0*2+0];
+    0.00 :   787c:   fld     fa1,0(a2)
+         : 510  B1r = B[bi+1*2+0];
+    0.00 :   787e:   fld     fa2,16(a2)
+         : 512  B2r = B[bi+2*2+0];
+    0.00 :   7880:   fld     fa3,32(a2)
+         : 514  B3r = B[bi+3*2+0];
+    0.00 :   7882:   fld     fa5,48(a2)
+         : 530  tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   7884:   vfmacc.vf       v10,fa1,v1
+         : 531  tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   7888:   vfmsac.vf       v9,fa1,v2
+         : 532  tmp1r = VFMACC_RR( tmp1r, B1r, A0r, gvl);
+    0.00 :   788c:   vfmacc.vf       v8,fa2,v1
+         : 533  tmp1i = VFMACC_RI( tmp1i, B1r, A0i, gvl);
+    0.00 :   7890:   vfmsac.vf       v7,fa2,v2
+         : 534  tmp2r = VFMACC_RR( tmp2r, B2r, A0r, gvl);
+    0.00 :   7894:   vfmacc.vf       v6,fa3,v1
+         : 535  tmp2i = VFMACC_RI( tmp2i, B2r, A0i, gvl);
+    0.00 :   7898:   vfmsac.vf       v5,fa3,v2
+         : 537  tmp3i = VFMACC_RI( tmp3i, B3r, A0i, gvl);
+    0.00 :   789c:   vfmsac.vf       v3,fa5,v2
+         : 536  tmp3r = VFMACC_RR( tmp3r, B3r, A0r, gvl);
+    0.00 :   78a0:   vfmacc.vf       v4,fa5,v1
+         : 507  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   78a4:   addi    a2,a2,64
+         : 538  ACC0r = __riscv_vfadd( ACC0r, tmp0r, gvl);
+    0.00 :   78a8:   vfadd.vv        v17,v17,v10
+         : 539  ACC0i = __riscv_vfadd( ACC0i, tmp0i, gvl);
+    0.00 :   78ac:   vfadd.vv        v18,v18,v9
+         : 540  ACC1r = __riscv_vfadd( ACC1r, tmp1r, gvl);
+    0.00 :   78b0:   vfadd.vv        v13,v13,v8
+         : 541  ACC1i = __riscv_vfadd( ACC1i, tmp1i, gvl);
+    0.00 :   78b4:   vfadd.vv        v16,v16,v7
+         : 542  ACC2r = __riscv_vfadd( ACC2r, tmp2r, gvl);
+    0.00 :   78b8:   vfadd.vv        v15,v15,v6
+         : 543  ACC2i = __riscv_vfadd( ACC2i, tmp2i, gvl);
+    0.00 :   78bc:   vfadd.vv        v14,v14,v5
+         : 544  ACC3r = __riscv_vfadd( ACC3r, tmp3r, gvl);
+    0.00 :   78c0:   vfadd.vv        v11,v11,v4
+         : 545  ACC3i = __riscv_vfadd( ACC3i, tmp3i, gvl);
+    0.00 :   78c4:   vfadd.vv        v12,v12,v3
+         : 507  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   78c8:   addi    t4,t4,32
+    0.00 :   78cc:   bne     t0,a2,7848 <zgemm_kernel_r+0x7a8>
+         : 551  vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   78d0:   ld      t2,-240(s0)
+         : 549  BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   78d4:   add     a2,s8,a3
+         : 551  vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   78d8:   slli    t4,a2,0x4
+    0.00 :   78dc:   vsetvli zero,t2,e64,m1,ta,ma
+    0.00 :   78e0:   add     s2,t5,t4
+    0.00 :   78e4:   vlse64.v        v1,(s2),a4
+         : 552  vfloat64m1_t C0i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   78e8:   addi    t4,t4,8
+    0.00 :   78ea:   add     s3,t5,t4
+    0.00 :   78ee:   vlse64.v        v7,(s3),a4
+         : 553  ci += ldc-gvl*0;
+    0.00 :   78f2:   add     a2,a2,s5
+         : 554  vfloat64m1_t C1r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   78f4:   slli    t0,a2,0x4
+         : 563  C0r = __riscv_vfmacc( C0r, alphar, ACC0r, gvl );
+    0.00 :   78f8:   vfmacc.vf       v1,fa0,v17
+         : 556  ci += ldc-gvl*0;
+    0.00 :   78fc:   add     a2,a2,s5
+         : 559  ci += ldc-gvl*0;
+    0.00 :   78fe:   add     t6,s5,a2
+         : 555  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7902:   addi    t4,t0,8
+         : 554  vfloat64m1_t C1r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7906:   add     t0,t0,t5
+    0.00 :   7908:   vlse64.v        v6,(t0),a4
+         : 571  C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   790c:   vfnmsac.vf      v1,fa4,v18
+         : 560  vfloat64m1_t C3r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7910:   slli    t6,t6,0x4
+         : 564  C0i = __riscv_vfmacc( C0i, alphar, ACC0i, gvl );
+    0.00 :   7912:   vfmacc.vf       v7,fa0,v18
+         : 557  vfloat64m1_t C2r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7916:   slli    a2,a2,0x4
+         : 561  vfloat64m1_t C3i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7918:   addi    s1,t6,8
+         : 558  vfloat64m1_t C2i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   791c:   addi    a6,a2,8
+         : 561  vfloat64m1_t C3i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7920:   add     t2,t5,s1
+         : 560  vfloat64m1_t C3r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7924:   add     s1,t5,t6
+         : 558  vfloat64m1_t C2i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7928:   add     t6,t5,a6
+         : 561  vfloat64m1_t C3i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   792c:   ld      a6,-240(s0)
+         : 571  C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   7930:   vmv1r.v v8,v1
+         : 557  vfloat64m1_t C2r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7934:   add     a2,a2,t5
+         : 561  vfloat64m1_t C3i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7936:   vsetvli zero,a6,e64,m1,ta,ma
+         : 555  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   793a:   add     t4,t4,t5
+         : 557  vfloat64m1_t C2r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   793c:   vlse64.v        v4,(a2),a4
+         : 561  vfloat64m1_t C3i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7940:   vlse64.v        v1,(t2),a4
+         : 560  vfloat64m1_t C3r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7944:   vlse64.v        v2,(s1),a4
+         : 558  vfloat64m1_t C2i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7948:   vlse64.v        v3,(t6),a4
+         : 555  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   794c:   vlse64.v        v5,(t4),a4
+         : 572  C0i = __riscv_vfmacc ( C0i, alphai, ACC0r, gvl );
+    0.00 :   7950:   vfmacc.vf       v7,fa4,v17
+         : 582  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C0r, gvl);
+    0.00 :   7954:   vsse64.v        v8,(s2),a4
+         : 565  C1r = __riscv_vfmacc( C1r, alphar, ACC1r, gvl );
+    0.00 :   7958:   vfmacc.vf       v6,fa0,v13
+         : 567  C2r = __riscv_vfmacc( C2r, alphar, ACC2r, gvl );
+    0.00 :   795c:   vfmacc.vf       v4,fa0,v15
+         : 568  C2i = __riscv_vfmacc( C2i, alphar, ACC2i, gvl );
+    0.00 :   7960:   vfmacc.vf       v3,fa0,v14
+         : 566  C1i = __riscv_vfmacc( C1i, alphar, ACC1i, gvl );
+    0.00 :   7964:   vfmacc.vf       v5,fa0,v16
+         : 569  C3r = __riscv_vfmacc( C3r, alphar, ACC3r, gvl );
+    0.00 :   7968:   vfmacc.vf       v2,fa0,v11
+         : 583  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C0i, gvl);
+    0.00 :   796c:   vsse64.v        v7,(s3),a4
+         : 573  C1r = __riscv_vfnmsac( C1r, alphai, ACC1i, gvl );
+    0.00 :   7970:   vfnmsac.vf      v6,fa4,v16
+         : 575  C2r = __riscv_vfnmsac( C2r, alphai, ACC2i, gvl );
+    0.00 :   7974:   vfnmsac.vf      v4,fa4,v14
+         : 576  C2i = __riscv_vfmacc ( C2i, alphai, ACC2r, gvl );
+    0.00 :   7978:   vfmacc.vf       v3,fa4,v15
+         : 574  C1i = __riscv_vfmacc ( C1i, alphai, ACC1r, gvl );
+    0.00 :   797c:   vfmacc.vf       v5,fa4,v13
+         : 570  C3i = __riscv_vfmacc( C3i, alphar, ACC3i, gvl );
+    0.00 :   7980:   vfmacc.vf       v1,fa0,v12
+         : 577  C3r = __riscv_vfnmsac( C3r, alphai, ACC3i, gvl );
+    0.00 :   7984:   vfnmsac.vf      v2,fa4,v12
+         : 585  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C1r, gvl);
+    0.00 :   7988:   vsse64.v        v6,(t0),a4
+         : 594  m_top += 2;
+    0.00 :   798c:   addi    a3,a3,2
+         : 578  C3i = __riscv_vfmacc ( C3i, alphai, ACC3r, gvl );
+    0.00 :   798e:   vfmacc.vf       v1,fa4,v11
+         : 586  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C1i, gvl);
+    0.00 :   7992:   vsse64.v        v5,(t4),a4
+         : 588  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C2r, gvl);
+    0.00 :   7996:   vsse64.v        v4,(a2),a4
+         : 589  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C2i, gvl);
+    0.00 :   799a:   vsse64.v        v3,(t6),a4
+         : 591  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C3r, gvl);
+    0.00 :   799e:   vsse64.v        v2,(s1),a4
+         : 592  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C3i, gvl);
+    0.00 :   79a2:   vsse64.v        v1,(t2),a4
+         : 598  if( M & 1 ) {
+    0.00 :   79a6:   ld      a2,-288(s0)
+    0.00 :   79aa:   beqz    a2,7588 <zgemm_kernel_r+0x4e8>
+         : 610  for(BLASLONG k=0; k<K; k++) {
+    0.00 :   79ae:   ld      t4,-120(s0)
+    0.00 :   79b2:   blez    t4,853a <zgemm_kernel_r+0x149a>
+         : 607  BLASLONG ai=m_top*K*2;
+    0.00 :   79b6:   mul     t6,a3,t4
+         : 606  double result7 = 0;
+    0.00 :   79ba:   fmv.d.x fa5,zero
+    0.00 :   79be:   addi    t0,a1,-64
+         : 605  double result6 = 0;
+    0.00 :   79c2:   fmv.d   fa3,fa5
+         : 604  double result5 = 0;
+    0.00 :   79c6:   fmv.d   fa1,fa5
+         : 603  double result4 = 0;
+    0.00 :   79ca:   fmv.d   fa2,fa5
+         : 602  double result3 = 0;
+    0.00 :   79ce:   fmv.d   ft1,fa5
+         : 601  double result2 = 0;
+    0.00 :   79d2:   fmv.d   ft0,fa5
+         : 600  double result1 = 0;
+    0.00 :   79d6:   fmv.d   ft3,fa5
+         : 599  double result0 = 0;
+    0.00 :   79da:   fmv.d   ft2,fa5
+    0.00 :   79de:   slli    t6,t6,0x4
+    0.00 :   79e0:   add     t6,t6,s4
+    0.00 :   79e2:   vsetvli a2,t4,e8,mf8,ta,ma
+         : 611  result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   79e6:   vlseg8e64.v     v8,(t0)
+    0.00 :   79ea:   vlseg2e64.v     v2,(t6)
+    0.00 :   79ee:   vsetivli        zero,1,e64,m1,ta,ma
+    0.00 :   79f2:   vfmv.s.f        v21,ft2
+         : 612  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   79f6:   vfmv.s.f        v19,ft3
+         : 613  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+    0.00 :   79fa:   vfmv.s.f        v17,ft0
+         : 614  result3+=S2*A[ai+0+1]*B[bi+2+0] + S3*A[ai+0+0]*B[bi+2+1];
+    0.00 :   79fe:   vfmv.s.f        v16,ft1
+         : 615  result4+=S0*A[ai+0+0]*B[bi+4+0] + S1*A[ai+0+1]*B[bi+4+1];
+    0.00 :   7a02:   vfmv.s.f        v7,fa2
+         : 616  result5+=S2*A[ai+0+1]*B[bi+4+0] + S3*A[ai+0+0]*B[bi+4+1];
+    0.00 :   7a06:   vfmv.s.f        v6,fa1
+         : 618  result7+=S2*A[ai+0+1]*B[bi+6+0] + S3*A[ai+0+0]*B[bi+6+1];
+    0.00 :   7a0a:   vfmv.s.f        v5,fa5
+         : 617  result6+=S0*A[ai+0+0]*B[bi+6+0] + S1*A[ai+0+1]*B[bi+6+1];
+    0.00 :   7a0e:   vfmv.s.f        v4,fa3
+         : 612  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   7a12:   vsetvli zero,a2,e64,m1,ta,ma
+    0.00 :   7a16:   vfneg.v v1,v2
+         : 613  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+    0.00 :   7a1a:   vfmul.vv        v23,v3,v11
+         : 611  result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   7a1e:   vfmul.vv        v25,v3,v9
+         : 612  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   7a22:   vfmul.vv        v24,v1,v9
+         : 614  result3+=S2*A[ai+0+1]*B[bi+2+0] + S3*A[ai+0+0]*B[bi+2+1];
+    0.00 :   7a26:   vfmul.vv        v22,v1,v11
+         : 616  result5+=S2*A[ai+0+1]*B[bi+4+0] + S3*A[ai+0+0]*B[bi+4+1];
+    0.00 :   7a2a:   vfmul.vv        v18,v1,v13
+         : 618  result7+=S2*A[ai+0+1]*B[bi+6+0] + S3*A[ai+0+0]*B[bi+6+1];
+    0.00 :   7a2e:   vfmul.vv        v1,v1,v15
+         : 613  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+    0.00 :   7a32:   vfmacc.vv       v23,v2,v10
+         : 615  result4+=S0*A[ai+0+0]*B[bi+4+0] + S1*A[ai+0+1]*B[bi+4+1];
+    0.00 :   7a36:   vfmul.vv        v20,v3,v13
+         : 612  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   7a3a:   vfmacc.vv       v24,v3,v8
+         : 614  result3+=S2*A[ai+0+1]*B[bi+2+0] + S3*A[ai+0+0]*B[bi+2+1];
+    0.00 :   7a3e:   vfmacc.vv       v22,v3,v10
+         : 617  result6+=S0*A[ai+0+0]*B[bi+6+0] + S1*A[ai+0+1]*B[bi+6+1];
+    0.00 :   7a42:   vfmul.vv        v26,v3,v15
+         : 618  result7+=S2*A[ai+0+1]*B[bi+6+0] + S3*A[ai+0+0]*B[bi+6+1];
+    0.00 :   7a46:   vfmacc.vv       v1,v3,v14
+         : 616  result5+=S2*A[ai+0+1]*B[bi+4+0] + S3*A[ai+0+0]*B[bi+4+1];
+    0.00 :   7a4a:   vfmacc.vv       v18,v3,v12
+         : 613  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+    0.00 :   7a4e:   vmv1r.v v3,v17
+         : 611  result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   7a52:   vfmacc.vv       v25,v2,v8
+         : 615  result4+=S0*A[ai+0+0]*B[bi+4+0] + S1*A[ai+0+1]*B[bi+4+1];
+    0.00 :   7a56:   vfmacc.vv       v20,v2,v12
+         : 613  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+    0.00 :   7a5a:   vfredosum.vs    v3,v23,v3
+         : 617  result6+=S0*A[ai+0+0]*B[bi+6+0] + S1*A[ai+0+1]*B[bi+6+1];
+    0.00 :   7a5e:   vfmadd.vv       v2,v14,v26
+         : 611  result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   7a62:   vmv1r.v v10,v21
+         : 612  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   7a66:   vmv1r.v v9,v19
+         : 614  result3+=S2*A[ai+0+1]*B[bi+2+0] + S3*A[ai+0+0]*B[bi+2+1];
+    0.00 :   7a6a:   vmv1r.v v8,v16
+         : 611  result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   7a6e:   vfredosum.vs    v10,v25,v10
+         : 610  for(BLASLONG k=0; k<K; k++) {
+    0.00 :   7a72:   slli    a6,a2,0x4
+    0.00 :   7a76:   add     t6,t6,a6
+         : 612  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   7a78:   vfredosum.vs    v9,v24,v9
+         : 610  for(BLASLONG k=0; k<K; k++) {
+    0.00 :   7a7c:   slli    a6,a2,0x6
+         : 613  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+    0.00 :   7a80:   vfmv.f.s        ft0,v3
+         : 618  result7+=S2*A[ai+0+1]*B[bi+6+0] + S3*A[ai+0+0]*B[bi+6+1];
+    0.00 :   7a84:   vmv1r.v v3,v5
+         : 614  result3+=S2*A[ai+0+1]*B[bi+2+0] + S3*A[ai+0+0]*B[bi+2+1];
+    0.00 :   7a88:   vfredosum.vs    v8,v22,v8
+         : 610  for(BLASLONG k=0; k<K; k++) {
+    0.00 :   7a8c:   sub     t4,t4,a2
+    0.00 :   7a90:   add     t0,t0,a6
+         : 618  result7+=S2*A[ai+0+1]*B[bi+6+0] + S3*A[ai+0+0]*B[bi+6+1];
+    0.00 :   7a92:   vfredosum.vs    v3,v1,v3
+         : 617  result6+=S0*A[ai+0+0]*B[bi+6+0] + S1*A[ai+0+1]*B[bi+6+1];
+    0.00 :   7a96:   vmv1r.v v1,v4
+         : 611  result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   7a9a:   vfmv.f.s        ft2,v10
+         : 615  result4+=S0*A[ai+0+0]*B[bi+4+0] + S1*A[ai+0+1]*B[bi+4+1];
+    0.00 :   7a9e:   vfredosum.vs    v7,v20,v7
+         : 612  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   7aa2:   vfmv.f.s        ft3,v9
+         : 616  result5+=S2*A[ai+0+1]*B[bi+4+0] + S3*A[ai+0+0]*B[bi+4+1];
+    0.00 :   7aa6:   vfredosum.vs    v6,v18,v6
+         : 614  result3+=S2*A[ai+0+1]*B[bi+2+0] + S3*A[ai+0+0]*B[bi+2+1];
+    0.00 :   7aaa:   vfmv.f.s        ft1,v8
+         : 617  result6+=S0*A[ai+0+0]*B[bi+6+0] + S1*A[ai+0+1]*B[bi+6+1];
+    0.00 :   7aae:   vfredosum.vs    v1,v2,v1
+         : 618  result7+=S2*A[ai+0+1]*B[bi+6+0] + S3*A[ai+0+0]*B[bi+6+1];
+    0.00 :   7ab2:   vfmv.f.s        fa5,v3
+         : 615  result4+=S0*A[ai+0+0]*B[bi+4+0] + S1*A[ai+0+1]*B[bi+4+1];
+    0.00 :   7ab6:   vfmv.f.s        fa2,v7
+         : 616  result5+=S2*A[ai+0+1]*B[bi+4+0] + S3*A[ai+0+0]*B[bi+4+1];
+    0.00 :   7aba:   vfmv.f.s        fa1,v6
+         : 617  result6+=S0*A[ai+0+0]*B[bi+6+0] + S1*A[ai+0+1]*B[bi+6+1];
+    0.00 :   7abe:   vfmv.f.s        fa3,v1
+         : 610  for(BLASLONG k=0; k<K; k++) {
+    0.00 :   7ac2:   bnez    t4,79e2 <zgemm_kernel_r+0x942>
+         : 623  BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   7ac6:   add     a3,a3,s8
+         : 625  Cr = C[(ci+0*ldc+0)*2+0];
+    0.00 :   7ac8:   slli    a2,a3,0x4
+    0.00 :   7acc:   add     t0,t5,a2
+         : 626  Ci = C[(ci+0*ldc+0)*2+1];
+    0.00 :   7ad0:   addi    a2,a2,8
+         : 625  Cr = C[(ci+0*ldc+0)*2+0];
+    0.00 :   7ad2:   fld     ft5,0(t0)
+         : 626  Ci = C[(ci+0*ldc+0)*2+1];
+    0.00 :   7ad6:   add     a2,a2,t5
+    0.00 :   7ad8:   fld     ft4,0(a2)
+         : 627  Cr += result0*alphar;
+    0.00 :   7adc:   fmadd.d ft5,fa0,ft2,ft5
+         : 633  Cr = C[(ci+1*ldc+0)*2+0];
+    0.00 :   7ae0:   add     t4,s5,a3
+         : 628  Ci += result1*alphar;
+    0.00 :   7ae4:   fmadd.d ft4,fa0,ft3,ft4
+         : 633  Cr = C[(ci+1*ldc+0)*2+0];
+    0.00 :   7ae8:   slli    t4,t4,0x4
+    0.00 :   7aea:   add     t2,t5,t4
+         : 634  Ci = C[(ci+1*ldc+0)*2+1];
+    0.00 :   7aee:   addi    t4,t4,8
+    0.00 :   7af0:   add     t4,t4,t5
+         : 629  Cr -= result1*alphai;
+    0.00 :   7af2:   fnmsub.d        ft3,fa4,ft3,ft5
+         : 641  Cr = C[(ci+2*ldc+0)*2+0];
+    0.00 :   7af6:   ld      s1,-336(s0)
+         : 632  C[(ci+0*ldc+0)*2+1] = Ci;
+    0.00 :   7afa:   fmadd.d ft2,fa4,ft2,ft4
+         : 88   for (BLASLONG j=0; j<N/4; j+=1) {
+    0.00 :   7afe:   addi    s6,s6,1
+         : 641  Cr = C[(ci+2*ldc+0)*2+0];
+    0.00 :   7b00:   add     t6,s1,a3
+    0.00 :   7b04:   slli    t6,t6,0x4
+         : 649  Cr = C[(ci+3*ldc+0)*2+0];
+    0.00 :   7b06:   ld      s1,-344(s0)
+         : 631  C[(ci+0*ldc+0)*2+0] = Cr;
+    0.00 :   7b0a:   fsd     ft3,0(t0)
+         : 641  Cr = C[(ci+2*ldc+0)*2+0];
+    0.00 :   7b0e:   add     t0,t5,t6
+         : 632  C[(ci+0*ldc+0)*2+1] = Ci;
+    0.00 :   7b12:   fsd     ft2,0(a2)
+         : 633  Cr = C[(ci+1*ldc+0)*2+0];
+    0.00 :   7b16:   fld     ft3,0(t2)
+         : 634  Ci = C[(ci+1*ldc+0)*2+1];
+    0.00 :   7b1a:   fld     ft2,0(t4)
+         : 642  Ci = C[(ci+2*ldc+0)*2+1];
+    0.00 :   7b1e:   addi    a2,t6,8
+         : 635  Cr += result2*alphar;
+    0.00 :   7b22:   fmadd.d ft3,fa0,ft0,ft3
+         : 636  Ci += result3*alphar;
+    0.00 :   7b26:   fmadd.d ft2,fa0,ft1,ft2
+         : 642  Ci = C[(ci+2*ldc+0)*2+1];
+    0.00 :   7b2a:   add     a2,a2,t5
+         : 649  Cr = C[(ci+3*ldc+0)*2+0];
+    0.00 :   7b2c:   add     a3,a3,s1
+    0.00 :   7b2e:   slli    a3,a3,0x4
+    0.00 :   7b30:   add     t6,t5,a3
+         : 650  Ci = C[(ci+3*ldc+0)*2+1];
+    0.00 :   7b34:   addi    a3,a3,8
+         : 637  Cr -= result3*alphai;
+    0.00 :   7b36:   fnmsub.d        ft1,fa4,ft1,ft3
+         : 640  C[(ci+1*ldc+0)*2+1] = Ci;
+    0.00 :   7b3a:   fmadd.d ft0,fa4,ft0,ft2
+         : 650  Ci = C[(ci+3*ldc+0)*2+1];
+    0.00 :   7b3e:   add     a3,a3,t5
+         : 88   for (BLASLONG j=0; j<N/4; j+=1) {
+    0.00 :   7b40:   add     s8,s8,s11
+    0.00 :   7b42:   add     a1,a1,s10
+    0.00 :   7b44:   add     a0,a0,s10
+    0.00 :   7b46:   add     s7,s7,s11
+         : 639  C[(ci+1*ldc+0)*2+0] = Cr;
+    0.00 :   7b48:   fsd     ft1,0(t2)
+         : 640  C[(ci+1*ldc+0)*2+1] = Ci;
+    0.00 :   7b4c:   fsd     ft0,0(t4)
+         : 641  Cr = C[(ci+2*ldc+0)*2+0];
+    0.00 :   7b50:   fld     ft1,0(t0)
+         : 642  Ci = C[(ci+2*ldc+0)*2+1];
+    0.00 :   7b54:   fld     ft0,0(a2)
+         : 88   for (BLASLONG j=0; j<N/4; j+=1) {
+    0.00 :   7b58:   mv      t2,t3
+         : 643  Cr += result4*alphar;
+    0.00 :   7b5a:   fmadd.d ft1,fa0,fa2,ft1
+         : 644  Ci += result5*alphar;
+    0.00 :   7b5e:   fmadd.d ft0,fa0,fa1,ft0
+         : 645  Cr -= result5*alphai;
+    0.00 :   7b62:   fnmsub.d        fa1,fa4,fa1,ft1
+         : 648  C[(ci+2*ldc+0)*2+1] = Ci;
+    0.00 :   7b66:   fmadd.d fa2,fa4,fa2,ft0
+         : 647  C[(ci+2*ldc+0)*2+0] = Cr;
+    0.00 :   7b6a:   fsd     fa1,0(t0)
+         : 648  C[(ci+2*ldc+0)*2+1] = Ci;
+    0.00 :   7b6e:   fsd     fa2,0(a2)
+         : 649  Cr = C[(ci+3*ldc+0)*2+0];
+    0.00 :   7b70:   fld     fa1,0(t6)
+         : 650  Ci = C[(ci+3*ldc+0)*2+1];
+    0.00 :   7b74:   fld     fa2,0(a3)
+         : 651  Cr += result6*alphar;
+    0.00 :   7b76:   fmadd.d fa1,fa0,fa3,fa1
+         : 652  Ci += result7*alphar;
+    0.00 :   7b7a:   fmadd.d fa2,fa0,fa5,fa2
+         : 653  Cr -= result7*alphai;
+    0.00 :   7b7e:   fnmsub.d        fa5,fa4,fa5,fa1
+         : 656  C[(ci+3*ldc+0)*2+1] = Ci;
+    0.00 :   7b82:   fmadd.d fa3,fa4,fa3,fa2
+         : 655  C[(ci+3*ldc+0)*2+0] = Cr;
+    0.00 :   7b86:   fsd     fa5,0(t6)
+         : 656  C[(ci+3*ldc+0)*2+1] = Ci;
+    0.00 :   7b8a:   fsd     fa3,0(a3)
+         : 88   for (BLASLONG j=0; j<N/4; j+=1) {
+    0.00 :   7b8c:   ld      a3,-248(s0)
+    0.00 :   7b90:   blt     s6,a3,759c <zgemm_kernel_r+0x4fc>
+    0.00 :   7b94:   ld      s9,-256(s0)
+    0.00 :   7b98:   ld      t0,-368(s0)
+    0.00 :   7b9c:   ld      t3,-376(s0)
+    0.00 :   7ba0:   slli    a6,a3,0x2
+         : 667  if( N & 2 ) {
+    0.00 :   7ba4:   andi    a5,t0,2
+    0.00 :   7ba8:   beqz    a5,818a <zgemm_kernel_r+0x10ea>
+         : 671  for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   7bac:   li      a4,7
+         : 668  gvl = __riscv_vsetvl_e64m1(4);
+    0.00 :   7bae:   vsetivli        a5,4,e64,m1,ta,ma
+         : 671  for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   7bb2:   bge     a4,s9,855e <zgemm_kernel_r+0x14be>
+         : 673  BLASLONG bi=n_top*K*2;
+    0.00 :   7bb6:   ld      s1,-120(s0)
+    0.00 :   7bba:   add     a0,a5,s5
+    0.00 :   7bbe:   slli    t2,a0,0x4
+    0.00 :   7bc2:   mul     t1,s1,a6
+    0.00 :   7bc6:   slli    a1,s1,0x1
+    0.00 :   7bca:   addi    a4,t3,32
+    0.00 :   7bce:   addi    t4,t5,8
+    0.00 :   7bd2:   slli    a3,a5,0x4
+         : 713  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7bd6:   sd      t0,-136(s0)
+    0.00 :   7bda:   sd      s4,-144(s0)
+    0.00 :   7bde:   sd      t3,-152(s0)
+    0.00 :   7be2:   sd      t5,-160(s0)
+    0.00 :   7be6:   addi    a2,a3,8
+         : 753  BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   7bea:   mul     a0,a6,s5
+         : 675  double B0i = B[bi+0*2+1];
+    0.00 :   7bee:   slli    s6,t1,0x4
+         : 674  double B0r = B[bi+0*2+0];
+    0.00 :   7bf2:   slli    a7,t1,0x4
+         : 675  double B0i = B[bi+0*2+1];
+    0.00 :   7bf6:   addi    s6,s6,8
+    0.00 :   7bf8:   add     a1,a1,t1
+    0.00 :   7bfa:   add     t6,a7,a4
+         : 676  double B1r = B[bi+1*2+0];
+    0.00 :   7bfe:   addi    s8,a7,16
+         : 677  double B1i = B[bi+1*2+1];
+    0.00 :   7c02:   addi    s7,s6,16
+    0.00 :   7c06:   slli    a1,a1,0x4
+         : 674  double B0r = B[bi+0*2+0];
+    0.00 :   7c08:   add     s10,t3,a7
+    0.00 :   7c0c:   add     t1,a0,s5
+    0.00 :   7c10:   slli    t1,t1,0x4
+    0.00 :   7c12:   slli    a0,a0,0x4
+         : 676  double B1r = B[bi+1*2+0];
+    0.00 :   7c14:   add     s8,s8,t3
+    0.00 :   7c16:   add     a1,a1,t3
+         : 677  double B1i = B[bi+1*2+1];
+    0.00 :   7c18:   add     s7,s7,t3
+    0.00 :   7c1a:   add     t1,t1,t4
+         : 675  double B0i = B[bi+0*2+1];
+    0.00 :   7c1c:   add     s6,s6,t3
+    0.00 :   7c1e:   add     a0,a0,t5
+    0.00 :   7c20:   mv      a7,s4
+         : 671  for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   7c22:   srai    s11,s9,0x3
+    0.00 :   7c26:   li      t4,0
+         : 680  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7c28:   li      a4,16
+         : 713  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7c2a:   sd      a6,-128(s0)
+    0.00 :   7c2e:   mv      t0,t6
+    0.00 :   7c30:   mv      s4,s1
+    0.00 :   7c32:   mv      t3,t2
+    0.00 :   7c34:   slli    t5,s1,0x7
+         : 681  vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7c38:   addi    a6,a7,8
+    0.00 :   7c3c:   vlse64.v        v3,(a6),a4
+         : 682  vfloat64m1_t A1r = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7c40:   add     a6,a3,a7
+    0.00 :   7c44:   vlse64.v        v2,(a6),a4
+         : 683  vfloat64m1_t A1i = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7c48:   add     a6,a7,a2
+         : 680  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7c4c:   vlse64.v        v4,(a7),a4
+         : 683  vfloat64m1_t A1i = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7c50:   vlse64.v        v1,(a6),a4
+         : 677  double B1i = B[bi+1*2+1];
+    0.00 :   7c54:   fld     fa5,0(s7)
+         : 675  double B0i = B[bi+0*2+1];
+    0.00 :   7c58:   fld     fa2,0(s6)
+         : 674  double B0r = B[bi+0*2+0];
+    0.00 :   7c5c:   fld     fa3,0(s10)
+         : 692  vfloat64m1_t tmp2r = __riscv_vfmul_vf_f64m1( A0i, B1i, gvl);
+    0.00 :   7c60:   vfmul.vf        v14,v3,fa5
+         : 693  vfloat64m1_t tmp2i = __riscv_vfmul_vf_f64m1( A0r, B1i, gvl);
+    0.00 :   7c64:   vfmul.vf        v16,v4,fa5
+         : 694  vfloat64m1_t tmp3r = __riscv_vfmul_vf_f64m1( A1i, B1i, gvl);
+    0.00 :   7c68:   vfmul.vf        v13,v1,fa5
+         : 695  vfloat64m1_t tmp3i = __riscv_vfmul_vf_f64m1( A1r, B1i, gvl);
+    0.00 :   7c6c:   vfmul.vf        v15,v2,fa5
+         : 688  vfloat64m1_t tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   7c70:   vfmul.vf        v19,v3,fa2
+         : 691  vfloat64m1_t tmp1i = __riscv_vfmul_vf_f64m1( A1r, B0i, gvl);
+    0.00 :   7c74:   vfmul.vf        v18,v2,fa2
+         : 690  vfloat64m1_t tmp1r = __riscv_vfmul_vf_f64m1( A1i, B0i, gvl);
+    0.00 :   7c78:   vfmul.vf        v17,v1,fa2
+         : 689  vfloat64m1_t tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   7c7c:   vfmul.vf        v20,v4,fa2
+         : 676  double B1r = B[bi+1*2+0];
+    0.00 :   7c80:   fld     fa5,0(s8)
+         : 713  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7c84:   li      s1,1
+         : 696  tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   7c86:   vfmacc.vf       v19,fa3,v4
+         : 699  tmp1i = VFMACC_RI( tmp1i, B0r, A1i, gvl);
+    0.00 :   7c8a:   vfmsac.vf       v18,fa3,v1
+         : 700  tmp2r = VFMACC_RR( tmp2r, B1r, A0r, gvl);
+    0.00 :   7c8e:   vfmacc.vf       v14,fa5,v4
+         : 698  tmp1r = VFMACC_RR( tmp1r, B0r, A1r, gvl);
+    0.00 :   7c92:   vfmacc.vf       v17,fa3,v2
+         : 697  tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   7c96:   vfmsac.vf       v20,fa3,v3
+         : 701  tmp2i = VFMACC_RI( tmp2i, B1r, A0i, gvl);
+    0.00 :   7c9a:   vfmsac.vf       v16,fa5,v3
+         : 702  tmp3r = VFMACC_RR( tmp3r, B1r, A1r, gvl);
+    0.00 :   7c9e:   vfmacc.vf       v13,fa5,v2
+         : 703  tmp3i = VFMACC_RI( tmp3i, B1r, A1i, gvl);
+    0.00 :   7ca2:   vfmsac.vf       v15,fa5,v1
+         : 713  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7ca6:   bge     s1,s4,7d48 <zgemm_kernel_r+0xca8>
+    0.00 :   7caa:   addi    t6,a7,128
+    0.00 :   7cae:   mv      a6,t0
+         : 721  A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7cb0:   addi    t2,t6,8
+    0.00 :   7cb4:   vlse64.v        v11,(t2),a4
+         : 722  A1r = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7cb8:   add     t2,a3,t6
+    0.00 :   7cbc:   vlse64.v        v10,(t2),a4
+         : 723  A1i = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7cc0:   add     t2,t6,a2
+         : 720  A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7cc4:   vlse64.v        v12,(t6),a4
+         : 723  A1i = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7cc8:   vlse64.v        v9,(t2),a4
+         : 717  B1i = B[bi+1*2+1];
+    0.00 :   7ccc:   fld     fa5,24(a6)
+         : 715  B0i = B[bi+0*2+1];
+    0.00 :   7cd0:   fld     fa2,8(a6)
+         : 714  B0r = B[bi+0*2+0];
+    0.00 :   7cd4:   fld     fa3,0(a6)
+         : 730  tmp2r = __riscv_vfmul_vf_f64m1( A0i, B1i, gvl);
+    0.00 :   7cd8:   vfmul.vf        v7,v11,fa5
+         : 731  tmp2i = __riscv_vfmul_vf_f64m1( A0r, B1i, gvl);
+    0.00 :   7cdc:   vfmul.vf        v3,v12,fa5
+         : 732  tmp3r = __riscv_vfmul_vf_f64m1( A1i, B1i, gvl);
+    0.00 :   7ce0:   vfmul.vf        v2,v9,fa5
+         : 733  tmp3i = __riscv_vfmul_vf_f64m1( A1r, B1i, gvl);
+    0.00 :   7ce4:   vfmul.vf        v1,v10,fa5
+         : 726  tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   7ce8:   vfmul.vf        v8,v11,fa2
+         : 729  tmp1i = __riscv_vfmul_vf_f64m1( A1r, B0i, gvl);
+    0.00 :   7cec:   vfmul.vf        v6,v10,fa2
+         : 728  tmp1r = __riscv_vfmul_vf_f64m1( A1i, B0i, gvl);
+    0.00 :   7cf0:   vfmul.vf        v5,v9,fa2
+         : 727  tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   7cf4:   vfmul.vf        v4,v12,fa2
+         : 716  B1r = B[bi+1*2+0];
+    0.00 :   7cf8:   fld     fa5,16(a6)
+         : 713  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7cfc:   addi    a6,a6,32
+         : 734  tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   7d00:   vfmacc.vf       v8,fa3,v12
+         : 737  tmp1i = VFMACC_RI( tmp1i, B0r, A1i, gvl);
+    0.00 :   7d04:   vfmsac.vf       v6,fa3,v9
+         : 738  tmp2r = VFMACC_RR( tmp2r, B1r, A0r, gvl);
+    0.00 :   7d08:   vfmacc.vf       v7,fa5,v12
+         : 736  tmp1r = VFMACC_RR( tmp1r, B0r, A1r, gvl);
+    0.00 :   7d0c:   vfmacc.vf       v5,fa3,v10
+         : 735  tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   7d10:   vfmsac.vf       v4,fa3,v11
+         : 739  tmp2i = VFMACC_RI( tmp2i, B1r, A0i, gvl);
+    0.00 :   7d14:   vfmsac.vf       v3,fa5,v11
+         : 740  tmp3r = VFMACC_RR( tmp3r, B1r, A1r, gvl);
+    0.00 :   7d18:   vfmacc.vf       v2,fa5,v10
+         : 741  tmp3i = VFMACC_RI( tmp3i, B1r, A1i, gvl);
+    0.00 :   7d1c:   vfmsac.vf       v1,fa5,v9
+         : 742  ACC0r = __riscv_vfadd( ACC0r, tmp0r, gvl);
+    0.00 :   7d20:   vfadd.vv        v19,v19,v8
+         : 746  ACC2r = __riscv_vfadd( ACC2r, tmp2r, gvl);
+    0.00 :   7d24:   vfadd.vv        v14,v14,v7
+         : 745  ACC1i = __riscv_vfadd( ACC1i, tmp1i, gvl);
+    0.00 :   7d28:   vfadd.vv        v18,v18,v6
+         : 744  ACC1r = __riscv_vfadd( ACC1r, tmp1r, gvl);
+    0.00 :   7d2c:   vfadd.vv        v17,v17,v5
+         : 743  ACC0i = __riscv_vfadd( ACC0i, tmp0i, gvl);
+    0.00 :   7d30:   vfadd.vv        v20,v20,v4
+         : 747  ACC2i = __riscv_vfadd( ACC2i, tmp2i, gvl);
+    0.00 :   7d34:   vfadd.vv        v16,v16,v3
+         : 748  ACC3r = __riscv_vfadd( ACC3r, tmp3r, gvl);
+    0.00 :   7d38:   vfadd.vv        v13,v13,v2
+         : 749  ACC3i = __riscv_vfadd( ACC3i, tmp3i, gvl);
+    0.00 :   7d3c:   vfadd.vv        v15,v15,v1
+         : 713  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7d40:   addi    t6,t6,128
+    0.00 :   7d44:   bne     a1,a6,7cb0 <zgemm_kernel_r+0xc10>
+         : 755  vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7d48:   vlse64.v        v2,(a0),a4
+         : 756  vfloat64m1_t C0i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7d4c:   addi    s3,a0,8
+    0.00 :   7d50:   vlse64.v        v1,(s3),a4
+         : 758  vfloat64m1_t C1r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7d54:   add     s2,a3,a0
+    0.00 :   7d58:   vlse64.v        v6,(s2),a4
+         : 759  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7d5c:   add     s1,a0,a2
+         : 767  C0r = __riscv_vfmacc( C0r, alphar, ACC0r, gvl );
+    0.00 :   7d60:   vfmacc.vf       v2,fa0,v19
+         : 761  vfloat64m1_t C2r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7d64:   addi    t2,t1,-8
+         : 768  C0i = __riscv_vfmacc( C0i, alphar, ACC0i, gvl );
+    0.00 :   7d68:   vfmacc.vf       v1,fa0,v20
+         : 764  vfloat64m1_t C3r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7d6c:   add     t6,t3,a0
+         : 765  vfloat64m1_t C3i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7d70:   add     a6,a3,t1
+         : 762  vfloat64m1_t C2i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7d74:   vlse64.v        v3,(t1),a4
+         : 775  C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   7d78:   vfnmsac.vf      v2,fa4,v20
+         : 759  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7d7c:   vlse64.v        v5,(s1),a4
+         : 776  C0i = __riscv_vfmacc ( C0i, alphai, ACC0r, gvl );
+    0.00 :   7d80:   vfmacc.vf       v1,fa4,v19
+         : 761  vfloat64m1_t C2r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7d84:   vlse64.v        v4,(t2),a4
+         : 769  C1r = __riscv_vfmacc( C1r, alphar, ACC1r, gvl );
+    0.00 :   7d88:   vfmacc.vf       v6,fa0,v17
+         : 772  C2i = __riscv_vfmacc( C2i, alphar, ACC2i, gvl );
+    0.00 :   7d8c:   vfmacc.vf       v3,fa0,v16
+         : 775  C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   7d90:   vmv1r.v v8,v2
+         : 764  vfloat64m1_t C3r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7d94:   vlse64.v        v2,(t6),a4
+         : 776  C0i = __riscv_vfmacc ( C0i, alphai, ACC0r, gvl );
+    0.00 :   7d98:   vmv1r.v v7,v1
+         : 765  vfloat64m1_t C3i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7d9c:   vlse64.v        v1,(a6),a4
+         : 786  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C0r, gvl);
+    0.00 :   7da0:   vsse64.v        v8,(a0),a4
+         : 777  C1r = __riscv_vfnmsac( C1r, alphai, ACC1i, gvl );
+    0.00 :   7da4:   vfnmsac.vf      v6,fa4,v18
+         : 770  C1i = __riscv_vfmacc( C1i, alphar, ACC1i, gvl );
+    0.00 :   7da8:   vfmacc.vf       v5,fa0,v18
+         : 771  C2r = __riscv_vfmacc( C2r, alphar, ACC2r, gvl );
+    0.00 :   7dac:   vfmacc.vf       v4,fa0,v14
+         : 773  C3r = __riscv_vfmacc( C3r, alphar, ACC3r, gvl );
+    0.00 :   7db0:   vfmacc.vf       v2,fa0,v13
+         : 780  C2i = __riscv_vfmacc ( C2i, alphai, ACC2r, gvl );
+    0.00 :   7db4:   vfmacc.vf       v3,fa4,v14
+         : 787  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C0i, gvl);
+    0.00 :   7db8:   vsse64.v        v7,(s3),a4
+         : 774  C3i = __riscv_vfmacc( C3i, alphar, ACC3i, gvl );
+    0.00 :   7dbc:   vfmacc.vf       v1,fa0,v15
+         : 778  C1i = __riscv_vfmacc ( C1i, alphai, ACC1r, gvl );
+    0.00 :   7dc0:   vfmacc.vf       v5,fa4,v17
+         : 779  C2r = __riscv_vfnmsac( C2r, alphai, ACC2i, gvl );
+    0.00 :   7dc4:   vfnmsac.vf      v4,fa4,v16
+         : 781  C3r = __riscv_vfnmsac( C3r, alphai, ACC3i, gvl );
+    0.00 :   7dc8:   vfnmsac.vf      v2,fa4,v15
+         : 671  for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   7dcc:   addi    t4,t4,1
+         : 789  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C1r, gvl);
+    0.00 :   7dce:   vsse64.v        v6,(s2),a4
+         : 782  C3i = __riscv_vfmacc ( C3i, alphai, ACC3r, gvl );
+    0.00 :   7dd2:   vfmacc.vf       v1,fa4,v13
+         : 671  for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   7dd6:   add     a7,a7,t5
+    0.00 :   7dd8:   addi    a0,a0,128
+         : 790  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C1i, gvl);
+    0.00 :   7ddc:   vsse64.v        v5,(s1),a4
+         : 792  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C2r, gvl);
+    0.00 :   7de0:   vsse64.v        v4,(t2),a4
+         : 793  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C2i, gvl);
+    0.00 :   7de4:   vsse64.v        v3,(t1),a4
+         : 671  for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   7de8:   addi    t1,t1,128
+         : 795  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C3r, gvl);
+    0.00 :   7dec:   vsse64.v        v2,(t6),a4
+         : 796  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C3i, gvl);
+    0.00 :   7df0:   vsse64.v        v1,(a6),a4
+         : 671  for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   7df4:   blt     t4,s11,7c38 <zgemm_kernel_r+0xb98>
+    0.00 :   7df8:   ld      a6,-128(s0)
+    0.00 :   7dfc:   ld      t0,-136(s0)
+    0.00 :   7e00:   ld      s4,-144(s0)
+    0.00 :   7e04:   ld      t3,-152(s0)
+    0.00 :   7e08:   ld      t5,-160(s0)
+    0.00 :   7e0c:   slli    a2,s11,0x3
+         : 802  if( M & 4 ) {
+    0.00 :   7e10:   andi    a4,s9,4
+    0.00 :   7e14:   beqz    a4,7f44 <zgemm_kernel_r+0xea4>
+         : 805  BLASLONG ai=m_top*K*2;
+    0.00 :   7e18:   ld      s1,-120(s0)
+         : 813  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7e1c:   li      a0,16
+         : 832  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7e1e:   li      t1,1
+         : 805  BLASLONG ai=m_top*K*2;
+    0.00 :   7e20:   mul     a4,s1,a2
+         : 806  BLASLONG bi=n_top*K*2;
+    0.00 :   7e24:   mul     a7,s1,a6
+         : 813  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7e28:   slli    a3,a4,0x4
+         : 814  vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7e2c:   slli    a4,a4,0x4
+    0.00 :   7e2e:   addi    a4,a4,8
+    0.00 :   7e30:   add     a4,a4,s4
+    0.00 :   7e32:   vlse64.v        v2,(a4),a0
+         : 813  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7e36:   add     a4,s4,a3
+    0.00 :   7e3a:   vlse64.v        v1,(a4),a0
+         : 808  double B0i = B[bi+0*2+1];
+    0.00 :   7e3e:   slli    a4,a7,0x4
+    0.00 :   7e42:   add     a4,a4,t3
+    0.00 :   7e44:   fld     fa3,8(a4)
+         : 810  double B1i = B[bi+1*2+1];
+    0.00 :   7e46:   fld     fa5,24(a4)
+         : 807  double B0r = B[bi+0*2+0];
+    0.00 :   7e48:   slli    a4,a7,0x4
+         : 819  vfloat64m1_t tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   7e4c:   vfmul.vf        v9,v2,fa3
+         : 820  vfloat64m1_t tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   7e50:   vfmul.vf        v10,v1,fa3
+         : 821  vfloat64m1_t tmp1r = __riscv_vfmul_vf_f64m1( A0i, B1i, gvl);
+    0.00 :   7e54:   vfmul.vf        v7,v2,fa5
+         : 822  vfloat64m1_t tmp1i = __riscv_vfmul_vf_f64m1( A0r, B1i, gvl);
+    0.00 :   7e58:   vfmul.vf        v8,v1,fa5
+         : 807  double B0r = B[bi+0*2+0];
+    0.00 :   7e5c:   add     a1,t3,a4
+    0.00 :   7e60:   fld     fa3,0(a1)
+         : 809  double B1r = B[bi+1*2+0];
+    0.00 :   7e62:   fld     fa5,16(a1)
+         : 823  tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   7e64:   vfmacc.vf       v9,fa3,v1
+         : 824  tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   7e68:   vfmsac.vf       v10,fa3,v2
+         : 826  tmp1i = VFMACC_RI( tmp1i, B1r, A0i, gvl);
+    0.00 :   7e6c:   vfmsac.vf       v8,fa5,v2
+         : 825  tmp1r = VFMACC_RR( tmp1r, B1r, A0r, gvl);
+    0.00 :   7e70:   vfmacc.vf       v7,fa5,v1
+         : 832  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7e74:   bge     t1,s1,7ede <zgemm_kernel_r+0xe3e>
+    0.00 :   7e78:   slli    a1,s1,0x1
+    0.00 :   7e7c:   add     a1,a1,a7
+    0.00 :   7e7e:   addi    a7,t3,32
+    0.00 :   7e82:   slli    a1,a1,0x4
+    0.00 :   7e84:   add     a4,a4,a7
+    0.00 :   7e86:   addi    a7,s4,64
+    0.00 :   7e8a:   add     a1,a1,t3
+    0.00 :   7e8c:   add     a3,a3,a7
+         : 840  A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7e8e:   addi    a7,a3,8
+         : 839  A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7e92:   vlse64.v        v6,(a3),a0
+         : 840  A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7e96:   vlse64.v        v5,(a7),a0
+         : 834  B0i = B[bi+0*2+1];
+    0.00 :   7e9a:   fld     fa1,8(a4)
+         : 836  B1i = B[bi+1*2+1];
+    0.00 :   7e9c:   fld     fa2,24(a4)
+         : 833  B0r = B[bi+0*2+0];
+    0.00 :   7e9e:   fld     fa3,0(a4)
+         : 835  B1r = B[bi+1*2+0];
+    0.00 :   7ea0:   fld     fa5,16(a4)
+         : 844  tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   7ea2:   vfmul.vf        v3,v6,fa1
+         : 843  tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   7ea6:   vfmul.vf        v4,v5,fa1
+         : 845  tmp1r = __riscv_vfmul_vf_f64m1( A0i, B1i, gvl);
+    0.00 :   7eaa:   vfmul.vf        v2,v5,fa2
+         : 846  tmp1i = __riscv_vfmul_vf_f64m1( A0r, B1i, gvl);
+    0.00 :   7eae:   vfmul.vf        v1,v6,fa2
+         : 832  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7eb2:   addi    a4,a4,32
+    0.00 :   7eb6:   addi    a3,a3,64
+         : 848  tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   7eba:   vfmsac.vf       v3,fa3,v5
+         : 847  tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   7ebe:   vfmacc.vf       v4,fa3,v6
+         : 849  tmp1r = VFMACC_RR( tmp1r, B1r, A0r, gvl);
+    0.00 :   7ec2:   vfmacc.vf       v2,fa5,v6
+         : 850  tmp1i = VFMACC_RI( tmp1i, B1r, A0i, gvl);
+    0.00 :   7ec6:   vfmsac.vf       v1,fa5,v5
+         : 852  ACC0i = __riscv_vfadd( ACC0i, tmp0i, gvl);
+    0.00 :   7eca:   vfadd.vv        v10,v10,v3
+         : 851  ACC0r = __riscv_vfadd( ACC0r, tmp0r, gvl);
+    0.00 :   7ece:   vfadd.vv        v9,v9,v4
+         : 853  ACC1r = __riscv_vfadd( ACC1r, tmp1r, gvl);
+    0.00 :   7ed2:   vfadd.vv        v7,v7,v2
+         : 854  ACC1i = __riscv_vfadd( ACC1i, tmp1i, gvl);
+    0.00 :   7ed6:   vfadd.vv        v8,v8,v1
+         : 832  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7eda:   bne     a4,a1,7e8e <zgemm_kernel_r+0xdee>
+         : 858  BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   7ede:   mul     a4,s5,a6
+         : 860  vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7ee2:   li      a3,16
+         : 858  BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   7ee4:   add     a4,a4,a2
+         : 860  vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7ee6:   slli    a1,a4,0x4
+    0.00 :   7eea:   add     a7,t5,a1
+    0.00 :   7eee:   vlse64.v        v1,(a7),a3
+         : 861  vfloat64m1_t C0i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7ef2:   addi    a1,a1,8
+    0.00 :   7ef4:   add     a1,a1,t5
+    0.00 :   7ef6:   vlse64.v        v3,(a1),a3
+         : 862  ci += ldc-gvl*0;
+    0.00 :   7efa:   add     a4,a4,s5
+         : 863  vfloat64m1_t C1r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7efc:   slli    a4,a4,0x4
+         : 866  C0r = __riscv_vfmacc( C0r, alphar, ACC0r, gvl );
+    0.00 :   7efe:   vfmacc.vf       v1,fa0,v9
+         : 864  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7f02:   addi    a0,a4,8
+         : 863  vfloat64m1_t C1r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   7f06:   add     a4,a4,t5
+    0.00 :   7f08:   vlse64.v        v2,(a4),a3
+         : 867  C0i = __riscv_vfmacc( C0i, alphar, ACC0i, gvl );
+    0.00 :   7f0c:   vfmacc.vf       v3,fa0,v10
+         : 864  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7f10:   add     a0,a0,t5
+         : 870  C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   7f12:   vfnmsac.vf      v1,fa4,v10
+         : 883  m_top += 4;
+    0.00 :   7f16:   addi    a2,a2,4
+         : 868  C1r = __riscv_vfmacc( C1r, alphar, ACC1r, gvl );
+    0.00 :   7f18:   vfmacc.vf       v2,fa0,v7
+         : 871  C0i = __riscv_vfmacc ( C0i, alphai, ACC0r, gvl );
+    0.00 :   7f1c:   vfmacc.vf       v3,fa4,v9
+         : 870  C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   7f20:   vmv1r.v v4,v1
+         : 864  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7f24:   vlse64.v        v1,(a0),a3
+         : 877  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C0r, gvl);
+    0.00 :   7f28:   vsse64.v        v4,(a7),a3
+         : 872  C1r = __riscv_vfnmsac( C1r, alphai, ACC1i, gvl );
+    0.00 :   7f2c:   vfnmsac.vf      v2,fa4,v8
+         : 869  C1i = __riscv_vfmacc( C1i, alphar, ACC1i, gvl );
+    0.00 :   7f30:   vfmacc.vf       v1,fa0,v8
+         : 878  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C0i, gvl);
+    0.00 :   7f34:   vsse64.v        v3,(a1),a3
+         : 873  C1i = __riscv_vfmacc ( C1i, alphai, ACC1r, gvl );
+    0.00 :   7f38:   vfmacc.vf       v1,fa4,v7
+         : 880  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C1r, gvl);
+    0.00 :   7f3c:   vsse64.v        v2,(a4),a3
+         : 881  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C1i, gvl);
+    0.00 :   7f40:   vsse64.v        v1,(a0),a3
+         : 887  if( M & 2 ) {
+    0.00 :   7f44:   andi    a5,s9,2
+    0.00 :   7f48:   beqz    a5,807c <zgemm_kernel_r+0xfdc>
+         : 890  BLASLONG ai=m_top*K*2;
+    0.00 :   7f4c:   ld      s1,-120(s0)
+         : 888  gvl = __riscv_vsetvl_e64m1(2);
+    0.00 :   7f50:   vsetivli        a5,2,e64,m1,ta,ma
+         : 898  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7f54:   li      a0,16
+         : 890  BLASLONG ai=m_top*K*2;
+    0.00 :   7f56:   mul     a4,a2,s1
+         : 917  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7f5a:   li      t1,1
+         : 891  BLASLONG bi=n_top*K*2;
+    0.00 :   7f5c:   mul     a7,s1,a6
+         : 898  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7f60:   slli    a3,a4,0x4
+         : 899  vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7f64:   slli    a4,a4,0x4
+    0.00 :   7f66:   addi    a4,a4,8
+    0.00 :   7f68:   add     a4,a4,s4
+    0.00 :   7f6a:   vlse64.v        v2,(a4),a0
+         : 898  vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7f6e:   add     a4,s4,a3
+    0.00 :   7f72:   vlse64.v        v1,(a4),a0
+         : 893  double B0i = B[bi+0*2+1];
+    0.00 :   7f76:   slli    a4,a7,0x4
+    0.00 :   7f7a:   add     a4,a4,t3
+    0.00 :   7f7c:   fld     fa3,8(a4)
+         : 895  double B1i = B[bi+1*2+1];
+    0.00 :   7f7e:   fld     fa5,24(a4)
+         : 892  double B0r = B[bi+0*2+0];
+    0.00 :   7f80:   slli    a4,a7,0x4
+         : 904  vfloat64m1_t tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   7f84:   vfmul.vf        v9,v2,fa3
+         : 905  vfloat64m1_t tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   7f88:   vfmul.vf        v10,v1,fa3
+         : 906  vfloat64m1_t tmp1r = __riscv_vfmul_vf_f64m1( A0i, B1i, gvl);
+    0.00 :   7f8c:   vfmul.vf        v7,v2,fa5
+         : 907  vfloat64m1_t tmp1i = __riscv_vfmul_vf_f64m1( A0r, B1i, gvl);
+    0.00 :   7f90:   vfmul.vf        v8,v1,fa5
+         : 892  double B0r = B[bi+0*2+0];
+    0.00 :   7f94:   add     a1,t3,a4
+    0.00 :   7f98:   fld     fa3,0(a1)
+         : 894  double B1r = B[bi+1*2+0];
+    0.00 :   7f9a:   fld     fa5,16(a1)
+         : 908  tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   7f9c:   vfmacc.vf       v9,fa3,v1
+         : 909  tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   7fa0:   vfmsac.vf       v10,fa3,v2
+         : 911  tmp1i = VFMACC_RI( tmp1i, B1r, A0i, gvl);
+    0.00 :   7fa4:   vfmsac.vf       v8,fa5,v2
+         : 910  tmp1r = VFMACC_RR( tmp1r, B1r, A0r, gvl);
+    0.00 :   7fa8:   vfmacc.vf       v7,fa5,v1
+         : 917  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7fac:   bge     t1,s1,8016 <zgemm_kernel_r+0xf76>
+    0.00 :   7fb0:   slli    a1,s1,0x1
+    0.00 :   7fb4:   add     a1,a1,a7
+    0.00 :   7fb6:   addi    a7,t3,32
+    0.00 :   7fba:   slli    a1,a1,0x4
+    0.00 :   7fbc:   add     a4,a4,a7
+    0.00 :   7fbe:   addi    a7,s4,32
+    0.00 :   7fc2:   add     a1,a1,t3
+    0.00 :   7fc4:   add     a3,a3,a7
+         : 925  A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7fc6:   addi    a7,a3,8
+         : 924  A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   7fca:   vlse64.v        v6,(a3),a0
+         : 925  A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   7fce:   vlse64.v        v5,(a7),a0
+         : 919  B0i = B[bi+0*2+1];
+    0.00 :   7fd2:   fld     fa1,8(a4)
+         : 921  B1i = B[bi+1*2+1];
+    0.00 :   7fd4:   fld     fa2,24(a4)
+         : 918  B0r = B[bi+0*2+0];
+    0.00 :   7fd6:   fld     fa3,0(a4)
+         : 920  B1r = B[bi+1*2+0];
+    0.00 :   7fd8:   fld     fa5,16(a4)
+         : 929  tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   7fda:   vfmul.vf        v3,v6,fa1
+         : 928  tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   7fde:   vfmul.vf        v4,v5,fa1
+         : 930  tmp1r = __riscv_vfmul_vf_f64m1( A0i, B1i, gvl);
+    0.00 :   7fe2:   vfmul.vf        v2,v5,fa2
+         : 931  tmp1i = __riscv_vfmul_vf_f64m1( A0r, B1i, gvl);
+    0.00 :   7fe6:   vfmul.vf        v1,v6,fa2
+         : 917  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   7fea:   addi    a4,a4,32
+    0.00 :   7fee:   addi    a3,a3,32
+         : 933  tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   7ff2:   vfmsac.vf       v3,fa3,v5
+         : 932  tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   7ff6:   vfmacc.vf       v4,fa3,v6
+         : 934  tmp1r = VFMACC_RR( tmp1r, B1r, A0r, gvl);
+    0.00 :   7ffa:   vfmacc.vf       v2,fa5,v6
+         : 935  tmp1i = VFMACC_RI( tmp1i, B1r, A0i, gvl);
+    0.00 :   7ffe:   vfmsac.vf       v1,fa5,v5
+         : 937  ACC0i = __riscv_vfadd( ACC0i, tmp0i, gvl);
+    0.00 :   8002:   vfadd.vv        v10,v10,v3
+         : 936  ACC0r = __riscv_vfadd( ACC0r, tmp0r, gvl);
+    0.00 :   8006:   vfadd.vv        v9,v9,v4
+         : 938  ACC1r = __riscv_vfadd( ACC1r, tmp1r, gvl);
+    0.00 :   800a:   vfadd.vv        v7,v7,v2
+         : 939  ACC1i = __riscv_vfadd( ACC1i, tmp1i, gvl);
+    0.00 :   800e:   vfadd.vv        v8,v8,v1
+         : 917  for(BLASLONG k=1; k<K; k++) {
+    0.00 :   8012:   bne     a1,a4,7fc6 <zgemm_kernel_r+0xf26>
+         : 943  BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   8016:   mul     a4,s5,a6
+         : 945  vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   801a:   li      a3,16
+         : 943  BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   801c:   add     a4,a4,a2
+         : 945  vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   801e:   slli    a1,a4,0x4
+    0.00 :   8022:   add     a7,t5,a1
+    0.00 :   8026:   vlse64.v        v1,(a7),a3
+         : 946  vfloat64m1_t C0i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   802a:   addi    a1,a1,8
+    0.00 :   802c:   add     a1,a1,t5
+    0.00 :   802e:   vlse64.v        v3,(a1),a3
+         : 947  ci += ldc-gvl*0;
+    0.00 :   8032:   add     a4,a4,s5
+         : 948  vfloat64m1_t C1r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   8034:   slli    a4,a4,0x4
+         : 951  C0r = __riscv_vfmacc( C0r, alphar, ACC0r, gvl );
+    0.00 :   8036:   vfmacc.vf       v1,fa0,v9
+         : 949  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   803a:   addi    a0,a4,8
+         : 948  vfloat64m1_t C1r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   803e:   add     a4,a4,t5
+    0.00 :   8040:   vlse64.v        v2,(a4),a3
+         : 952  C0i = __riscv_vfmacc( C0i, alphar, ACC0i, gvl );
+    0.00 :   8044:   vfmacc.vf       v3,fa0,v10
+         : 949  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   8048:   add     a0,a0,t5
+         : 955  C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   804a:   vfnmsac.vf      v1,fa4,v10
+         : 968  m_top += 2;
+    0.00 :   804e:   addi    a2,a2,2
+         : 953  C1r = __riscv_vfmacc( C1r, alphar, ACC1r, gvl );
+    0.00 :   8050:   vfmacc.vf       v2,fa0,v7
+         : 956  C0i = __riscv_vfmacc ( C0i, alphai, ACC0r, gvl );
+    0.00 :   8054:   vfmacc.vf       v3,fa4,v9
+         : 955  C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   8058:   vmv1r.v v4,v1
+         : 949  vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   805c:   vlse64.v        v1,(a0),a3
+         : 962  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C0r, gvl);
+    0.00 :   8060:   vsse64.v        v4,(a7),a3
+         : 957  C1r = __riscv_vfnmsac( C1r, alphai, ACC1i, gvl );
+    0.00 :   8064:   vfnmsac.vf      v2,fa4,v8
+         : 954  C1i = __riscv_vfmacc( C1i, alphar, ACC1i, gvl );
+    0.00 :   8068:   vfmacc.vf       v1,fa0,v8
+         : 963  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C0i, gvl);
+    0.00 :   806c:   vsse64.v        v3,(a1),a3
+         : 958  C1i = __riscv_vfmacc ( C1i, alphai, ACC1r, gvl );
+    0.00 :   8070:   vfmacc.vf       v1,fa4,v7
+         : 965  __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C1r, gvl);
+    0.00 :   8074:   vsse64.v        v2,(a4),a3
+         : 966  __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C1i, gvl);
+    0.00 :   8078:   vsse64.v        v1,(a0),a3
+         : 972  if( M & 1 ) {
+    0.00 :   807c:   andi    a5,s9,1
+    0.00 :   8080:   beqz    a5,8188 <zgemm_kernel_r+0x10e8>
+         : 980  double result2 = 0;
+         : 981  double result3 = 0;
+         : 982  BLASLONG ai=m_top*K*2;
+         : 983  BLASLONG bi=n_top*K*2;
+         :
+         : 985  for(BLASLONG k=0; k<K; k++) {
+    0.00 :   8084:   ld      a5,-120(s0)
+    0.00 :   8088:   blez    a5,856c <zgemm_kernel_r+0x14cc>
+         : 977  BLASLONG ai=m_top*K*2;
+    0.00 :   808c:   mul     a3,a2,a5
+         : 976  double result3 = 0;
+    0.00 :   8090:   fmv.d.x fa5,zero
+    0.00 :   8094:   mv      a1,a5
+         : 975  double result2 = 0;
+    0.00 :   8096:   fmv.d   fa3,fa5
+         : 974  double result1 = 0;
+    0.00 :   809a:   fmv.d   fa1,fa5
+         : 973  double result0 = 0;
+    0.00 :   809e:   fmv.d   fa2,fa5
+         : 978  BLASLONG bi=n_top*K*2;
+    0.00 :   80a2:   mul     a4,a5,a6
+    0.00 :   80a6:   slli    a3,a3,0x4
+    0.00 :   80a8:   add     a3,a3,s4
+    0.00 :   80aa:   slli    a4,a4,0x4
+    0.00 :   80ac:   add     a4,a4,t3
+    0.00 :   80ae:   vsetvli a5,a1,e8,mf8,ta,ma
+         : 981  result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   80b2:   vlseg2e64.v     v2,(a3)
+    0.00 :   80b6:   vlseg4e64.v     v4,(a4)
+    0.00 :   80ba:   vsetivli        zero,1,e64,m1,ta,ma
+    0.00 :   80be:   vfmv.s.f        v11,fa2
+         : 982  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   80c2:   vfmv.s.f        v10,fa1
+         : 984  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+         : 985  result3+=S2*A[ai+0+1]*B[bi+2+0] + S3*A[ai+0+0]*B[bi+2+1];
+    0.00 :   80c6:   vfmv.s.f        v9,fa5
+         : 983  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+    0.00 :   80ca:   vfmv.s.f        v8,fa3
+         : 982  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   80ce:   vsetvli zero,a5,e64,m1,ta,ma
+         : 980  for(BLASLONG k=0; k<K; k++) {
+    0.00 :   80d2:   slli    a7,a5,0x4
+    0.00 :   80d6:   slli    a0,a5,0x5
+         : 982  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   80da:   vfneg.v v1,v2
+         : 981  result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   80de:   vfmul.vv        v14,v3,v5
+         : 983  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+    0.00 :   80e2:   vfmul.vv        v12,v3,v7
+         : 982  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   80e6:   vfmul.vv        v13,v1,v5
+         : 984  result3+=S2*A[ai+0+1]*B[bi+2+0] + S3*A[ai+0+0]*B[bi+2+1];
+    0.00 :   80ea:   vfmul.vv        v1,v1,v7
+         : 980  for(BLASLONG k=0; k<K; k++) {
+    0.00 :   80ee:   sub     a1,a1,a5
+    0.00 :   80f0:   add     a3,a3,a7
+         : 981  result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   80f2:   vfmacc.vv       v14,v2,v4
+         : 983  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+    0.00 :   80f6:   vfmacc.vv       v12,v2,v6
+         : 982  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   80fa:   vfmacc.vv       v13,v3,v4
+         : 984  result3+=S2*A[ai+0+1]*B[bi+2+0] + S3*A[ai+0+0]*B[bi+2+1];
+    0.00 :   80fe:   vfmacc.vv       v1,v3,v6
+    0.00 :   8102:   vmv1r.v v2,v9
+         : 981  result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   8106:   vmv1r.v v4,v11
+         : 982  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   810a:   vmv1r.v v3,v10
+         : 980  for(BLASLONG k=0; k<K; k++) {
+    0.00 :   810e:   add     a4,a4,a0
+         : 981  result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   8110:   vfredosum.vs    v4,v14,v4
+         : 984  result3+=S2*A[ai+0+1]*B[bi+2+0] + S3*A[ai+0+0]*B[bi+2+1];
+    0.00 :   8114:   vfredosum.vs    v2,v1,v2
+         : 983  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+    0.00 :   8118:   vmv1r.v v1,v8
+         : 982  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   811c:   vfredosum.vs    v3,v13,v3
+         : 983  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+    0.00 :   8120:   vfredosum.vs    v1,v12,v1
+         : 981  result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   8124:   vfmv.f.s        fa2,v4
+         : 984  result3+=S2*A[ai+0+1]*B[bi+2+0] + S3*A[ai+0+0]*B[bi+2+1];
+    0.00 :   8128:   vfmv.f.s        fa5,v2
+         : 982  result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   812c:   vfmv.f.s        fa1,v3
+         : 983  result2+=S0*A[ai+0+0]*B[bi+2+0] + S1*A[ai+0+1]*B[bi+2+1];
+    0.00 :   8130:   vfmv.f.s        fa3,v1
+         : 980  for(BLASLONG k=0; k<K; k++) {
+    0.00 :   8134:   bnez    a1,80ae <zgemm_kernel_r+0x100e>
+         : 989  ai+=1*2;
+         : 990  bi+=2*2;
+         : 991  }
+         :
+         : 993  BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   8136:   mul     a5,s5,a6
+    0.00 :   813a:   add     a5,a5,a2
+         : 991  double Cr, Ci;
+         : 992  Cr = C[(ci+0*ldc+0)*2+0];
+    0.00 :   813c:   slli    a4,a5,0x4
+    0.00 :   8140:   add     a2,t5,a4
+         : 992  Ci = C[(ci+0*ldc+0)*2+1];
+    0.00 :   8144:   addi    a4,a4,8
+         : 991  Cr = C[(ci+0*ldc+0)*2+0];
+    0.00 :   8146:   fld     ft1,0(a2)
+         : 992  Ci = C[(ci+0*ldc+0)*2+1];
+    0.00 :   814a:   add     a4,a4,t5
+    0.00 :   814c:   fld     ft0,0(a4)
+         : 993  Cr += result0*alphar;
+    0.00 :   8150:   fmadd.d ft1,fa0,fa2,ft1
+         : 999  Ci += result1*alphar;
+         : 1000 Cr -= result1*alphai;
+         : 1001 Ci += result0*alphai;
+         : 1002 C[(ci+0*ldc+0)*2+0] = Cr;
+         : 1003 C[(ci+0*ldc+0)*2+1] = Ci;
+         : 1004 Cr = C[(ci+1*ldc+0)*2+0];
+    0.00 :   8154:   add     a5,a5,s5
+         : 994  Ci += result1*alphar;
+    0.00 :   8156:   fmadd.d ft0,fa0,fa1,ft0
+         : 999  Cr = C[(ci+1*ldc+0)*2+0];
+    0.00 :   815a:   slli    a5,a5,0x4
+    0.00 :   815c:   add     a3,t5,a5
+         : 1000 Ci = C[(ci+1*ldc+0)*2+1];
+    0.00 :   8160:   addi    a5,a5,8
+    0.00 :   8162:   add     a5,a5,t5
+         : 995  Cr -= result1*alphai;
+    0.00 :   8164:   fnmsub.d        fa1,fa4,fa1,ft1
+         : 998  C[(ci+0*ldc+0)*2+1] = Ci;
+    0.00 :   8168:   fmadd.d fa2,fa4,fa2,ft0
+         : 997  C[(ci+0*ldc+0)*2+0] = Cr;
+    0.00 :   816c:   fsd     fa1,0(a2)
+         : 998  C[(ci+0*ldc+0)*2+1] = Ci;
+    0.00 :   816e:   fsd     fa2,0(a4)
+         : 999  Cr = C[(ci+1*ldc+0)*2+0];
+    0.00 :   8170:   fld     fa1,0(a3)
+         : 1000 Ci = C[(ci+1*ldc+0)*2+1];
+    0.00 :   8172:   fld     fa2,0(a5)
+         : 1001 Cr += result2*alphar;
+    0.00 :   8174:   fmadd.d fa1,fa0,fa3,fa1
+         : 1002 Ci += result3*alphar;
+    0.00 :   8178:   fmadd.d fa2,fa0,fa5,fa2
+         : 1003 Cr -= result3*alphai;
+    0.00 :   817c:   fnmsub.d        fa5,fa4,fa5,fa1
+         : 1006 Ci += result2*alphai;
+         : 1007 C[(ci+1*ldc+0)*2+0] = Cr;
+         : 1008 C[(ci+1*ldc+0)*2+1] = Ci;
+    0.00 :   8180:   fmadd.d fa3,fa4,fa3,fa2
+         : 1005 C[(ci+1*ldc+0)*2+0] = Cr;
+    0.00 :   8184:   fsd     fa5,0(a3)
+         : 1006 C[(ci+1*ldc+0)*2+1] = Ci;
+    0.00 :   8186:   fsd     fa3,0(a5)
+         : 1010 m_top+=1;
+         : 1011 }
+         :
+         : 1013 n_top += 2;
+    0.00 :   8188:   addi    a6,a6,2
+         :
+         :
+         :
+         : 1020 // -- tails for N=1
+         :
+         : 1022 if( N & 1 ) {
+    0.00 :   818a:   andi    t0,t0,1
+    0.00 :   818e:   beqz    t0,850e <zgemm_kernel_r+0x146e>
+         : 1021 gvl = __riscv_vsetvl_e64m1(4);
+         : 1022 m_top = 0;
+         :
+         : 1024 for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   8192:   li      a4,7
+         : 1018 gvl = __riscv_vsetvl_e64m1(4);
+    0.00 :   8194:   vsetivli        a5,4,e64,m1,ta,ma
+         : 1021 for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   8198:   bge     a4,s9,8562 <zgemm_kernel_r+0x14c2>
+         : 1023 BLASLONG ai=m_top*K*2;
+         : 1024 BLASLONG bi=n_top*K*2;
+    0.00 :   819c:   ld      s10,-120(s0)
+         : 1075 ACC1r = __riscv_vfadd( ACC1r, tmp1r, gvl);
+         : 1076 ACC1i = __riscv_vfadd( ACC1i, tmp1i, gvl);
+         : 1077 }
+         :
+         :
+         : 1080 BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   81a0:   mul     t0,s5,a6
+    0.00 :   81a4:   slli    t1,a5,0x4
+    0.00 :   81a8:   slli    s7,s10,0x7
+    0.00 :   81ac:   add     t6,s4,s7
+    0.00 :   81b0:   addi    t4,t1,8
+         : 1021 for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   81b4:   srai    s1,s9,0x3
+    0.00 :   81b8:   mv      t2,s4
+    0.00 :   81ba:   li      s2,0
+         : 1028 vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   81bc:   li      a3,16
+         : 1049 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   81be:   li      s8,1
+         : 1023 BLASLONG bi=n_top*K*2;
+    0.00 :   81c0:   mul     a4,a6,s10
+    0.00 :   81c4:   slli    t0,t0,0x4
+    0.00 :   81c6:   add     t0,t0,t5
+         : 1024 double B0r = B[bi+0*2+0];
+    0.00 :   81c8:   slli    s3,a4,0x4
+         : 1025 double B0i = B[bi+0*2+1];
+    0.00 :   81cc:   slli    a4,a4,0x4
+    0.00 :   81ce:   addi    a4,a4,8
+         : 1024 double B0r = B[bi+0*2+0];
+    0.00 :   81d0:   add     s3,s3,t3
+         : 1025 double B0i = B[bi+0*2+1];
+    0.00 :   81d2:   add     s6,t3,a4
+         : 1029 vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   81d6:   addi    a1,t2,8
+         : 1030 vfloat64m1_t A1r = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   81da:   add     a2,t1,t2
+         : 1031 vfloat64m1_t A1i = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   81de:   add     a4,t2,t4
+         : 1029 vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   81e2:   vlse64.v        v3,(a1),a3
+         : 1028 vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   81e6:   vlse64.v        v4,(t2),a3
+         : 1030 vfloat64m1_t A1r = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   81ea:   vlse64.v        v1,(a2),a3
+         : 1031 vfloat64m1_t A1i = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   81ee:   vlse64.v        v2,(a4),a3
+         : 1025 double B0i = B[bi+0*2+1];
+    0.00 :   81f2:   fld     fa3,0(s6)
+         : 1024 double B0r = B[bi+0*2+0];
+    0.00 :   81f6:   fld     fa5,0(s3)
+         : 1036 vfloat64m1_t tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   81fa:   vfmul.vf        v11,v3,fa3
+         : 1037 vfloat64m1_t tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   81fe:   vfmul.vf        v12,v4,fa3
+         : 1039 vfloat64m1_t tmp1i = __riscv_vfmul_vf_f64m1( A1r, B0i, gvl);
+    0.00 :   8202:   vfmul.vf        v10,v1,fa3
+         : 1038 vfloat64m1_t tmp1r = __riscv_vfmul_vf_f64m1( A1i, B0i, gvl);
+    0.00 :   8206:   vfmul.vf        v9,v2,fa3
+         : 1040 tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   820a:   vfmacc.vf       v11,fa5,v4
+         : 1041 tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   820e:   vfmsac.vf       v12,fa5,v3
+         : 1043 tmp1i = VFMACC_RI( tmp1i, B0r, A1i, gvl);
+    0.00 :   8212:   vfmsac.vf       v10,fa5,v2
+         : 1042 tmp1r = VFMACC_RR( tmp1r, B0r, A1r, gvl);
+    0.00 :   8216:   vfmacc.vf       v9,fa5,v1
+         : 1049 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   821a:   bge     s8,s10,827e <zgemm_kernel_r+0x11de>
+    0.00 :   821e:   addi    a4,t2,128
+    0.00 :   8222:   mv      a2,s3
+         : 1055 A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   8224:   addi    a7,a4,8
+         : 1056 A1r = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   8228:   add     a0,a4,t1
+         : 1057 A1i = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   822c:   add     a1,a4,t4
+         : 1054 A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   8230:   vlse64.v        v8,(a4),a3
+         : 1055 A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   8234:   vlse64.v        v7,(a7),a3
+         : 1056 A1r = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   8238:   vlse64.v        v5,(a0),a3
+         : 1057 A1i = __riscv_vlse64_v_f64m1( &A[ai+1*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   823c:   vlse64.v        v6,(a1),a3
+         : 1051 B0i = B[bi+0*2+1];
+    0.00 :   8240:   fld     fa3,24(a2)
+         : 1050 B0r = B[bi+0*2+0];
+    0.00 :   8242:   fld     fa5,16(a2)
+         : 1049 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   8244:   addi    a4,a4,128
+         : 1060 tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   8248:   vfmul.vf        v4,v7,fa3
+         : 1061 tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   824c:   vfmul.vf        v3,v8,fa3
+         : 1063 tmp1i = __riscv_vfmul_vf_f64m1( A1r, B0i, gvl);
+    0.00 :   8250:   vfmul.vf        v2,v5,fa3
+         : 1062 tmp1r = __riscv_vfmul_vf_f64m1( A1i, B0i, gvl);
+    0.00 :   8254:   vfmul.vf        v1,v6,fa3
+         : 1049 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   8258:   addi    a2,a2,16
+         : 1064 tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   825a:   vfmacc.vf       v4,fa5,v8
+         : 1065 tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   825e:   vfmsac.vf       v3,fa5,v7
+         : 1067 tmp1i = VFMACC_RI( tmp1i, B0r, A1i, gvl);
+    0.00 :   8262:   vfmsac.vf       v2,fa5,v6
+         : 1066 tmp1r = VFMACC_RR( tmp1r, B0r, A1r, gvl);
+    0.00 :   8266:   vfmacc.vf       v1,fa5,v5
+         : 1068 ACC0r = __riscv_vfadd( ACC0r, tmp0r, gvl);
+    0.00 :   826a:   vfadd.vv        v11,v11,v4
+         : 1069 ACC0i = __riscv_vfadd( ACC0i, tmp0i, gvl);
+    0.00 :   826e:   vfadd.vv        v12,v12,v3
+         : 1071 ACC1i = __riscv_vfadd( ACC1i, tmp1i, gvl);
+    0.00 :   8272:   vfadd.vv        v10,v10,v2
+         : 1070 ACC1r = __riscv_vfadd( ACC1r, tmp1r, gvl);
+    0.00 :   8276:   vfadd.vv        v9,v9,v1
+         : 1049 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   827a:   bne     a4,t6,8224 <zgemm_kernel_r+0x1184>
+         :
+         : 1078 vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   827e:   vlse64.v        v4,(t0),a3
+         : 1078 vfloat64m1_t C0i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   8282:   addi    a1,t0,8
+    0.00 :   8286:   vlse64.v        v3,(a1),a3
+         : 1080 ci += gvl;
+         : 1081 vfloat64m1_t C1r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   828a:   add     a2,t1,t0
+    0.00 :   828e:   vlse64.v        v2,(a2),a3
+         : 1081 vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   8292:   add     a4,t0,t4
+         :
+         : 1084 C0r = __riscv_vfmacc( C0r, alphar, ACC0r, gvl );
+    0.00 :   8296:   vfmacc.vf       v4,fa0,v11
+         : 1081 vfloat64m1_t C1i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   829a:   vlse64.v        v1,(a4),a3
+         : 1084 C0i = __riscv_vfmacc( C0i, alphar, ACC0i, gvl );
+    0.00 :   829e:   vfmacc.vf       v3,fa0,v12
+         : 1021 for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   82a2:   addi    s2,s2,1
+         : 1085 C1r = __riscv_vfmacc( C1r, alphar, ACC1r, gvl );
+    0.00 :   82a4:   vfmacc.vf       v2,fa0,v9
+         : 1021 for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   82a8:   add     t2,t2,s7
+         : 1087 C1i = __riscv_vfmacc( C1i, alphar, ACC1i, gvl );
+         : 1088 C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   82aa:   vfnmsac.vf      v4,fa4,v12
+         : 1086 C1i = __riscv_vfmacc( C1i, alphar, ACC1i, gvl );
+    0.00 :   82ae:   vfmacc.vf       v1,fa0,v10
+         : 1088 C0i = __riscv_vfmacc ( C0i, alphai, ACC0r, gvl );
+    0.00 :   82b2:   vfmacc.vf       v3,fa4,v11
+         : 1021 for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   82b6:   add     t6,t6,s7
+         : 1089 C1r = __riscv_vfnmsac( C1r, alphai, ACC1i, gvl );
+    0.00 :   82b8:   vfnmsac.vf      v2,fa4,v10
+         : 1094 C1i = __riscv_vfmacc ( C1i, alphai, ACC1r, gvl );
+         :
+         : 1096 ci=n_top*ldc+m_top;
+         :
+         : 1098 __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C0r, gvl);
+    0.00 :   82bc:   vsse64.v        v4,(t0),a3
+         : 1090 C1i = __riscv_vfmacc ( C1i, alphai, ACC1r, gvl );
+    0.00 :   82c0:   vfmacc.vf       v1,fa4,v9
+         : 1021 for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   82c4:   addi    t0,t0,128
+         : 1095 __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C0i, gvl);
+    0.00 :   82c8:   vsse64.v        v3,(a1),a3
+         : 1097 ci += gvl;
+         : 1098 __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C1r, gvl);
+    0.00 :   82cc:   vsse64.v        v2,(a2),a3
+         : 1098 __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C1i, gvl);
+    0.00 :   82d0:   vsse64.v        v1,(a4),a3
+         : 1021 for (BLASLONG i=0; i<M/8; i+=1) {
+    0.00 :   82d4:   blt     s2,s1,81d6 <zgemm_kernel_r+0x1136>
+    0.00 :   82d8:   slli    s1,s1,0x3
+         :
+         : 1105 m_top += 8;
+         : 1106 }
+         :
+         :
+         : 1109 if( M & 4 ) {
+    0.00 :   82da:   andi    a4,s9,4
+    0.00 :   82de:   beqz    a4,83a0 <zgemm_kernel_r+0x1300>
+         : 1107 gvl = __riscv_vsetvl_e64m1(4);
+         :
+         : 1109 BLASLONG ai=m_top*K*2;
+    0.00 :   82e0:   ld      t1,-120(s0)
+         : 1113 BLASLONG bi=n_top*K*2;
+         : 1114 double B0r = B[bi+0*2+0];
+         : 1115 double B0i = B[bi+0*2+1];
+         : 1116 bi += 1*2;
+         :
+         : 1118 vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   82e4:   li      a1,16
+         : 1126 tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+         : 1127 tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+         : 1128 vfloat64m1_t ACC0r = tmp0r;
+         : 1129 vfloat64m1_t ACC0i = tmp0i;
+         :
+         : 1131 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   82e6:   li      a0,1
+         : 1107 BLASLONG ai=m_top*K*2;
+    0.00 :   82e8:   mul     a4,t1,s1
+         : 1108 BLASLONG bi=n_top*K*2;
+    0.00 :   82ec:   mul     a2,a6,t1
+         : 1113 vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   82f0:   slli    a3,a4,0x4
+         : 1114 vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   82f4:   slli    a4,a4,0x4
+    0.00 :   82f6:   addi    a4,a4,8
+    0.00 :   82f8:   add     a4,a4,s4
+         : 1113 vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   82fa:   add     a7,s4,a3
+         : 1114 vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   82fe:   vlse64.v        v1,(a4),a1
+         : 1113 vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   8302:   vlse64.v        v2,(a7),a1
+         : 1110 double B0i = B[bi+0*2+1];
+    0.00 :   8306:   slli    a4,a2,0x4
+    0.00 :   830a:   add     a4,a4,t3
+    0.00 :   830c:   fld     fa5,8(a4)
+         : 1109 double B0r = B[bi+0*2+0];
+    0.00 :   830e:   slli    a4,a2,0x4
+    0.00 :   8312:   add     a4,a4,t3
+         : 1119 vfloat64m1_t tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   8314:   vfmul.vf        v3,v1,fa5
+         : 1120 vfloat64m1_t tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   8318:   vfmul.vf        v4,v2,fa5
+         : 1109 double B0r = B[bi+0*2+0];
+    0.00 :   831c:   fld     fa5,0(a4)
+         : 1121 tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   831e:   vfmacc.vf       v3,fa5,v2
+         : 1122 tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   8322:   vfmsac.vf       v4,fa5,v1
+         : 1126 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   8326:   bge     a0,t1,836c <zgemm_kernel_r+0x12cc>
+    0.00 :   832a:   add     a2,a2,t1
+    0.00 :   832c:   slli    a2,a2,0x4
+    0.00 :   832e:   addi    a7,t3,-16
+    0.00 :   8332:   addi    a0,s4,64
+    0.00 :   8336:   add     a2,a2,a7
+    0.00 :   8338:   add     a3,a3,a0
+         : 1132 B0r = B[bi+0*2+0];
+         : 1133 B0i = B[bi+0*2+1];
+         : 1134 bi += 1*2;
+         :
+         : 1136 A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+         : 1137 A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   833a:   addi    a0,a3,8
+         : 1131 A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   833e:   vlse64.v        v6,(a3),a1
+         : 1132 A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   8342:   vlse64.v        v5,(a0),a1
+         : 1128 B0i = B[bi+0*2+1];
+    0.00 :   8346:   fld     fa3,24(a4)
+         : 1127 B0r = B[bi+0*2+0];
+    0.00 :   8348:   fld     fa5,16(a4)
+         : 1126 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   834a:   addi    a4,a4,16
+    0.00 :   834c:   addi    a3,a3,64
+         : 1136 ai += 4*2;
+         :
+         : 1138 tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+         : 1139 tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   8350:   vfmul.vf        v1,v6,fa3
+         : 1135 tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   8354:   vfmul.vf        v2,v5,fa3
+         : 1138 tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+         : 1139 tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   8358:   vfmsac.vf       v1,fa5,v5
+         : 1137 tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   835c:   vfmacc.vf       v2,fa5,v6
+         : 1140 ACC0r = __riscv_vfadd( ACC0r, tmp0r, gvl);
+         : 1141 ACC0i = __riscv_vfadd( ACC0i, tmp0i, gvl);
+    0.00 :   8360:   vfadd.vv        v4,v4,v1
+         : 1139 ACC0r = __riscv_vfadd( ACC0r, tmp0r, gvl);
+    0.00 :   8364:   vfadd.vv        v3,v3,v2
+         : 1126 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   8368:   bne     a2,a4,833a <zgemm_kernel_r+0x129a>
+         : 1144 }
+         :
+         :
+         : 1147 BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   836c:   mul     a4,a6,s5
+         :
+         : 1147 vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   8370:   li      a3,16
+         : 1144 BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   8372:   add     a4,a4,s1
+         : 1146 vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   8374:   slli    a4,a4,0x4
+    0.00 :   8376:   add     a2,t5,a4
+    0.00 :   837a:   vlse64.v        v2,(a2),a3
+         : 1147 vfloat64m1_t C0i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   837e:   addi    a4,a4,8
+    0.00 :   8380:   add     a4,a4,t5
+    0.00 :   8382:   vlse64.v        v1,(a4),a3
+         : 1159 ci=n_top*ldc+m_top;
+         :
+         : 1161 __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C0r, gvl);
+         : 1162 __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C0i, gvl);
+         :
+         : 1164 m_top += 4;
+    0.00 :   8386:   addi    s1,s1,4
+         : 1149 C0r = __riscv_vfmacc( C0r, alphar, ACC0r, gvl );
+    0.00 :   8388:   vfmacc.vf       v2,fa0,v3
+         : 1150 C0i = __riscv_vfmacc( C0i, alphar, ACC0i, gvl );
+    0.00 :   838c:   vfmacc.vf       v1,fa0,v4
+         : 1151 C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   8390:   vfnmsac.vf      v2,fa4,v4
+         : 1152 C0i = __riscv_vfmacc ( C0i, alphai, ACC0r, gvl );
+    0.00 :   8394:   vfmacc.vf       v1,fa4,v3
+         : 1156 __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C0r, gvl);
+    0.00 :   8398:   vsse64.v        v2,(a2),a3
+         : 1157 __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C0i, gvl);
+    0.00 :   839c:   vsse64.v        v1,(a4),a3
+         : 1163 }
+         :
+         :
+         : 1166 if( M & 2 ) {
+    0.00 :   83a0:   andi    a5,s9,2
+    0.00 :   83a4:   beqz    a5,846a <zgemm_kernel_r+0x13ca>
+         : 1166 gvl = __riscv_vsetvl_e64m1(2);
+         :
+         : 1168 BLASLONG ai=m_top*K*2;
+    0.00 :   83a6:   ld      t1,-120(s0)
+         : 1164 gvl = __riscv_vsetvl_e64m1(2);
+    0.00 :   83aa:   vsetivli        a5,2,e64,m1,ta,ma
+         : 1172 BLASLONG bi=n_top*K*2;
+         : 1173 double B0r = B[bi+0*2+0];
+         : 1174 double B0i = B[bi+0*2+1];
+         : 1175 bi += 1*2;
+         :
+         : 1177 vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   83ae:   li      a1,16
+         : 1166 BLASLONG ai=m_top*K*2;
+    0.00 :   83b0:   mul     a4,s1,t1
+         : 1185 tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+         : 1186 tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+         : 1187 vfloat64m1_t ACC0r = tmp0r;
+         : 1188 vfloat64m1_t ACC0i = tmp0i;
+         :
+         : 1190 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   83b4:   li      a0,1
+         : 1167 BLASLONG bi=n_top*K*2;
+    0.00 :   83b6:   mul     a2,a6,t1
+         : 1172 vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   83ba:   slli    a3,a4,0x4
+         : 1173 vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   83be:   slli    a4,a4,0x4
+    0.00 :   83c0:   addi    a4,a4,8
+    0.00 :   83c2:   add     a4,a4,s4
+         : 1172 vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   83c4:   add     a7,s4,a3
+         : 1173 vfloat64m1_t A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   83c8:   vlse64.v        v1,(a4),a1
+         : 1172 vfloat64m1_t A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   83cc:   vlse64.v        v2,(a7),a1
+         : 1169 double B0i = B[bi+0*2+1];
+    0.00 :   83d0:   slli    a4,a2,0x4
+    0.00 :   83d4:   add     a4,a4,t3
+    0.00 :   83d6:   fld     fa5,8(a4)
+         : 1168 double B0r = B[bi+0*2+0];
+    0.00 :   83d8:   slli    a4,a2,0x4
+    0.00 :   83dc:   add     a4,a4,t3
+         : 1178 vfloat64m1_t tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   83de:   vfmul.vf        v3,v1,fa5
+         : 1179 vfloat64m1_t tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   83e2:   vfmul.vf        v4,v2,fa5
+         : 1168 double B0r = B[bi+0*2+0];
+    0.00 :   83e6:   fld     fa5,0(a4)
+         : 1180 tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   83e8:   vfmacc.vf       v3,fa5,v2
+         : 1181 tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   83ec:   vfmsac.vf       v4,fa5,v1
+         : 1185 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   83f0:   bge     a0,t1,8436 <zgemm_kernel_r+0x1396>
+    0.00 :   83f4:   add     a2,a2,t1
+    0.00 :   83f6:   slli    a2,a2,0x4
+    0.00 :   83f8:   addi    a7,t3,-16
+    0.00 :   83fc:   addi    a0,s4,32
+    0.00 :   8400:   add     a2,a2,a7
+    0.00 :   8402:   add     a3,a3,a0
+         : 1191 B0r = B[bi+0*2+0];
+         : 1192 B0i = B[bi+0*2+1];
+         : 1193 bi += 1*2;
+         :
+         : 1195 A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+         : 1196 A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   8404:   addi    a0,a3,8
+         : 1190 A0r = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2], sizeof(FLOAT)*2, gvl );
+    0.00 :   8408:   vlse64.v        v6,(a3),a1
+         : 1191 A0i = __riscv_vlse64_v_f64m1( &A[ai+0*gvl*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   840c:   vlse64.v        v5,(a0),a1
+         : 1187 B0i = B[bi+0*2+1];
+    0.00 :   8410:   fld     fa3,24(a4)
+         : 1186 B0r = B[bi+0*2+0];
+    0.00 :   8412:   fld     fa5,16(a4)
+         : 1185 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   8414:   addi    a4,a4,16
+    0.00 :   8416:   addi    a3,a3,32
+         : 1195 ai += 2*2;
+         :
+         : 1197 tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+         : 1198 tmp0i = __riscv_vfmul_vf_f64m1( A0r, B0i, gvl);
+    0.00 :   841a:   vfmul.vf        v1,v6,fa3
+         : 1194 tmp0r = __riscv_vfmul_vf_f64m1( A0i, B0i, gvl);
+    0.00 :   841e:   vfmul.vf        v2,v5,fa3
+         : 1197 tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+         : 1198 tmp0i = VFMACC_RI( tmp0i, B0r, A0i, gvl);
+    0.00 :   8422:   vfmsac.vf       v1,fa5,v5
+         : 1196 tmp0r = VFMACC_RR( tmp0r, B0r, A0r, gvl);
+    0.00 :   8426:   vfmacc.vf       v2,fa5,v6
+         : 1199 ACC0r = __riscv_vfadd( ACC0r, tmp0r, gvl);
+         : 1200 ACC0i = __riscv_vfadd( ACC0i, tmp0i, gvl);
+    0.00 :   842a:   vfadd.vv        v4,v4,v1
+         : 1198 ACC0r = __riscv_vfadd( ACC0r, tmp0r, gvl);
+    0.00 :   842e:   vfadd.vv        v3,v3,v2
+         : 1185 for(BLASLONG k=1; k<K; k++) {
+    0.00 :   8432:   bne     a2,a4,8404 <zgemm_kernel_r+0x1364>
+         : 1203 }
+         :
+         :
+         : 1206 BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   8436:   mul     a4,a6,s5
+         :
+         : 1206 vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   843a:   li      a3,16
+         : 1203 BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   843c:   add     a4,a4,s1
+         : 1205 vfloat64m1_t C0r = __riscv_vlse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, gvl );
+    0.00 :   843e:   slli    a4,a4,0x4
+    0.00 :   8440:   add     a2,t5,a4
+    0.00 :   8444:   vlse64.v        v2,(a2),a3
+         : 1206 vfloat64m1_t C0i = __riscv_vlse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, gvl );
+    0.00 :   8448:   addi    a4,a4,8
+    0.00 :   844a:   add     a4,a4,t5
+    0.00 :   844c:   vlse64.v        v1,(a4),a3
+         : 1218 ci=n_top*ldc+m_top;
+         :
+         : 1220 __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C0r, gvl);
+         : 1221 __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C0i, gvl);
+         :
+         : 1223 m_top += 2;
+    0.00 :   8450:   addi    s1,s1,2
+         : 1208 C0r = __riscv_vfmacc( C0r, alphar, ACC0r, gvl );
+    0.00 :   8452:   vfmacc.vf       v2,fa0,v3
+         : 1209 C0i = __riscv_vfmacc( C0i, alphar, ACC0i, gvl );
+    0.00 :   8456:   vfmacc.vf       v1,fa0,v4
+         : 1210 C0r = __riscv_vfnmsac( C0r, alphai, ACC0i, gvl );
+    0.00 :   845a:   vfnmsac.vf      v2,fa4,v4
+         : 1211 C0i = __riscv_vfmacc ( C0i, alphai, ACC0r, gvl );
+    0.00 :   845e:   vfmacc.vf       v1,fa4,v3
+         : 1215 __riscv_vsse64_v_f64m1( &C[ci*2+0], sizeof(FLOAT)*2, C0r, gvl);
+    0.00 :   8462:   vsse64.v        v2,(a2),a3
+         : 1216 __riscv_vsse64_v_f64m1( &C[ci*2+1], sizeof(FLOAT)*2, C0i, gvl);
+    0.00 :   8466:   vsse64.v        v1,(a4),a3
+         : 1222 }
+         :
+         :
+         : 1225 if( M & 1 ) {
+    0.00 :   846a:   andi    s9,s9,1
+    0.00 :   846e:   beqz    s9,850e <zgemm_kernel_r+0x146e>
+         : 1228 double result0 = 0;
+         : 1229 double result1 = 0;
+         : 1230 BLASLONG ai=m_top*K*2;
+         : 1231 BLASLONG bi=n_top*K*2;
+         :
+         : 1233 for(BLASLONG k=0; k<K; k++) {
+    0.00 :   8472:   ld      a5,-120(s0)
+    0.00 :   8476:   blez    a5,857e <zgemm_kernel_r+0x14de>
+         : 1226 BLASLONG bi=n_top*K*2;
+    0.00 :   847a:   mul     a3,a6,a5
+         : 1224 double result1 = 0;
+    0.00 :   847e:   fmv.d.x fa5,zero
+         : 1223 double result0 = 0;
+    0.00 :   8482:   fmv.d   fa3,fa5
+         : 1225 BLASLONG ai=m_top*K*2;
+    0.00 :   8486:   mul     a4,s1,a5
+    0.00 :   848a:   slli    a3,a3,0x4
+    0.00 :   848c:   add     t3,t3,a3
+    0.00 :   848e:   slli    a4,a4,0x4
+    0.00 :   8490:   add     s4,s4,a4
+    0.00 :   8492:   vsetvli a4,a5,e8,mf8,ta,ma
+         : 1229 result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   8496:   vlseg2e64.v     v4,(s4)
+    0.00 :   849a:   vlseg2e64.v     v2,(t3)
+    0.00 :   849e:   vsetivli        zero,1,e64,m1,ta,ma
+    0.00 :   84a2:   vfmv.s.f        v6,fa3
+         : 1230 result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   84a6:   vfmv.s.f        v1,fa5
+    0.00 :   84aa:   vsetvli zero,a4,e64,m1,ta,ma
+    0.00 :   84ae:   slli    a3,a4,0x4
+         : 1228 for(BLASLONG k=0; k<K; k++) {
+    0.00 :   84b2:   sub     a5,a5,a4
+    0.00 :   84b4:   add     t3,t3,a3
+    0.00 :   84b6:   add     s4,s4,a3
+         : 1230 result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   84b8:   vfneg.v v8,v4
+         : 1229 result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   84bc:   vfmul.vv        v7,v3,v5
+         : 1230 result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   84c0:   vfmul.vv        v8,v8,v3
+         : 1229 result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   84c4:   vmv1r.v v3,v6
+    0.00 :   84c8:   vfmacc.vv       v7,v2,v4
+         : 1230 result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   84cc:   vfmadd.vv       v2,v5,v8
+         : 1229 result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   84d0:   vfredosum.vs    v3,v7,v3
+         : 1230 result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   84d4:   vfredosum.vs    v1,v2,v1
+         : 1229 result0+=S0*A[ai+0+0]*B[bi+0+0] + S1*A[ai+0+1]*B[bi+0+1];
+    0.00 :   84d8:   vfmv.f.s        fa3,v3
+         : 1230 result1+=S2*A[ai+0+1]*B[bi+0+0] + S3*A[ai+0+0]*B[bi+0+1];
+    0.00 :   84dc:   vfmv.f.s        fa5,v1
+         : 1228 for(BLASLONG k=0; k<K; k++) {
+    0.00 :   84e0:   bnez    a5,8492 <zgemm_kernel_r+0x13f2>
+         : 1235 ai+=1*2;
+         : 1236 bi+=1*2;
+         : 1237 }
+         :
+         : 1239 BLASLONG ci=n_top*ldc+m_top;
+    0.00 :   84e2:   mul     a5,a6,s5
+    0.00 :   84e6:   add     a5,a5,s1
+         : 1237 double Cr, Ci;
+         : 1238 Cr = C[(ci+0*ldc+0)*2+0];
+    0.00 :   84e8:   slli    a5,a5,0x4
+    0.00 :   84ea:   add     a4,t5,a5
+         : 1238 Ci = C[(ci+0*ldc+0)*2+1];
+    0.00 :   84ee:   addi    a5,a5,8
+         : 1237 Cr = C[(ci+0*ldc+0)*2+0];
+    0.00 :   84f0:   fld     fa2,0(a4)
+         : 1238 Ci = C[(ci+0*ldc+0)*2+1];
+    0.00 :   84f2:   add     t5,t5,a5
+    0.00 :   84f4:   fld     fa1,0(t5)
+         : 1239 Cr += result0*alphar;
+    0.00 :   84f8:   fmadd.d fa2,fa0,fa3,fa2
+         : 1240 Ci += result1*alphar;
+    0.00 :   84fc:   fmadd.d fa0,fa0,fa5,fa1
+         : 1241 Cr -= result1*alphai;
+    0.00 :   8500:   fnmsub.d        fa5,fa4,fa5,fa2
+         : 1244 Ci += result0*alphai;
+         : 1245 C[(ci+0*ldc+0)*2+0] = Cr;
+         : 1246 C[(ci+0*ldc+0)*2+1] = Ci;
+    0.00 :   8504:   fmadd.d fa4,fa4,fa3,fa0
+         : 1243 C[(ci+0*ldc+0)*2+0] = Cr;
+    0.00 :   8508:   fsd     fa5,0(a4)
+         : 1244 C[(ci+0*ldc+0)*2+1] = Ci;
+    0.00 :   850a:   fsd     fa4,0(t5)
+         :
+         : 1253 n_top += 1;
+         : 1254 }
+         :
+         : 1256 return 0;
+         : 1257 }
+    0.00 :   850e:   ld      ra,376(sp)
+    0.00 :   8510:   ld      s0,368(sp)
+    0.00 :   8512:   ld      s1,360(sp)
+    0.00 :   8514:   ld      s2,352(sp)
+    0.00 :   8516:   ld      s3,344(sp)
+    0.00 :   8518:   ld      s4,336(sp)
+    0.00 :   851a:   ld      s5,328(sp)
+    0.00 :   851c:   ld      s6,320(sp)
+    0.00 :   851e:   ld      s7,312(sp)
+    0.00 :   8520:   ld      s8,304(sp)
+    0.00 :   8522:   ld      s9,296(sp)
+    0.00 :   8524:   ld      s10,288(sp)
+    0.00 :   8526:   ld      s11,280(sp)
+    0.00 :   8528:   li      a0,0
+    0.00 :   852a:   addi    sp,sp,384
+    0.00 :   852c:   ret
+    0.00 :   852e:   slli    a4,a2,0x3
+    0.00 :   8532:   sd      a4,-296(s0)
+    0.00 :   8536:   j       7178 <zgemm_kernel_r+0xd8>
+         : 606  double result7 = 0;
+    0.00 :   853a:   fmv.d.x fa5,zero
+         : 605  double result6 = 0;
+    0.00 :   853e:   fmv.d   fa3,fa5
+         : 604  double result5 = 0;
+    0.00 :   8542:   fmv.d   fa1,fa5
+         : 603  double result4 = 0;
+    0.00 :   8546:   fmv.d   fa2,fa5
+         : 602  double result3 = 0;
+    0.00 :   854a:   fmv.d   ft1,fa5
+         : 601  double result2 = 0;
+    0.00 :   854e:   fmv.d   ft0,fa5
+         : 600  double result1 = 0;
+    0.00 :   8552:   fmv.d   ft3,fa5
+         : 599  double result0 = 0;
+    0.00 :   8556:   fmv.d   ft2,fa5
+    0.00 :   855a:   j       7ac6 <zgemm_kernel_r+0xa26>
+         : 669  m_top = 0;
+    0.00 :   855e:   li      a2,0
+    0.00 :   8560:   j       7e10 <zgemm_kernel_r+0xd70>
+         : 1019 m_top = 0;
+    0.00 :   8562:   li      s1,0
+    0.00 :   8564:   j       82da <zgemm_kernel_r+0x123a>
+         : 83   BLASLONG n_top = 0;
+    0.00 :   8566:   li      a6,0
+    0.00 :   8568:   j       7ba4 <zgemm_kernel_r+0xb04>
+         : 976  double result3 = 0;
+    0.00 :   856c:   fmv.d.x fa5,zero
+         : 975  double result2 = 0;
+    0.00 :   8570:   fmv.d   fa3,fa5
+         : 974  double result1 = 0;
+    0.00 :   8574:   fmv.d   fa1,fa5
+         : 973  double result0 = 0;
+    0.00 :   8578:   fmv.d   fa2,fa5
+    0.00 :   857c:   j       8136 <zgemm_kernel_r+0x1096>
+         : 1224 double result1 = 0;
+    0.00 :   857e:   fmv.d.x fa5,zero
+         : 1223 double result0 = 0;
+    0.00 :   8582:   fmv.d   fa3,fa5
+    0.00 :   8586:   j       84e2 <zgemm_kernel_r+0x1442>
