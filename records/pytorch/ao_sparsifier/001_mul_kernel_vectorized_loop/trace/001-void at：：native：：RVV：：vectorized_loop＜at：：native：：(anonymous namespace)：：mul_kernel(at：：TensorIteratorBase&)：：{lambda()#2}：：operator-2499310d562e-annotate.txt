@@ -1,0 +1,987 @@
+ Percent |	Source code & Disassembly of libtorch_cpu.so for cpu-clock (13 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3       Disassembly of section .text:
+         :
+         : 5       00000000038fbb7e <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]>:
+         : 6       void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+         : 199     // the same type and contiguous with one exception: a single input may be
+         : 200     // a scalar (stride 0). It's position is indicated by the argument `S`. If `S`
+         : 201     // is 0, then there are no scalar inputs.
+         : 202     template <typename func_t, typename vec_func_t>
+         : 203     inline void
+         : 204     vectorized_loop(char** C10_RESTRICT data_, int64_t n, int64_t S, func_t&& op, vec_func_t&& vop) {
+    0.00 :   38fbb7e:        addi    sp,sp,-576
+         : 207     using Vec = Vectorized<scalar_t>;
+         : 208     constexpr int ntensors = traits::arity + 1;
+         :
+         : 210     char* C10_RESTRICT data[ntensors];
+         : 211     for (const auto arg : c10::irange(ntensors)) {
+         : 212     data[arg] = data_[arg];
+    0.00 :   38fbb82:        vsetivli        zero,2,e64,m1,ta,ma
+         : 199     vectorized_loop(char** C10_RESTRICT data_, int64_t n, int64_t S, func_t&& op, vec_func_t&& vop) {
+    0.00 :   38fbb86:        sd      s0,560(sp)
+    0.00 :   38fbb8a:        sd      s7,504(sp)
+    0.00 :   38fbb8c:        addi    s0,sp,576
+    0.00 :   38fbb8e:        sd      s11,472(sp)
+    0.00 :   38fbb90:        sd      ra,568(sp)
+    0.00 :   38fbb94:        sd      s8,496(sp)
+         : 207     data[arg] = data_[arg];
+    0.00 :   38fbb96:        vle64.v v1,(a0)
+    0.00 :   38fbb9a:        addi    a5,s0,-432
+    0.00 :   38fbb9e:        ld      a3,16(a0)
+         : 199     vectorized_loop(char** C10_RESTRICT data_, int64_t n, int64_t S, func_t&& op, vec_func_t&& vop) {
+    0.00 :   38fbba0:        mv      s11,a2
+    0.00 :   38fbba2:        auipc   a2,0x4d0d
+    0.00 :   38fbba6:        ld      a2,-1570(a2) # 8608580 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   38fbbaa:        addi    t3,s0,-449
+         : 207     data[arg] = data_[arg];
+    0.00 :   38fbbae:        vse64.v v1,(a5)
+    0.00 :   38fbbb2:        vslidedown.vi   v2,v1,1
+    0.00 :   38fbbb6:        sd      a3,-416(s0)
+         : 199     vectorized_loop(char** C10_RESTRICT data_, int64_t n, int64_t S, func_t&& op, vec_func_t&& vop) {
+    0.00 :   38fbbba:        ld      a4,0(a2)
+    0.00 :   38fbbbc:        sd      a4,-120(s0)
+    0.00 :   38fbbc0:        li      a4,0
+         : 206     for (const auto arg : c10::irange(ntensors)) {
+    0.00 :   38fbbc2:        vmv.x.s a0,v2
+    0.00 :   38fbbc6:        vmv.x.s t1,v1
+         : 199     vectorized_loop(char** C10_RESTRICT data_, int64_t n, int64_t S, func_t&& op, vec_func_t&& vop) {
+    0.00 :   38fbbca:        andi    s7,t3,-32
+         : 210     }
+         :
+         : 212     Vec opt_scalar = Vec(S > 0 ? c10::load((scalar_t*)data[S]) : scalar_t(0));
+    0.00 :   38fbbce:        beqz    s11,38fc306 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x788>
+    0.00 :   38fbbd2:        slli    a4,s11,0x3
+    0.00 :   38fbbd6:        add     a5,a5,a4
+         : 212     torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+         : 11      namespace detail {
+         :
+         : 13      template <typename T>
+         : 14      struct LoadImpl {
+         : 15      C10_HOST_DEVICE static T apply(const void* src) {
+         : 16      return *reinterpret_cast<const T*>(src);
+    0.00 :   38fbbd8:        ld      a4,0(a5)
+         : 18      at::vec::RVV::Vectorized<float>::Vectorized(float):
+         : 33      Vectorized() {}
+         : 34      Vectorized(vfloat32m2_t v) {
+         : 35      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+         : 36      }
+         : 37      Vectorized(float val) {
+         : 38      vfloat32m2_t v = __riscv_vfmv_v_f_f32m2(val, VFLOAT32_VL);
+    0.00 :   38fbbda:        vsetivli        zero,8,e32,m2,ta,ma
+         : 34      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fbbde:        addi    s8,s0,-408
+         : 33      vfloat32m2_t v = __riscv_vfmv_v_f_f32m2(val, VFLOAT32_VL);
+    0.00 :   38fbbe2:        flw     fa5,0(a4)
+         : 35      void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+         : 212     int64_t i = 0;
+         : 213     for (; i <= n - 2 * Vec::size(); i += 2 * Vec::size()) {
+    0.00 :   38fbbe6:        li      a5,15
+         : 215     at::vec::RVV::Vectorized<float>::Vectorized(float):
+    0.00 :   38fbbe8:        vfmv.v.f        v2,fa5
+         : 34      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fbbec:        vse32.v v2,(s8)
+         : 36      void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+    0.00 :   38fbbf0:        bge     a5,a1,38fc346 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x7c8>
+    0.00 :   38fbbf4:        addi    a4,a1,-15
+    0.00 :   38fbbf8:        sd      s1,552(sp)
+    0.00 :   38fbbfc:        sd      s2,544(sp)
+    0.00 :   38fbc00:        sd      s3,536(sp)
+    0.00 :   38fbc04:        sd      s4,528(sp)
+    0.00 :   38fbc08:        sd      s6,512(sp)
+    0.00 :   38fbc0c:        sd      s9,488(sp)
+    0.00 :   38fbc0e:        sd      s10,480(sp)
+    0.00 :   38fbc10:        li      a5,1
+    0.00 :   38fbc12:        sd      a4,-552(s0)
+    0.00 :   38fbc16:        bne     s11,a5,38fc07a <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4fc>
+    0.00 :   38fbc1a:        sub     a2,t1,a3
+         : 217     auto args1 = dereference_vec<traits>(&data[1], opt_scalar, S, i);
+         : 218     auto args2 = dereference_vec<traits>(&data[1], opt_scalar, S, i + Vec::size());
+         : 219     auto out1 = std::apply(vop, std::move(args1));
+         : 220     auto out2 = std::apply(vop, std::move(args2));
+         : 221     out1.store(data[0] + i * sizeof(scalar_t));
+    0.00 :   38fbc1e:        addi    a5,a2,-32
+    0.00 :   38fbc22:        sd      a5,-536(s0)
+    0.00 :   38fbc26:        addi    a5,s0,-376
+    0.00 :   38fbc2a:        sd      a5,-504(s0)
+    0.00 :   38fbc2e:        addi    a5,s0,-344
+    0.00 :   38fbc32:        sd      s11,-528(s0)
+    0.00 :   38fbc36:        addi    s3,a3,32
+    0.00 :   38fbc3a:        mv      s11,s8
+         : 211     int64_t i = 0;
+    0.00 :   38fbc3c:        li      s6,0
+    0.00 :   38fbc3e:        addi    s2,s0,-248
+    0.00 :   38fbc42:        addi    s10,s0,-312
+    0.00 :   38fbc46:        addi    s1,s0,-280
+    0.00 :   38fbc4a:        addi    s4,s0,-184
+    0.00 :   38fbc4e:        addi    s9,s0,-152
+    0.00 :   38fbc52:        sd      a5,-544(s0)
+    0.00 :   38fbc56:        sd      a3,-488(s0)
+    0.00 :   38fbc5a:        sd      t1,-496(s0)
+    0.00 :   38fbc5e:        sd      a0,-512(s0)
+    0.00 :   38fbc62:        sd      a1,-520(s0)
+    0.00 :   38fbc66:        mv      s8,a2
+         : 80      return dereference_vec_impl<traits>(data, opt_scalar, S, i, Indices{});
+    0.00 :   38fbc68:        mv      a4,s6
+         : 82      dereference_vec<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)>&> >():
+    0.00 :   38fbc6a:        li      a3,1
+    0.00 :   38fbc6c:        addi    a1,s0,-424
+    0.00 :   38fbc70:        mv      a2,s11
+    0.00 :   38fbc72:        mv      a0,s2
+    0.00 :   38fbc74:        jal     3834fc6 <function_traits<at::native::(anonymous namespace)::add_clamp_kernel(at::TensorIterator&, c10::Scalar const&, c10::Scalar const&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>::ArgsTuple at::native::RVV::dereference_vec_impl<function_traits<at::native::(anonymous namespace)::add_clamp_kernel(at::TensorIterator&, c10::Scalar const&, c10::Scalar const&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>, 0ul, 1ul>(char* restrict*, function_traits<at::native::(anonymous namespace)::add_clamp_kernel(at::TensorIterator&, c10::Scalar const&, c10::Scalar const&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>::result_type const&, unsigned long, long, std::integer_sequence<unsigned long, 0ul, 1ul>) [clone .isra.0]>
+         : 85      void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+         : 71      S == INDEX + 1 ?
+    0.00 :   38fbc78:        mv      a3,s1
+         : 73      dereference_vec_impl<function_traits<at::native::(anonymous namespace)::add_clamp_kernel(at::TensorIterator&, const c10::Scalar&, const c10::Scalar&, const c10::Scalar&)::<lambda()>::<lambda()>::<lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)>&>, 0, 1>():
+    0.00 :   38fbc7a:        mv      a1,s11
+    0.00 :   38fbc7c:        li      a4,32
+    0.00 :   38fbc80:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fbc84:        vle8.v  v1,(a1)
+    0.00 :   38fbc88:        sub     a4,a4,a5
+    0.00 :   38fbc8a:        add     a1,a1,a5
+    0.00 :   38fbc8c:        vse8.v  v1,(a3)
+    0.00 :   38fbc90:        add     a3,a3,a5
+    0.00 :   38fbc92:        bnez    a4,38fbc80 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x102>
+         : 80      at::vec::RVV::Vectorized<float>::loadu(void const*, long):
+         : 131     return __riscv_vle32_v_f32m2_tu(
+         : 132     zero_vec, reinterpret_cast<const float*>(ptr), count);
+         : 133     }
+         : 134     #else
+         : 135     // If the address of ptr is not aligned, the performance will be very slow.
+         : 136     if (reinterpret_cast<uintptr_t>(ptr) & 0x3) {
+    0.00 :   38fbc94:        andi    a5,s3,3
+    0.00 :   38fbc98:        beqz    a5,38fc2f8 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x77a>
+         : 136     __at_align__ float tmp_values[size()];
+         : 137     for (const auto i : c10::irange(size())) {
+         : 138     tmp_values[i] = 0.0;
+         : 139     }
+         : 140     std::memcpy(
+    0.00 :   38fbc9c:        mv      a3,s7
+    0.00 :   38fbc9e:        mv      a1,s3
+    0.00 :   38fbca0:        li      a4,32
+    0.00 :   38fbca4:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fbca8:        vle8.v  v1,(a1)
+    0.00 :   38fbcac:        sub     a4,a4,a5
+    0.00 :   38fbcae:        add     a1,a1,a5
+    0.00 :   38fbcb0:        vse8.v  v1,(a3)
+    0.00 :   38fbcb4:        add     a3,a3,a5
+    0.00 :   38fbcb6:        bnez    a4,38fbca4 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x126>
+         : 140     tmp_values,
+         : 141     reinterpret_cast<const float*>(ptr),
+         : 142     count * sizeof(float));
+         : 143     return __riscv_vle32_v_f32m2(tmp_values, VFLOAT32_VL);
+    0.00 :   38fbcb8:        vsetivli        zero,8,e32,m2,ta,ma
+    0.00 :   38fbcbc:        vle32.v v2,(s7)
+         : 146     at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fbcc0:        vse32.v v2,(s10)
+         : 32      std::_Head_base<1ul, at::vec::RVV::Vectorized<float>, false>::_Head_base<at::vec::RVV::Vectorized<float> const>(at::vec::RVV::Vectorized<float> const&&):
+         : 213     constexpr _Head_base(const _Head_base&) = default;
+         : 214     constexpr _Head_base(_Head_base&&) = default;
+         :
+         : 216     template<typename _UHead>
+         : 217     constexpr _Head_base(_UHead&& __h)
+         : 218     : _M_head_impl(std::forward<_UHead>(__h)) { }
+    0.00 :   38fbcc4:        mv      a3,s4
+    0.00 :   38fbcc6:        mv      a1,s10
+    0.00 :   38fbcc8:        li      a4,32
+    0.00 :   38fbccc:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fbcd0:        vle8.v  v1,(a1)
+    0.00 :   38fbcd4:        sub     a4,a4,a5
+    0.00 :   38fbcd6:        add     a1,a1,a5
+    0.00 :   38fbcd8:        vse8.v  v1,(a3)
+    0.00 :   38fbcdc:        add     a3,a3,a5
+    0.00 :   38fbcde:        bnez    a4,38fbccc <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x14e>
+         : 229     std::_Head_base<0ul, at::vec::RVV::Vectorized<float>, false>::_Head_base<at::vec::RVV::Vectorized<float> const>(at::vec::RVV::Vectorized<float> const&&):
+    0.00 :   38fbce0:        mv      a3,s9
+    0.00 :   38fbce2:        mv      a1,s1
+    0.00 :   38fbce4:        li      a4,32
+    0.00 :   38fbce8:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fbcec:        vle8.v  v1,(a1)
+    0.00 :   38fbcf0:        sub     a4,a4,a5
+    0.00 :   38fbcf2:        add     a1,a1,a5
+    0.00 :   38fbcf4:        vse8.v  v1,(a3)
+    0.00 :   38fbcf8:        add     a3,a3,a5
+    0.00 :   38fbcfa:        bnez    a4,38fbce8 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x16a>
+         : 223     void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+         : 62      __invfwd(typename remove_reference<_Tp>::type& __t) noexcept
+         : 63      { return static_cast<_Up&&>(__t); }
+         :
+         : 65      template<typename _Res, typename _Fn, typename... _Args>
+         : 66      constexpr _Res
+         : 67      __invoke_impl(__invoke_other, _Fn&& __f, _Args&&... __args)
+    0.00 :   38fbcfc:        mv      a3,s10
+         : 69      __invoke_impl<at::vec::RVV::Vectorized<float>, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)>&, at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float> >():
+    0.00 :   38fbcfe:        addi    a1,s0,-216
+    0.00 :   38fbd02:        li      a4,32
+    0.00 :   38fbd06:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fbd0a:        vle8.v  v1,(a1)
+    0.00 :   38fbd0e:        sub     a4,a4,a5
+    0.00 :   38fbd10:        add     a1,a1,a5
+    0.00 :   38fbd12:        vse8.v  v1,(a3)
+    0.00 :   38fbd16:        add     a3,a3,a5
+    0.00 :   38fbd18:        bnez    a4,38fbd06 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x188>
+    0.00 :   38fbd1a:        mv      a3,s1
+    0.00 :   38fbd1c:        mv      a1,s2
+    0.00 :   38fbd1e:        li      a4,32
+    0.00 :   38fbd22:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fbd26:        vle8.v  v1,(a1)
+    0.00 :   38fbd2a:        sub     a4,a4,a5
+    0.00 :   38fbd2c:        add     a1,a1,a5
+    0.00 :   38fbd2e:        vse8.v  v1,(a3)
+    0.00 :   38fbd32:        add     a3,a3,a5
+    0.00 :   38fbd34:        bnez    a4,38fbd22 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x1a4>
+         : 81      at::vec::RVV::Vectorized<float>::operator __rvv_float32m2_t() const:
+         : 56      return __riscv_vle32_v_f32m2(this->values, VFLOAT32_VL);
+    0.00 :   38fbd36:        vsetivli        zero,8,e32,m2,ta,ma
+    0.00 :   38fbd3a:        vle32.v v2,(s10)
+    0.00 :   38fbd3e:        vle32.v v4,(s1)
+         : 60      at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fbd42:        ld      a5,-504(s0)
+    0.00 :   38fbd46:        mv      a3,s10
+    0.00 :   38fbd48:        mv      a1,s9
+    0.00 :   38fbd4a:        li      a4,32
+         : 35      at::vec::RVV::Vectorized<float> at::vec::RVV::operator*<float>(at::vec::RVV::Vectorized<float> const&, at::vec::RVV::Vectorized<float> const&):
+         :
+         : 515     template <>
+         : 516     Vectorized<float> inline operator*(
+         : 517     const Vectorized<float>& a,
+         : 518     const Vectorized<float>& b) {
+         : 519     return __riscv_vfmul_vv_f32m2(a, b, VFLOAT32_VL);
+    0.00 :   38fbd4e:        vfmul.vv        v2,v2,v4
+         : 521     at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fbd52:        vse32.v v2,(a5)
+         : 32      void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+    0.00 :   38fbd56:        vsetvli a5,a4,e8,m1,ta,ma
+         : 63      __invoke_impl<at::vec::RVV::Vectorized<float>, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)>&, at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float> >():
+    0.00 :   38fbd5a:        vle8.v  v1,(a1)
+    0.00 :   38fbd5e:        sub     a4,a4,a5
+    0.00 :   38fbd60:        add     a1,a1,a5
+    0.00 :   38fbd62:        vse8.v  v1,(a3)
+    0.00 :   38fbd66:        add     a3,a3,a5
+    0.00 :   38fbd68:        bnez    a4,38fbd56 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x1d8>
+    0.00 :   38fbd6a:        mv      a3,s1
+    0.00 :   38fbd6c:        mv      a1,s4
+    0.00 :   38fbd6e:        li      a4,32
+    0.00 :   38fbd72:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fbd76:        vle8.v  v1,(a1)
+    0.00 :   38fbd7a:        sub     a4,a4,a5
+    0.00 :   38fbd7c:        add     a1,a1,a5
+    0.00 :   38fbd7e:        vse8.v  v1,(a3)
+    0.00 :   38fbd82:        add     a3,a3,a5
+    0.00 :   38fbd84:        bnez    a4,38fbd72 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x1f4>
+         : 78      at::vec::RVV::Vectorized<float>::operator __rvv_float32m2_t() const:
+         : 56      return __riscv_vle32_v_f32m2(this->values, VFLOAT32_VL);
+    0.00 :   38fbd86:        vsetivli        zero,8,e32,m2,ta,ma
+    0.00 :   38fbd8a:        vle32.v v2,(s10)
+    0.00 :   38fbd8e:        vle32.v v4,(s1)
+         : 60      void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+         : 217     out1.store(data[0] + i * sizeof(scalar_t));
+    0.00 :   38fbd92:        ld      a5,-536(s0)
+         : 219     at::vec::RVV::Vectorized<float>::store(void*, long) const:
+         : 155     std::memcpy(ptr, this->values, count * sizeof(float));
+    0.00 :   38fbd96:        ld      a1,-504(s0)
+    0.00 :   38fbd9a:        li      a4,32
+         : 158     void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+    0.00 :   38fbd9e:        add     a3,a5,s3
+         : 218     at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fbda2:        ld      a5,-544(s0)
+         : 32      at::vec::RVV::Vectorized<float> at::vec::RVV::operator*<float>(at::vec::RVV::Vectorized<float> const&, at::vec::RVV::Vectorized<float> const&):
+         : 514     return __riscv_vfmul_vv_f32m2(a, b, VFLOAT32_VL);
+    0.00 :   38fbda6:        vfmul.vv        v2,v2,v4
+         : 516     at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fbdaa:        vse32.v v2,(a5)
+         : 32      at::vec::RVV::Vectorized<float>::store(void*, long) const:
+         : 155     std::memcpy(ptr, this->values, count * sizeof(float));
+    0.00 :   38fbdae:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fbdb2:        vle8.v  v1,(a1)
+    0.00 :   38fbdb6:        sub     a4,a4,a5
+    0.00 :   38fbdb8:        add     a1,a1,a5
+    0.00 :   38fbdba:        vse8.v  v1,(a3)
+    0.00 :   38fbdbe:        add     a3,a3,a5
+    0.00 :   38fbdc0:        bnez    a4,38fbdae <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x230>
+    0.00 :   38fbdc2:        ld      a1,-544(s0)
+         : 164     void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+         : 218     out2.store(data[0] + (i + Vec::size()) * sizeof(scalar_t));
+    0.00 :   38fbdc6:        add     a3,s3,s8
+         : 220     at::vec::RVV::Vectorized<float>::store(void*, long) const:
+    0.00 :   38fbdca:        li      a4,32
+    0.00 :   38fbdce:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fbdd2:        vle8.v  v1,(a1)
+    0.00 :   38fbdd6:        sub     a4,a4,a5
+    0.00 :   38fbdd8:        add     a1,a1,a5
+    0.00 :   38fbdda:        vse8.v  v1,(a3)
+    0.00 :   38fbdde:        add     a3,a3,a5
+    0.00 :   38fbde0:        bnez    a4,38fbdce <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x250>
+         : 163     void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+         : 212     for (; i <= n - 2 * Vec::size(); i += 2 * Vec::size()) {
+    0.00 :   38fbde2:        ld      a5,-552(s0)
+    0.00 :   38fbde6:        addi    s6,s6,16
+    0.00 :   38fbde8:        addi    s3,s3,64
+    0.00 :   38fbdec:        blt     s6,a5,38fbc68 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0xea>
+    0.00 :   38fbdf0:        ld      a1,-520(s0)
+    0.00 :   38fbdf4:        ld      a3,-488(s0)
+    0.00 :   38fbdf8:        ld      t1,-496(s0)
+    0.00 :   38fbdfc:        addi    a4,a1,-16
+    0.00 :   38fbe00:        ld      a0,-512(s0)
+    0.00 :   38fbe04:        ld      s11,-528(s0)
+    0.00 :   38fbe08:        ld      s1,552(sp)
+    0.00 :   38fbe0c:        ld      s2,544(sp)
+    0.00 :   38fbe10:        ld      s3,536(sp)
+    0.00 :   38fbe14:        ld      s4,528(sp)
+    0.00 :   38fbe18:        ld      s6,512(sp)
+    0.00 :   38fbe1c:        ld      s9,488(sp)
+    0.00 :   38fbe1e:        ld      s10,480(sp)
+    0.00 :   38fbe20:        andi    a4,a4,-16
+    0.00 :   38fbe22:        addi    a4,a4,16
+         : 220     }
+         : 221     if (i < n) {
+    0.00 :   38fbe24:        bge     a4,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 223     int64_t strides[ntensors];
+         : 224     for (const auto arg : c10::irange(ntensors)) {
+         : 225     strides[arg] = (S > 0 && arg == S) ? 0 : sizeof(scalar_t);
+    0.00 :   38fbe28:        addi    t3,s11,-1
+    0.00 :   38fbe2c:        addi    a5,s11,-2
+    0.00 :   38fbe30:        snez    t3,t3
+    0.00 :   38fbe34:        snez    a5,a5
+    0.00 :   38fbe38:        slli    t3,t3,0x2
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbe3a:        mul     a6,a4,t3
+         : 223     strides[arg] = (S > 0 && arg == S) ? 0 : sizeof(scalar_t);
+    0.00 :   38fbe3e:        slli    a5,a5,0x2
+         : 90      result_type* out_ptr = (result_type*)(data[0] + i * strides[0]);
+    0.00 :   38fbe40:        slli    a7,a4,0x2
+         : 92      execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbe44:        add     a7,a7,t1
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbe46:        addi    t1,a4,1
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbe4a:        mul     a2,a5,a4
+         : 53      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbe4e:        add     t4,a0,a6
+         : 12      void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+         : 157     [](const Vectorized<opmath_t>& x,
+         : 158     const Vectorized<opmath_t>& y) { return x * y; });
+         : 159     });
+         : 160     });
+         : 161     } else {
+         : 162     _AT_DISPATCH_MUL_TYPES(dtype, "mul_cpu", [&]() {
+    0.00 :   38fbe52:        flw     fa5,0(t4)
+         : 164     torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbe56:        add     t4,a3,a2
+         : 12      operator()():
+    0.00 :   38fbe5a:        flw     fa4,0(t4)
+    0.00 :   38fbe5e:        fmul.s  fa5,fa5,fa4
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbe62:        fsw     fa5,0(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbe66:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbe6a:        add     a6,a6,t3
+    0.00 :   38fbe6c:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbe6e:        add     t1,a0,a6
+    0.00 :   38fbe72:        add     t4,a3,a2
+         : 13      operator()():
+    0.00 :   38fbe76:        flw     fa4,0(t1)
+    0.00 :   38fbe7a:        flw     fa5,0(t4)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbe7e:        addi    t1,a4,2
+         : 91      operator()():
+    0.00 :   38fbe82:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbe86:        fsw     fa5,4(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbe8a:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbe8e:        add     a6,a6,t3
+    0.00 :   38fbe90:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbe92:        add     t1,a3,a2
+    0.00 :   38fbe96:        add     t4,a0,a6
+         : 13      operator()():
+    0.00 :   38fbe9a:        flw     fa4,0(t1)
+    0.00 :   38fbe9e:        flw     fa5,0(t4)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbea2:        addi    t1,a4,3
+         : 91      operator()():
+    0.00 :   38fbea6:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbeaa:        fsw     fa5,8(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbeae:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbeb2:        add     a6,a6,t3
+    0.00 :   38fbeb4:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbeb6:        add     t1,a3,a2
+    0.00 :   38fbeba:        add     t4,a0,a6
+         : 13      operator()():
+    0.00 :   38fbebe:        flw     fa4,0(t1)
+    0.00 :   38fbec2:        flw     fa5,0(t4)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbec6:        addi    t1,a4,4
+         : 91      operator()():
+    0.00 :   38fbeca:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbece:        fsw     fa5,12(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbed2:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbed6:        add     a6,a6,t3
+    0.00 :   38fbed8:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbeda:        add     t1,a3,a2
+    0.00 :   38fbede:        add     t4,a0,a6
+         : 13      operator()():
+    0.00 :   38fbee2:        flw     fa4,0(t1)
+    0.00 :   38fbee6:        flw     fa5,0(t4)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbeea:        addi    t1,a4,5
+         : 91      operator()():
+    0.00 :   38fbeee:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbef2:        fsw     fa5,16(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbef6:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbefa:        add     a6,a6,t3
+    0.00 :   38fbefc:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbefe:        add     t1,a3,a2
+    0.00 :   38fbf02:        add     t4,a0,a6
+         : 13      operator()():
+    0.00 :   38fbf06:        flw     fa4,0(t1)
+    0.00 :   38fbf0a:        flw     fa5,0(t4)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbf0e:        addi    t1,a4,6
+         : 91      operator()():
+    0.00 :   38fbf12:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbf16:        fsw     fa5,20(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbf1a:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbf1e:        add     a6,a6,t3
+    0.00 :   38fbf20:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbf22:        add     t1,a3,a2
+    0.00 :   38fbf26:        add     t4,a0,a6
+         : 13      operator()():
+    0.00 :   38fbf2a:        flw     fa4,0(t1)
+    0.00 :   38fbf2e:        flw     fa5,0(t4)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbf32:        addi    t1,a4,7
+         : 91      operator()():
+    0.00 :   38fbf36:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbf3a:        fsw     fa5,24(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbf3e:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbf42:        add     a6,a6,t3
+    0.00 :   38fbf44:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbf46:        add     t1,a3,a2
+    0.00 :   38fbf4a:        add     t4,a0,a6
+         : 13      operator()():
+    0.00 :   38fbf4e:        flw     fa4,0(t1)
+    0.00 :   38fbf52:        flw     fa5,0(t4)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbf56:        addi    t1,a4,8
+         : 91      operator()():
+    0.00 :   38fbf5a:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbf5e:        fsw     fa5,28(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbf62:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbf66:        add     a6,a6,t3
+    0.00 :   38fbf68:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbf6a:        add     t1,a3,a2
+    0.00 :   38fbf6e:        add     t4,a0,a6
+         : 13      operator()():
+    0.00 :   38fbf72:        flw     fa4,0(t1)
+    0.00 :   38fbf76:        flw     fa5,0(t4)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbf7a:        addi    t1,a4,9
+         : 91      operator()():
+    0.00 :   38fbf7e:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbf82:        fsw     fa5,32(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbf86:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbf8a:        add     a6,a6,t3
+    0.00 :   38fbf8c:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbf8e:        add     t1,a3,a2
+    0.00 :   38fbf92:        add     t4,a0,a6
+         : 13      operator()():
+    0.00 :   38fbf96:        flw     fa4,0(t1)
+    0.00 :   38fbf9a:        flw     fa5,0(t4)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbf9e:        addi    t1,a4,10
+         : 91      operator()():
+    0.00 :   38fbfa2:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbfa6:        fsw     fa5,36(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbfaa:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbfae:        add     a6,a6,t3
+    0.00 :   38fbfb0:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbfb2:        add     t1,a3,a2
+    0.00 :   38fbfb6:        add     t4,a0,a6
+         : 13      operator()():
+    0.00 :   38fbfba:        flw     fa4,0(t1)
+    0.00 :   38fbfbe:        flw     fa5,0(t4)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbfc2:        addi    t1,a4,11
+         : 91      operator()():
+    0.00 :   38fbfc6:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbfca:        fsw     fa5,40(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbfce:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbfd2:        add     a6,a6,t3
+    0.00 :   38fbfd4:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbfd6:        add     t1,a3,a2
+    0.00 :   38fbfda:        add     t4,a0,a6
+         : 13      operator()():
+    0.00 :   38fbfde:        flw     fa4,0(t1)
+    0.00 :   38fbfe2:        flw     fa5,0(t4)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbfe6:        addi    t1,a4,12
+         : 91      operator()():
+    0.00 :   38fbfea:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fbfee:        fsw     fa5,44(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fbff2:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fbff6:        add     a6,a6,t3
+    0.00 :   38fbff8:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fbffa:        add     t1,a3,a2
+    0.00 :   38fbffe:        add     t4,a0,a6
+         : 13      operator()():
+    0.00 :   38fc002:        flw     fa4,0(t1)
+    0.00 :   38fc006:        flw     fa5,0(t4)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fc00a:        addi    t1,a4,13
+         : 91      operator()():
+    0.00 :   38fc00e:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fc012:        fsw     fa5,48(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fc016:        bge     t1,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      dereference_impl<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>, 0, 1>():
+         : 51      data[INDEX] + i * strides[INDEX])...);
+    0.00 :   38fc01a:        add     a6,a6,t3
+    0.00 :   38fc01c:        add     a2,a2,a5
+         : 54      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fc01e:        add     a0,a0,a6
+    0.00 :   38fc020:        add     a6,a3,a2
+         : 13      operator()():
+    0.00 :   38fc024:        flw     fa5,0(a0)
+    0.00 :   38fc028:        flw     fa4,0(a6)
+         : 159     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 89      for (; i < n; i++) {
+    0.00 :   38fc02c:        addi    a4,a4,14
+         : 91      operator()():
+    0.00 :   38fc02e:        fmul.s  fa5,fa5,fa4
+         : 158     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fc032:        fsw     fa5,52(a7)
+         : 89      for (; i < n; i++) {
+    0.00 :   38fc036:        bge     a4,a1,38fc050 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x4d2>
+         : 91      torch::headeronly::detail::LoadImpl<float>::apply(void const*):
+    0.00 :   38fc03a:        add     a5,a5,a3
+    0.00 :   38fc03c:        add     a5,a5,a2
+    0.00 :   38fc03e:        add     a0,a0,t3
+         : 14      operator()():
+    0.00 :   38fc040:        flw     fa4,0(a5)
+    0.00 :   38fc044:        flw     fa5,0(a0)
+    0.00 :   38fc048:        fmul.s  fa5,fa5,fa4
+         : 160     execute_op<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(scalar_t, scalar_t)>&>():
+         : 91      *out_ptr = std::apply(op, dereference<traits>(
+    0.00 :   38fc04c:        fsw     fa5,56(a7)
+         : 93      void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+         : 227     }
+         : 228     basic_loop(data, strides, i, n, std::forward<func_t>(op));
+         : 229     }
+         : 230     }
+    0.00 :   38fc050:        auipc   a5,0x4d0c
+    0.00 :   38fc054:        ld      a5,1328(a5) # 8608580 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   38fc058:        ld      a4,-120(s0)
+    0.00 :   38fc05c:        ld      a5,0(a5)
+    0.00 :   38fc05e:        xor     a5,a5,a4
+    0.00 :   38fc060:        li      a4,0
+    0.00 :   38fc062:        bnez    a5,38fc34a <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x7cc>
+    0.00 :   38fc066:        ld      ra,568(sp)
+    0.00 :   38fc06a:        ld      s0,560(sp)
+    0.00 :   38fc06e:        ld      s7,504(sp)
+    0.00 :   38fc070:        ld      s8,496(sp)
+    0.00 :   38fc072:        ld      s11,472(sp)
+    0.00 :   38fc074:        addi    sp,sp,576
+    0.00 :   38fc078:        ret
+         : 212     for (; i <= n - 2 * Vec::size(); i += 2 * Vec::size()) {
+    0.00 :   38fc07a:        li      a5,2
+    0.00 :   38fc07c:        sd      s5,520(sp)
+    0.00 :   38fc080:        sd      a5,-496(s0)
+    0.00 :   38fc084:        addi    a5,t1,-32
+         : 217     out1.store(data[0] + i * sizeof(scalar_t));
+    0.00 :   38fc088:        sub     a5,a5,a0
+    0.00 :   38fc08a:        sd      a5,-560(s0)
+    0.00 :   38fc08e:        addi    a5,s0,-376
+    0.00 :   38fc092:        sd      a5,-504(s0)
+    0.00 :   38fc096:        addi    a5,s0,-344
+    0.00 :   38fc09a:        sd      a5,-544(s0)
+    0.00 :   38fc09e:        sub     a5,t1,a0
+    0.00 :   38fc0a2:        addi    s3,a0,32
+    0.00 :   38fc0a6:        addi    s6,a3,32
+         : 211     int64_t i = 0;
+    0.00 :   38fc0aa:        sd      zero,-488(s0)
+    0.00 :   38fc0ae:        addi    s2,s0,-248
+    0.00 :   38fc0b2:        addi    s1,s0,-280
+    0.00 :   38fc0b6:        addi    s4,s0,-184
+    0.00 :   38fc0ba:        sd      a5,-568(s0)
+         : 217     dereference_vec_impl<function_traits<at::native::(anonymous namespace)::add_clamp_kernel(at::TensorIterator&, const c10::Scalar&, const c10::Scalar&, const c10::Scalar&)::<lambda()>::<lambda()>::<lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)>&>, 0, 1>():
+         : 71      S == INDEX + 1 ?
+    0.00 :   38fc0be:        sd      a3,-512(s0)
+    0.00 :   38fc0c2:        sd      t1,-520(s0)
+    0.00 :   38fc0c6:        sd      a0,-528(s0)
+    0.00 :   38fc0ca:        addi    s10,s0,-152
+    0.00 :   38fc0ce:        mv      s9,s7
+    0.00 :   38fc0d0:        sd      a1,-536(s0)
+    0.00 :   38fc0d4:        addi    s5,s0,-312
+         : 79      dereference_vec<function_traits<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)>&> >():
+         : 80      return dereference_vec_impl<traits>(data, opt_scalar, S, i, Indices{});
+    0.00 :   38fc0d8:        ld      a4,-488(s0)
+    7.69 :   38fc0dc:        ld      a3,-496(s0)
+    0.00 :   38fc0e0:        mv      a2,s8
+    0.00 :   38fc0e2:        addi    a1,s0,-424
+    0.00 :   38fc0e6:        mv      a0,s2
+    0.00 :   38fc0e8:        jal     3834fc6 <function_traits<at::native::(anonymous namespace)::add_clamp_kernel(at::TensorIterator&, c10::Scalar const&, c10::Scalar const&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>::ArgsTuple at::native::RVV::dereference_vec_impl<function_traits<at::native::(anonymous namespace)::add_clamp_kernel(at::TensorIterator&, c10::Scalar const&, c10::Scalar const&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>, 0ul, 1ul>(char* restrict*, function_traits<at::native::(anonymous namespace)::add_clamp_kernel(at::TensorIterator&, c10::Scalar const&, c10::Scalar const&, c10::Scalar const&)::{lambda()#1}::operator()() const::{lambda()#7}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>::result_type const&, unsigned long, long, std::integer_sequence<unsigned long, 0ul, 1ul>) [clone .isra.0]>
+         : 87      at::vec::RVV::Vectorized<float>::loadu(void const*, long):
+         : 131     if (reinterpret_cast<uintptr_t>(ptr) & 0x3) {
+    0.00 :   38fc0ec:        andi    a5,s3,3
+    0.00 :   38fc0f0:        beqz    a5,38fc2c0 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x742>
+         : 136     std::memcpy(
+    0.00 :   38fc0f4:        mv      a3,s9
+    0.00 :   38fc0f6:        mv      a2,s3
+    0.00 :   38fc0f8:        li      a4,32
+    0.00 :   38fc0fc:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fc100:        vle8.v  v1,(a2)
+    0.00 :   38fc104:        sub     a4,a4,a5
+    0.00 :   38fc106:        add     a2,a2,a5
+    0.00 :   38fc108:        vse8.v  v1,(a3)
+    0.00 :   38fc10c:        add     a3,a3,a5
+    0.00 :   38fc10e:        bnez    a4,38fc0fc <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x57e>
+         : 140     return __riscv_vle32_v_f32m2(tmp_values, VFLOAT32_VL);
+    0.00 :   38fc110:        vsetivli        zero,8,e32,m2,ta,ma
+    0.00 :   38fc114:        vle32.v v2,(s9)
+         : 143     at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fc118:        vse32.v v2,(s1)
+         : 32      dereference_vec_impl<function_traits<at::native::(anonymous namespace)::add_clamp_kernel(at::TensorIterator&, const c10::Scalar&, const c10::Scalar&, const c10::Scalar&)::<lambda()>::<lambda()>::<lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)>&>, 0, 1>():
+         : 71      S == INDEX + 1 ?
+    0.00 :   38fc11c:        li      a5,2
+    0.00 :   38fc11e:        bne     s11,a5,38fc2b0 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x732>
+    0.00 :   38fc122:        mv      a3,s5
+    0.00 :   38fc124:        mv      a2,s8
+    0.00 :   38fc126:        li      a4,32
+    0.00 :   38fc12a:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fc12e:        vle8.v  v1,(a2)
+    0.00 :   38fc132:        sub     a4,a4,a5
+    0.00 :   38fc134:        add     a2,a2,a5
+    0.00 :   38fc136:        vse8.v  v1,(a3)
+    0.00 :   38fc13a:        add     a3,a3,a5
+    0.00 :   38fc13c:        bnez    a4,38fc12a <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x5ac>
+         : 81      std::_Head_base<1ul, at::vec::RVV::Vectorized<float>, false>::_Head_base<at::vec::RVV::Vectorized<float> const>(at::vec::RVV::Vectorized<float> const&&):
+    0.00 :   38fc13e:        mv      a3,s4
+    0.00 :   38fc140:        mv      a2,s5
+    0.00 :   38fc142:        li      a4,32
+    0.00 :   38fc146:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fc14a:        vle8.v  v1,(a2)
+    7.69 :   38fc14e:        sub     a4,a4,a5
+    0.00 :   38fc150:        add     a2,a2,a5
+    0.00 :   38fc152:        vse8.v  v1,(a3)
+    0.00 :   38fc156:        add     a3,a3,a5
+    0.00 :   38fc158:        bnez    a4,38fc146 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x5c8>
+         : 223     std::_Head_base<0ul, at::vec::RVV::Vectorized<float>, false>::_Head_base<at::vec::RVV::Vectorized<float> const>(at::vec::RVV::Vectorized<float> const&&):
+    0.00 :   38fc15a:        mv      a3,s10
+    0.00 :   38fc15c:        mv      a2,s1
+    0.00 :   38fc15e:        li      a4,32
+    0.00 :   38fc162:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fc166:        vle8.v  v1,(a2)
+    0.00 :   38fc16a:        sub     a4,a4,a5
+    0.00 :   38fc16c:        add     a2,a2,a5
+    0.00 :   38fc16e:        vse8.v  v1,(a3)
+    0.00 :   38fc172:        add     a3,a3,a5
+    0.00 :   38fc174:        bnez    a4,38fc162 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x5e4>
+         : 223     __invoke_impl<at::vec::RVV::Vectorized<float>, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)>&, at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float> >():
+    0.00 :   38fc176:        mv      a3,s5
+    0.00 :   38fc178:        addi    a2,s0,-216
+    0.00 :   38fc17c:        li      a4,32
+    0.00 :   38fc180:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fc184:        vle8.v  v1,(a2)
+    0.00 :   38fc188:        sub     a4,a4,a5
+    0.00 :   38fc18a:        add     a2,a2,a5
+    0.00 :   38fc18c:        vse8.v  v1,(a3)
+    0.00 :   38fc190:        add     a3,a3,a5
+    0.00 :   38fc192:        bnez    a4,38fc180 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x602>
+    0.00 :   38fc194:        mv      a3,s1
+    0.00 :   38fc196:        mv      a2,s2
+    0.00 :   38fc198:        li      a4,32
+    0.00 :   38fc19c:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fc1a0:        vle8.v  v1,(a2)
+    0.00 :   38fc1a4:        sub     a4,a4,a5
+    0.00 :   38fc1a6:        add     a2,a2,a5
+    0.00 :   38fc1a8:        vse8.v  v1,(a3)
+    0.00 :   38fc1ac:        add     a3,a3,a5
+    0.00 :   38fc1ae:        bnez    a4,38fc19c <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x61e>
+         : 82      at::vec::RVV::Vectorized<float>::operator __rvv_float32m2_t() const:
+         : 56      return __riscv_vle32_v_f32m2(this->values, VFLOAT32_VL);
+    0.00 :   38fc1b0:        vsetivli        zero,8,e32,m2,ta,ma
+    0.00 :   38fc1b4:        vle32.v v2,(s5)
+    0.00 :   38fc1b8:        vle32.v v4,(s1)
+         : 60      at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fc1bc:        ld      a5,-504(s0)
+    0.00 :   38fc1c0:        mv      a3,s5
+    0.00 :   38fc1c2:        mv      a2,s10
+    0.00 :   38fc1c4:        li      a4,32
+         : 35      at::vec::RVV::Vectorized<float> at::vec::RVV::operator*<float>(at::vec::RVV::Vectorized<float> const&, at::vec::RVV::Vectorized<float> const&):
+         : 514     return __riscv_vfmul_vv_f32m2(a, b, VFLOAT32_VL);
+    0.00 :   38fc1c8:        vfmul.vv        v2,v2,v4
+         : 516     at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fc1cc:        vse32.v v2,(a5)
+         : 32      __invoke_impl<at::vec::RVV::Vectorized<float>, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::<lambda()>::<lambda()>::<lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)>&, at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float> >():
+    0.00 :   38fc1d0:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fc1d4:        vle8.v  v1,(a2)
+    0.00 :   38fc1d8:        sub     a4,a4,a5
+    0.00 :   38fc1da:        add     a2,a2,a5
+    0.00 :   38fc1dc:        vse8.v  v1,(a3)
+    0.00 :   38fc1e0:        add     a3,a3,a5
+    0.00 :   38fc1e2:        bnez    a4,38fc1d0 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x652>
+    0.00 :   38fc1e4:        mv      a3,s1
+    0.00 :   38fc1e6:        mv      a2,s4
+    0.00 :   38fc1e8:        li      a4,32
+    0.00 :   38fc1ec:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fc1f0:        vle8.v  v1,(a2)
+    0.00 :   38fc1f4:        sub     a4,a4,a5
+    0.00 :   38fc1f6:        add     a2,a2,a5
+    0.00 :   38fc1f8:        vse8.v  v1,(a3)
+    0.00 :   38fc1fc:        add     a3,a3,a5
+    0.00 :   38fc1fe:        bnez    a4,38fc1ec <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x66e>
+         : 79      at::vec::RVV::Vectorized<float>::operator __rvv_float32m2_t() const:
+         : 56      return __riscv_vle32_v_f32m2(this->values, VFLOAT32_VL);
+    0.00 :   38fc200:        vsetivli        zero,8,e32,m2,ta,ma
+    0.00 :   38fc204:        vle32.v v2,(s5)
+    0.00 :   38fc208:        vle32.v v4,(s1)
+         : 60      void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+         : 217     out1.store(data[0] + i * sizeof(scalar_t));
+    7.69 :   38fc20c:        ld      a5,-560(s0)
+         : 219     at::vec::RVV::Vectorized<float>::store(void*, long) const:
+         : 155     std::memcpy(ptr, this->values, count * sizeof(float));
+    0.00 :   38fc210:        ld      a2,-504(s0)
+    0.00 :   38fc214:        li      a4,32
+         : 158     void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+    0.00 :   38fc218:        add     a3,a5,s3
+         : 218     at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fc21c:        ld      a5,-544(s0)
+         : 32      at::vec::RVV::Vectorized<float> at::vec::RVV::operator*<float>(at::vec::RVV::Vectorized<float> const&, at::vec::RVV::Vectorized<float> const&):
+         : 514     return __riscv_vfmul_vv_f32m2(a, b, VFLOAT32_VL);
+    0.00 :   38fc220:        vfmul.vv        v2,v2,v4
+         : 516     at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fc224:        vse32.v v2,(a5)
+         : 32      at::vec::RVV::Vectorized<float>::store(void*, long) const:
+         : 155     std::memcpy(ptr, this->values, count * sizeof(float));
+    0.00 :   38fc228:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fc22c:        vle8.v  v1,(a2)
+    0.00 :   38fc230:        sub     a4,a4,a5
+    0.00 :   38fc232:        add     a2,a2,a5
+    0.00 :   38fc234:        vse8.v  v1,(a3)
+   53.85 :   38fc238:        add     a3,a3,a5
+    0.00 :   38fc23a:        bnez    a4,38fc228 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x6aa>
+         : 163     void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+         : 218     out2.store(data[0] + (i + Vec::size()) * sizeof(scalar_t));
+    0.00 :   38fc23c:        ld      a5,-568(s0)
+         : 220     at::vec::RVV::Vectorized<float>::store(void*, long) const:
+    7.69 :   38fc240:        ld      a2,-544(s0)
+    0.00 :   38fc244:        li      a4,32
+         : 157     void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+    0.00 :   38fc248:        add     a3,a5,s3
+         : 219     at::vec::RVV::Vectorized<float>::store(void*, long) const:
+    0.00 :   38fc24c:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fc250:        vle8.v  v1,(a2)
+    7.69 :   38fc254:        sub     a4,a4,a5
+    0.00 :   38fc256:        add     a2,a2,a5
+    0.00 :   38fc258:        vse8.v  v1,(a3)
+    0.00 :   38fc25c:        add     a3,a3,a5
+    0.00 :   38fc25e:        bnez    a4,38fc24c <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x6ce>
+         : 162     void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+         : 212     for (; i <= n - 2 * Vec::size(); i += 2 * Vec::size()) {
+    0.00 :   38fc260:        ld      a5,-488(s0)
+    0.00 :   38fc264:        ld      a4,-552(s0)
+    0.00 :   38fc268:        addi    s3,s3,64
+    0.00 :   38fc26c:        addi    a5,a5,16
+    0.00 :   38fc26e:        sd      a5,-488(s0)
+    0.00 :   38fc272:        addi    s6,s6,64
+    0.00 :   38fc276:        blt     a5,a4,38fc0d8 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x55a>
+    0.00 :   38fc27a:        ld      a1,-536(s0)
+    0.00 :   38fc27e:        ld      a3,-512(s0)
+    0.00 :   38fc282:        ld      t1,-520(s0)
+    0.00 :   38fc286:        addi    a4,a1,-16
+    0.00 :   38fc28a:        andi    a4,a4,-16
+    0.00 :   38fc28c:        ld      a0,-528(s0)
+    0.00 :   38fc290:        ld      s1,552(sp)
+    0.00 :   38fc294:        ld      s2,544(sp)
+    0.00 :   38fc298:        ld      s3,536(sp)
+    0.00 :   38fc29c:        ld      s4,528(sp)
+    0.00 :   38fc2a0:        ld      s5,520(sp)
+    0.00 :   38fc2a4:        ld      s6,512(sp)
+    0.00 :   38fc2a8:        ld      s9,488(sp)
+    0.00 :   38fc2aa:        ld      s10,480(sp)
+    0.00 :   38fc2ac:        addi    a4,a4,16
+    0.00 :   38fc2ae:        j       38fbe24 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x2a6>
+         : 228     at::vec::RVV::Vectorized<float>::loadu(void const*, long):
+         : 131     if (reinterpret_cast<uintptr_t>(ptr) & 0x3) {
+    0.00 :   38fc2b0:        andi    a5,s6,3
+    0.00 :   38fc2b4:        bnez    a5,38fc2ce <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x750>
+         : 144     reinterpret_cast<const float*>(ptr), VFLOAT32_VL);
+    0.00 :   38fc2b6:        vle32.v v2,(s6)
+         : 146     at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fc2ba:        vse32.v v2,(s5)
+    7.69 :   38fc2be:        j       38fc13e <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x5c0>
+         : 33      at::vec::RVV::Vectorized<float>::loadu(void const*, long):
+         : 144     reinterpret_cast<const float*>(ptr), VFLOAT32_VL);
+    0.00 :   38fc2c0:        vsetivli        zero,8,e32,m2,ta,ma
+    0.00 :   38fc2c4:        vle32.v v2,(s3)
+         : 147     at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fc2c8:        vse32.v v2,(s1)
+    0.00 :   38fc2cc:        j       38fc11c <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x59e>
+         : 33      at::vec::RVV::Vectorized<float>::loadu(void const*, long):
+         : 136     std::memcpy(
+    0.00 :   38fc2ce:        mv      a3,s9
+    0.00 :   38fc2d0:        mv      a2,s6
+    0.00 :   38fc2d2:        li      a4,32
+    0.00 :   38fc2d6:        vsetvli a5,a4,e8,m1,ta,ma
+    0.00 :   38fc2da:        vle8.v  v1,(a2)
+    0.00 :   38fc2de:        sub     a4,a4,a5
+    0.00 :   38fc2e0:        add     a2,a2,a5
+    0.00 :   38fc2e2:        vse8.v  v1,(a3)
+    0.00 :   38fc2e6:        add     a3,a3,a5
+    0.00 :   38fc2e8:        bnez    a4,38fc2d6 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x758>
+         : 140     return __riscv_vle32_v_f32m2(tmp_values, VFLOAT32_VL);
+    0.00 :   38fc2ea:        vsetivli        zero,8,e32,m2,ta,ma
+    0.00 :   38fc2ee:        vle32.v v2,(s9)
+         : 143     at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fc2f2:        vse32.v v2,(s5)
+    0.00 :   38fc2f6:        j       38fc13e <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x5c0>
+         : 33      at::vec::RVV::Vectorized<float>::loadu(void const*, long):
+         : 144     reinterpret_cast<const float*>(ptr), VFLOAT32_VL);
+    0.00 :   38fc2f8:        vsetivli        zero,8,e32,m2,ta,ma
+    0.00 :   38fc2fc:        vle32.v v2,(s3)
+         : 147     at::vec::RVV::Vectorized<float>::Vectorized(__rvv_float32m2_t):
+         : 30      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fc300:        vse32.v v2,(s10)
+         : 31      }
+    0.00 :   38fc304:        j       38fbcc4 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x146>
+         : 33      at::vec::RVV::Vectorized<float>::Vectorized(float):
+         : 33      vfloat32m2_t v = __riscv_vfmv_v_f_f32m2(val, VFLOAT32_VL);
+    0.00 :   38fc306:        vsetivli        zero,8,e32,m2,ta,ma
+    0.00 :   38fc30a:        vmv.v.i v2,0
+         : 34      __riscv_vse32_v_f32m2(values, v, VFLOAT32_VL);
+    0.00 :   38fc30e:        addi    s8,s0,-408
+         : 36      void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+    0.00 :   38fc312:        li      a5,15
+         : 213     at::vec::RVV::Vectorized<float>::Vectorized(float):
+    0.00 :   38fc314:        vse32.v v2,(s8)
+         : 35      void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]:
+    0.00 :   38fc318:        bge     a5,a1,38fc346 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x7c8>
+    0.00 :   38fc31c:        addi    a5,a1,-15
+    0.00 :   38fc320:        sd      s1,552(sp)
+    0.00 :   38fc324:        sd      s2,544(sp)
+    0.00 :   38fc328:        sd      s3,536(sp)
+    0.00 :   38fc32c:        sd      s4,528(sp)
+    0.00 :   38fc330:        sd      s5,520(sp)
+    0.00 :   38fc334:        sd      s6,512(sp)
+    0.00 :   38fc338:        sd      s9,488(sp)
+    0.00 :   38fc33a:        sd      s10,480(sp)
+    0.00 :   38fc33c:        sd      a5,-552(s0)
+         : 213     auto args1 = dereference_vec<traits>(&data[1], opt_scalar, S, i);
+    0.00 :   38fc340:        sd      zero,-496(s0)
+    0.00 :   38fc344:        j       38fc084 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x506>
+         : 211     int64_t i = 0;
+    0.00 :   38fc346:        li      a4,0
+    0.00 :   38fc348:        j       38fbe24 <void at::native::RVV::vectorized_loop<at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&>(char**, long, long, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(float, float)#1}&, at::native::(anonymous namespace)::mul_kernel(at::TensorIteratorBase&)::{lambda()#2}::operator()() const::{lambda()#14}::operator()() const::{lambda(at::vec::RVV::Vectorized<float>, at::vec::RVV::Vectorized<float>)#1}&) [clone .isra.0]+0x2a6>
+    0.00 :   38fc34a:        sd      s1,552(sp)
+    0.00 :   38fc34e:        sd      s2,544(sp)
+    0.00 :   38fc352:        sd      s3,536(sp)
+    0.00 :   38fc356:        sd      s4,528(sp)
+    0.00 :   38fc35a:        sd      s5,520(sp)
+    0.00 :   38fc35e:        sd      s6,512(sp)
+    0.00 :   38fc362:        sd      s9,488(sp)
+    0.00 :   38fc364:        sd      s10,480(sp)
+         : 227     }
+    0.00 :   38fc366:        auipc   ra,0xfd1e8
+    0.00 :   38fc36a:        jalr    1354(ra) # ae48b0 <__stack_chk_fail@plt>

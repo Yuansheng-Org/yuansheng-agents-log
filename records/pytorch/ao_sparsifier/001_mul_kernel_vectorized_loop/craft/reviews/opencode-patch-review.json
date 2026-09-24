@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-pytorch-ao-sparsifier-001",
+  "patchCandidateId": "pc-bp-pytorch-ao-sparsifier-001",
+  "reviewedAt": "2026-09-15T02:12:00.000Z",
+  "reviewer": "opencode-comet-review",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 命中 riscv-macro。store() 由 std::memcpy 的 e8/m1 字节搬运循环改为一次 __riscv_vle32_v_f32m2 + 一次 __riscv_vse32_v_f32m2；SEW=32/LMUL=m2 与 VFLOAT32_VL=8 类型合同自洽，vl 携带正确，未改动 Vectorized<float> 成员类型与公共接口，未触碰 RVV_SUPPORT_UNALIGN 分支。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "文件锚点真实性", "result": "PASS" },
+    { "dimension": "行号锚点真实性", "result": "PASS" },
+    { "dimension": "证据引用真实性", "result": "PASS" },
+    { "dimension": "结论可溯源性", "result": "PASS" },
+    { "dimension": "模型知识越界", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "aten/src/ATen/cpu/vec/rvv/vec_float.h",
+      "line": 155,
+      "evidence": "-    std::memcpy(ptr, this->values, count * sizeof(float));",
+      "severity": "suggestion",
+      "category": "performance-residual",
+      "suggestion": "本次改动消除了 store() 的 e8/m1 字节搬运循环（blueprint 最高占比 53.85% 证据行 38fc238），但 values 仍为内存数组，vectorized_loop 中其余栈 spill/reload（ld a5,-560(s0) 等）与 out-of-line dereference_vec_impl 调用仍在。彻底寄存器化属跨 RVV vec 层 ABI 改动，建议作为后续独立变更在人工复核后进行。"
+    }
+  ]
+}

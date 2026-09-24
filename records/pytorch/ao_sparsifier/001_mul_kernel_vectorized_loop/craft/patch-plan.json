@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-pytorch-ao-sparsifier-001",
+  "blueprintId": "bp-pytorch-ao_sparsifier-001",
+  "createdAt": "2026-09-15T02:10:03.205Z",
+  "objective": "RVV Vectorized<float> 以 32 字节内存数组 values 承载向量数据，使 vectorized_loop 每轮的 Vectorized 临时值必须经栈 spill/reload 与 std::memcpy 字节搬运往返内存，而非保持在 vfloat32m2_t 寄存器中。",
+  "changes": [
+    {
+      "filePath": "aten/src/ATen/cpu/vec/rvv/vec_float.h",
+      "action": "modify",
+      "rationale": "RVV Vectorized<float> 以 32 字节内存数组 values 承载向量数据，使 vectorized_loop 每轮的 Vectorized 临时值必须经栈 spill/reload 与 std::memcpy 字节搬运往返内存，而非保持在 vfloat32m2_t 寄存器中。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "aten/src/ATen/native/cpu/Loops.h",
+      "action": "modify",
+      "rationale": "RVV Vectorized<float> 以 32 字节内存数组 values 承载向量数据，使 vectorized_loop 每轮的 Vectorized 临时值必须经栈 spill/reload 与 std::memcpy 字节搬运往返内存，而非保持在 vfloat32m2_t 寄存器中。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 aten/src/ATen/cpu/vec/rvv/vec_float.h, aten/src/ATen/native/cpu/Loops.h 来解决 blueprint bp-pytorch-ao_sparsifier-001。"
+}
