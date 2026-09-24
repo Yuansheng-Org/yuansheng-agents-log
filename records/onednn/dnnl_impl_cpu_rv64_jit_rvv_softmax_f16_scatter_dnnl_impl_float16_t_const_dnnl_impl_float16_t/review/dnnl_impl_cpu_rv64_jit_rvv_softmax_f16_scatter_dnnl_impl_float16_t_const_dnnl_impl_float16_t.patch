@@ -1,0 +1,127 @@
+diff --git a/src/cpu/rv64/jit_rvv_softmax_kernel.cpp b/src/cpu/rv64/jit_rvv_softmax_kernel.cpp
+index 2bc4f3de0cc1dce78d9d9f07a3c650154c22fd60..1b0b735512a8d69477a2090dddfb4cae895b5db0 100644
+--- a/src/cpu/rv64/jit_rvv_softmax_kernel.cpp
++++ b/src/cpu/rv64/jit_rvv_softmax_kernel.cpp
+@@ -45,6 +45,17 @@ using namespace Xbyak_riscv;
+     static_cast<int32_t>(offsetof( \
+             jit_rvv_softmax_f32_reduce_max_kernel_t::call_params_t, field))
+ 
++template <bool gather>
++const jit_rvv_softmax_xf16_strided_kernel_t &get_xf16_strided_kernel() {
++    static const jit_rvv_softmax_xf16_strided_kernel_t kernel(gather);
++    return kernel;
++}
++
++template const jit_rvv_softmax_xf16_strided_kernel_t &
++get_xf16_strided_kernel<true>();
++template const jit_rvv_softmax_xf16_strided_kernel_t &
++get_xf16_strided_kernel<false>();
++
+ namespace {
+ 
+ template <bool src_f32, data_type_t dt>
+@@ -57,8 +68,7 @@ void dispatch_xf16_affine(
+ template <bool gather>
+ void dispatch_xf16_strided(
+         const jit_rvv_softmax_xf16_strided_kernel_t::call_params_t *p) {
+-    static const jit_rvv_softmax_xf16_strided_kernel_t kernel(gather);
+-    kernel(p);
++    get_xf16_strided_kernel<gather>()(p);
+ }
+ 
+ template <data_type_t dt>
+diff --git a/src/cpu/rv64/jit_rvv_softmax_kernel.hpp b/src/cpu/rv64/jit_rvv_softmax_kernel.hpp
+index 6f9b5e1aefb10138c9b190ad46c30c3b55fe142a..ef2b5bd8b5945282621e0acae86ccf5574522095 100644
+--- a/src/cpu/rv64/jit_rvv_softmax_kernel.hpp
++++ b/src/cpu/rv64/jit_rvv_softmax_kernel.hpp
+@@ -103,6 +103,9 @@ private:
+     bool gather_;
+ };
+ 
++template <bool gather>
++const jit_rvv_softmax_xf16_strided_kernel_t &get_xf16_strided_kernel();
++
+ struct jit_rvv_softmax_xf16_exp_sub_sum_kernel_t : public jit_generator_t {
+     struct call_params_t {
+         const void *src;
+diff --git a/src/cpu/rv64/rvv_softmax.cpp b/src/cpu/rv64/rvv_softmax.cpp
+index 7466fe39544f87a48de28e1025876d4ef1c0beb4..7f27b7e60b90848fd240d410d875841a99369978 100644
+--- a/src/cpu/rv64/rvv_softmax.cpp
++++ b/src/cpu/rv64/rvv_softmax.cpp
+@@ -34,6 +34,15 @@ rvv_softmax_fwd_t::rvv_softmax_fwd_t(const pd_t *apd) : primitive_t(apd) {
+     if (pd()->use_jit_) {
+         affine_kernel_.reset(new jit_rvv_softmax_affine_kernel_t());
+     }
++#if defined(XBYAK_RISCV_V) && XBYAK_RISCV_V == 1
++    // Resolve the process-wide kernels during primitive creation so the
++    // strided hot path can bypass the function-local static guards.
++    if (utils::one_of(pd()->rsp_.data_type, data_type::f16, data_type::bf16)
++            && pd()->rsp_.inner_size > 1) {
++        gather_kernel_ = &get_xf16_strided_kernel<true>();
++        scatter_kernel_ = &get_xf16_strided_kernel<false>();
++    }
++#endif
+ }
+ 
+ namespace {
+@@ -213,7 +222,9 @@ void compute_softmax_xf16_rvv(const T *src, T *dst, dim_t len,
+ template <typename T, data_type_t dt>
+ void execute_xf16(const void *src, void *dst, const rvv_softmax_conf_t &rsp,
+         dim_t outer_stride, int nthr, bool is_softmax_inf_as_zero,
+-        float *reduction, char *scratch) {
++        float *reduction, char *scratch,
++        const jit_rvv_softmax_xf16_strided_kernel_t *gather_kernel,
++        const jit_rvv_softmax_xf16_strided_kernel_t *scatter_kernel) {
+     const T *src_p = static_cast<const T *>(src);
+     T *dst_p = static_cast<T *>(dst);
+ 
+@@ -253,14 +264,16 @@ void execute_xf16(const void *src, void *dst, const rvv_softmax_conf_t &rsp,
+             const dim_t i = idx % rsp.inner_size;
+             const dim_t base = outer * outer_stride + i;
+ 
+-            jit_rvv_softmax_xf16_gather(
+-                    src_p + base, tmp, rsp.axis_size, stride_bytes);
++            jit_rvv_softmax_xf16_strided_kernel_t::call_params_t gp {
++                    src_p + base, tmp, rsp.axis_size, stride_bytes};
++            (*gather_kernel)(&gp);
+ 
+             compute_softmax_xf16_rvv<T, dt>(tmp, tmp, rsp.axis_size,
+                     rsp.is_logsoftmax, is_softmax_inf_as_zero, reduction_tmp);
+ 
+-            jit_rvv_softmax_xf16_scatter(
+-                    tmp, dst_p + base, rsp.axis_size, stride_bytes);
++            jit_rvv_softmax_xf16_strided_kernel_t::call_params_t sp {
++                    tmp, dst_p + base, rsp.axis_size, stride_bytes};
++            (*scatter_kernel)(&sp);
+         }
+     });
+ }
+@@ -360,11 +373,11 @@ status_t rvv_softmax_fwd_t::execute_forward(const exec_ctx_t &ctx) const {
+             if (rsp.data_type == data_type::bf16)
+                 execute_xf16<dnnl::impl::bfloat16_t, data_type::bf16>(src, dst,
+                         rsp, outer_stride, nthr, is_softmax_inf_as_zero,
+-                        reduction, scratch);
++                        reduction, scratch, gather_kernel_, scatter_kernel_);
+             else
+                 execute_xf16<dnnl::impl::float16_t, data_type::f16>(src, dst,
+                         rsp, outer_stride, nthr, is_softmax_inf_as_zero,
+-                        reduction, scratch);
++                        reduction, scratch, gather_kernel_, scatter_kernel_);
+         } break;
+ #endif
+         default: return status::unimplemented;
+diff --git a/src/cpu/rv64/rvv_softmax.hpp b/src/cpu/rv64/rvv_softmax.hpp
+index 6e835dee257a7602be0f156f60f36c0f98f83c40..6d953afcf0b3ca060a43eafb33f8ec4fb11c9752 100644
+--- a/src/cpu/rv64/rvv_softmax.hpp
++++ b/src/cpu/rv64/rvv_softmax.hpp
+@@ -169,6 +169,10 @@ private:
+     status_t execute_forward(const exec_ctx_t &ctx) const;
+     const pd_t *pd() const { return (const pd_t *)primitive_t::pd().get(); }
+     std::unique_ptr<jit_rvv_softmax_affine_kernel_t> affine_kernel_;
++#if defined(XBYAK_RISCV_V) && XBYAK_RISCV_V == 1
++    const jit_rvv_softmax_xf16_strided_kernel_t *gather_kernel_ = nullptr;
++    const jit_rvv_softmax_xf16_strided_kernel_t *scatter_kernel_ = nullptr;
++#endif
+ };
+ 
+ } // namespace rv64
