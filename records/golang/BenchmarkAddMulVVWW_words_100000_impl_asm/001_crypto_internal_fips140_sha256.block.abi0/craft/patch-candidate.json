@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-go-benchmarkaddmulvvww-words-100000-impl-asm-001",
+  "patchPlanId": "pp-bp-go-benchmarkaddmulvvww-words-100000-impl-asm-001",
+  "createdAt": "2026-09-11T01:37:35.477Z",
+  "changedFiles": [
+    "src/crypto/internal/fips140/sha256/sha256block_riscv64.s"
+  ],
+  "gitDiff": "diff --git a/src/crypto/internal/fips140/sha256/sha256block_riscv64.s b/src/crypto/internal/fips140/sha256/sha256block_riscv64.s\nindex 567d44781c..c48b6b439f 100644\n--- a/src/crypto/internal/fips140/sha256/sha256block_riscv64.s\n+++ b/src/crypto/internal/fips140/sha256/sha256block_riscv64.s\n@@ -5,6 +5,7 @@\n //go:build !purego\n \n #include \"textflag.h\"\n+#include \"asm_riscv64.h\"\n \n // SHA256 block routine. See sha256block.go for Go equivalent.\n //\n@@ -47,6 +48,15 @@\n // H7 = h + H7\n \n // Wt = Mt; for 0 <= t <= 15\n+#ifdef hasZbb\n+// Load the big-endian message word with a single word load plus a byte\n+// reverse (rev8), instead of assembling it byte-by-byte.\n+#define MSGSCHEDULE0(index) \\\n+\tMOVWU\t((index*4))(X29), X5; \\\n+\tREV8\tX5, X5; \\\n+\tSRL\t$32, X5; \\\n+\tMOVW\tX5, (index*4)(X19)\n+#else\n #define MSGSCHEDULE0(index) \\\n \tMOVBU\t((index*4)+0)(X29), X5; \\\n \tMOVBU\t((index*4)+1)(X29), X6; \\\n@@ -59,6 +69,7 @@\n \tOR\tX5, X7, X5; \\\n \tOR\tX5, X8, X5; \\\n \tMOVW\tX5, (index*4)(X19)\n+#endif\n \n // Wt = SIGMA1(Wt-2) + Wt-7 + SIGMA0(Wt-15) + Wt-16; for 16 <= t <= 63\n //   SIGMA0(x) = ROTR(7,x) XOR ROTR(18,x) XOR SHR(3,x)\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

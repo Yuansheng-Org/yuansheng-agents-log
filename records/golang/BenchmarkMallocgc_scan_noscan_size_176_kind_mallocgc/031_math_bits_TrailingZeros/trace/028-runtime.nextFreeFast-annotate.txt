@@ -1,0 +1,58 @@
+ Percent |	Source code & Disassembly of go for cpu-clock (3 samples, percent: local period)
+------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     000000000002b2e8 <runtime.nextFreeFast>:
+         : 6     runtime.nextFreeFast():
+    0.00 :   2b2e8:  ld      s1,56(a0)
+    0.00 :   2b2ea:  bnez    s1,2b2f6 <runtime.nextFreeFast+0xe>
+    0.00 :   2b2ee:  li      a1,64
+    0.00 :   2b2f2:  j       2b318 <runtime.nextFreeFast+0x30>
+   33.33 :   2b2f6:  neg     a1,s1
+    0.00 :   2b2fa:  and     a1,a1,s1
+    0.00 :   2b2fc:  auipc   a2,0x5e1
+    0.00 :   2b300:  ld      a2,-308(a2) # 60c1c8 <$i64.03f79d71b4ca8b09>
+   33.33 :   2b304:  mul     a1,a1,a2
+    0.00 :   2b308:  srli    a1,a1,0x3a
+    0.00 :   2b30a:  auipc   a2,0xca8
+    0.00 :   2b30e:  addi    a2,a2,438 # cd34c0 <internal/runtime/sys.deBruijn64tab>
+    0.00 :   2b312:  add     a1,a1,a2
+    0.00 :   2b314:  lbu     a1,0(a1)
+    0.00 :   2b318:  li      a2,64
+    0.00 :   2b31c:  bge     a1,a2,2b386 <runtime.nextFreeFast+0x9e>
+    0.00 :   2b320:  lhu     a2,48(a0)
+    0.00 :   2b324:  add     a2,a2,a1
+    0.00 :   2b326:  lhu     a3,50(a0)
+    0.00 :   2b32a:  slli    a4,a2,0x30
+    0.00 :   2b32e:  srli    a4,a4,0x30
+    0.00 :   2b330:  bgeu    a4,a3,2b386 <runtime.nextFreeFast+0x9e>
+    0.00 :   2b334:  addi    a4,a2,1
+    0.00 :   2b338:  andi    a5,a4,63
+    0.00 :   2b33c:  bnez    a5,2b350 <runtime.nextFreeFast+0x68>
+    0.00 :   2b340:  slli    a5,a4,0x30
+    0.00 :   2b344:  srli    a5,a5,0x30
+    0.00 :   2b346:  beq     a5,a3,2b350 <runtime.nextFreeFast+0x68>
+    0.00 :   2b34a:  li      a0,0
+    0.00 :   2b34c:  ret
+    0.00 :   2b350:  addi    a1,a1,1
+    0.00 :   2b352:  srl     s1,s1,a1
+    0.00 :   2b356:  sltiu   a1,a1,64
+    0.00 :   2b35a:  neg     a1,a1
+    0.00 :   2b35e:  and     s1,s1,a1
+    0.00 :   2b360:  sd      s1,56(a0)
+    0.00 :   2b362:  sh      a4,48(a0)
+    0.00 :   2b366:  lhu     s1,96(a0)
+    0.00 :   2b36a:  addi    s1,s1,1
+   33.33 :   2b36c:  sh      s1,96(a0)
+    0.00 :   2b370:  slli    s1,a2,0x30
+    0.00 :   2b374:  srli    s1,s1,0x30
+    0.00 :   2b376:  ld      a1,104(a0)
+    0.00 :   2b378:  mul     s1,s1,a1
+    0.00 :   2b37c:  ld      a1,24(a0)
+    0.00 :   2b37e:  add     a0,s1,a1
+    0.00 :   2b382:  ret
+    0.00 :   2b386:  li      a0,0
+    0.00 :   2b388:  ret

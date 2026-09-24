@@ -1,0 +1,137 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-go-BenchmarkAddMulVVWW_words_100000_impl_asm-001",
+  "source": {
+    "agent": "trace",
+    "software": "go",
+    "testcaseIds": [
+      "BenchmarkAddMulVVWW_words_100000_impl_asm"
+    ],
+    "diagnosisId": "diag-20260910T062543220Z-f499ad5e",
+    "targetHardware": "SOPHGO SG2044 (XuanTie C920v2, RVV 1.0 VLEN=128, rv64imafdcv_..._zba_zbb_zbc_zbs, no zvk*)",
+    "repositoryUrl": "https://github.com/golang/go.git",
+    "testBranch": "master",
+    "commitHash": "82215dc6c01ed6efb6f4f236cd5c87ceb6dc318a",
+    "createdAt": "2026-09-10T06:25:43.220Z"
+  },
+  "problem": {
+    "summary": "crypto/internal/fips140/sha256.block.abi0 在 C920v2 上以纯 Go 通用标量实现执行：64 轮完全展开、零 RVV 指令、无 riscv64 专用 SHA-256 kernel，且未利用硬件 Zbb 的 roriw/rev8 指令（旋转用 srliw+slliw+or 三元组、BE 消息字用 4×lbu+shift+or 逐字节拼装）。19 个 cpu-clock sample 均匀散布于整个 13.8KB 展开体，无单点热点，成本分布在全轮函数体。该函数并非 math/big addMulVVW benchmark 的稳态热点，样本大概率来自二进制启动期 crypto/FIPS140 自检路径，属 incidental 成本。",
+    "evidence": [
+      "perf annotate: cpu-clock 19 samples，5.26%×19 均匀覆盖 0x536476–0x539b2e 全部 64 轮展开体；prologue 0 sample；全函数 3,857 行零 v*",
+      "perf stat: IPC=0.776；branch_misses=20,607,457/424,843,559≈4.85%；L1_dcache_load_misses≈1.2%；LLC_load_misses≈12.3%（全运行口径，cache_references≈cache_misses 为该 PMU 计数一致性异常，未过度解读）",
+      "消息装载段每字 10 条指令（536476: lbu t0,0(t4) … 536494: or t0,s0,t0），16 字共 160 条；每轮 6 个 srliw+slliw+or 旋转三元组（5364a2/5364a6/5364aa 等），W schedule 每轮再 4 个（536f4e 等）",
+      "W schedule（rounds 16–63）每轮 4×lwu+1×sw 栈往返（536f3e: lwu t0,56(s3)…536f9c: sw t0,0(s3)），48 轮/块",
+      "hardware isa 含 v（RVV 1.0, vlenb=16→VLEN=128）与 zba zbb zbc zbs；无任何 zvk*（无 Zvknha/Zvknhb 向量 SHA-256 指令）",
+      "基准值：ns_per_op=301,056 ns；保留窗口 264 samples 中本函数占 19（≈7.2%），annotate 由 top-30 workflow 于 2026-09-08 再生成（未重跑 benchmark）"
+    ]
+  },
+  "rootCause": {
+    "summary": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+    "candidateFiles": [
+      "crypto/internal/fips140/sha256/sha256block_riscv64.s（新增：Zbb 或 base-RVV block kernel，与 amd64/arm64 sha256block_*.s 对齐）",
+      "crypto/internal/fips140/sha256/sha256block.go（现 riscv64 实际执行的通用标量实现，修改为按 GOARCH 选择实现）",
+      "cmd/compile/internal/ssa/gen/RISCV64.rules（可选载体：增加 roriw/rori 与 lwu+rev8+srli 的 lowering，feature-gated 于 Zbb）"
+    ],
+    "performanceFactors": [
+      "No vectorization (autovec gap / RVV kernel not built)",
+      "RISC-V ISA Extension-Specific Instruction Substitution"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "SHA-256 压缩输出 bit-identical（FIPS140 自检向量与 crypto/sha256 既有测试）",
+      "big-endian 消息字语义（vrgather 端序交换或 rev8+srli 正确性）",
+      "block() 单流块压缩 API 合同：p 指针推进、剩余长度语义、digest 累加顺序不变",
+      "无 zvk* 硬件的 base-RVV 回退正确性；非 Zbb 构建保持原合成序列（feature-gated）",
+      "Go uint32 零扩展语义（roriw 高位 sign-extend 需 SSA 层核对）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "TestSHA256 / FIPS140 self-test (crypto/internal/fips140/sha256)",
+      "crypto/sha256 全量测试（含 BenchmarkHash8Bytes/New 基准）",
+      "BenchmarkAddMulVVWW_words_100000_impl_asm（确认改动不干扰 math/big 回归基线）"
+    ]
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.68,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "需人工确认两点：(1) 19 个 sample 的调用来源路径（大概率启动期 crypto/FIPS140 自检，无调用栈证据）；(2) 本 benchmark 场景下该函数为 incidental 成本，是否仍优先为 SHA-256 通用场景实施。",
+    "reasoning": "perf annotate 显示该函数 19 个 cpu-clock sample 均匀覆盖全部 64 轮展开体且零 v*（热点证据），perf stat 全运行 IPC=0.776、branch_miss≈4.85% 表明 compute/latency-bound（指标证据）；反汇编显示每轮 6 个 srliw+slliw+or 旋转三元组、每字 4×lbu 字节拼装、W schedule 每轮 4×lwu+1×sw 栈往返（机制证据），而硬件 isa 同时含 v（RVV 1.0, VLEN=128）与 Zbb 且无 zvk*（路由证据）；知识证据（OpenSSL ror/rev8 Zbb commits、Go PR 59488、OpenCV scalable RVV PR 系列）证明该两类修复在同类哈希/平台上有先例收益。三者共同指向：riscv64 缺专用 SHA-256 实现（no-vectorization）叠加编译器未做 Zbb 指令选择（ISA substitution）为根因。因 sampling IP precision 缺失、函数 workload 角色未证实，收益判断仅限局部份额（19/19 局部、≈7.2% 运行窗口，不叠加），故为 probable 而非 confirmed。",
+    "alternativeExplanations": [
+      "code_path 视角：根因可部分归因于纯 Go 通用实现的代码形态（64 轮全展开、W 数组栈化）而非架构差异本身",
+      "样本来源不确定：19 个 sample 可能来自二进制启动期 FIPS140 自检而非 benchmark 稳态，若属自检路径，本次 benchmark 场景的优化收益将远低于 SHA-256 通用场景",
+      "annotate 为 2026-09-08 top-30 workflow 再生成产物（未重跑 perf record），样本归属存在再处理偏差的可能"
+    ],
+    "currentGaps": "build ISA 的 readelf -A arch 字符串未提供（baseline_gap: build ISA）；sampling IP precision 未知（baseline_gap: sampling IP precision，归因止于 interval 级）；函数 workload 角色（启动期自检 vs 稳态热点）无调用栈证据无法证实；perf stat 中 cache_references≈cache_misses 为 PMU 计数一致性问题；annotate 由再生成工作流产生，benchmark 未重跑",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 19 个 sample 的来源调用路径（是否 FIPS140 启动自检）；确认本函数在该 benchmark 场景中是否值得作为优化对象，或转交 SHA-256 通用场景专项处理",
+    "affectedTarget": "RV: BenchmarkAddMulVVWW_words_100000_impl_asm",
+    "recommendedFirstAction": "在 crypto/internal/fips140/sha256/ 新增 sha256block_riscv64.s：第一优先级用 Zbb roriw/rev8 重写 64 轮标量实现（风险最低、不依赖 RVV build 开关，可立即替换纯 Go 通用路径），同时用 crypto/sha256 与 FIPS140 自检测试验证 bit-identical；随后评估 base-RVV W schedule 向量化（vle32/vadd.vv/vrgather.vv，VLEN=128/SEW=32 4-lane）作为第二优先级。编译器载体（RISCV64.rules 增加 roriw/rev8 lowering）作为并行优化项。",
+    "recommendedVerification": "重跑 go test crypto/sha256 crypto/internal/fips140/sha256 全部测试；在 C920v2 上 A/B 运行 crypto/sha256 BenchmarkHash8Bytes/New 基准；对 crypto/internal/fips140/sha256.block.abi0 重跑 perf annotate，确认 srliw+slliw+or 三元组/lbu 拼装序列消失并出现 roriw/rev8（或 v*），原 19-sample 区间指令组成改变；确认 BenchmarkAddMulVVWW_words_100000_impl_asm 无回归",
+    "metricEvidence": [
+      {
+        "metric": "ns_per_op",
+        "rv": 301056,
+        "anomalyNote": "math/big addMulVVW asm 基准单操作耗时（本函数为 incidental 采样，非该指标直接贡献者）"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.776,
+        "anomalyNote": "全运行口径，低于典型 OoO 核 1.0+ 水平，指示 compute/latency-bound"
+      },
+      {
+        "metric": "L1_dcache_load_misses(%)",
+        "rv": 1.2,
+        "anomalyNote": "14,311,913/1,158,850,266，miss 率低，非 memory-bound"
+      },
+      {
+        "metric": "LLC_load_misses(%)",
+        "rv": 12.3,
+        "anomalyNote": "25,918,181/210,614,900，中等命中；cache_references≈cache_misses 为 PMU 计数一致性问题"
+      },
+      {
+        "metric": "branch_misses(%)",
+        "rv": 4.85,
+        "anomalyNote": "20,607,457/424,843,559，轮函数体无数据相关分支，非 branch-bound"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "crypto/internal/fips140/sha256.block.abi0",
+        "fileModule": "crypto/internal/fips140/sha256（Go 仓库 src/crypto/internal/fips140/sha256/，riscv64 走通用 sha256block.go；annotate 无 debug 行号，模块按包路径）",
+        "rvvPattern": "No vectorization (autovec gap / RVV kernel not built)",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.072,
+        "note": "SHA-256 压缩轮函数（密码学，串行加法链 + W schedule），19 samples 均匀分布于全函数 64 轮展开体，零 v*；大概率来自启动期 crypto/FIPS140 自检路径而非 benchmark 稳态；局部样本份额 19/19（100%），运行窗口 ≈7.2%，workload 级 Amdahl 上界不可声明"
+      },
+      {
+        "hotspotFunction": "crypto/internal/fips140/sha256.block.abi0",
+        "fileModule": "crypto/internal/fips140/sha256（同函数；指令选择证据：5364a2 srliw t6,a4,0x6 / 5364a6 slliw t1,a4,0x1a / 5364aa or t1,t6,t1；536476 lbu t0,0(t4) 字节拼装）",
+        "rvvPattern": "RISC-V ISA Extension-Specific Instruction Substitution",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.072,
+        "note": "同一函数的指令选择子机制（L4）：每轮 6+4 个 srliw+slliw+or 旋转三元组、每 BE 字 10 条拼装指令；硬件 zbb 可用 roriw/rev8；静态指令削减估计 ≈39%（非 cycle 上界）；与 no-vectorization 共享同一 evidence 区间，份额不叠加"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "crypto/internal/fips140/sha256/sha256block.go（通用标量 block 实现，riscv64 当前执行路径；候选新增 src/crypto/internal/fips140/sha256/sha256block_riscv64.s）",
+      "relatedKnowledge": [
+        "https://github.com/openssl/openssl/commit/03ce37e11729",
+        "https://github.com/openssl/openssl/commit/ca6286c382a7",
+        "https://github.com/openssl/openssl/commit/80c664db430d",
+        "https://github.com/golang/go/pull/59488",
+        "https://github.com/golang/go/commit/3659b8756a2b81766e589e34d4fe9613b5917de0",
+        "https://github.com/openjdk/jdk/commit/08d563ba15047020fd5f5fea80547e18898bbab2",
+        "https://github.com/openjdk/jdk/commit/b1a21b563e3ae13fa5c409a4f0c04686c3f5b34a",
+        "https://github.com/opencv/opencv/pull/22179",
+        "https://github.com/opencv/opencv/pull/27160"
+      ],
+      "evidenceExplanation": "OpenSSL 的 Zbb ror/rev8 系列 commit 证明哈希轮函数旋转/字节交换可由原生指令替换并获得实机收益（SHA-512 旋转替换实测 +55.68% 吞吐）；Go 自身 PR 59488 与 3659b8756a2b 证明 Go riscv64 后端具备引入 Zbb 指令选择的先例；OpenJDK rev8 commit 提供 32/64-bit 字节反转替换的跨项目验证；OpenCV scalable RVV PR 系列证明将标量/固定宽度循环改写为 scalable RVV 的通用做法。这些知识来源与本次反汇编证据（旋转三元组、字节拼装、零 v*）指向同一根因：缺 riscv64 专用实现 + 未做 Zbb 指令选择。"
+    }
+  }
+}

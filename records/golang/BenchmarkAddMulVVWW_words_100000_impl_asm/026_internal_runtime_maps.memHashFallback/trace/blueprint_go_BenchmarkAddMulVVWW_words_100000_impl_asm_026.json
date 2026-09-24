@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-go-BenchmarkAddMulVVWW_words_100000_impl_asm-026",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-09T15:54:54.916Z",
+    "software": "go",
+    "testcaseIds": [
+      "BenchmarkAddMulVVWW_words_100000_impl_asm"
+    ],
+    "diagnosisId": "diag-20260909T155454916Z-5b6c3c5b",
+    "targetHardware": "SOPHGO SG2044 / T-Head XuanTie C920v2 (riscv64, RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/golang/go.git",
+    "testBranch": "master",
+    "commitHash": "82215dc6c01ed6efb6f4f236cd5c87ceb6dc318a"
+  },
+  "problem": {
+    "summary": "BenchmarkAddMulVVWW_words_100000_impl_asm 的采样窗口内，Go 链接器（DSO=link）的 map 键哈希 internal/runtime/maps.memHashFallback 以 2/264 samples（约 0.76%）列 rank 026 尾部热点。该函数是 link 进程所有 map 字符串/字节键哈希的唯一路径（riscv64 无 AES memhash 汇编且硬件无 zk* 扩展，memHashAESImplemented=false）；每个 8 字节 word 以 22 条 lbu+slli+or byte-assembly 物化（readUnaligned64 → byteorder.LEUint64），riscv64 后端未折叠为单条 ld；两 sample 分别落在尾部混合返回（140b0）与 ≤16 字节路径的 8 字节读取区间（141a2）。样本归属 link 进程（构建/链接阶段），与被测 benchmark 计时指标无直接关联；收益上界约 0.76%（局部份额），属低影响的工具链 codegen 质量问题。",
+    "evidence": [
+      "cpu-clock samples: internal/runtime/maps.memHashFallback = 2/264（≈0.76%，percent: local period），rank 026，DSO=link（Go 链接器）",
+      "hot lines 原文: 50.00 : 140b0: ret（尾部混合/返回区间 [0x14082..0x140b0]）与 50.00 : 141a2: slli t0,t0,0x20（≤16 字节路径第二段 8 字节读取区间 [0x14170..0x14220]）",
+      "每 8 字节 word 以 22 条指令 byte-assembly 物化（8×lbu + 7×slli + 7×or；13ef8-13f86、13f8a-13fce、140b4-1416a、14170-14220、14224-1444a 多处），源码为 readUnaligned64 → byteorder.LEUint64（runtime_alg.go:87-93，goarch.BigEndian 编译期常量 false）",
+      "fallback-only 路由：memHashAESImplemented=false（memhash_noaes.go:14，riscv64 无 memhash 汇编），硬件 ISA 无 zk*/zvk* → AES memhash 不可用",
+      "全 workload perf stat: IPC 0.776; branch miss 4.85% (20.6M/424.8M); L1-dcache miss 1.24% (14.3M/1.159G)"
+    ]
+  },
+  "rootCause": {
+    "summary": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+    "candidateFiles": [
+      "src/cmd/compile/internal/ssa/gen/RISCV64.rules",
+      "src/internal/runtime/maps/runtime_alg.go"
+    ],
+    "performanceFactors": [
+      "Wide Scalar Memory-Access Code Generation"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "low",
+    "mustPreserve": [
+      "哈希数值输出逐位不变（LE 拼装值 == 原生 LE 加载值）",
+      "strict-aliasing 与有效 object representation 语义",
+      "不得越过语义长度读取完整 word（每段恰好 8/4 字节，不 over-read）",
+      "little-endian 字节序解释不变（BE 端口不可裸发 ld/lwu）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "BenchmarkAddMulVVWW_words_100000_impl_asm",
+      "go test cmd/compile/internal/ssa",
+      "go test internal/runtime/maps",
+      "all.bash (linux/riscv64)"
+    ],
+    "regressionCommand": "agent1 patch_regression --case BenchmarkAddMulVVWW_words_100000_impl_asm"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.65,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "样本归属 link（Go 链接器）进程（构建/链接阶段，非被测 benchmark 计时区间）；收益上界仅 0.76%（局部份额）；未对齐 ld 在 C920v2 上的实测性能未验证；需人工确认工具链折叠规则的投入与风险（该规则同时惠及同批次 017/018/019 同根因函数）",
+    "reasoning": "全 workload perf stat 显示 IPC 0.776、L1-dcache miss 1.24%，整体 compute/branch-bound；memHashFallback 的 2/264 samples 分别落在尾部混合返回（140b0）与 ≤16 字节路径的 8 字节读取区间（141a2），反汇编显示每 8 字节 word 以 22 条 lbu+slli+or 拼装（13ef8-13f86、14170-14220、14224-1444a 等），与 runtime_alg.go:87-93 readUnaligned64 → byteorder.LEUint64 的源码链完全一致（goarch.BigEndian 编译期常量折叠为 LE 分支）；memhash_noaes.go:14 证明 riscv64 无 AES memhash（memHashAESImplemented=false）且硬件无 zk*，fallback 是唯一哈希路径；命中 pattern wide_scalar_memory_access_codegen 的 fix 方向是给编译器一个合法可识别的单次访问合同（riscv64 后端折叠规则），与同批次 017/018/019 同根因。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "sample 数过少（2/264）且位于 link 进程，140b0 的 ret 行可能含前序 mix 链（mulhu/mul/xor）的 PMU skid，真实热点归属存在不确定性（IP precision 未知）",
+      "若追求更大杠杆，可评估为 riscv64 提供专用标量 memhash 内核（替代 byte-assembly fallback；非 AES 版，因硬件无 zk*）——但该方向缺 Go 的 assembly policy 证据（policy-backed missing-.S 四证不全），当前仅作假设",
+      "若成本主导是 map 哈希的调用频率而非单调用指令数，则调用方减少 map 查询（如缓存哈希值）可能收益更大（未在当前证据中独立验证）"
+    ],
+    "currentGaps": "build ISA 精确 Tag_RISCV_arch 未提供（由指令形态推断 rva20u64 默认）；Sampling IP precision（precise_ip）未知；percent type 为 local period、无 global-period 份额；采样窗口与 perf stat counting 窗口可能不一致（sampling 覆盖 build/link 阶段）；未对齐 ld 在 C920v2 上的实测性能数据缺失（MISALIGNED_SCALAR_PERF 未采集）；哈希调用频率分账未建立（样本仅 2 个）；ARM 侧 perf stat 未采集",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认采样窗口中 link 阶段样本的处理方式；未对齐（readUnaligned64 契约）单次宽加载在 C920v2 上的实测收益；以及工具链级折叠规则（惠及 017/018/019/020 四处同根因函数）的整体投入决策",
+    "affectedTarget": "RV + BenchmarkAddMulVVWW_words_100000_impl_asm（样本归属 link 进程，构建阶段）",
+    "recommendedFirstAction": "src/cmd/compile/internal/ssa/gen/RISCV64.rules：增加 Or64/Or32+Lsh*+ZeroExt8to(64|32)+load 组合到 MOVDload/MOVWUload 的折叠规则（以读取宽度与语义长度一致及 config.LittleEndian 为门控）；项目侧回退选项为 src/internal/runtime/maps/runtime_alg.go:87-93 保留 readUnaligned64 的 portable byteorder 实现不变",
+    "recommendedVerification": "实现折叠规则后重跑 go test cmd/compile/internal/ssa 与 riscv64 all.bash；对含链接阶段的 perf record/annotate 检查 memHashFallback 的 14170-14220/13ef8-13f86/14224-1444a 区间收敛为单条 ld/lwu；用 maps 相关 micro-benchmark（go test -bench）做指令/周期对比，确认哈希输出逐位一致且未对齐 ld 无回退",
+    "metricEvidence": [
+      {
+        "metric": "Samples (cpu-clock, local period)",
+        "rv": 2,
+        "anomalyNote": "memHashFallback 占 264 总样本约 0.76%（rank 026），样本归属 link 进程（构建/链接阶段），函数级收益上界小"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.776,
+        "anomalyNote": "全 workload IPC 0.776，compute-bound 区间，与函数级 compute-bound 判断一致"
+      },
+      {
+        "metric": "L1 D-cache Miss Rate(%)",
+        "rv": 1.24,
+        "anomalyNote": "L1 miss 率低，无 memory-bound 证据；本函数成本为 byte-assembly 依赖链 + mul 混合，非访存主导"
+      },
+      {
+        "metric": "Branch Miss Rate(%)",
+        "rv": 4.85,
+        "anomalyNote": "全 workload 分支误预测 4.85%；本函数长度分派分支按输入分布走，非成本主导"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "internal/runtime/maps.memHashFallback",
+        "fileModule": "src/internal/runtime/maps/runtime_hash64.go",
+        "rvvPattern": "Wide Scalar Memory-Access Code Generation",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.0076,
+        "note": "Go 链接器 map 键哈希（wyhash 系非加密哈希 fallback，compiler-generated 标量代码）；riscv64 无 AES memhash 且硬件无 zk*，fallback 是唯一路径；每 8 字节 word 22 条 byte-assembly 指令；2/264 samples 落在 ≤16 字节路径读取区间与尾部混合"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/internal/runtime/maps/runtime_hash64.go:21-65 (memHashFallback) / 86-87 (r8/r4); src/internal/runtime/maps/runtime_alg.go:79-93 (readUnaligned64/32 → byteorder.LEUint64/LEUint32); src/internal/runtime/maps/memhash_noaes.go:14 (memHashAESImplemented=false); src/cmd/compile/internal/ssa/gen/RISCV64.rules (折叠规则缺失位置)",
+      "relatedKnowledge": "https://github.com/zlib-ng/zlib-ng/commit/d7e121e56b64b5916810cf32615062a53f954773, https://github.com/zlib-ng/zlib-ng/commit/7a859e8cc350f3983236bd67522b5e7c2acec85a",
+      "evidenceExplanation": "runtime_hash64.go 的 r8/r4 读取在反汇编中呈现为 22 条/8 字节的 lbu+slli+or 拼装，与 runtime_alg.go:87-93 readUnaligned64 → byteorder.LEUint64（goarch.BigEndian 编译期常量 false 折叠为 LE 分支）完全一致；memhash_noaes.go:14 证明 riscv64 无 AES memhash 汇编，fallback 是唯一路径；pattern 的 Related PRs 记载同类『按值/单次快照物化固定宽度访问』优化（zlib-ng decode-table entry 按值加载），证明该修复方向在真实项目有效"
+    }
+  }
+}

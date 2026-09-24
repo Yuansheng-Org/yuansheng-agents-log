@@ -1,0 +1,13 @@
+cmd/compile: use runtime Zbb dispatch for riscv64 TrailingZeros
+
+For rva20u64, use the existing RISCV64HasZbb runtime feature flag to
+select CTZ/CTZW for public math/bits TrailingZeros calls while retaining
+the pure-Go fallback. Keep unconditional lowering for rva22u64 and
+newer, where Zbb is mandatory.
+
+Do not apply the runtime feature check to internal/runtime/sys aliases
+in rva20u64 builds. Those aliases are used in short map and allocator
+hot paths where the extra check can outweigh the instruction saving.
+
+Add intrinsic-table tests for the rva20/rva22 boundary and extend the
+math/bits asmcheck expectations to all riscv64 profiles.

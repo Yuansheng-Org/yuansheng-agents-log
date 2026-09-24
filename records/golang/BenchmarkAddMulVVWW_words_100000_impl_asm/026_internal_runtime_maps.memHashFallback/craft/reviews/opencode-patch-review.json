@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-bp-go-BenchmarkAddMulVVWW-026-01",
+  "patchCandidateId": "pc-bp-go-benchmarkaddmulvvww-words-100000-impl-asm-026",
+  "reviewedAt": "2026-09-17T03:40:00Z",
+  "reviewer": "opencode-craft-independent-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "not-applicable",
+    "notes": "arch-scan archSpecific=false (matches=[])。补丁无 .S/inline-asm/RVV intrinsic/ISA 特性宏；riscv64 分支仅用 RV64I 基础 lwu/ld 做对齐快路径，未对齐回退 byteorder 字节拼装，不依赖任何可选扩展，无 vsetvl/vtype，无 x86/ARM 专有指令；AES/zk* 路径不变。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": []
+}

@@ -1,0 +1,290 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-go-benchmarkaddmulvvww-words-100000-impl-asm-026",
+  "blueprintId": "bp-go-BenchmarkAddMulVVWW_words_100000_impl_asm-026",
+  "createdAt": "2026-09-17T02:50:06.551Z",
+  "objective": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+  "changes": [
+    {
+      "filePath": "internal/runtime/maps.memHashFallback",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "2/264",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "20.6M/424.8M",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "14.3M/1.159G",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "cmd/compile",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "readUnaligned64/32",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "ld/lwu",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "src/cmd/compile/internal/ssa/gen/RISCV64.rules",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "src/internal/runtime/maps/runtime_alg.go",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "src/cmd/compile/internal/ssa/gen/RISCV64",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "MOVDload/MOVWUload",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "src/internal/runtime/maps/runtime_alg.go:87-93",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "017/018/019",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "build/link",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "src/internal/runtime/maps/runtime_hash64.go",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "src/internal/runtime/maps/runtime_hash64.go:21-65",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "r8/r4",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "src/internal/runtime/maps/runtime_alg.go:79-93",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "byteorder.LEUint64/LEUint32",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    },
+    {
+      "filePath": "src/internal/runtime/maps/memhash_noaes.go",
+      "action": "modify",
+      "rationale": "cmd/compile 的 riscv64 后端未把 byteorder.LEUint64/LEUint32（经 readUnaligned64/32 内联）的 byte-or 表达式折叠为单条 ld/lwu 宽加载，使 memHashFallback 每 8 字节读取付出 22 条 lbu+slli+or 指令；该函数是 link 进程 map 哈希的唯一路径（无 riscv64 memhash 汇编、硬件无 zk*），≤16 字节键每次调用约 44 条 byte-assembly 指令。readUnaligned64 命名契约显式许可未对齐读取，每段读取长度与语义长度完全一致（无 over-read），单次宽访问在语言与平台上均安全。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "low"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应围绕 internal/runtime/maps.memHashFallback, 2/264, 20.6M/424.8M, 14.3M/1.159G, cmd/compile, readUnaligned64/32, ld/lwu, src/cmd/compile/internal/ssa/gen/RISCV64.rules, src/internal/runtime/maps/runtime_alg.go, src/cmd/compile/internal/ssa/gen/RISCV64, MOVDload/MOVWUload, src/internal/runtime/maps/runtime_alg.go:87-93, 017/018/019, build/link, src/internal/runtime/maps/runtime_hash64.go, src/internal/runtime/maps/runtime_hash64.go:21-65, r8/r4, src/internal/runtime/maps/runtime_alg.go:79-93, byteorder.LEUint64/LEUint32, src/internal/runtime/maps/memhash_noaes.go 解决 blueprint bp-go-BenchmarkAddMulVVWW_words_100000_impl_asm-026 指出的根因。允许涉及 构建系统、平台适配、构建参数、注册入口；源码实现、汇编/kernel/intrinsic/SIMD/vector 后端、分发表。"
+}
