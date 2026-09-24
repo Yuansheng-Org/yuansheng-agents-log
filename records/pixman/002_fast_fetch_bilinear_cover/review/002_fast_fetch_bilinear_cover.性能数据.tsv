@@ -1,2 +1,0 @@
-metric	unit	baseline_rep1	baseline_rep2	baseline_rep3	baseline_median	patched_rep1	patched_rep2	patched_rep3	patched_median	change_percent	paired_wins	paired_losses	improvement_signal	regression_signal
-MPix/s	MPix/s (higher is better)	78.18	78.28	77.86	78.18	85.32	85.35	85.18	85.32	9.132771	3	0	YES	NO
