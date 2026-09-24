@@ -1,0 +1,11 @@
+diff --git a/Configurations/10-main.conf b/Configurations/10-main.conf
+--- a/Configurations/10-main.conf
++++ b/Configurations/10-main.conf
+@@ -756,6 +756,7 @@
+         inherit_from     => [ "linux-generic64"],
+         perlasm_scheme   => "linux64",
+         asm_arch         => 'riscv64',
++        enable           => [ 'ec_nistp_64_gcc_128' ],
+     },
+ 
+     "linux32-riscv32" => {
