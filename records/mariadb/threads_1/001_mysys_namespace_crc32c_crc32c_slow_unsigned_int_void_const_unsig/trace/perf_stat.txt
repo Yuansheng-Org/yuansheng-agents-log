@@ -1,0 +1,63 @@
+20-MARIADB-SYSBENCH-BENCHMARK threads_1 RISC-V perf stat
+========================================================
+
+Source CSV: /workspace/results/20-mariadb-sysbench-benchmark_results.csv
+TestName: threads_1
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 353,612,337,750 |
+| task_clock | 7,638.92 |
+| cpu_cycle | 18,840,691,049 |
+| instruction | 10,748,449,558 |
+| cache_references | 357,650,964 |
+| cache_misses | 357,651,775 |
+| branches | 1,053,749,226 |
+| branch_misses | 58,581,762 |
+| L1_dcache_loads | 2,547,104,797 |
+| L1_dcache_load_misses | 55,582,370 |
+| LLC_loads | 357,656,398 |
+| LLC_load_misses | 41,227,264 |
+| IPC | 0.570491 |
+| transactions | 924 |
+| queries_per_second | 1,844.57 |
+| latency_avg_ms | 10.83 |
+| latency_p95_ms | 13.95 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 353.612338 |
+| cache_miss_rate | 100.000% |
+| branch_miss_rate | 5.559% |
+| L1_dcache_load_miss_rate | 2.182% |
+| LLC_load_miss_rate | 11.527% |
+
+perf stat style summary
+-----------------------
+        353,612,337,750  duration_time
+               7,638.92  task_clock
+         18,840,691,049  cpu_cycle
+         10,748,449,558  instruction
+            357,650,964  cache_references
+            357,651,775  cache_misses
+          1,053,749,226  branches
+             58,581,762  branch_misses
+          2,547,104,797  L1_dcache_loads
+             55,582,370  L1_dcache_load_misses
+            357,656,398  LLC_loads
+             41,227,264  LLC_load_misses
+               0.570491  IPC
+                    924  transactions
+               1,844.57  queries_per_second
+                  10.83  latency_avg_ms
+                  13.95  latency_p95_ms
+             353.612338  duration_s
+               100.000%  cache_miss_rate
+                 5.559%  branch_miss_rate
+                 2.182%  L1_dcache_load_miss_rate
+                11.527%  LLC_load_miss_rate

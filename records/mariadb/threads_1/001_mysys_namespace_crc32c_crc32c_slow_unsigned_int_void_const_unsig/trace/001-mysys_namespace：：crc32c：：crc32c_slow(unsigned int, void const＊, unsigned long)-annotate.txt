@@ -1,0 +1,428 @@
+ Percent |	Source code & Disassembly of mariadbd for cpu-clock (37 samples, percent: local period)
+-------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000ffa40e <mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long)>:
+         : 6      mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+         : 419    return static_cast<uint32_t>(l ^ 0xffffffffu);
+         : 420    }
+         : 421    #endif
+         :
+         : 423    static unsigned crc32c_slow(unsigned crc, const void* buf, size_t size)
+         : 424    {
+    0.00 :   ffa40e: addi    sp,sp,-32
+    2.70 :   ffa410: sd      s0,16(sp)
+    0.00 :   ffa412: sd      ra,24(sp)
+    0.00 :   ffa414: addi    s0,sp,32
+         : 427    uint64_t l = crc ^ 0xffffffffu;
+         :
+         : 429    // Point x at first 16-byte aligned byte in string.  This might be
+         : 430    // just past the end of the string.
+         : 431    const uintptr_t pval = reinterpret_cast<uintptr_t>(p);
+         : 432    const uint8_t* x = reinterpret_cast<const uint8_t*>(ALIGN(pval, 4));
+    0.00 :   ffa416: addi    a3,a1,15
+         : 422    uint64_t l = crc ^ 0xffffffffu;
+    0.00 :   ffa41a: not     a0,a0
+    0.00 :   ffa41e: slli    a7,a0,0x20
+         : 421    const uint8_t *e = p + size;
+    0.00 :   ffa422: add     a2,a2,a1
+         : 427    const uint8_t* x = reinterpret_cast<const uint8_t*>(ALIGN(pval, 4));
+    0.00 :   ffa424: andi    a3,a3,-16
+         : 422    uint64_t l = crc ^ 0xffffffffu;
+    0.00 :   ffa426: srli    a7,a7,0x20
+         : 428    if (x <= e)
+    0.00 :   ffa42a: bltu    a2,a3,ffa460 <mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long)+0x52>
+         : 430    // Process bytes until finished or p is 16-byte aligned
+         : 431    while (p != x)
+    0.00 :   ffa42e: auipc   a5,0x2a0
+    0.00 :   ffa432: addi    a5,a5,1490 # 129aa00 <mysys_namespace::crc32c::table0_>
+    0.00 :   ffa436: beq     a1,a3,ffa460 <mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long)+0x52>
+         : 431    STEP1;
+    0.00 :   ffa43a: lbu     a4,0(a1)
+    0.00 :   ffa43e: srli    a0,a7,0x8
+    0.00 :   ffa442: addi    a1,a1,1
+    0.00 :   ffa444: xor     a4,a7,a4
+    0.00 :   ffa448: zext.b  a4,a4
+    0.00 :   ffa44c: slli    a4,a4,0x2
+    0.00 :   ffa44e: add     a4,a4,a5
+    0.00 :   ffa450: lwu     a7,0(a4)
+    0.00 :   ffa454: xor     a7,a7,a0
+         : 430    while (p != x)
+    0.00 :   ffa458: bne     a1,a3,ffa43a <mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long)+0x2c>
+         : 444    while ((e-p) >= 8)
+         : 445    Slow_CRC32(&l, &p);
+         : 446    // Process the last few bytes
+         : 447    while (p != e)
+         : 448    STEP1;
+         : 449    return static_cast<uint32_t>(l ^ 0xffffffffu);
+    0.00 :   ffa45c: sext.w  a0,a7
+         : 433    while ((e-p) >= 16)
+    0.00 :   ffa460: sub     a4,a2,a1
+    0.00 :   ffa464: li      a6,15
+    0.00 :   ffa466: auipc   a5,0x2a0
+    0.00 :   ffa46a: addi    a5,a5,1434 # 129aa00 <mysys_namespace::crc32c::table0_>
+    0.00 :   ffa46e: auipc   a3,0x2a1
+    0.00 :   ffa472: addi    a3,a3,1426 # 129ba00 <_my_bits_reverse_table>
+    0.00 :   ffa476: bge     a6,a4,ffa620 <mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long)+0x212>
+         :
+         : 30     __fortify_function void *
+         : 31     __NTH (memcpy (void *__restrict __dest, const void *__restrict __src,
+         : 32     size_t __len))
+         : 33     {
+         : 34     return __builtin___memcpy_chk (__dest, __src, __len,
+    0.00 :   ffa47a: lbu     t3,0(a1)
+         : 36     memcpy():
+    0.00 :   ffa47e: lbu     t1,1(a1)
+    2.70 :   ffa482: lbu     a0,2(a1)
+    0.00 :   ffa486: lbu     a4,3(a1)
+    0.00 :   ffa48a: sb      t3,-20(s0)
+    0.00 :   ffa48e: sb      t1,-19(s0)
+    2.70 :   ffa492: sb      a0,-18(s0)
+    0.00 :   ffa496: sb      a4,-17(s0)
+         : 36     mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+         :
+         : 123    static inline uint32 uint4korr(const void *p)
+         : 124    {
+         : 125    uint32 ret;
+         : 126    memcpy(&ret, p, 4);
+         : 127    return my_letoh32(ret);
+    0.00 :   ffa49a: lw      a4,-20(s0)
+    8.11 :   ffa49e: lbu     t0,4(a1)
+         : 30     memcpy():
+    0.00 :   ffa4a2: lbu     t6,5(a1)
+         : 30     mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+         : 323    uint32_t c = static_cast<uint32_t>(*l ^ LE_LOAD32(*p));
+    0.00 :   ffa4a6: xor     a4,a7,a4
+         : 325    memcpy():
+    0.00 :   ffa4aa: lbu     t5,6(a1)
+    0.00 :   ffa4ae: lbu     t3,7(a1)
+         : 31     Slow_CRC32():
+         : 325    *l = table3_[c & 0xff] ^
+    0.00 :   ffa4b2: zext.b  t1,a4
+         : 328    table0_[c >> 24];
+    0.00 :   ffa4b6: srliw   a0,a4,0x18
+         : 325    *l = table3_[c & 0xff] ^
+    0.00 :   ffa4ba: slli    t1,t1,0x2
+         : 328    table0_[c >> 24];
+    0.00 :   ffa4bc: slli    a0,a0,0x2
+    0.00 :   ffa4be: add     a0,a0,a5
+         : 326    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa4c0: srli    a7,a4,0x6
+         : 325    *l = table3_[c & 0xff] ^
+    5.41 :   ffa4c4: add     t1,t1,a3
+    0.00 :   ffa4c6: lw      t4,0(a0)
+         : 328    memcpy():
+    2.70 :   ffa4ca: sb      t0,-20(s0)
+    0.00 :   ffa4ce: sb      t6,-19(s0)
+    0.00 :   ffa4d2: sb      t5,-18(s0)
+    0.00 :   ffa4d6: lw      t1,-1024(t1)
+    0.00 :   ffa4da: sb      t3,-17(s0)
+         : 34     Slow_CRC32():
+         : 326    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa4de: andi    a7,a7,1020
+         : 327    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa4e2: srli    a4,a4,0xe
+    0.00 :   ffa4e4: lw      a0,-20(s0)
+         : 326    table2_[(c >> 8) & 0xff] ^
+   13.51 :   ffa4e8: add     a7,a7,a5
+         : 327    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa4ea: andi    a4,a4,1020
+         : 326    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa4ee: lw      t3,1024(a7)
+         : 327    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa4f2: add     a4,a4,a3
+    2.70 :   ffa4f4: xor     a7,t1,t4
+    0.00 :   ffa4f8: lw      a4,-2048(a4)
+         : 331    mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+    0.00 :   ffa4fc: xor     a0,a0,a7
+         : 123    uint4korr():
+    0.00 :   ffa500: xor     a0,a0,t3
+         : 123    Slow_CRC32():
+         : 330    c = static_cast<uint32_t>(*l ^ LE_LOAD32(*p));
+    0.00 :   ffa504: xor     a4,a4,a0
+         : 332    mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+    0.00 :   ffa506: lbu     t6,8(a1)
+         : 30     memcpy():
+    0.00 :   ffa50a: lbu     t5,9(a1)
+    0.00 :   ffa50e: lbu     t4,10(a1)
+         : 31     Slow_CRC32():
+         : 333    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa512: srli    t3,a4,0x6
+         : 334    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa516: srli    t1,a4,0xe
+         : 332    *l = table3_[c & 0xff] ^
+    0.00 :   ffa51a: zext.b  a7,a4
+         : 335    table0_[c >> 24];
+    0.00 :   ffa51e: srliw   a0,a4,0x18
+         : 333    table2_[(c >> 8) & 0xff] ^
+    2.70 :   ffa522: andi    t3,t3,1020
+         : 334    table1_[(c >> 16) & 0xff] ^
+    2.70 :   ffa526: andi    a4,t1,1020
+         : 332    *l = table3_[c & 0xff] ^
+    2.70 :   ffa52a: slli    a7,a7,0x2
+         : 335    table0_[c >> 24];
+    0.00 :   ffa52c: slli    a0,a0,0x2
+         : 333    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa52e: add     t1,a5,t3
+         : 335    table0_[c >> 24];
+    0.00 :   ffa532: add     a0,a0,a5
+         : 334    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa534: add     a4,a4,a3
+         : 332    *l = table3_[c & 0xff] ^
+    0.00 :   ffa536: add     a7,a7,a3
+         : 333    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa538: lw      t1,1024(t1)
+    0.00 :   ffa53c: lw      t3,0(a0)
+         : 334    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa540: lw      a4,-2048(a4)
+    0.00 :   ffa544: lw      a7,-1024(a7)
+         : 337    memcpy():
+    2.70 :   ffa548: sb      t6,-20(s0)
+    0.00 :   ffa54c: sb      t5,-19(s0)
+    0.00 :   ffa550: sb      t4,-18(s0)
+    2.70 :   ffa554: lbu     a0,11(a1)
+    0.00 :   ffa558: xor     a7,a7,t3
+         : 34     mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+    0.00 :   ffa55c: lbu     t0,12(a1)
+         : 30     memcpy():
+    0.00 :   ffa560: sb      a0,-17(s0)
+         : 30     mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+    0.00 :   ffa564: lw      a0,-20(s0)
+         : 123    memcpy():
+    5.41 :   ffa568: lbu     t3,15(a1)
+    0.00 :   ffa56c: lbu     t6,13(a1)
+    0.00 :   ffa570: xor     a0,a0,a7
+    0.00 :   ffa574: xor     a0,a0,t1
+         : 33     mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+         : 323    uint32_t c = static_cast<uint32_t>(*l ^ LE_LOAD32(*p));
+    2.70 :   ffa578: xor     a4,a4,a0
+         : 325    memcpy():
+    0.00 :   ffa57a: lbu     t5,14(a1)
+         : 30     Slow_CRC32():
+         : 325    *l = table3_[c & 0xff] ^
+    0.00 :   ffa57e: zext.b  t1,a4
+         : 328    table0_[c >> 24];
+    0.00 :   ffa582: srliw   a0,a4,0x18
+         : 325    *l = table3_[c & 0xff] ^
+    0.00 :   ffa586: slli    t1,t1,0x2
+         : 328    table0_[c >> 24];
+    0.00 :   ffa588: slli    a0,a0,0x2
+    0.00 :   ffa58a: add     a0,a0,a5
+         : 326    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa58c: srli    a7,a4,0x6
+         : 325    *l = table3_[c & 0xff] ^
+    0.00 :   ffa590: add     t1,t1,a3
+    0.00 :   ffa592: lw      t1,-1024(t1)
+    0.00 :   ffa596: lw      t4,0(a0)
+         : 329    memcpy():
+    2.70 :   ffa59a: sb      t3,-17(s0)
+    0.00 :   ffa59e: sb      t0,-20(s0)
+    0.00 :   ffa5a2: sb      t6,-19(s0)
+    0.00 :   ffa5a6: sb      t5,-18(s0)
+         : 33     Slow_CRC32():
+         : 326    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa5aa: andi    a7,a7,1020
+         : 327    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa5ae: srli    a4,a4,0xe
+         : 326    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa5b0: add     a7,a7,a5
+    0.00 :   ffa5b2: lw      a0,-20(s0)
+         : 327    table1_[(c >> 16) & 0xff] ^
+   18.92 :   ffa5b6: andi    a4,a4,1020
+         : 326    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa5ba: lw      t3,1024(a7)
+         : 327    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa5be: add     a4,a4,a3
+    0.00 :   ffa5c0: xor     a7,t1,t4
+    2.70 :   ffa5c4: lw      a4,-2048(a4)
+         : 331    mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+    0.00 :   ffa5c8: xor     a0,a0,a7
+         : 123    uint4korr():
+    0.00 :   ffa5cc: xor     a0,a0,t3
+         : 123    Slow_CRC32():
+         : 330    c = static_cast<uint32_t>(*l ^ LE_LOAD32(*p));
+    0.00 :   ffa5d0: xor     a4,a4,a0
+         : 332    *l = table3_[c & 0xff] ^
+    0.00 :   ffa5d2: zext.b  a0,a4
+         : 335    table0_[c >> 24];
+    2.70 :   ffa5d6: srliw   t1,a4,0x18
+         : 333    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa5da: srli    a7,a4,0x6
+         : 332    *l = table3_[c & 0xff] ^
+    5.41 :   ffa5de: slli    a0,a0,0x2
+         : 335    table0_[c >> 24];
+    0.00 :   ffa5e0: slli    t1,t1,0x2
+         : 332    *l = table3_[c & 0xff] ^
+    0.00 :   ffa5e2: add     a0,a0,a3
+         : 335    table0_[c >> 24];
+    0.00 :   ffa5e4: add     t1,t1,a5
+         : 333    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa5e6: andi    a7,a7,1020
+         : 334    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa5ea: srli    a4,a4,0xe
+    0.00 :   ffa5ec: lw      a0,-1024(a0)
+    0.00 :   ffa5f0: lw      t1,0(t1)
+         : 333    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa5f4: add     a7,a7,a5
+         : 334    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa5f6: andi    a4,a4,1020
+    0.00 :   ffa5fa: lw      a7,1024(a7)
+    0.00 :   ffa5fe: add     a4,a4,a3
+    0.00 :   ffa600: lw      a4,-2048(a4)
+    0.00 :   ffa604: xor     a0,a0,t1
+    0.00 :   ffa608: xor     a0,a0,a7
+    0.00 :   ffa60c: xor     a0,a0,a4
+         : 331    *p += 4;
+    0.00 :   ffa60e: addi    a1,a1,16
+         : 334    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa610: slli    a7,a0,0x20
+         : 336    mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+         : 433    while ((e-p) >= 16)
+    0.00 :   ffa614: sub     a4,a2,a1
+         : 435    Slow_CRC32():
+         : 334    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa618: srli    a7,a7,0x20
+         : 336    mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+         : 433    while ((e-p) >= 16)
+    2.70 :   ffa61c: blt     a6,a4,ffa47a <mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long)+0x6c>
+         : 439    while ((e-p) >= 8)
+    0.00 :   ffa620: li      t1,7
+    0.00 :   ffa622: bge     t1,a4,ffa710 <mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long)+0x302>
+    0.00 :   ffa626: auipc   a5,0x2a0
+    0.00 :   ffa62a: addi    a5,a5,986 # 129aa00 <mysys_namespace::crc32c::table0_>
+    0.00 :   ffa62e: auipc   a3,0x2a1
+    0.00 :   ffa632: addi    a3,a3,978 # 129ba00 <_my_bits_reverse_table>
+    0.00 :   ffa636: lbu     t3,0(a1)
+         : 30     memcpy():
+    0.00 :   ffa63a: lbu     a6,1(a1)
+    0.00 :   ffa63e: lbu     a0,2(a1)
+    2.70 :   ffa642: lbu     a4,3(a1)
+    0.00 :   ffa646: sb      t3,-20(s0)
+    0.00 :   ffa64a: sb      a6,-19(s0)
+    0.00 :   ffa64e: sb      a0,-18(s0)
+    0.00 :   ffa652: sb      a4,-17(s0)
+         : 36     mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+    0.00 :   ffa656: lw      a4,-20(s0)
+    0.00 :   ffa65a: lbu     t3,7(a1)
+         : 30     memcpy():
+    0.00 :   ffa65e: lbu     t0,4(a1)
+         : 30     mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+         : 323    uint32_t c = static_cast<uint32_t>(*l ^ LE_LOAD32(*p));
+    0.00 :   ffa662: xor     a4,a7,a4
+         : 325    memcpy():
+    0.00 :   ffa666: lbu     t6,5(a1)
+    0.00 :   ffa66a: lbu     t5,6(a1)
+         : 31     Slow_CRC32():
+         : 325    *l = table3_[c & 0xff] ^
+    0.00 :   ffa66e: zext.b  a7,a4
+         : 328    table0_[c >> 24];
+    0.00 :   ffa672: srliw   a0,a4,0x18
+         : 325    *l = table3_[c & 0xff] ^
+    0.00 :   ffa676: slli    a7,a7,0x2
+         : 328    table0_[c >> 24];
+    0.00 :   ffa678: slli    a0,a0,0x2
+    0.00 :   ffa67a: add     a0,a0,a5
+         : 326    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa67c: srli    a6,a4,0x6
+         : 325    *l = table3_[c & 0xff] ^
+    0.00 :   ffa680: add     a7,a7,a3
+    0.00 :   ffa682: lw      a7,-1024(a7)
+    0.00 :   ffa686: lw      t4,0(a0)
+         : 329    memcpy():
+    0.00 :   ffa68a: sb      t3,-17(s0)
+    0.00 :   ffa68e: sb      t0,-20(s0)
+    0.00 :   ffa692: sb      t6,-19(s0)
+    0.00 :   ffa696: sb      t5,-18(s0)
+         : 33     Slow_CRC32():
+         : 326    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa69a: andi    a6,a6,1020
+         : 327    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa69e: srli    a4,a4,0xe
+         : 326    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa6a0: add     a6,a6,a5
+    0.00 :   ffa6a2: lw      a0,-20(s0)
+         : 327    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa6a6: andi    a4,a4,1020
+         : 326    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa6aa: lw      t3,1024(a6)
+         : 327    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa6ae: add     a4,a4,a3
+    0.00 :   ffa6b0: xor     a6,a7,t4
+    0.00 :   ffa6b4: lw      a4,-2048(a4)
+         : 331    mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+    0.00 :   ffa6b8: xor     a0,a0,a6
+         : 123    uint4korr():
+    0.00 :   ffa6bc: xor     a0,a0,t3
+         : 123    Slow_CRC32():
+         : 330    c = static_cast<uint32_t>(*l ^ LE_LOAD32(*p));
+    0.00 :   ffa6c0: xor     a4,a4,a0
+         : 332    *l = table3_[c & 0xff] ^
+    0.00 :   ffa6c2: zext.b  a0,a4
+         : 335    table0_[c >> 24];
+    0.00 :   ffa6c6: srliw   a7,a4,0x18
+         : 333    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa6ca: srli    a6,a4,0x6
+         : 332    *l = table3_[c & 0xff] ^
+    0.00 :   ffa6ce: slli    a0,a0,0x2
+         : 335    table0_[c >> 24];
+    0.00 :   ffa6d0: slli    a7,a7,0x2
+         : 332    *l = table3_[c & 0xff] ^
+    0.00 :   ffa6d2: add     a0,a0,a3
+         : 335    table0_[c >> 24];
+    0.00 :   ffa6d4: add     a7,a7,a5
+         : 333    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa6d6: andi    a6,a6,1020
+         : 334    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa6da: srli    a4,a4,0xe
+    0.00 :   ffa6dc: lw      a7,0(a7)
+    0.00 :   ffa6e0: lw      a0,-1024(a0)
+         : 333    table2_[(c >> 8) & 0xff] ^
+    0.00 :   ffa6e4: add     a6,a6,a5
+         : 334    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa6e6: andi    a4,a4,1020
+    0.00 :   ffa6ea: lw      a6,1024(a6)
+    0.00 :   ffa6ee: add     a4,a4,a3
+    0.00 :   ffa6f0: lw      a4,-2048(a4)
+    0.00 :   ffa6f4: xor     a0,a0,a7
+    0.00 :   ffa6f8: xor     a0,a0,a6
+    0.00 :   ffa6fc: xor     a0,a0,a4
+         : 331    *p += 4;
+    0.00 :   ffa6fe: addi    a1,a1,8
+         : 334    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa700: slli    a7,a0,0x20
+         : 336    mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+         : 439    while ((e-p) >= 8)
+    0.00 :   ffa704: sub     a4,a2,a1
+         : 441    Slow_CRC32():
+         : 334    table1_[(c >> 16) & 0xff] ^
+    0.00 :   ffa708: srli    a7,a7,0x20
+         : 336    mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long):
+         : 439    while ((e-p) >= 8)
+    0.00 :   ffa70c: blt     t1,a4,ffa636 <mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long)+0x228>
+         : 442    while (p != e)
+    0.00 :   ffa710: beq     a1,a2,ffa742 <mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long)+0x334>
+    0.00 :   ffa714: auipc   a5,0x2a0
+    0.00 :   ffa718: addi    a5,a5,748 # 129aa00 <mysys_namespace::crc32c::table0_>
+         : 443    STEP1;
+    0.00 :   ffa71c: lbu     a4,0(a1)
+    0.00 :   ffa720: srli    a3,a7,0x8
+    0.00 :   ffa724: addi    a1,a1,1
+    0.00 :   ffa726: xor     a4,a7,a4
+    0.00 :   ffa72a: zext.b  a4,a4
+    0.00 :   ffa72e: slli    a4,a4,0x2
+    0.00 :   ffa730: add     a4,a4,a5
+    0.00 :   ffa732: lwu     a7,0(a4)
+    0.00 :   ffa736: xor     a7,a7,a3
+         : 442    while (p != e)
+    0.00 :   ffa73a: bne     a1,a2,ffa71c <mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long)+0x30e>
+         : 444    return static_cast<uint32_t>(l ^ 0xffffffffu);
+    0.00 :   ffa73e: sext.w  a0,a7
+         : 445    }
+    0.00 :   ffa742: ld      ra,24(sp)
+    0.00 :   ffa744: ld      s0,16(sp)
+    0.00 :   ffa746: not     a0,a0
+    0.00 :   ffa74a: addi    sp,sp,32
+    0.00 :   ffa74c: ret

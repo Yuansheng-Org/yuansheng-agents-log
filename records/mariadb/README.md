@@ -9,3 +9,13 @@
 | 4      | 36     | 1                | 2      | 2             | 1            |
 
 
+
+## 已筛选补丁的产物归档
+
+本分支仅整理 `add-mariadb` 已筛选的 1 个函数目录，按 `records/mariadb/<测试用例>/<函数>/` 归档。测例名称和 Blueprint ID 取自 Agent Debug 的 Trace；`craft/patch.diff` 与 Agent Debug 原始 Craft 补丁逐字节一致，原有专家复核文件保留。
+
+| 测试用例 | 函数目录 | Blueprint ID |
+| --- | --- | --- |
+| `threads_1` | [001_mysys_namespace_crc32c_crc32c_slow_unsigned_int_void_const_unsig](threads_1/001_mysys_namespace_crc32c_crc32c_slow_unsigned_int_void_const_unsig/) | `bp-mariadb-threads_1-001` |
+
+`trace/` 保留对应函数的原始追踪文件；`craft/` 补充 Plan、Candidate 和 `reviews/` 中的 AI 审核。历史统计保持原值；AI 审核与原有专家复核文件分别保留，不自动推断编译、回归或上游接收状态。
