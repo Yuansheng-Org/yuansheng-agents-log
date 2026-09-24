@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-ffmpeg-checkasm-h264chroma-003",
+  "blueprintId": "bp-ffmpeg-checkasm_h264chroma-003",
+  "createdAt": "2026-09-11T11:28:00.290Z",
+  "objective": "16-bit H.264 chroma MC 的 RISC-V 向量实现缺失（init 仅 bit_depth==8 注册 8-bit RVV），16-bit 变体长期执行 C template 标量 4-tap 加权链；注意 High 10 profile 场景相对小众，样本仅 1 个，优先级需评估。",
+  "changes": [
+    {
+      "filePath": "libavcodec/riscv/h264_chroma_init_riscv.c",
+      "action": "modify",
+      "rationale": "16-bit H.264 chroma MC 的 RISC-V 向量实现缺失（init 仅 bit_depth==8 注册 8-bit RVV），16-bit 变体长期执行 C template 标量 4-tap 加权链；注意 High 10 profile 场景相对小众，样本仅 1 个，优先级需评估。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "libavcodec/riscv/h264_mc_chroma.S",
+      "action": "modify",
+      "rationale": "16-bit H.264 chroma MC 的 RISC-V 向量实现缺失（init 仅 bit_depth==8 注册 8-bit RVV），16-bit 变体长期执行 C template 标量 4-tap 加权链；注意 High 10 profile 场景相对小众，样本仅 1 个，优先级需评估。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 libavcodec/riscv/h264_chroma_init_riscv.c, libavcodec/riscv/h264_mc_chroma.S 来解决 blueprint bp-ffmpeg-checkasm_h264chroma-003。"
+}

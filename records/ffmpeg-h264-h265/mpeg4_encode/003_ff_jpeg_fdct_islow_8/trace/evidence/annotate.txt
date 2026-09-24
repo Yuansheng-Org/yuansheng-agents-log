@@ -1,0 +1,430 @@
+ Percent |	Source code & Disassembly of ffmpeg for cpu-clock (27 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000007dbde4 <ff_jpeg_fdct_islow_8>:
+         : 6      ff_jpeg_fdct_islow_8():
+         : 261    * Perform the forward DCT on one block of samples.
+         : 262    */
+         :
+         : 264    GLOBAL(void)
+         : 265    FUNC(ff_jpeg_fdct_islow)(int16_t *data)
+         : 266    {
+    0.00 :   7dbde4: addi    sp,sp,-96
+    0.00 :   7dbde6: sd      s0,88(sp)
+         : 269    row_fdct_8():
+         : 218    dataptr[2] = (int16_t) DESCALE(z1 + MULTIPLY(tmp13, FIX_0_765366865),
+    0.00 :   7dbde8: lui     t2,0x2
+         : 217    z1 = MULTIPLY(tmp12 + tmp13, FIX_0_541196100);
+    0.00 :   7dbdea: lui     s0,0x1
+         : 220    dataptr[6] = (int16_t) DESCALE(z1 + MULTIPLY(tmp12, - FIX_1_847759065),
+    0.00 :   7dbdec: lui     t0,0xffffc
+         : 232    z5 = MULTIPLY(z3 + z4, FIX_1_175875602); /* sqrt(2) * c3 */
+    0.00 :   7dbdee: lui     t6,0x2
+         : 238    z1 = MULTIPLY(z1, - FIX_0_899976223); /* sqrt(2) * (c7-c3) */
+    0.00 :   7dbdf0: lui     t5,0xffffe
+         : 239    z2 = MULTIPLY(z2, - FIX_2_562915447); /* sqrt(2) * (-c1-c3) */
+    0.00 :   7dbdf2: lui     t4,0xffffb
+         : 240    z3 = MULTIPLY(z3, - FIX_1_961570560); /* sqrt(2) * (-c3-c5) */
+    0.00 :   7dbdf4: lui     t3,0xffffc
+         : 241    z4 = MULTIPLY(z4, - FIX_0_390180644); /* sqrt(2) * (c5-c3) */
+    0.00 :   7dbdf6: lui     t1,0xfffff
+         : 235    tmp5 = MULTIPLY(tmp5, FIX_2_053119869); /* sqrt(2) * ( c1+c3-c5+c7) */
+    0.00 :   7dbdf8: lui     a6,0x4
+         : 236    tmp6 = MULTIPLY(tmp6, FIX_3_072711026); /* sqrt(2) * ( c1+c3+c5-c7) */
+    0.00 :   7dbdfa: lui     a1,0x6
+         : 237    tmp7 = MULTIPLY(tmp7, FIX_1_501321110); /* sqrt(2) * ( c1+c3-c5-c7) */
+    0.00 :   7dbdfc: lui     a2,0x3
+         : 239    ff_jpeg_fdct_islow_8():
+         : 261    {
+    0.00 :   7dbdfe: sd      s1,80(sp)
+         : 263    row_fdct_8():
+         : 234    tmp4 = MULTIPLY(tmp4, FIX_0_298631336); /* sqrt(2) * (-c1+c3+c5-c7) */
+    0.00 :   7dbe00: addiw   a7,s0,-1650 # 98e <offset+0x88e>
+         : 236    ff_jpeg_fdct_islow_8():
+         : 261    {
+    0.00 :   7dbe04: sd      s2,72(sp)
+    0.00 :   7dbe06: sd      s3,64(sp)
+    0.00 :   7dbe08: sd      s4,56(sp)
+    0.00 :   7dbe0a: sd      s5,48(sp)
+    0.00 :   7dbe0c: sd      s6,40(sp)
+    0.00 :   7dbe0e: sd      s7,32(sp)
+    0.00 :   7dbe10: sd      s8,24(sp)
+    0.00 :   7dbe12: sd      s9,16(sp)
+    0.00 :   7dbe14: sd      s10,8(sp)
+    0.00 :   7dbe16: sd      s11,0(sp)
+    0.00 :   7dbe18: addi    s1,a0,128
+         : 273    row_fdct_8():
+         : 194    dataptr = data;
+    0.00 :   7dbe1c: mv      a5,a0
+         : 217    z1 = MULTIPLY(tmp12 + tmp13, FIX_0_541196100);
+    0.00 :   7dbe1e: addiw   s0,s0,337
+         : 218    dataptr[2] = (int16_t) DESCALE(z1 + MULTIPLY(tmp13, FIX_0_765366865),
+    0.00 :   7dbe22: addiw   t2,t2,-1922 # 187e <offset+0x177e>
+         : 220    dataptr[6] = (int16_t) DESCALE(z1 + MULTIPLY(tmp12, - FIX_1_847759065),
+    0.00 :   7dbe26: addiw   t0,t0,1247 # ffffffffffffc4df <__BSS_END__+0xfffffffffe2e0c7f>
+         : 232    z5 = MULTIPLY(z3 + z4, FIX_1_175875602); /* sqrt(2) * c3 */
+    0.00 :   7dbe2a: addiw   t6,t6,1441 # 25a1 <offset+0x24a1>
+         : 238    z1 = MULTIPLY(z1, - FIX_0_899976223); /* sqrt(2) * (c7-c3) */
+    0.00 :   7dbe2e: addiw   t5,t5,819 # ffffffffffffe333 <__BSS_END__+0xfffffffffe2e2ad3>
+         : 239    z2 = MULTIPLY(z2, - FIX_2_562915447); /* sqrt(2) * (-c1-c3) */
+    0.00 :   7dbe32: addiw   t4,t4,-515 # ffffffffffffadfd <__BSS_END__+0xfffffffffe2df59d>
+         : 240    z3 = MULTIPLY(z3, - FIX_1_961570560); /* sqrt(2) * (-c3-c5) */
+    0.00 :   7dbe36: addiw   t3,t3,315 # ffffffffffffc13b <__BSS_END__+0xfffffffffe2e08db>
+         : 241    z4 = MULTIPLY(z4, - FIX_0_390180644); /* sqrt(2) * (c5-c3) */
+    0.00 :   7dbe3a: addiw   t1,t1,900 # fffffffffffff384 <__BSS_END__+0xfffffffffe2e3b24>
+         : 235    tmp5 = MULTIPLY(tmp5, FIX_2_053119869); /* sqrt(2) * ( c1+c3-c5+c7) */
+    0.00 :   7dbe3e: addiw   a6,a6,435 # 41b3 <offset+0x40b3>
+         : 236    tmp6 = MULTIPLY(tmp6, FIX_3_072711026); /* sqrt(2) * ( c1+c3+c5-c7) */
+    0.00 :   7dbe42: addiw   a1,a1,596 # 6254 <offset+0x6154>
+         : 237    tmp7 = MULTIPLY(tmp7, FIX_1_501321110); /* sqrt(2) * ( c1+c3-c5-c7) */
+    0.00 :   7dbe46: addiw   a2,a2,11 # 300b <offset+0x2f0b>
+         : 196    tmp0 = dataptr[0] + dataptr[7];
+    3.70 :   7dbe48: lh      a4,14(a5)
+         : 200    tmp2 = dataptr[2] + dataptr[5];
+    0.00 :   7dbe4c: lh      s2,10(a5)
+         : 198    tmp1 = dataptr[1] + dataptr[6];
+    0.00 :   7dbe50: lh      a3,12(a5)
+         : 202    tmp3 = dataptr[3] + dataptr[4];
+    0.00 :   7dbe54: lh      s5,8(a5)
+         : 196    tmp0 = dataptr[0] + dataptr[7];
+    0.00 :   7dbe58: lh      s9,0(a5)
+         : 200    tmp2 = dataptr[2] + dataptr[5];
+    0.00 :   7dbe5c: lh      s4,4(a5)
+         : 198    tmp1 = dataptr[1] + dataptr[6];
+    0.00 :   7dbe60: lh      s10,2(a5)
+         : 202    tmp3 = dataptr[3] + dataptr[4];
+    0.00 :   7dbe64: lh      s3,6(a5)
+         : 197    tmp7 = dataptr[0] - dataptr[7];
+    0.00 :   7dbe68: subw    s7,s9,a4
+         : 196    tmp0 = dataptr[0] + dataptr[7];
+    0.00 :   7dbe6c: addw    s9,s9,a4
+         : 201    tmp5 = dataptr[2] - dataptr[5];
+    0.00 :   7dbe70: subw    a4,s4,s2
+         : 200    tmp2 = dataptr[2] + dataptr[5];
+    0.00 :   7dbe74: addw    s4,s4,s2
+         : 199    tmp6 = dataptr[1] - dataptr[6];
+    0.00 :   7dbe78: subw    s2,s10,a3
+         : 198    tmp1 = dataptr[1] + dataptr[6];
+    3.70 :   7dbe7c: addw    s10,s10,a3
+         : 203    tmp4 = dataptr[3] - dataptr[4];
+    0.00 :   7dbe80: subw    a3,s3,s5
+         : 231    z4 = tmp5 + tmp7;
+    0.00 :   7dbe84: addw    s6,s7,a4
+         : 202    tmp3 = dataptr[3] + dataptr[4];
+    0.00 :   7dbe88: addw    s3,s3,s5
+         : 230    z3 = tmp4 + tmp6;
+    0.00 :   7dbe8c: addw    s5,s2,a3
+         : 232    z5 = MULTIPLY(z3 + z4, FIX_1_175875602); /* sqrt(2) * c3 */
+    3.70 :   7dbe90: addw    s8,s5,s6
+    0.00 :   7dbe94: mulw    s8,t6,s8
+         : 228    z1 = tmp4 + tmp7;
+    0.00 :   7dbe98: addw    s11,s7,a3
+         : 251    dataptr += DCTSIZE;         /* advance pointer to next row */
+   14.81 :   7dbe9c: addi    a5,a5,16
+         : 241    z4 = MULTIPLY(z4, - FIX_0_390180644); /* sqrt(2) * (c5-c3) */
+    0.00 :   7dbe9e: mulw    s6,t1,s6
+         : 240    z3 = MULTIPLY(z3, - FIX_1_961570560); /* sqrt(2) * (-c3-c5) */
+    0.00 :   7dbea2: mulw    s5,t3,s5
+         : 238    z1 = MULTIPLY(z1, - FIX_0_899976223); /* sqrt(2) * (c7-c3) */
+    0.00 :   7dbea6: mulw    s11,t5,s11
+         : 243    z3 += z5;
+    0.00 :   7dbeaa: addw    s5,s8,s5
+         : 244    z4 += z5;
+    0.00 :   7dbeae: addw    s8,s8,s6
+         : 229    z2 = tmp5 + tmp6;
+    0.00 :   7dbeb2: addw    s6,s2,a4
+         : 234    tmp4 = MULTIPLY(tmp4, FIX_0_298631336); /* sqrt(2) * (-c1+c3+c5-c7) */
+    0.00 :   7dbeb6: mulw    a3,a7,a3
+         : 239    z2 = MULTIPLY(z2, - FIX_2_562915447); /* sqrt(2) * (-c1-c3) */
+    0.00 :   7dbeba: mulw    s6,t4,s6
+         : 246    dataptr[7] = (int16_t) DESCALE(tmp4 + z1 + z3, CONST_BITS-PASS1_BITS);
+    0.00 :   7dbebe: addw    a3,a3,s11
+    0.00 :   7dbec2: addw    a3,a3,s5
+    0.00 :   7dbec6: addiw   a3,a3,256
+    0.00 :   7dbeca: sraiw   a3,a3,0x9
+    3.70 :   7dbece: sh      a3,-2(a5)
+         : 210    tmp13 = tmp0 - tmp3;
+    0.00 :   7dbed2: subw    a3,s9,s3
+         : 209    tmp10 = tmp0 + tmp3;
+    0.00 :   7dbed6: addw    s9,s9,s3
+         : 212    tmp12 = tmp1 - tmp2;
+    0.00 :   7dbeda: subw    s3,s10,s4
+         : 211    tmp11 = tmp1 + tmp2;
+    0.00 :   7dbede: addw    s10,s10,s4
+         : 235    tmp5 = MULTIPLY(tmp5, FIX_2_053119869); /* sqrt(2) * ( c1+c3-c5+c7) */
+    7.41 :   7dbee2: mulw    a4,a6,a4
+         : 217    z1 = MULTIPLY(tmp12 + tmp13, FIX_0_541196100);
+    0.00 :   7dbee6: addw    s4,a3,s3
+         : 247    dataptr[5] = (int16_t) DESCALE(tmp5 + z2 + z4, CONST_BITS-PASS1_BITS);
+    0.00 :   7dbeea: addw    a4,a4,s6
+         : 237    tmp7 = MULTIPLY(tmp7, FIX_1_501321110); /* sqrt(2) * ( c1+c3-c5-c7) */
+    0.00 :   7dbeee: mulw    s7,a2,s7
+         : 247    dataptr[5] = (int16_t) DESCALE(tmp5 + z2 + z4, CONST_BITS-PASS1_BITS);
+    0.00 :   7dbef2: addw    a4,a4,s8
+    0.00 :   7dbef6: addiw   a4,a4,256
+    0.00 :   7dbefa: sraiw   a4,a4,0x9
+    3.70 :   7dbefe: sh      a4,-6(a5)
+         : 236    tmp6 = MULTIPLY(tmp6, FIX_3_072711026); /* sqrt(2) * ( c1+c3+c5-c7) */
+    0.00 :   7dbf02: mulw    s2,a1,s2
+         : 249    dataptr[1] = (int16_t) DESCALE(tmp7 + z1 + z4, CONST_BITS-PASS1_BITS);
+    0.00 :   7dbf06: addw    s7,s7,s11
+    0.00 :   7dbf0a: addw    s7,s7,s8
+    0.00 :   7dbf0e: addiw   s7,s7,256
+    0.00 :   7dbf12: sraiw   s7,s7,0x9
+    3.70 :   7dbf16: sh      s7,-14(a5)
+         : 214    dataptr[0] = (int16_t) ((tmp10 + tmp11) * (1 << PASS1_BITS));
+    0.00 :   7dbf1a: addw    s7,s9,s10
+         : 215    dataptr[4] = (int16_t) ((tmp10 - tmp11) * (1 << PASS1_BITS));
+    0.00 :   7dbf1e: subw    s9,s9,s10
+         : 214    dataptr[0] = (int16_t) ((tmp10 + tmp11) * (1 << PASS1_BITS));
+    0.00 :   7dbf22: slliw   s7,s7,0x4
+         : 215    dataptr[4] = (int16_t) ((tmp10 - tmp11) * (1 << PASS1_BITS));
+    0.00 :   7dbf26: slliw   s9,s9,0x4
+         : 217    z1 = MULTIPLY(tmp12 + tmp13, FIX_0_541196100);
+    0.00 :   7dbf2a: mulw    s4,s0,s4
+         : 248    dataptr[3] = (int16_t) DESCALE(tmp6 + z2 + z3, CONST_BITS-PASS1_BITS);
+    0.00 :   7dbf2e: addw    s2,s2,s6
+    3.70 :   7dbf32: addw    s2,s2,s5
+    0.00 :   7dbf36: addiw   s2,s2,256
+    0.00 :   7dbf3a: sraiw   s2,s2,0x9
+         : 214    dataptr[0] = (int16_t) ((tmp10 + tmp11) * (1 << PASS1_BITS));
+    0.00 :   7dbf3e: sh      s7,-16(a5)
+         : 215    dataptr[4] = (int16_t) ((tmp10 - tmp11) * (1 << PASS1_BITS));
+    0.00 :   7dbf42: sh      s9,-8(a5)
+         : 248    dataptr[3] = (int16_t) DESCALE(tmp6 + z2 + z3, CONST_BITS-PASS1_BITS);
+    0.00 :   7dbf46: sh      s2,-10(a5)
+         : 218    dataptr[2] = (int16_t) DESCALE(z1 + MULTIPLY(tmp13, FIX_0_765366865),
+    0.00 :   7dbf4a: mulw    a3,t2,a3
+         : 220    dataptr[6] = (int16_t) DESCALE(z1 + MULTIPLY(tmp12, - FIX_1_847759065),
+    0.00 :   7dbf4e: mulw    a4,t0,s3
+         : 218    dataptr[2] = (int16_t) DESCALE(z1 + MULTIPLY(tmp13, FIX_0_765366865),
+    3.70 :   7dbf52: addw    a3,a3,s4
+    0.00 :   7dbf56: addiw   a3,a3,256
+    0.00 :   7dbf5a: sraiw   a3,a3,0x9
+    0.00 :   7dbf5e: sh      a3,-12(a5)
+         : 220    dataptr[6] = (int16_t) DESCALE(z1 + MULTIPLY(tmp12, - FIX_1_847759065),
+    0.00 :   7dbf62: addw    a4,a4,s4
+    0.00 :   7dbf66: addiw   a4,a4,256
+    0.00 :   7dbf6a: sraiw   a4,a4,0x9
+    0.00 :   7dbf6e: sh      a4,-4(a5)
+         : 195    for (ctr = DCTSIZE-1; ctr >= 0; ctr--) {
+    0.00 :   7dbf72: bne     a5,s1,7dbe48 <ff_jpeg_fdct_islow_8+0x64>
+         : 197    ff_jpeg_fdct_islow_8():
+         :
+         : 300    dataptr[DCTSIZE*0] = DESCALE(tmp10 + tmp11, OUT_SHIFT);
+         : 301    dataptr[DCTSIZE*4] = DESCALE(tmp10 - tmp11, OUT_SHIFT);
+         :
+         : 303    z1 = MULTIPLY(tmp12 + tmp13, FIX_0_541196100);
+         : 304    dataptr[DCTSIZE*2] = DESCALE(z1 + MULTIPLY(tmp13, FIX_0_765366865),
+    0.00 :   7dbf76: lui     s0,0x2
+         : 298    z1 = MULTIPLY(tmp12 + tmp13, FIX_0_541196100);
+    0.00 :   7dbf78: lui     s1,0x1
+         : 301    CONST_BITS + OUT_SHIFT);
+         : 302    dataptr[DCTSIZE*6] = DESCALE(z1 + MULTIPLY(tmp12, - FIX_1_847759065),
+    0.00 :   7dbf7a: lui     t2,0xffffc
+         :
+         : 320    tmp4 = MULTIPLY(tmp4, FIX_0_298631336); /* sqrt(2) * (-c1+c3+c5-c7) */
+         : 321    tmp5 = MULTIPLY(tmp5, FIX_2_053119869); /* sqrt(2) * ( c1+c3-c5+c7) */
+         : 322    tmp6 = MULTIPLY(tmp6, FIX_3_072711026); /* sqrt(2) * ( c1+c3+c5-c7) */
+         : 323    tmp7 = MULTIPLY(tmp7, FIX_1_501321110); /* sqrt(2) * ( c1+c3-c5-c7) */
+         : 324    z1 = MULTIPLY(z1, - FIX_0_899976223); /* sqrt(2) * (c7-c3) */
+    0.00 :   7dbf7c: lui     t6,0xffffe
+         : 320    z2 = MULTIPLY(z2, - FIX_2_562915447); /* sqrt(2) * (-c1-c3) */
+    0.00 :   7dbf7e: lui     t5,0xffffb
+         : 321    z3 = MULTIPLY(z3, - FIX_1_961570560); /* sqrt(2) * (-c3-c5) */
+    0.00 :   7dbf80: lui     t4,0xffffc
+         : 322    z4 = MULTIPLY(z4, - FIX_0_390180644); /* sqrt(2) * (c5-c3) */
+    3.70 :   7dbf82: lui     t3,0xfffff
+         : 315    tmp4 = MULTIPLY(tmp4, FIX_0_298631336); /* sqrt(2) * (-c1+c3+c5-c7) */
+    0.00 :   7dbf84: lui     t1,0x1
+         : 316    tmp5 = MULTIPLY(tmp5, FIX_2_053119869); /* sqrt(2) * ( c1+c3-c5+c7) */
+    0.00 :   7dbf86: lui     a7,0x4
+         : 317    tmp6 = MULTIPLY(tmp6, FIX_3_072711026); /* sqrt(2) * ( c1+c3+c5-c7) */
+    0.00 :   7dbf88: lui     a6,0x6
+         : 318    tmp7 = MULTIPLY(tmp7, FIX_1_501321110); /* sqrt(2) * ( c1+c3-c5-c7) */
+    0.00 :   7dbf8a: lui     a1,0x3
+         : 313    z5 = MULTIPLY(z3 + z4, FIX_1_175875602); /* sqrt(2) * c3 */
+    0.00 :   7dbf8c: addiw   t0,s0,1441 # 25a1 <offset+0x24a1>
+         : 298    z1 = MULTIPLY(tmp12 + tmp13, FIX_0_541196100);
+    0.00 :   7dbf90: addiw   s1,s1,337 # 1151 <offset+0x1051>
+         : 299    dataptr[DCTSIZE*2] = DESCALE(z1 + MULTIPLY(tmp13, FIX_0_765366865),
+    3.70 :   7dbf94: addiw   s0,s0,-1922
+         : 301    dataptr[DCTSIZE*6] = DESCALE(z1 + MULTIPLY(tmp12, - FIX_1_847759065),
+    0.00 :   7dbf98: addiw   t2,t2,1247 # ffffffffffffc4df <__BSS_END__+0xfffffffffe2e0c7f>
+         : 319    z1 = MULTIPLY(z1, - FIX_0_899976223); /* sqrt(2) * (c7-c3) */
+    0.00 :   7dbf9c: addiw   t6,t6,819 # ffffffffffffe333 <__BSS_END__+0xfffffffffe2e2ad3>
+         : 320    z2 = MULTIPLY(z2, - FIX_2_562915447); /* sqrt(2) * (-c1-c3) */
+    0.00 :   7dbfa0: addiw   t5,t5,-515 # ffffffffffffadfd <__BSS_END__+0xfffffffffe2df59d>
+         : 321    z3 = MULTIPLY(z3, - FIX_1_961570560); /* sqrt(2) * (-c3-c5) */
+    0.00 :   7dbfa4: addiw   t4,t4,315 # ffffffffffffc13b <__BSS_END__+0xfffffffffe2e08db>
+         : 322    z4 = MULTIPLY(z4, - FIX_0_390180644); /* sqrt(2) * (c5-c3) */
+    0.00 :   7dbfa8: addiw   t3,t3,900 # fffffffffffff384 <__BSS_END__+0xfffffffffe2e3b24>
+         : 315    tmp4 = MULTIPLY(tmp4, FIX_0_298631336); /* sqrt(2) * (-c1+c3+c5-c7) */
+    0.00 :   7dbfac: addiw   t1,t1,-1650 # 98e <offset+0x88e>
+         : 316    tmp5 = MULTIPLY(tmp5, FIX_2_053119869); /* sqrt(2) * ( c1+c3-c5+c7) */
+    0.00 :   7dbfb0: addiw   a7,a7,435 # 41b3 <offset+0x40b3>
+         : 317    tmp6 = MULTIPLY(tmp6, FIX_3_072711026); /* sqrt(2) * ( c1+c3+c5-c7) */
+    0.00 :   7dbfb4: addiw   a6,a6,596 # 6254 <offset+0x6154>
+         : 318    tmp7 = MULTIPLY(tmp7, FIX_1_501321110); /* sqrt(2) * ( c1+c3-c5-c7) */
+    0.00 :   7dbfb8: addiw   a1,a1,11 # 300b <offset+0x2f0b>
+    0.00 :   7dbfba: addi    s2,a0,16
+         : 299    dataptr[DCTSIZE*2] = DESCALE(z1 + MULTIPLY(tmp13, FIX_0_765366865),
+    0.00 :   7dbfbe: lui     a2,0x10
+         : 277    tmp0 = dataptr[DCTSIZE*0] + dataptr[DCTSIZE*7];
+    0.00 :   7dbfc0: lh      a3,112(a0)
+         : 281    tmp2 = dataptr[DCTSIZE*2] + dataptr[DCTSIZE*5];
+    0.00 :   7dbfc4: lh      a4,80(a0)
+         : 279    tmp1 = dataptr[DCTSIZE*1] + dataptr[DCTSIZE*6];
+    0.00 :   7dbfc8: lh      s4,96(a0)
+         : 283    tmp3 = dataptr[DCTSIZE*3] + dataptr[DCTSIZE*4];
+    0.00 :   7dbfcc: lh      s6,64(a0)
+         : 277    tmp0 = dataptr[DCTSIZE*0] + dataptr[DCTSIZE*7];
+    0.00 :   7dbfd0: lh      a5,0(a0)
+         : 281    tmp2 = dataptr[DCTSIZE*2] + dataptr[DCTSIZE*5];
+    0.00 :   7dbfd4: lh      s5,32(a0)
+         : 279    tmp1 = dataptr[DCTSIZE*1] + dataptr[DCTSIZE*6];
+    0.00 :   7dbfd8: lh      s10,16(a0)
+         : 283    tmp3 = dataptr[DCTSIZE*3] + dataptr[DCTSIZE*4];
+    0.00 :   7dbfdc: lh      s3,48(a0)
+         : 278    tmp7 = dataptr[DCTSIZE*0] - dataptr[DCTSIZE*7];
+    3.70 :   7dbfe0: subw    s8,a5,a3
+         : 277    tmp0 = dataptr[DCTSIZE*0] + dataptr[DCTSIZE*7];
+    0.00 :   7dbfe4: addw    a5,a5,a3
+         : 282    tmp5 = dataptr[DCTSIZE*2] - dataptr[DCTSIZE*5];
+    0.00 :   7dbfe6: subw    a3,s5,a4
+         : 281    tmp2 = dataptr[DCTSIZE*2] + dataptr[DCTSIZE*5];
+    0.00 :   7dbfea: addw    s5,s5,a4
+         : 280    tmp6 = dataptr[DCTSIZE*1] - dataptr[DCTSIZE*6];
+    0.00 :   7dbfee: subw    a4,s10,s4
+         : 279    tmp1 = dataptr[DCTSIZE*1] + dataptr[DCTSIZE*6];
+    0.00 :   7dbff2: addw    s10,s10,s4
+         : 284    tmp4 = dataptr[DCTSIZE*3] - dataptr[DCTSIZE*4];
+    0.00 :   7dbff6: subw    s4,s3,s6
+         : 312    z4 = tmp5 + tmp7;
+    0.00 :   7dbffa: addw    s7,s8,a3
+         : 283    tmp3 = dataptr[DCTSIZE*3] + dataptr[DCTSIZE*4];
+    0.00 :   7dbffe: addw    s3,s3,s6
+         : 311    z3 = tmp4 + tmp6;
+    0.00 :   7dc002: addw    s6,a4,s4
+         : 313    z5 = MULTIPLY(z3 + z4, FIX_1_175875602); /* sqrt(2) * c3 */
+    0.00 :   7dc006: addw    s9,s6,s7
+         : 309    z1 = tmp4 + tmp7;
+    7.41 :   7dc00a: addw    s11,s8,s4
+         : 319    z1 = MULTIPLY(z1, - FIX_0_899976223); /* sqrt(2) * (c7-c3) */
+    0.00 :   7dc00e: mulw    s11,t6,s11
+         : 332    dataptr[DCTSIZE*7] = DESCALE(tmp4 + z1 + z3, CONST_BITS + OUT_SHIFT);
+         : 333    dataptr[DCTSIZE*5] = DESCALE(tmp5 + z2 + z4, CONST_BITS + OUT_SHIFT);
+         : 334    dataptr[DCTSIZE*3] = DESCALE(tmp6 + z2 + z3, CONST_BITS + OUT_SHIFT);
+         : 335    dataptr[DCTSIZE*1] = DESCALE(tmp7 + z1 + z4, CONST_BITS + OUT_SHIFT);
+         :
+         : 337    dataptr++;                  /* advance pointer to next column */
+    0.00 :   7dc012: addi    a0,a0,2
+         : 313    z5 = MULTIPLY(z3 + z4, FIX_1_175875602); /* sqrt(2) * c3 */
+    0.00 :   7dc014: mulw    s9,t0,s9
+         : 321    z3 = MULTIPLY(z3, - FIX_1_961570560); /* sqrt(2) * (-c3-c5) */
+    0.00 :   7dc018: mulw    s6,t4,s6
+         : 315    tmp4 = MULTIPLY(tmp4, FIX_0_298631336); /* sqrt(2) * (-c1+c3+c5-c7) */
+    0.00 :   7dc01c: mulw    s4,t1,s4
+         : 324    z3 += z5;
+    0.00 :   7dc020: addw    s6,s9,s6
+         : 322    z4 = MULTIPLY(z4, - FIX_0_390180644); /* sqrt(2) * (c5-c3) */
+    3.70 :   7dc024: mulw    s7,t3,s7
+         : 327    dataptr[DCTSIZE*7] = DESCALE(tmp4 + z1 + z3, CONST_BITS + OUT_SHIFT);
+    0.00 :   7dc028: addw    s4,s4,s11
+    0.00 :   7dc02c: addw    s4,s4,s6
+    0.00 :   7dc030: addw    s4,a2,s4
+    7.41 :   7dc034: sraiw   s4,s4,0x11
+    3.70 :   7dc038: sh      s4,110(a0)
+         : 291    tmp13 = tmp0 - tmp3;
+    0.00 :   7dc03c: subw    s4,a5,s3
+         : 290    tmp10 = tmp0 + tmp3;
+    0.00 :   7dc040: addw    a5,a5,s3
+         : 293    tmp12 = tmp1 - tmp2;
+    0.00 :   7dc044: subw    s3,s10,s5
+         : 292    tmp11 = tmp1 + tmp2;
+    0.00 :   7dc048: addw    s10,s10,s5
+         : 318    tmp7 = MULTIPLY(tmp7, FIX_1_501321110); /* sqrt(2) * ( c1+c3-c5-c7) */
+    0.00 :   7dc04c: mulw    s8,a1,s8
+         : 325    z4 += z5;
+    0.00 :   7dc050: addw    s9,s9,s7
+         : 310    z2 = tmp5 + tmp6;
+    0.00 :   7dc054: addw    s7,a4,a3
+         : 298    z1 = MULTIPLY(tmp12 + tmp13, FIX_0_541196100);
+    0.00 :   7dc058: addw    s5,s4,s3
+         : 330    dataptr[DCTSIZE*1] = DESCALE(tmp7 + z1 + z4, CONST_BITS + OUT_SHIFT);
+    0.00 :   7dc05c: addw    s8,s8,s11
+    0.00 :   7dc060: addw    s8,s8,s9
+    0.00 :   7dc064: addw    s8,a2,s8
+    0.00 :   7dc068: sraiw   s8,s8,0x11
+         : 320    z2 = MULTIPLY(z2, - FIX_2_562915447); /* sqrt(2) * (-c1-c3) */
+    0.00 :   7dc06c: mulw    s7,t5,s7
+         : 295    dataptr[DCTSIZE*0] = DESCALE(tmp10 + tmp11, OUT_SHIFT);
+    0.00 :   7dc070: addw    s11,a5,s10
+         : 330    dataptr[DCTSIZE*1] = DESCALE(tmp7 + z1 + z4, CONST_BITS + OUT_SHIFT);
+    0.00 :   7dc074: sh      s8,14(a0)
+         : 296    dataptr[DCTSIZE*4] = DESCALE(tmp10 - tmp11, OUT_SHIFT);
+    0.00 :   7dc078: subw    s8,a5,s10
+         : 295    dataptr[DCTSIZE*0] = DESCALE(tmp10 + tmp11, OUT_SHIFT);
+    0.00 :   7dc07c: addiw   s10,s11,8
+         : 316    tmp5 = MULTIPLY(tmp5, FIX_2_053119869); /* sqrt(2) * ( c1+c3-c5+c7) */
+    3.70 :   7dc080: mulw    a5,a7,a3
+         : 296    dataptr[DCTSIZE*4] = DESCALE(tmp10 - tmp11, OUT_SHIFT);
+    0.00 :   7dc084: addiw   a3,s8,8
+    0.00 :   7dc088: sraiw   a3,a3,0x4
+    0.00 :   7dc08c: sh      a3,62(a0)
+         : 295    dataptr[DCTSIZE*0] = DESCALE(tmp10 + tmp11, OUT_SHIFT);
+    0.00 :   7dc090: sraiw   s8,s10,0x4
+    0.00 :   7dc094: sh      s8,-2(a0)
+         : 328    dataptr[DCTSIZE*5] = DESCALE(tmp5 + z2 + z4, CONST_BITS + OUT_SHIFT);
+    0.00 :   7dc098: addw    a5,a5,s7
+    0.00 :   7dc09c: addw    a5,a5,s9
+    0.00 :   7dc0a0: addw    a5,a5,a2
+         : 317    tmp6 = MULTIPLY(tmp6, FIX_3_072711026); /* sqrt(2) * ( c1+c3+c5-c7) */
+    0.00 :   7dc0a2: mulw    a3,a6,a4
+         : 328    dataptr[DCTSIZE*5] = DESCALE(tmp5 + z2 + z4, CONST_BITS + OUT_SHIFT);
+    0.00 :   7dc0a6: sraiw   a5,a5,0x11
+    0.00 :   7dc0aa: sh      a5,78(a0)
+         : 298    z1 = MULTIPLY(tmp12 + tmp13, FIX_0_541196100);
+    0.00 :   7dc0ae: mulw    s5,s1,s5
+         : 329    dataptr[DCTSIZE*3] = DESCALE(tmp6 + z2 + z3, CONST_BITS + OUT_SHIFT);
+    0.00 :   7dc0b2: addw    a3,a3,s7
+    3.70 :   7dc0b6: addw    a3,a3,s6
+    0.00 :   7dc0ba: addw    a3,a3,a2
+    0.00 :   7dc0bc: sraiw   a3,a3,0x11
+    0.00 :   7dc0c0: sh      a3,46(a0)
+         : 299    dataptr[DCTSIZE*2] = DESCALE(z1 + MULTIPLY(tmp13, FIX_0_765366865),
+    0.00 :   7dc0c4: mulw    a4,s0,s4
+         : 301    dataptr[DCTSIZE*6] = DESCALE(z1 + MULTIPLY(tmp12, - FIX_1_847759065),
+    0.00 :   7dc0c8: mulw    a5,t2,s3
+         : 299    dataptr[DCTSIZE*2] = DESCALE(z1 + MULTIPLY(tmp13, FIX_0_765366865),
+    0.00 :   7dc0cc: addw    a4,a4,s5
+    0.00 :   7dc0d0: addw    a4,a4,a2
+    0.00 :   7dc0d2: sraiw   a4,a4,0x11
+    3.70 :   7dc0d6: sh      a4,30(a0)
+         : 301    dataptr[DCTSIZE*6] = DESCALE(z1 + MULTIPLY(tmp12, - FIX_1_847759065),
+    3.70 :   7dc0da: addw    a5,a5,s5
+    0.00 :   7dc0de: addw    a5,a5,a2
+    0.00 :   7dc0e0: sraiw   a5,a5,0x11
+    0.00 :   7dc0e4: sh      a5,94(a0)
+         : 276    for (ctr = DCTSIZE-1; ctr >= 0; ctr--) {
+    0.00 :   7dc0e8: bne     a0,s2,7dbfc0 <ff_jpeg_fdct_islow_8+0x1dc>
+         : 334    }
+         : 335    }
+    0.00 :   7dc0ec: ld      s0,88(sp)
+    0.00 :   7dc0ee: ld      s1,80(sp)
+    0.00 :   7dc0f0: ld      s2,72(sp)
+    0.00 :   7dc0f2: ld      s3,64(sp)
+    0.00 :   7dc0f4: ld      s4,56(sp)
+    0.00 :   7dc0f6: ld      s5,48(sp)
+    0.00 :   7dc0f8: ld      s6,40(sp)
+    0.00 :   7dc0fa: ld      s7,32(sp)
+    0.00 :   7dc0fc: ld      s8,24(sp)
+    0.00 :   7dc0fe: ld      s9,16(sp)
+    0.00 :   7dc100: ld      s10,8(sp)
+    0.00 :   7dc102: ld      s11,0(sp)
+    0.00 :   7dc104: addi    sp,sp,96
+    0.00 :   7dc106: ret

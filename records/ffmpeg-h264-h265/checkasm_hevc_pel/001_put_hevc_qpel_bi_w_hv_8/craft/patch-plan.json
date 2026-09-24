@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-ffmpeg-checkasm-hevc-pel-001",
+  "blueprintId": "bp-ffmpeg-checkasm_hevc_pel-001",
+  "createdAt": "2026-09-12T10:22:46.880Z",
+  "objective": "HEVC 8-bit qpel 加权插值（bi w_hv）的 RISC-V 向量实现不存在：hevcdsp_init_riscv.c 仅注册 pel_pixels（[0][0] 纯拷贝，bit_depth==8），8-tap 加权插值变体（uni/bi h/v/hv，8/9/10/12-bit）执行 C template 标量乘加链。",
+  "changes": [
+    {
+      "filePath": "libavcodec/riscv/hevcdsp_init.c",
+      "action": "modify",
+      "rationale": "HEVC 8-bit qpel 加权插值（bi w_hv）的 RISC-V 向量实现不存在：hevcdsp_init_riscv.c 仅注册 pel_pixels（[0][0] 纯拷贝，bit_depth==8），8-tap 加权插值变体（uni/bi h/v/hv，8/9/10/12-bit）执行 C template 标量乘加链。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "libavcodec/riscv/hevcdsp_qpel.S",
+      "action": "modify",
+      "rationale": "HEVC 8-bit qpel 加权插值（bi w_hv）的 RISC-V 向量实现不存在：hevcdsp_init_riscv.c 仅注册 pel_pixels（[0][0] 纯拷贝，bit_depth==8），8-tap 加权插值变体（uni/bi h/v/hv，8/9/10/12-bit）执行 C template 标量乘加链。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 libavcodec/riscv/hevcdsp_init.c, libavcodec/riscv/hevcdsp_qpel.S 来解决 blueprint bp-ffmpeg-checkasm_hevc_pel-001。"
+}

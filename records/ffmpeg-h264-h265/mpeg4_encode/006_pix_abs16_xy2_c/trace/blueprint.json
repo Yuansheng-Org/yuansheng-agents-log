@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-ffmpeg-mpeg4_encode-006",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T11:40:06.414Z",
+    "software": "ffmpeg",
+    "testcaseIds": [
+      "mpeg4_encode"
+    ],
+    "targetHardware": "SpacemiT K3 / spacemit-x100 (RVV 1.0, VLEN=256, vlenb=32)",
+    "repositoryUrl": "https://github.com/FFmpeg/FFmpeg.git",
+    "testBranch": "master",
+    "commitHash": "1d7b14f61d66fdf18f15204c613df9d65396c319",
+    "diagnosisId": "diag-20260908T114006414Z-e9b448ea"
+  },
+  "problem": {
+    "summary": "pix_abs16_xy2_c（像素绝对差 xy2 插值）被采样为 MPEG-4 编码热点：C 标量链全量执行。证据：80ad1e addw 插值累加 / 80ad70 sraiw。",
+    "evidence": [
+      "perf stat: IPC=1.474, branch_miss_rate=4.278%, 88fps/300 帧",
+      "采样点: 80ad1e addw 插值累加 / 80ad70 sraiw",
+      "libavcodec/riscv/: mpegvideoencdsp 仅覆盖部分 SAD 变体；xy2 无 RVV",
+      "构建 ISA: zvl128b1p0，硬件 VLEN=256"
+    ]
+  },
+  "rootCause": {
+    "summary": "像素绝对差 xy2（水平+垂直插值 SAD）为 C 标量实现（riscv 仅覆盖部分 SAD 变体）。与 MPEG-4 编码 RVV 覆盖缺口同根因。",
+    "candidateFiles": [
+      "libavcodec/riscv/mpegvideoencdsp_rvv.S"
+    ],
+    "performanceFactors": [
+      "Policy-Backed Missing RISC-V Assembly Kernel"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "pix_abs16_xy2 语义与编码输出逐位一致",
+      "MPVContext 状态/函数指针表布局不变",
+      "RVV_I32 gate 一致性"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "mpeg4_encode"
+    ],
+    "regressionCommand": "agent1 patch_regression --case mpeg4_encode"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "真实编码 workload 热点；SAD 变体可向量化；需统一规划并实测后自动转发",
+    "reasoning": "libavcodec/riscv/ 无 pix_abs16_xy2 对应实现，C 标量插值链被采用。policy 四证齐全，准入 gate（RVV_I32）成立。运动估计 SAD 每搜索点执行。定性 probable + conditional。",
+    "rootCauseType": "arch_gap",
+    "alternativeExplanations": [
+      "插值 + vwsubu 绝对差可向量化"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision；样本分散",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 SAD 变体可向量化方案；与 SAD 族统一规划",
+    "affectedTarget": "RV + mpeg4_encode",
+    "recommendedFirstAction": "在 mpegvideoencdsp_rvv.S 增加 xy2 插值 SAD 变体，init 补齐 xy2 槽",
+    "recommendedVerification": "MPEG-4 编码输出一致；K3 对比 C vs RVV 时间",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 1.474,
+        "anomalyNote": "偏低"
+      },
+      {
+        "metric": "Branch Miss Rate(%)",
+        "rv": 4.278,
+        "anomalyNote": "高"
+      },
+      {
+        "metric": "MPEG-4 fps",
+        "rv": 88,
+        "anomalyNote": "编码吞吐基准"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "pix_abs16_xy2_c",
+        "fileModule": "libavcodec/mpegvideo_enc.c",
+        "rvvPattern": "Policy-Backed Missing RISC-V Assembly Kernel",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.02,
+        "note": "SAD xy2 C fallback"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "libavcodec/riscv/mpegvideoencdsp_rvv.S",
+      "relatedKnowledge": "https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/79adb692a2720647e9dbe57de33fd50b41db295c",
+      "evidenceExplanation": "FFmpeg PR 23712 shape-first 实例提供同构修复先例；mpegvideoencdsp_rvv.S 已有 SAD kernel 可扩展。"
+    }
+  }
+}

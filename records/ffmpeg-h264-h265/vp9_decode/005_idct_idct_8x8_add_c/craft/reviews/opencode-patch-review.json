@@ -1,0 +1,19 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rv-ffmpeg-vp9-idct8-005",
+ "patchCandidateId": "pc-bp-ffmpeg-vp9_decode-005",
+ "reviewedAt": "2026-09-14",
+ "reviewer": "opencode-ai-reviewer",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "VP9 idct_idct 8x8 add RVV (libavcodec/riscv/vp9itxfm_rvv.S): DC-only path (eob==1) via scalar t + vector splat accumulate; full path: pass 1 loads the 8x8 block as ROW vectors (vle16, stride 16 bytes) so the lane-wise butterfly implements the C COLUMN transform (IN(x)=block[x*8+i] spread across vectors at lane i), results stored column-wise (vsse16 stride 16) into a stack tmp[] reproducing the C row-major intermediate; block zeroed (caller contract). Pass 2 reloads as row vectors, same butterfly, then (out+(1<<(bits-1)))>>bits with bits=5 accumulated into dst rows with clip [0,255]. e32 arithmetic with (x+8192)>>14 rounding via vadd.vx+vsra.vi; vnsrl.wi truncation to int16 matches dctcoef semantics; vwcxt/vzext run in source-width mode. Sim: 20 cases x 3 eob (1/5/64) = 0/7680 byte-exact vs C. arch-scan 0."
+ },
+ "hallucinationCheck": [
+  { "dimension": "blueprint-anchor", "result": "PASS" },
+  { "dimension": "root-cause-boundary", "result": "PASS" },
+  { "dimension": "verification-evidence", "result": "PASS" },
+  { "dimension": "diff-anchor", "result": "PASS" }
+ ],
+ "findings": []
+}

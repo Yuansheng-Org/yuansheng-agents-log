@@ -1,0 +1,288 @@
+ Percent |	Source code & Disassembly of ffmpeg for cpu-clock (176 samples, percent: local period)
+------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000003dc946 <ff_bwdif_filter_line_c>:
+         : 6      ff_bwdif_filter_line_c():
+         :
+         : 133    void ff_bwdif_filter_line_c(void *dst1, const void *prev1, const void *cur1, const void *next1,
+         : 134    int w, int prefs, int mrefs, int prefs2, int mrefs2,
+         : 135    int prefs3, int mrefs3, int prefs4, int mrefs4,
+         : 136    int parity, int clip_max)
+         : 137    {
+    0.00 :   3dc946: addi    sp,sp,-176
+    0.00 :   3dc948: sd      s8,104(sp)
+    0.00 :   3dc94a: mv      s8,a5
+    0.00 :   3dc94c: lw      a5,184(sp)
+    0.00 :   3dc94e: lw      t1,216(sp)
+    0.00 :   3dc950: sd      s1,160(sp)
+    0.00 :   3dc952: sd      a5,16(sp)
+    0.00 :   3dc954: lw      a5,192(sp)
+    0.00 :   3dc956: sd      s2,152(sp)
+    0.00 :   3dc958: sd      s6,120(sp)
+    0.00 :   3dc95a: sd      a5,24(sp)
+    0.00 :   3dc95c: lw      a5,200(sp)
+    0.00 :   3dc95e: sd      s9,96(sp)
+    0.00 :   3dc960: sd      s10,88(sp)
+    0.00 :   3dc962: sd      a5,48(sp)
+    0.00 :   3dc964: lw      a5,208(sp)
+    0.00 :   3dc966: sd      s11,80(sp)
+    0.00 :   3dc968: sd      s7,112(sp)
+    0.00 :   3dc96a: sd      a5,56(sp)
+    0.00 :   3dc96c: lw      a5,224(sp)
+    0.00 :   3dc96e: sd      a7,32(sp)
+    0.00 :   3dc970: lw      s10,176(sp)
+    0.00 :   3dc972: sd      a5,40(sp)
+    0.00 :   3dc974: mv      s11,a0
+    0.00 :   3dc976: mv      s1,a1
+    0.00 :   3dc978: mv      s2,a3
+    0.00 :   3dc97a: mv      s6,a4
+    0.00 :   3dc97c: mv      s9,a6
+         : 137    uint8_t *dst   = dst1;
+         : 138    const uint8_t *prev  = prev1;
+         : 139    const uint8_t *cur   = cur1;
+         : 140    const uint8_t *next  = next1;
+         : 141    const uint8_t *prev2 = parity ? prev : cur ;
+    0.00 :   3dc97e: beqz    t1,3dcc36 <ff_bwdif_filter_line_c+0x2f0>
+         : 138    const uint8_t *next2 = parity ? cur  : next;
+    0.00 :   3dc982: mv      s7,a2
+         : 141    int interpol, x;
+         :
+         : 143    FILTER1()
+    0.00 :   3dc984: mv      a5,s7
+    0.00 :   3dc986: li      a7,0
+    0.00 :   3dc988: blez    s6,3dcbfe <ff_bwdif_filter_line_c+0x2b8>
+    0.00 :   3dc98c: sd      s0,168(sp)
+         : 142    FILTER_LINE()
+    0.00 :   3dc98e: lui     a0,0x1
+    0.00 :   3dc990: lui     s0,0x1
+    0.00 :   3dc992: lui     a3,0x1
+    0.00 :   3dc994: lui     a4,0x1
+    0.00 :   3dc996: addiw   s0,s0,981 # 13d5 <offset+0x12d5>
+    0.00 :   3dc99a: addiw   a0,a0,1474 # 15c2 <offset+0x14c2>
+    0.00 :   3dc99e: addiw   a3,a3,-295 # ed9 <offset+0xdd9>
+    0.00 :   3dc9a2: addiw   a4,a4,213 # 10d5 <offset+0xfd5>
+    0.00 :   3dc9a6: sd      s3,144(sp)
+    0.00 :   3dc9a8: sd      s4,136(sp)
+    0.00 :   3dc9aa: sd      s5,128(sp)
+    0.00 :   3dc9ac: sw      s0,64(sp)
+    0.00 :   3dc9ae: sw      a0,68(sp)
+    0.00 :   3dc9b0: sw      a3,72(sp)
+    0.00 :   3dc9b2: sw      a4,76(sp)
+    0.00 :   3dc9b4: sd      s7,8(sp)
+    0.00 :   3dc9b6: sd      s6,0(sp)
+         : 141    FILTER1()
+    2.27 :   3dc9b8: add     a3,a7,s9
+    1.14 :   3dc9bc: add     t1,s1,a3
+    0.57 :   3dc9c0: add     t3,a2,a3
+    3.41 :   3dc9c4: add     a4,a7,s8
+    0.57 :   3dc9c8: lbu     t3,0(t3)
+    6.82 :   3dc9cc: lbu     t4,0(t1)
+    1.14 :   3dc9d0: add     a6,s1,a4
+    0.00 :   3dc9d4: add     a3,a3,s2
+    0.00 :   3dc9d6: add     t5,a2,a4
+    0.00 :   3dc9da: lbu     t1,0(a3)
+    2.27 :   3dc9de: add     a0,s2,a4
+    0.57 :   3dc9e2: lbu     a3,0(a6)
+    0.57 :   3dc9e6: lbu     a4,0(t5)
+    2.84 :   3dc9ea: subw    t4,t4,t3
+    0.00 :   3dc9ee: sraiw   t5,t4,0x1f
+    0.00 :   3dc9f2: subw    a3,a3,a4
+    1.14 :   3dc9f4: xor     t4,t4,t5
+    0.00 :   3dc9f8: subw    t4,t4,t5
+    0.00 :   3dc9fc: lbu     a0,0(a0)
+    5.11 :   3dca00: sraiw   t5,a3,0x1f
+    0.00 :   3dca04: xor     a3,a3,t5
+    0.00 :   3dca08: subw    t1,t1,t3
+    0.57 :   3dca0c: subw    a3,a3,t5
+    3.41 :   3dca10: subw    a0,a0,a4
+    0.57 :   3dca12: addw    a3,a3,t4
+    2.27 :   3dca16: sraiw   t4,t1,0x1f
+    3.41 :   3dca1a: sraiw   t5,a0,0x1f
+    0.57 :   3dca1e: xor     t1,t1,t4
+    1.14 :   3dca22: subw    t1,t1,t4
+    0.00 :   3dca26: xor     t4,a0,t5
+    0.57 :   3dca2a: subw    t4,t4,t5
+    1.14 :   3dca2e: add     a6,a1,a7
+    5.68 :   3dca32: lbu     a6,0(a6)
+    0.57 :   3dca36: addw    t4,t4,t1
+    2.84 :   3dca3a: lbu     t1,0(a5)
+    4.55 :   3dca3e: sraiw   t5,a3,0x1
+    0.00 :   3dca42: sraiw   t4,t4,0x1
+    0.00 :   3dca46: subw    a0,a6,t1
+    0.00 :   3dca4a: addw    a6,a6,t1
+    1.14 :   3dca4e: sraiw   t1,a0,0x1f
+    1.70 :   3dca52: xor     a0,a0,t1
+    0.00 :   3dca56: subw    a0,a0,t1
+    3.98 :   3dca5a: sext.w  a3,t5
+    0.57 :   3dca5e: sraiw   t1,a6,0x1
+    1.70 :   3dca62: bge     t5,t4,3dca6a <ff_bwdif_filter_line_c+0x124>
+    0.00 :   3dca66: sext.w  a3,t4
+    1.70 :   3dca6a: sext.w  t5,a3
+    0.57 :   3dca6e: sraiw   t4,a0,0x1
+    1.14 :   3dca72: bge     t5,t4,3dca7a <ff_bwdif_filter_line_c+0x134>
+    0.57 :   3dca76: sext.w  a3,t4
+    6.25 :   3dca7a: beqz    a3,3dcbe4 <ff_bwdif_filter_line_c+0x29e>
+         : 142    FILTER_LINE()
+    0.00 :   3dca7e: ld      s0,32(sp)
+    0.00 :   3dca80: add     t0,s10,a7
+    0.00 :   3dca84: add     t0,t0,a1
+    0.00 :   3dca86: add     t5,s0,a7
+    0.00 :   3dca8a: ld      s0,8(sp)
+    0.00 :   3dca8c: add     t6,a1,t5
+    0.00 :   3dca90: add     t4,a5,s10
+    0.00 :   3dca94: add     t5,t5,s0
+    1.14 :   3dca96: lbu     t4,0(t4)
+    0.00 :   3dca9a: lbu     s5,0(t6)
+    1.14 :   3dca9e: lbu     t0,0(t0)
+    0.00 :   3dcaa2: lbu     s0,0(t5)
+    0.00 :   3dcaa6: subw    t2,t1,t3
+    0.00 :   3dcaaa: addw    t0,t0,t4
+    0.57 :   3dcaae: addw    t5,s5,s0
+    0.00 :   3dcab2: sraiw   t6,t0,0x1
+    0.00 :   3dcab6: sraiw   t5,t5,0x1
+    0.00 :   3dcaba: subw    t6,t6,t3
+    0.00 :   3dcabe: subw    t5,t5,a4
+    0.00 :   3dcac2: mv      t4,t6
+    0.00 :   3dcac4: subw    s3,t1,a4
+    0.00 :   3dcac8: bge     t5,t6,3dcace <ff_bwdif_filter_line_c+0x188>
+    0.00 :   3dcacc: mv      t4,t5
+    1.14 :   3dcace: mv      s4,t2
+    1.70 :   3dcad0: bge     t2,s3,3dcad6 <ff_bwdif_filter_line_c+0x190>
+    0.00 :   3dcad4: mv      s4,s3
+    0.00 :   3dcad6: sext.w  s7,t4
+    0.00 :   3dcada: sext.w  s6,s4
+    0.57 :   3dcade: bge     s7,s6,3dcae4 <ff_bwdif_filter_line_c+0x19e>
+    0.57 :   3dcae2: mv      t4,s4
+    0.57 :   3dcae4: negw    t4,t4
+    0.00 :   3dcae8: sext.w  s4,t4
+    0.00 :   3dcaec: bge     t4,a3,3dcaf4 <ff_bwdif_filter_line_c+0x1ae>
+    0.57 :   3dcaf0: sext.w  s4,a3
+    0.00 :   3dcaf4: mv      a3,t2
+    0.57 :   3dcaf6: bge     s3,t2,3dcafc <ff_bwdif_filter_line_c+0x1b6>
+    0.00 :   3dcafa: mv      a3,s3
+    0.00 :   3dcafc: mv      t4,t6
+    0.00 :   3dcafe: bge     t6,t5,3dcb04 <ff_bwdif_filter_line_c+0x1be>
+    0.00 :   3dcb02: mv      t4,t5
+    0.00 :   3dcb04: sext.w  t6,a3
+    0.00 :   3dcb08: sext.w  t5,t4
+    0.57 :   3dcb0c: bge     t5,t6,3dcb12 <ff_bwdif_filter_line_c+0x1cc>
+    0.00 :   3dcb10: mv      a3,t4
+    1.14 :   3dcb12: sext.w  t4,a3
+    0.57 :   3dcb16: bge     t4,s4,3dcb1c <ff_bwdif_filter_line_c+0x1d6>
+    0.00 :   3dcb1a: mv      a3,s4
+    0.00 :   3dcb1c: ld      t4,24(sp)
+    0.00 :   3dcb1e: subw    t6,t3,a4
+    0.00 :   3dcb22: addw    a4,t3,a4
+    0.00 :   3dcb26: add     t5,t4,a7
+    0.57 :   3dcb2a: ld      t4,16(sp)
+    1.14 :   3dcb2c: add     t5,t5,a2
+    0.00 :   3dcb2e: sraiw   t3,t6,0x1f
+    0.00 :   3dcb32: add     t4,t4,a7
+    0.00 :   3dcb34: add     t4,t4,a2
+    0.00 :   3dcb36: lbu     t5,0(t5)
+    0.57 :   3dcb3a: lbu     t4,0(t4)
+    0.00 :   3dcb3e: xor     t6,t6,t3
+    0.00 :   3dcb42: subw    t6,t6,t3
+    0.00 :   3dcb46: addw    t4,t5,t4
+    0.57 :   3dcb4a: bge     a0,t6,3dcc1e <ff_bwdif_filter_line_c+0x2d8>
+    0.00 :   3dcb4e: lw      a0,72(sp)
+    0.57 :   3dcb50: addw    t0,t0,s5
+    0.00 :   3dcb54: addw    s0,s0,t0
+    0.00 :   3dcb58: mulw    s0,a0,s0
+    0.00 :   3dcb5c: ld      a0,56(sp)
+    0.00 :   3dcb5e: ld      t0,8(sp)
+    0.00 :   3dcb60: lw      t6,68(sp)
+    0.00 :   3dcb62: add     a0,a0,a7
+    0.00 :   3dcb64: add     t3,a1,a0
+    0.00 :   3dcb68: add     a0,a0,t0
+    0.57 :   3dcb6a: lbu     t5,0(a0)
+    0.57 :   3dcb6e: ld      a0,48(sp)
+    0.00 :   3dcb70: lbu     t3,0(t3)
+    0.00 :   3dcb74: mulw    a6,t6,a6
+    0.00 :   3dcb78: add     a0,a0,a7
+    0.00 :   3dcb7a: addw    t3,t3,t5
+    0.00 :   3dcb7e: add     t5,a1,a0
+    1.14 :   3dcb82: lbu     t5,0(t5)
+    0.00 :   3dcb86: add     a0,a0,t0
+    0.57 :   3dcb88: lbu     a0,0(a0)
+    0.00 :   3dcb8c: addw    t5,t5,t3
+    0.00 :   3dcb90: addw    t3,a0,t5
+    0.00 :   3dcb94: slliw   a0,t3,0x7
+    0.00 :   3dcb98: subw    a0,a0,t3
+    0.57 :   3dcb9c: lw      t3,76(sp)
+    0.00 :   3dcb9e: slliw   a0,a0,0x3
+    0.00 :   3dcba2: subw    a6,a6,s0
+    0.00 :   3dcba6: addw    a6,a6,a0
+    0.00 :   3dcbaa: mulw    a4,t3,a4
+    0.00 :   3dcbae: li      a0,213
+    0.00 :   3dcbb2: sraiw   a6,a6,0x2
+    0.00 :   3dcbb6: mulw    t4,a0,t4
+    0.00 :   3dcbba: addw    a4,a4,a6
+    0.00 :   3dcbbe: subw    a4,a4,t4
+    0.00 :   3dcbc2: sraiw   a4,a4,0xd
+         : 143    FILTER2()
+    0.00 :   3dcbc6: addw    a0,t1,a3
+    0.00 :   3dcbca: blt     a0,a4,3dcc12 <ff_bwdif_filter_line_c+0x2cc>
+    0.00 :   3dcbce: subw    t1,t1,a3
+    0.00 :   3dcbd2: sext.w  a0,t1
+    0.00 :   3dcbd6: bge     t1,a4,3dcbde <ff_bwdif_filter_line_c+0x298>
+    0.00 :   3dcbda: sext.w  a0,a4
+         : 146    av_clip_c():
+         : 183    static av_always_inline av_const int av_clip_c(int a, int amin, int amax)
+         : 184    {
+         : 185    #if defined(HAVE_AV_CONFIG_H) && defined(ASSERT_LEVEL) && ASSERT_LEVEL >= 2
+         : 186    if (amin > amax) abort();
+         : 187    #endif
+         : 188    if      (a < amin) return amin;
+    0.00 :   3dcbde: li      t1,0
+    0.57 :   3dcbe0: bgez    a0,3dcc12 <ff_bwdif_filter_line_c+0x2cc>
+         : 191    ff_bwdif_filter_line_c():
+         : 141    FILTER1()
+    1.14 :   3dcbe4: add     a4,s11,a7
+    0.00 :   3dcbe8: sb      t1,0(a4)
+    0.57 :   3dcbec: ld      a4,0(sp)
+    2.84 :   3dcbee: addi    a7,a7,1
+         : 143    FILTER2()
+    0.00 :   3dcbf0: addi    a5,a5,1
+         : 141    FILTER1()
+    0.00 :   3dcbf2: bne     a7,a4,3dc9b8 <ff_bwdif_filter_line_c+0x72>
+    0.00 :   3dcbf6: ld      s0,168(sp)
+    0.00 :   3dcbf8: ld      s3,144(sp)
+    0.00 :   3dcbfa: ld      s4,136(sp)
+    0.00 :   3dcbfc: ld      s5,128(sp)
+         : 144    }
+    0.00 :   3dcbfe: ld      s1,160(sp)
+    0.00 :   3dcc00: ld      s2,152(sp)
+    0.00 :   3dcc02: ld      s6,120(sp)
+    0.00 :   3dcc04: ld      s7,112(sp)
+    0.00 :   3dcc06: ld      s8,104(sp)
+    0.00 :   3dcc08: ld      s9,96(sp)
+    0.00 :   3dcc0a: ld      s10,88(sp)
+    0.00 :   3dcc0c: ld      s11,80(sp)
+    0.00 :   3dcc0e: addi    sp,sp,176
+    0.00 :   3dcc10: ret
+         : 155    av_clip_c():
+         : 184    else if (a > amax) return amax;
+    0.00 :   3dcc12: ld      a4,40(sp)
+    1.14 :   3dcc14: mv      t1,a4
+    0.00 :   3dcc16: bge     a0,a4,3dcbe4 <ff_bwdif_filter_line_c+0x29e>
+    0.00 :   3dcc1a: mv      t1,a0
+    0.00 :   3dcc1c: j       3dcbe4 <ff_bwdif_filter_line_c+0x29e>
+         : 190    ff_bwdif_filter_line_c():
+         : 142    FILTER_LINE()
+    0.00 :   3dcc1e: lw      a0,64(sp)
+    0.00 :   3dcc20: mulw    a4,a0,a4
+    0.00 :   3dcc24: li      a0,981
+    0.00 :   3dcc28: mulw    t4,a0,t4
+    0.00 :   3dcc2c: subw    a4,a4,t4
+    0.57 :   3dcc30: sraiw   a4,a4,0xd
+    0.57 :   3dcc34: j       3dcbc6 <ff_bwdif_filter_line_c+0x280>
+         : 138    const uint8_t *next2 = parity ? cur  : next;
+    0.00 :   3dcc36: mv      s7,a3
+         : 137    const uint8_t *prev2 = parity ? prev : cur ;
+    0.00 :   3dcc38: mv      a1,a2
+    0.00 :   3dcc3a: j       3dc984 <ff_bwdif_filter_line_c+0x3e>

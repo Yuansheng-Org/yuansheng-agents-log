@@ -1,0 +1,19 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rv-ffmpeg-mpeg4-fdct-003",
+ "patchCandidateId": "pc-bp-ffmpeg-mpeg4_encode-003",
+ "reviewedAt": "2026-09-14",
+ "reviewer": "opencode-ai-reviewer",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "ff_jpeg_fdct_islow_8 RVV (libavcodec/riscv/fdctdsp_rvv.S): both passes of the 8-point LL&M butterfly are lane-wise on 8 vectors. Pass 1 loads the block as 8 column vectors (vlse16, stride 16) so the row butterfly (pairs x0+x7, x1+x6, ...) is element-wise across the column vectors; results stored back column-wise (vsse16, stride 16), reproducing the C row-major intermediate in place. Pass 2 reloads rows (vle16) and reuses the identical butterfly macro. All multiplies in e32 mod 2^32; DESCALE(x,n)=(x+(1<<(n-1)))>>n via vadd.vx+vsra.vi; int16 truncation via vnsrl.wi; pass1 even outputs are <<PASS1_BITS (vsll.vi). Matches jfdctint_template.c bit-exactly (sim 30 cases x 64 coeffs = 0/1920). Registration gated on 8-bit, RVV_I32, vlen>=128, dct_algo not FASTINT/FAAN. arch-scan 0."
+ },
+ "hallucinationCheck": [
+  { "dimension": "blueprint-anchor", "result": "PASS" },
+  { "dimension": "root-cause-boundary", "result": "PASS" },
+  { "dimension": "verification-evidence", "result": "PASS" },
+  { "dimension": "diff-anchor", "result": "PASS" }
+ ],
+ "findings": []
+}

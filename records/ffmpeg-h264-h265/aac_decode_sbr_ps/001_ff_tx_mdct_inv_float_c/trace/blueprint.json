@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-ffmpeg-aac_decode_sbr_ps-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T06:14:31.052Z",
+    "software": "ffmpeg",
+    "testcaseIds": [
+      "aac_decode_sbr_ps"
+    ],
+    "diagnosisId": "diag-20260908-141431",
+    "targetHardware": "SpacemiT K3 / spacemit-x100 (RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://github.com/FFmpeg/FFmpeg.git",
+    "testBranch": "master",
+    "commitHash": "1d7b14f61d66fdf18f15204c613df9d65396c319"
+  },
+  "problem": {
+    "summary": "AAC SBR/PS 解码路径中 MDCT 逆变换（ff_tx_mdct_inv_float_c）在 RISC-V 上以标量逐蝶形实现执行，热点集中于两段复数复乘循环（CMUL3/CMUL），在支持 RVV 1.0（VLEN=256）的 K3 上完全未向量化，且构建 ISA 按 zvl128b（128-bit VLEN）编译，存在 2 倍向量宽度未利用。该函数是本用例 rank 001 最大热区（83 samples）。",
+    "evidence": [
+      "perf stat: IPC=1.631, branch_miss_rate=2.158%, L1D_load_miss_rate=1.193% — compute-leaning，非 memory/branch-bound",
+      "hot loop 1（CMUL3 pre-twiddle）: f5cb38 fmul.s 12.05%, f5cb50 fsw 18.07%, f5cb2a mul 8.43% — 标量复乘链",
+      "hot loop 2（CMUL post-twiddle）: f5cbb8 addi 10.84%, f5cbf8 fsw 8.43% — 标量循环控制与写回",
+      "代码来源: libavutil/tx_template.c:1312 (TX_NAME(ff_tx_mdct_inv)，_c 后缀=C 实现)；libavutil/riscv/ 无 tx RVV 实现（对比 aarch64 tx_float_neon.S、x86 tx_float.asm）",
+      "构建 ISA: rv64i...v1p0...zvl128b1p0（含 v 但按 128-bit VLEN 构建），硬件 VLEN=256"
+    ]
+  },
+  "rootCause": {
+    "summary": "MDCT 逆变换以标量逐蝶形实现（交织 AoS 复数按 [re,im] 逐点 flw/fmul/fsw 取用），在 RVV 1.0 硬件上零 v* 指令；FFmpeg AV_TX 框架在 RISC-V 侧缺少向量 codelet，导致整级同构蝶形未沿元素轴向量化，VLEN=256 宽度完全闲置。",
+    "candidateFiles": [
+      "libavutil/tx_template.c"
+    ],
+    "performanceFactors": [
+      "RVV FFT/DCT/MFCC Transform Kernels",
+      "No vectorization"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "对外 API 的输入/输出复数布局与缩放约定不变（SBR 上层 ff_aac_sbr_apply 依赖）",
+      "ifftFlag 逆变换语义（虚部取反）",
+      "与 s->sub 递归子变换（ff_tx_fft*_ns_float_c）的配合契约"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "aac_decode_sbr_ps",
+      "checkasm_sbrdsp"
+    ],
+    "regressionCommand": "agent1 patch_regression --case aac_decode_sbr_ps"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.88,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=1.631 且 L1D miss 仅 1.193%、branch miss 2.158%，排除 memory/branch-bound，热点是纯计算形态。annotate 中两段 hot loop 全部为标量 flw/fmul.s/fsub.s/fsw 复乘链（f5cb38 12.05%、f5cb50 18.07%），zero v*，符合 patterns/rvv_fft_transform_kernels.md 的标量逐蝶形+交织复数 AoS 特征。源码证据（tx_priv.h:30 TX_NAME 宏 _c 后缀 + libavutil/riscv/ 无 tx RVV 实现）确认 C fallback 被实际采用，而 aarch64/x86 有 NEON/asm 实现证明 AV_TX 框架支持架构专有向量 codelet。NMSIS 关联提交（952264aaa7 等）展示了 vlseg2/vsseg2 蝶形向量化+split twiddle+Stockham 的成熟路径。三项证据共同指向变换算法结构未向量化这一根因。",
+    "rootCauseType": "arch_gap",
+    "alternativeExplanations": [
+      "build 仅按 zvl128b 编译导致编译器即使自动向量化也只用 128-bit 宽度——但本函数 annotate 中 zero v*，说明连 128-bit 向量路径都未走，故不是单纯的 VLEN 配置问题，而是实现层面无向量代码",
+      "若 compiler autovec 在更高优化档可生成 v* 代码，则根因可能部分归因于构建配置（-O 级别/RVV flag）——可作为次候选"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision（无 precise_ip 信息，单行占比仅锚定 loop interval）；缺函数级 workload 贡献占比，收益上界仅限局部样本份额；未验证 K3 上 zvl256b 重建效果",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + aac_decode_sbr_ps",
+    "recommendedFirstAction": "在 libavutil/riscv/ 新增 tx RVV codelet（参照 libavutil/tx.c 注册表 ff_tx_codelet_list_float_c[] 与 aarch64 tx_float_neon.S 结构），实现 MDCT 蝶形级向量化：vlseg2e32 拆 re/im、split(SoA) twiddle 表连续 vle32、vsseg2e32 写回；同时将构建 ISA 从 zvl128b 提升至 zvl256b 以利用 K3 全宽",
+    "recommendedVerification": "重跑 aac_decode_sbr_ps 用例的 perf annotate，核对蝶形 hot interval 出现 vlseg2e32/vsseg2e32/vsetvli/vfmul 且 flw/fsw 标量占比显著下降；运行 checkasm_sbrdsp 与 AV_TX 往返正确性测试确认 re/im 逐 bin 一致",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 1.631,
+        "anomalyNote": "IPC 1.63 接近 compute-bound 特征，向量化修复可望显著提升指令吞吐"
+      },
+      {
+        "metric": "Branch Miss Rate(%)",
+        "rv": 2.158,
+        "anomalyNote": "branch miss 2.16% 属正常范围，排除 branch-bound"
+      },
+      {
+        "metric": "L1 Dcache Load Miss Rate(%)",
+        "rv": 1.193,
+        "anomalyNote": "L1D miss 1.19% 很低，排除 memory-bound，确认 compute 形态"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "ff_tx_mdct_inv_float_c",
+        "fileModule": "libavutil/tx_template.c",
+        "rvvPattern": "RVV FFT/DCT/MFCC Transform Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.54,
+        "note": "MDCT 逆变换（音频频谱变换），标量逐蝶形复乘链，rank 001 最大热区（83 samples），两 hot loop 主导样本约 54%"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "libavutil/tx_template.c:1312",
+      "relatedKnowledge": "https://github.com/Nuclei-Software/NMSIS/commit/952264aaa764fa80c5d362b5f326bc9edd985500;https://github.com/Nuclei-Software/NMSIS/commit/dea09437a68e46f5912221f4da22befa7d5cea02;https://github.com/Nuclei-Software/NMSIS/commit/6752d263baba7488ff4e4550dc3e8cd3f0da4e44;https://github.com/Nuclei-Software/NMSIS/commit/b14e3dafb0c93392b3698daa9b6c64bcce3733c3",
+      "evidenceExplanation": "NMSIS 的 RVV CFFT 蝶形向量化（vlseg2/vsseg2 de-interleave + split twiddle + Stockham 乒乓）提供了与 FFmpeg AV_TX MDCT 同构的成熟修复路径；FFmpeg 侧 libavutil/riscv/ 无任何 tx RVV 实现（aarch64/x86 有），确认 arch_gap 根因。"
+    }
+  }
+}

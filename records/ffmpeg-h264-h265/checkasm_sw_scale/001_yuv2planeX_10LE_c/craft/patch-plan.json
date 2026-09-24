@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-ffmpeg-checkasm-sw-scale-001",
+  "blueprintId": "bp-ffmpeg-checkasm_sw_scale-001",
+  "createdAt": "2026-09-13T08:54:00.136Z",
+  "objective": "swscale yuv2planeX（10LE）的 RISC-V 向量实现不存在：yuv2planeX/hScale 系列全部执行 C 标量乘加链。与 swscale RVV 覆盖缺口同根因。",
+  "changes": [
+    {
+      "filePath": "libswscale/riscv/swscale.c",
+      "action": "modify",
+      "rationale": "swscale yuv2planeX（10LE）的 RISC-V 向量实现不存在：yuv2planeX/hScale 系列全部执行 C 标量乘加链。与 swscale RVV 覆盖缺口同根因。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "libswscale/swscale_template.c",
+      "action": "modify",
+      "rationale": "swscale yuv2planeX（10LE）的 RISC-V 向量实现不存在：yuv2planeX/hScale 系列全部执行 C 标量乘加链。与 swscale RVV 覆盖缺口同根因。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 libswscale/riscv/swscale.c, libswscale/swscale_template.c 来解决 blueprint bp-ffmpeg-checkasm_sw_scale-001。"
+}

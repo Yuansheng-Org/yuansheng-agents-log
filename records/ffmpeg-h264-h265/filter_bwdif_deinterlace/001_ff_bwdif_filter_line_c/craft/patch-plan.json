@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-ffmpeg-filter-bwdif-deinterlace-001",
+  "blueprintId": "bp-ffmpeg-filter_bwdif_deinterlace-001",
+  "createdAt": "2026-09-14T02:31:18.306Z",
+  "objective": "bwdif 反交错主滤波行（filter_line）的 RISC-V 向量实现不存在：libavfilter/riscv/ 无 bwdif 实现，C 标量时空插值链全量执行。",
+  "changes": [
+    {
+      "filePath": "libavfilter/riscv/vf_bwdif_init.c",
+      "action": "modify",
+      "rationale": "bwdif 反交错主滤波行（filter_line）的 RISC-V 向量实现不存在：libavfilter/riscv/ 无 bwdif 实现，C 标量时空插值链全量执行。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "libavfilter/riscv/vf_bwdif_rvv.S",
+      "action": "modify",
+      "rationale": "bwdif 反交错主滤波行（filter_line）的 RISC-V 向量实现不存在：libavfilter/riscv/ 无 bwdif 实现，C 标量时空插值链全量执行。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 libavfilter/riscv/vf_bwdif_init.c, libavfilter/riscv/vf_bwdif_rvv.S 来解决 blueprint bp-ffmpeg-filter_bwdif_deinterlace-001。"
+}

@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-ffmpeg-checkasm_hevc_pel-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T08:55:12.297Z",
+    "software": "ffmpeg",
+    "testcaseIds": [
+      "checkasm_hevc_pel"
+    ],
+    "targetHardware": "SpacemiT K3 / spacemit-x100 (RVV 1.0, VLEN=256, vlenb=32)",
+    "repositoryUrl": "https://github.com/FFmpeg/FFmpeg.git",
+    "testBranch": "master",
+    "commitHash": "1d7b14f61d66fdf18f15204c613df9d65396c319",
+    "diagnosisId": "diag-20260908T085512297Z-d1756d6f"
+  },
+  "problem": {
+    "summary": "HEVC 8-bit qpel 双方向加权插值（bi w_hv）的 C fallback（put_hevc_qpel_bi_w_hv_8）被 checkasm 采用执行：hevcdsp_init_riscv.c 仅对 qpel/epel 注册 [0][0]=pel_pixels（纯拷贝，且仅 bit_depth==8），所有加权插值变体无 RVV 覆盖，执行标量 8-tap 乘加链。样本：1710c8 sh 12.32% / 1711e2 bltu 9.42% / 171080 lbu。",
+    "evidence": [
+      "perf stat: IPC=2.597, geomean=6.107, speedup_total=10.92（但仅 5 个 put_hevc_pel_pixels 有 RVV）",
+      "checkasm_bench.csv: 1576 行仅 5 行含 rvv_i32（put_hevc_pel_pixels{4,8,16,32,64}_8）",
+      "hevcdsp_init.c: RVV_FNASSIGN(c->put_hevc_qpel/epel, 0, 0, pel_pixels, rvv_256) 仅 [0][0] 槽 + case 8",
+      "样本~138个全在标量 C 链: 1710c8 sh 12.32% / 1711e2 bltu 9.42% / 171080 lbu",
+      "构建 ISA: rv64i...v1p0...zvl128b1p0，硬件 VLEN=256"
+    ]
+  },
+  "rootCause": {
+    "summary": "HEVC 8-bit qpel 加权插值（bi w_hv）的 RISC-V 向量实现不存在：hevcdsp_init_riscv.c 仅注册 pel_pixels（[0][0] 纯拷贝，bit_depth==8），8-tap 加权插值变体（uni/bi h/v/hv，8/9/10/12-bit）执行 C template 标量乘加链。",
+    "candidateFiles": [
+      "libavcodec/riscv/hevcdsp_init.c",
+      "libavcodec/riscv/hevcdsp_qpel.S"
+    ],
+    "performanceFactors": [
+      "Policy-Backed Missing RISC-V Assembly Kernel"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "8-bit 8-tap 加权插值语义（系数乘加 + 加权移位 + clip）与像素输出逐位一致",
+      "HEVCDSPContext 函数指针表布局不变",
+      "RVV_I32 的 func 声明/runtime gate 一致性"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "checkasm_hevc_pel"
+    ],
+    "regressionCommand": "agent1 patch_regression --case checkasm_hevc_pel"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "checkasm reference 路径 + 真实 workload 触发频率未验证（8-bit 加权插值为 HEVC 解码高频，建议优先）；需统一规划并实测收益后自动转发",
+    "reasoning": "hevcdsp_init_riscv.c 仅注册 pel_pixels（[0][0]，case 8），put_hevc_qpel_bi_w_hv_8 的 bi w_hv 加权插值无 RVV 覆盖 → C fallback 被 checkasm 采用（~138 样本全在标量 8-tap 链）。policy 四证齐全，准入 gate（RVV_I32）成立。8-bit 加权插值是 HEVC 解码高频路径，9/10/12-bit 场景小众。定性 probable + conditional。",
+    "rootCauseType": "arch_gap",
+    "alternativeExplanations": [
+      "若真实 workload 中该变体触发频率低，优先级需按实际占比调整",
+      "qpel/epel 各族 kernel 形状接近，可共享同一向量滤波结构"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision；缺真实 workload 级贡献评估",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 HEVC 加权插值各变体在真实解码流中的触发频率；与 qpel/epel 宏族统一规划优先级",
+    "affectedTarget": "RV + checkasm_hevc_pel",
+    "recommendedFirstAction": "在 hevcdsp 宏族增加加权插值 RVV 变体（SEW=8→e16 8-tap 乘加 + 加权/移位 + clip），init 补齐 put_hevc_qpel/epel 各槽；8-bit bi_w_hv/uni_w_hv 优先（采样最高）",
+    "recommendedVerification": "运行 checkasm_hevc_pel 对应槽位确认 bit-exact；K3 对比 C vs RVV cycles",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 2.597,
+        "anomalyNote": "较高，compute-leaning"
+      },
+      {
+        "metric": "Branch Miss Rate(%)",
+        "rv": 1.061,
+        "anomalyNote": "低"
+      },
+      {
+        "metric": "L1 Dcache Load Miss Rate(%)",
+        "rv": 0.014,
+        "anomalyNote": "极低，排除 memory-bound"
+      },
+      {
+        "metric": "checkasm compared_functions",
+        "rv": 5,
+        "anomalyNote": "仅 5 个 pel_pixels 有 RVV 对照，其余 1570+ 全 C"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "put_hevc_qpel_bi_w_hv_8",
+        "fileModule": "libavcodec/hevc/hevcpred_template.c",
+        "rvvPattern": "Policy-Backed Missing RISC-V Assembly Kernel",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.03,
+        "note": "8-bit bi w_hv C fallback；样本 ~138 全在标量链"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "libavcodec/riscv/hevcdsp_init.c",
+      "relatedKnowledge": "https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/79adb692a2720647e9dbe57de33fd50b41db295c;https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/afb967b81e4169e9e563f6342f4f9f636627de5b",
+      "evidenceExplanation": "FFmpeg PR 23712 shape-first 实例与上游同类 .S 优化 commit 提供同构修复先例；hevcdsp_init.c 仅 pel_pixels 覆盖，加权插值族需新增。"
+    }
+  }
+}

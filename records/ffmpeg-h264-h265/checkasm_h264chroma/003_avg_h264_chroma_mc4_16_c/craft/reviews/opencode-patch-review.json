@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-ffmpeg-checkasm-h264chroma-003",
+  "patchCandidateId": "pc-bp-ffmpeg-checkasm_h264chroma-003",
+  "reviewedAt": "2026-09-11T16:00:00.000Z",
+  "reviewResult": "pass",
+  "reviewer": "opencode-ai-reviewer",
+  "findings": [],
+  "archReview": {
+    "status": "passed",
+    "notes": "16-bit 色度 MC：e16 数据 + e32/m2 累加 + vnsrl.wi 独立目标窄化 + vaaddu avg；bit_depth>8 注册分支与 8-bit 并列；模拟器全相位 0 不匹配；QEMU 8.2.2 窄化 TCG 异常已定位"
+  },
+  "hallucinationCheck": [
+    { "dimension": "technicalAccuracy", "result": "PASS" },
+    { "dimension": "claimTraceability", "result": "PASS" },
+    { "dimension": "explainability", "result": "PASS" },
+    { "dimension": "internalConsistency", "result": "PASS" },
+    { "dimension": "safety", "result": "PASS" }
+  ]
+}

@@ -1,0 +1,1335 @@
+ Percent |	Source code & Disassembly of ffmpeg for cpu-clock (44 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000b1fd8a <idct_idct_16x16_add_c.part.0>:
+         : 6      idct_idct_16x16_add_c():
+         : 1509   out[ 9] = (dctint)( (t11  - t10)  * 11585U  + (1 << 13)) >> 14;
+         : 1510   out[ 5] = (dctint)(-(t14a + t15a) * 11585U  + (1 << 13)) >> 14;
+         : 1511   out[10] = (dctint)( (t14a - t15a) * 11585U  + (1 << 13)) >> 14;
+         : 1512   }
+         :
+         : 1514   itxfm_wrap(16, 6)
+    0.00 :   b1fd8a: addi    sp,sp,-800
+    0.00 :   b1fd8e: sd      a1,72(sp)
+    0.00 :   b1fd90: auipc   a1,0xa01
+    0.00 :   b1fd94: ld      a1,136(a1) # 1520e18 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   b1fd98: ld      a3,0(a1)
+    0.00 :   b1fd9a: sd      a3,680(sp)
+    0.00 :   b1fd9e: li      a3,0
+         : 1522   idct16_1d():
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b1fda0: lui     a1,0x3
+    0.00 :   b1fda2: addiw   a1,a1,1335 # 3537 <offset+0x3437>
+    0.00 :   b1fda6: sw      a1,24(sp)
+    0.00 :   b1fda8: lui     a1,0x2
+    0.00 :   b1fdaa: addiw   a1,a1,910 # 238e <offset+0x228e>
+    0.00 :   b1fdae: sw      a1,32(sp)
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b1fdb0: lui     a1,0x4
+    0.00 :   b1fdb2: addiw   a1,a1,-79 # 3fb1 <offset+0x3eb1>
+    0.00 :   b1fdb6: sw      a1,40(sp)
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b1fdb8: lui     a1,0x3
+    0.00 :   b1fdba: addiw   a1,a1,377 # 3179 <offset+0x3079>
+    0.00 :   b1fdbe: sw      a1,48(sp)
+    0.00 :   b1fdc0: lui     a1,0x3
+    0.00 :   b1fdc2: addiw   a1,a1,-1894 # 289a <offset+0x279a>
+    0.00 :   b1fdc6: sw      a1,56(sp)
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    0.00 :   b1fdc8: lui     a1,0x2
+    0.00 :   b1fdca: addiw   a1,a1,-469 # 1e2b <offset+0x1d2b>
+    0.00 :   b1fdce: sw      a1,64(sp)
+    0.00 :   b1fdd0: lui     a1,0x4
+    0.00 :   b1fdd2: addiw   a1,a1,-1935 # 3871 <offset+0x3771>
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b1fdd6: lui     a5,0x1
+    0.00 :   b1fdd8: addiw   a5,a5,660 # 1294 <offset+0x1194>
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    0.00 :   b1fddc: sw      a1,80(sp)
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b1fdde: lui     a1,0x4
+         : 1341   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b1fde0: sd      s0,784(sp)
+    0.00 :   b1fde4: sd      s5,744(sp)
+    0.00 :   b1fde8: addi    s0,sp,168
+    0.00 :   b1fdea: sd      s6,736(sp)
+    0.00 :   b1fdee: sd      s7,728(sp)
+    0.00 :   b1fdf2: sd      s9,712(sp)
+    0.00 :   b1fdf6: sd      s11,696(sp)
+         : 1517   idct16_1d():
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b1fdfa: lui     s5,0x3
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b1fdfc: lui     s7,0x2
+    0.00 :   b1fdfe: lui     s6,0x4
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b1fe00: lui     s9,0x1
+    0.00 :   b1fe02: lui     s11,0x4
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b1fe04: addiw   a1,a1,-705 # 3d3f <offset+0x3c3f>
+    0.00 :   b1fe08: sw      a5,112(sp)
+    0.00 :   b1fe0a: addi    a5,sp,680
+    0.00 :   b1fe0c: sd      a5,16(sp)
+         : 1344   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b1fe0e: sd      ra,792(sp)
+    0.00 :   b1fe12: sd      s1,776(sp)
+    0.00 :   b1fe16: sd      s2,768(sp)
+    0.00 :   b1fe1a: sd      s3,760(sp)
+    0.00 :   b1fe1e: sd      s4,752(sp)
+    0.00 :   b1fe22: sd      s8,720(sp)
+    0.00 :   b1fe26: sd      s10,704(sp)
+    0.00 :   b1fe2a: sd      s0,96(sp)
+    0.00 :   b1fe2c: sd      a0,0(sp)
+    0.00 :   b1fe2e: mv      a3,s0
+         : 1520   idct16_1d():
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b1fe30: addiw   s5,s5,-703 # 2d41 <offset+0x2c41>
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b1fe34: addiw   s7,s7,-1922 # 187e <offset+0x177e>
+    0.00 :   b1fe38: addiw   s6,s6,-1247 # 3b21 <offset+0x3a21>
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b1fe3c: addiw   s9,s9,-900 # c7c <offset+0xb7c>
+    0.00 :   b1fe40: addiw   s11,s11,-315 # 3ec5 <offset+0x3dc5>
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b1fe44: sw      a1,92(sp)
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b1fe46: lui     a5,0x2
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b1fe48: sd      a2,104(sp)
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b1fe4a: lh      s2,256(a2)
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b1fe4e: lh      s1,32(a2)
+    0.00 :   b1fe52: lh      t2,480(a2)
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b1fe56: lh      s0,0(a2)
+         : 1334   t15a = (dctint)(IN(1)  * 16305U + IN(15) *  1606U + (1 << 13)) >> 14;
+    0.00 :   b1fe5a: lw      s3,40(sp)
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b1fe5c: li      a4,1606
+         : 1326   t1a  = (dctint)((IN(0) - IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b1fe60: subw    s8,s0,s2
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b1fe64: mulw    a6,s1,a4
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b1fe68: addw    s0,s0,s2
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    2.27 :   b1fe6c: lh      a0,288(a2)
+    0.00 :   b1fe70: lh      t6,224(a2)
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    0.00 :   b1fe74: lh      t4,160(a2)
+    0.00 :   b1fe78: lh      a7,352(a2)
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b1fe7c: lh      t5,416(a2)
+    0.00 :   b1fe80: lh      s10,96(a2)
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b1fe84: lh      t1,64(a2)
+    0.00 :   b1fe88: lh      a1,448(a2)
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b1fe8c: mulw    s2,t2,s3
+    0.00 :   b1fe90: addw    a6,a5,a6
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b1fe94: lh      t0,320(a2)
+    0.00 :   b1fe98: lh      t3,192(a2)
+         : 1326   t1a  = (dctint)((IN(0) - IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b1fe9c: sd      s8,8(sp)
+         : 1332   t6a  = (dctint)(IN(10) *  9102U + IN(6)  * 13623U + (1 << 13)) >> 14;
+    0.00 :   b1fe9e: lw      s8,32(sp)
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b1fea0: lh      s4,128(a2)
+    0.00 :   b1fea4: lh      a4,384(a2)
+         : 1330   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b1fea8: addi    a3,a3,32
+    0.00 :   b1feac: addi    a2,a2,2
+         : 1510   idct16_1d():
+         : 1334   t15a = (dctint)(IN(1)  * 16305U + IN(15) *  1606U + (1 << 13)) >> 14;
+    0.00 :   b1feae: mulw    s1,s1,s3
+    0.00 :   b1feb2: li      s3,1606
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b1feb6: subw    a6,a6,s2
+    0.00 :   b1feba: sraiw   a6,a6,0xe
+         : 1334   t15a = (dctint)(IN(1)  * 16305U + IN(15) *  1606U + (1 << 13)) >> 14;
+    0.00 :   b1febe: mulw    t2,t2,s3
+         : 1336   t14a = (dctint)(IN(9)  * 10394U + IN(7)  * 12665U + (1 << 13)) >> 14;
+    0.00 :   b1fec2: lw      s3,56(sp)
+         : 1334   t15a = (dctint)(IN(1)  * 16305U + IN(15) *  1606U + (1 << 13)) >> 14;
+    0.00 :   b1fec4: addw    t2,t2,s1
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b1fec8: lw      s1,48(sp)
+         : 1336   t14a = (dctint)(IN(9)  * 10394U + IN(7)  * 12665U + (1 << 13)) >> 14;
+    0.00 :   b1feca: mulw    s2,a0,s3
+         : 1334   t15a = (dctint)(IN(1)  * 16305U + IN(15) *  1606U + (1 << 13)) >> 14;
+    0.00 :   b1fece: addw    t2,a5,t2
+    0.00 :   b1fed2: sraiw   t2,t2,0xe
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b1fed6: mulw    a0,a0,s1
+         : 1336   t14a = (dctint)(IN(9)  * 10394U + IN(7)  * 12665U + (1 << 13)) >> 14;
+    0.00 :   b1feda: mulw    s1,t6,s1
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b1fede: addw    a0,a0,a5
+    0.00 :   b1fee0: mulw    t6,t6,s3
+         : 1336   t14a = (dctint)(IN(9)  * 10394U + IN(7)  * 12665U + (1 << 13)) >> 14;
+    0.00 :   b1fee4: addw    s2,s1,s2
+    0.00 :   b1fee8: addw    s2,a5,s2
+    0.00 :   b1feec: sraiw   s2,s2,0xe
+         : 1356   t14 = t15a - t14a;
+    0.00 :   b1fef0: subw    s1,t2,s2
+         : 1357   t15 = t15a + t14a;
+    0.00 :   b1fef4: addw    t2,t2,s2
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    6.82 :   b1fef8: lw      s3,64(sp)
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b1fefa: subw    a0,a0,t6
+    0.00 :   b1fefe: sraiw   s2,a0,0xe
+         : 1351   t9  = t8a  - t9a;
+    0.00 :   b1ff02: subw    a0,a6,s2
+         : 1361   t9a  = (dctint)(  t14 *  6270U - t9  * 15137U  + (1 << 13)) >> 14;
+    0.00 :   b1ff06: mulw    t6,s7,s1
+         : 1350   t8  = t8a  + t9a;
+    0.00 :   b1ff0a: addw    a6,a6,s2
+         : 1361   t9a  = (dctint)(  t14 *  6270U - t9  * 15137U  + (1 << 13)) >> 14;
+    0.00 :   b1ff0e: mulw    s2,s6,a0
+    0.00 :   b1ff12: addw    t6,a5,t6
+         : 1362   t14a = (dctint)(  t14 * 15137U + t9  *  6270U  + (1 << 13)) >> 14;
+    2.27 :   b1ff16: mulw    s1,s6,s1
+         : 1361   t9a  = (dctint)(  t14 *  6270U - t9  * 15137U  + (1 << 13)) >> 14;
+    0.00 :   b1ff1a: subw    t6,t6,s2
+         : 1338   t13a = (dctint)(IN(5)  * 14449U + IN(11) *  7723U + (1 << 13)) >> 14;
+    0.00 :   b1ff1e: lw      s2,80(sp)
+         : 1361   t9a  = (dctint)(  t14 *  6270U - t9  * 15137U  + (1 << 13)) >> 14;
+    0.00 :   b1ff20: sraiw   t6,t6,0xe
+         : 1362   t14a = (dctint)(  t14 * 15137U + t9  *  6270U  + (1 << 13)) >> 14;
+    0.00 :   b1ff24: mulw    a0,s7,a0
+    0.00 :   b1ff28: addw    a0,a0,s1
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    0.00 :   b1ff2a: mulw    s1,t4,s3
+         : 1362   t14a = (dctint)(  t14 * 15137U + t9  *  6270U  + (1 << 13)) >> 14;
+    0.00 :   b1ff2e: addw    a0,a0,a5
+    0.00 :   b1ff30: sraiw   a0,a0,0xe
+         : 1338   t13a = (dctint)(IN(5)  * 14449U + IN(11) *  7723U + (1 << 13)) >> 14;
+    2.27 :   b1ff34: mulw    t4,t4,s2
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    0.00 :   b1ff38: addw    s1,s1,a5
+    0.00 :   b1ff3a: mulw    s2,a7,s2
+         : 1338   t13a = (dctint)(IN(5)  * 14449U + IN(11) *  7723U + (1 << 13)) >> 14;
+    0.00 :   b1ff3e: mulw    a7,a7,s3
+         : 1340   t12a = (dctint)(IN(13) *  4756U + IN(3)  * 15679U + (1 << 13)) >> 14;
+    0.00 :   b1ff42: lw      s3,112(sp)
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    0.00 :   b1ff44: subw    s1,s1,s2
+    0.00 :   b1ff48: sraiw   s1,s1,0xe
+         : 1338   t13a = (dctint)(IN(5)  * 14449U + IN(11) *  7723U + (1 << 13)) >> 14;
+    0.00 :   b1ff4c: addw    t4,a7,t4
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b1ff50: lw      a7,92(sp)
+         : 1340   t12a = (dctint)(IN(13) *  4756U + IN(3)  * 15679U + (1 << 13)) >> 14;
+    0.00 :   b1ff52: mulw    s2,t5,s3
+         : 1338   t13a = (dctint)(IN(5)  * 14449U + IN(11) *  7723U + (1 << 13)) >> 14;
+    0.00 :   b1ff56: addw    t4,a5,t4
+    0.00 :   b1ff5a: sraiw   t4,t4,0xe
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b1ff5e: mulw    t5,t5,a7
+         : 1340   t12a = (dctint)(IN(13) *  4756U + IN(3)  * 15679U + (1 << 13)) >> 14;
+    0.00 :   b1ff62: mulw    a7,s10,a7
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b1ff66: addw    t5,a5,t5
+    0.00 :   b1ff6a: mulw    s10,s10,s3
+         : 1340   t12a = (dctint)(IN(13) *  4756U + IN(3)  * 15679U + (1 << 13)) >> 14;
+    0.00 :   b1ff6e: addw    a7,a7,s2
+    0.00 :   b1ff72: addw    a7,a5,a7
+    0.00 :   b1ff76: sraiw   a7,a7,0xe
+         : 1355   t13 = t12a - t13a;
+    0.00 :   b1ff7a: subw    s2,a7,t4
+         : 1354   t12 = t12a + t13a;
+    0.00 :   b1ff7e: addw    a7,t4,a7
+         : 1378   t12a = t15  - t12;
+    0.00 :   b1ff82: subw    t4,t2,a7
+         : 1388   out[ 0] = t0a + t15a;
+    0.00 :   b1ff86: addw    a7,a7,t2
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    2.27 :   b1ff8a: lw      s3,24(sp)
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b1ff8c: subw    t5,t5,s10
+    0.00 :   b1ff90: sraiw   t5,t5,0xe
+         : 1352   t10 = t11a - t10a;
+    0.00 :   b1ff94: subw    t2,t5,s1
+         : 1353   t11 = t11a + t10a;
+    0.00 :   b1ff98: addw    s1,s1,t5
+         : 1377   t11a = t8   - t11;
+    0.00 :   b1ff9c: subw    t5,a6,s1
+         : 1363   t10a = (dctint)(-(t13 * 15137U + t10 *  6270U) + (1 << 13)) >> 14;
+    0.00 :   b1ffa0: mulw    s10,s6,s2
+         : 1395   out[ 7] = t7  + t8a;
+    0.00 :   b1ffa4: addw    a6,a6,s1
+         : 1386   t12  = (dctint)((t12a + t11a) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b1ffa8: addw    s1,t5,t4
+         : 1385   t11  = (dctint)((t12a - t11a) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b1ffac: subw    t4,t4,t5
+         : 1364   t13a = (dctint)(  t13 *  6270U - t10 * 15137U  + (1 << 13)) >> 14;
+    0.00 :   b1ffb0: mulw    t5,s7,s2
+         : 1363   t10a = (dctint)(-(t13 * 15137U + t10 *  6270U) + (1 << 13)) >> 14;
+    0.00 :   b1ffb4: mulw    s2,s7,t2
+         : 1364   t13a = (dctint)(  t13 *  6270U - t10 * 15137U  + (1 << 13)) >> 14;
+    0.00 :   b1ffb8: addw    t5,a5,t5
+    0.00 :   b1ffbc: mulw    t2,s6,t2
+         : 1363   t10a = (dctint)(-(t13 * 15137U + t10 *  6270U) + (1 << 13)) >> 14;
+    0.00 :   b1ffc0: addw    s2,s2,s10
+    0.00 :   b1ffc4: subw    s2,a5,s2
+    0.00 :   b1ffc8: sraiw   s2,s2,0xe
+         : 1376   t10  = t9a  - t10a;
+    0.00 :   b1ffcc: subw    s10,t6,s2
+         : 1394   out[ 6] = t6  + t9;
+    0.00 :   b1ffd0: addw    t6,t6,s2
+         : 1364   t13a = (dctint)(  t13 *  6270U - t10 * 15137U  + (1 << 13)) >> 14;
+    2.27 :   b1ffd4: subw    t5,t5,t2
+    0.00 :   b1ffd8: sraiw   s2,t5,0xe
+         : 1379   t13  = t14a - t13a;
+    0.00 :   b1ffdc: subw    t5,a0,s2
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b1ffe0: mulw    t2,t1,s9
+         : 1389   out[ 1] = t1a + t14;
+    0.00 :   b1ffe4: addw    a0,a0,s2
+         : 1384   t13a = (dctint)((t13  + t10)  * 11585U + (1 << 13)) >> 14;
+    0.00 :   b1ffe8: addw    s2,s10,t5
+         : 1383   t10a = (dctint)((t13  - t10)  * 11585U + (1 << 13)) >> 14;
+    0.00 :   b1ffec: subw    t5,t5,s10
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b1fff0: mulw    s10,a1,s11
+    0.00 :   b1fff4: addw    t2,a5,t2
+         : 1330   t7a  = (dctint)(IN(2)  * 16069U + IN(14) *  3196U + (1 << 13)) >> 14;
+    0.00 :   b1fff8: mulw    a1,a1,s9
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b1fffc: subw    t2,t2,s10
+    0.00 :   b20000: sraiw   t2,t2,0xe
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20004: mulw    s10,t0,s3
+         : 1330   t7a  = (dctint)(IN(2)  * 16069U + IN(14) *  3196U + (1 << 13)) >> 14;
+    0.00 :   b20008: mulw    t1,t1,s11
+         : 1332   t6a  = (dctint)(IN(10) *  9102U + IN(6)  * 13623U + (1 << 13)) >> 14;
+    0.00 :   b2000c: mulw    t0,t0,s8
+         : 1330   t7a  = (dctint)(IN(2)  * 16069U + IN(14) *  3196U + (1 << 13)) >> 14;
+    0.00 :   b20010: addw    t1,a1,t1
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20014: addw    a1,a5,s10
+         : 1330   t7a  = (dctint)(IN(2)  * 16069U + IN(14) *  3196U + (1 << 13)) >> 14;
+    0.00 :   b20018: addw    t1,a5,t1
+    0.00 :   b2001c: sraiw   t1,t1,0xe
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20020: mulw    s10,t3,s8
+         : 1332   t6a  = (dctint)(IN(10) *  9102U + IN(6)  * 13623U + (1 << 13)) >> 14;
+    0.00 :   b20024: mulw    t3,t3,s3
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20028: subw    a1,a1,s10
+    0.00 :   b2002c: sraiw   s10,a1,0xe
+         : 1326   t1a  = (dctint)((IN(0) - IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20030: ld      s3,8(sp)
+         : 1347   t5  = t4a  - t5a;
+    0.00 :   b20032: subw    a1,t2,s10
+         : 1346   t4  = t4a  + t5a;
+    0.00 :   b20036: addw    t2,t2,s10
+         : 1332   t6a  = (dctint)(IN(10) *  9102U + IN(6)  * 13623U + (1 << 13)) >> 14;
+    2.27 :   b2003a: addw    t3,t3,t0
+    0.00 :   b2003e: addw    t3,a5,t3
+    0.00 :   b20042: sraiw   t3,t3,0xe
+         : 1348   t6  = t7a  - t6a;
+    0.00 :   b20046: subw    s10,t1,t3
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b2004a: mulw    t0,s4,s7
+         : 1349   t7  = t7a  + t6a;
+    0.00 :   b2004e: addw    t1,t1,t3
+         : 1359   t5a  = (dctint)((t6 - t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20052: subw    t3,s10,a1
+         : 1360   t6a  = (dctint)((t6 + t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20056: addw    a1,a1,s10
+         : 1328   t3a  = (dctint)(IN(4)  * 15137U + IN(12) *  6270U + (1 << 13)) >> 14;
+    0.00 :   b2005a: mulw    s4,s4,s6
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b2005e: addw    t0,a5,t0
+    0.00 :   b20062: mulw    s10,a4,s6
+         : 1328   t3a  = (dctint)(IN(4)  * 15137U + IN(12) *  6270U + (1 << 13)) >> 14;
+    0.00 :   b20066: mulw    a4,a4,s7
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b2006a: subw    t0,t0,s10
+    0.00 :   b2006e: sraiw   t0,t0,0xe
+         : 1326   t1a  = (dctint)((IN(0) - IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20072: mulw    s3,s5,s3
+         : 1328   t3a  = (dctint)(IN(4)  * 15137U + IN(12) *  6270U + (1 << 13)) >> 14;
+    0.00 :   b20076: addw    a4,a4,s4
+    0.00 :   b2007a: addw    a4,a4,a5
+    0.00 :   b2007c: sraiw   a4,a4,0xe
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20080: mulw    s0,s5,s0
+         : 1326   t1a  = (dctint)((IN(0) - IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20084: addw    s3,a5,s3
+    0.00 :   b20088: sraiw   s3,s3,0xe
+         : 1344   t2  = t1a  - t2a;
+    0.00 :   b2008c: subw    s10,s3,t0
+         : 1343   t1  = t1a  + t2a;
+    0.00 :   b20090: addw    t0,s3,t0
+         : 1360   t6a  = (dctint)((t6 + t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20094: mulw    a1,s5,a1
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20098: addw    s0,s0,a5
+    0.00 :   b2009a: sraiw   s0,s0,0xe
+         : 1345   t3  = t0a  - t3a;
+    0.00 :   b2009e: subw    s3,s0,a4
+         : 1342   t0  = t0a  + t3a;
+    0.00 :   b200a2: addw    a4,a4,s0
+         : 1391   out[ 3] = t3a + t12;
+    0.00 :   b200a4: addw    s0,s3,t2
+         : 1392   out[ 4] = t4  + t11;
+    0.00 :   b200a8: subw    s3,s3,t2
+         : 1388   out[ 0] = t0a + t15a;
+    0.00 :   b200ac: addw    t2,a4,t1
+         : 1395   out[ 7] = t7  + t8a;
+    0.00 :   b200b0: subw    a4,a4,t1
+         : 1359   t5a  = (dctint)((t6 - t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b200b4: mulw    t3,s5,t3
+         : 1360   t6a  = (dctint)((t6 + t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b200b8: addw    a1,a1,a5
+    0.00 :   b200ba: sraiw   a1,a1,0xe
+         : 1384   t13a = (dctint)((t13  + t10)  * 11585U + (1 << 13)) >> 14;
+    0.00 :   b200be: mulw    s2,s5,s2
+         : 1359   t5a  = (dctint)((t6 - t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b200c2: addw    t3,a5,t3
+    0.00 :   b200c6: sraiw   t1,t3,0xe
+         : 1388   out[ 0] = t0a + t15a;
+    0.00 :   b200ca: addw    t3,t2,a7
+         : 1403   out[15] = t0a - t15a;
+    0.00 :   b200ce: subw    t2,t2,a7
+         : 1395   out[ 7] = t7  + t8a;
+    0.00 :   b200d2: addw    a7,a4,a6
+         : 1396   out[ 8] = t7  - t8a;
+    2.27 :   b200d6: subw    a4,a4,a6
+         : 1389   out[ 1] = t1a + t14;
+    0.00 :   b200da: addw    a6,t0,a1
+         : 1390   out[ 2] = t2a + t13a;
+    0.00 :   b200de: addw    s4,s10,t1
+         : 1388   out[ 0] = t0a + t15a;
+    0.00 :   b200e2: sh      t3,-32(a3)
+         : 1384   t13a = (dctint)((t13  + t10)  * 11585U + (1 << 13)) >> 14;
+    0.00 :   b200e6: addw    s2,a5,s2
+         : 1389   out[ 1] = t1a + t14;
+    0.00 :   b200ea: addw    t3,a6,a0
+         : 1390   out[ 2] = t2a + t13a;
+    0.00 :   b200ee: srai    s2,s2,0xe
+         : 1402   out[14] = t1a - t14;
+    0.00 :   b200f2: subw    a6,a6,a0
+         : 1389   out[ 1] = t1a + t14;
+    0.00 :   b200f6: sh      t3,-30(a3)
+         : 1394   out[ 6] = t6  + t9;
+    0.00 :   b200fa: subw    a1,t0,a1
+         : 1390   out[ 2] = t2a + t13a;
+    0.00 :   b200fe: addw    t3,s4,s2
+         : 1401   out[13] = t2a - t13a;
+    0.00 :   b20102: subw    s4,s4,s2
+         : 1402   out[14] = t1a - t14;
+    0.00 :   b20106: sh      a6,-4(a3)
+         : 1394   out[ 6] = t6  + t9;
+    0.00 :   b2010a: addw    t0,a1,t6
+         : 1390   out[ 2] = t2a + t13a;
+    0.00 :   b2010e: sh      t3,-28(a3)
+         : 1397   out[ 9] = t6  - t9;
+    0.00 :   b20112: subw    a1,a1,t6
+         : 1401   out[13] = t2a - t13a;
+    0.00 :   b20116: sh      s4,-6(a3)
+         : 1394   out[ 6] = t6  + t9;
+    0.00 :   b2011a: sh      t0,-20(a3)
+         : 1383   t10a = (dctint)((t13  - t10)  * 11585U + (1 << 13)) >> 14;
+    0.00 :   b2011e: mulw    a0,s5,t5
+         : 1397   out[ 9] = t6  - t9;
+    0.00 :   b20122: sh      a1,-14(a3)
+         : 1396   out[ 8] = t7  - t8a;
+    0.00 :   b20126: sh      a4,-16(a3)
+         : 1393   out[ 5] = t5  + t10a;
+    0.00 :   b2012a: subw    t1,s10,t1
+         : 1403   out[15] = t0a - t15a;
+    0.00 :   b2012e: sh      t2,-2(a3)
+         : 1395   out[ 7] = t7  + t8a;
+    0.00 :   b20132: sh      a7,-18(a3)
+         : 1386   t12  = (dctint)((t12a + t11a) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20136: mulw    a1,s5,s1
+         : 1383   t10a = (dctint)((t13  - t10)  * 11585U + (1 << 13)) >> 14;
+    0.00 :   b2013a: addw    a0,a0,a5
+         : 1393   out[ 5] = t5  + t10a;
+    0.00 :   b2013c: srai    a0,a0,0xe
+    0.00 :   b2013e: addw    a6,t1,a0
+         : 1398   out[10] = t5  - t10a;
+    0.00 :   b20142: subw    t1,t1,a0
+         : 1393   out[ 5] = t5  + t10a;
+    2.27 :   b20146: sh      a6,-22(a3)
+         : 1398   out[10] = t5  - t10a;
+    0.00 :   b2014a: sh      t1,-12(a3)
+         : 1385   t11  = (dctint)((t12a - t11a) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b2014e: mulw    a4,s5,t4
+         : 1386   t12  = (dctint)((t12a + t11a) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20152: addw    a1,a1,a5
+         : 1391   out[ 3] = t3a + t12;
+    0.00 :   b20154: srai    a1,a1,0xe
+    0.00 :   b20156: addw    a0,s0,a1
+         : 1400   out[12] = t3a - t12;
+    0.00 :   b2015a: subw    s0,s0,a1
+         : 1391   out[ 3] = t3a + t12;
+    0.00 :   b2015c: sh      a0,-26(a3)
+         : 1400   out[12] = t3a - t12;
+    0.00 :   b20160: sh      s0,-8(a3)
+         : 1385   t11  = (dctint)((t12a - t11a) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20164: addw    a4,a4,a5
+         : 1392   out[ 4] = t4  + t11;
+    0.00 :   b20166: srai    a4,a4,0xe
+    0.00 :   b20168: addw    a1,s3,a4
+         : 1399   out[11] = t4  - t11;
+    0.00 :   b2016c: subw    s3,s3,a4
+         : 1401   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b20170: ld      a4,16(sp)
+         : 1511   idct16_1d():
+         : 1392   out[ 4] = t4  + t11;
+    0.00 :   b20172: sh      a1,-24(a3)
+         : 1399   out[11] = t4  - t11;
+    0.00 :   b20176: sh      s3,-10(a3)
+         : 1401   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b2017a: bne     a4,a3,b1fe4a <idct_idct_16x16_add_c.part.0+0xc0>
+    0.00 :   b2017e: ld      a0,104(sp)
+    0.00 :   b20180: li      a2,512
+    0.00 :   b20184: li      a1,0
+    0.00 :   b20186: auipc   ra,0xff605
+    0.00 :   b2018a: jalr    1226(ra) # 125650 <memset@plt>
+    0.00 :   b2018e: ld      s11,72(sp)
+    0.00 :   b20190: ld      s8,0(sp)
+         : 1511   idct16_1d():
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b20192: lui     a5,0x3
+         : 1337   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b20194: slli    s0,s11,0x1
+    0.00 :   b20198: add     s7,s0,s11
+    0.00 :   b2019c: slli    t6,s11,0x3
+    0.00 :   b201a0: slli    s5,s7,0x2
+    0.00 :   b201a4: sub     t0,t6,s11
+    0.00 :   b201a8: sub     s1,s5,s11
+    0.00 :   b201ac: add     s1,s1,s8
+    0.00 :   b201ae: slli    t2,t0,0x1
+    0.00 :   b201b2: sd      s1,56(sp)
+    0.00 :   b201b4: add     s1,t2,s8
+    0.00 :   b201b8: slli    t5,s11,0x4
+    0.00 :   b201bc: sd      s1,64(sp)
+    0.00 :   b201be: add     s1,s8,t0
+    0.00 :   b201c2: add     s0,s0,s8
+         : 1524   idct16_1d():
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b201c4: addiw   a5,a5,-1894 # 289a <offset+0x279a>
+         : 1337   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b201c8: sub     t5,t5,s11
+    0.00 :   b201cc: sd      s1,40(sp)
+    0.00 :   b201ce: add     s1,t6,s8
+    0.00 :   b201d2: slli    t3,s11,0x2
+    0.00 :   b201d6: add     s6,t6,s11
+    0.00 :   b201da: sd      s0,16(sp)
+    0.00 :   b201dc: sd      s1,48(sp)
+    0.00 :   b201de: mv      s0,s8
+    0.00 :   b201e0: add     s1,t5,s8
+         : 1519   idct16_1d():
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    2.27 :   b201e4: sw      a5,140(sp)
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    0.00 :   b201e6: lui     a5,0x2
+    0.00 :   b201e8: addiw   a5,a5,-469 # 1e2b <offset+0x1d2b>
+    0.00 :   b201ec: sd      s1,80(sp)
+         : 1341   av_clip_uint8_c():
+         : 212    * @param a value to clip
+         : 213    * @return clipped value
+         : 214    */
+         : 215    static av_always_inline av_const uint8_t av_clip_uint8_c(int a)
+         : 216    {
+         : 217    if (a&(~0xFF)) return (~a)>>31;
+    0.00 :   b201ee: add     s9,s6,s0
+    0.00 :   b201f2: add     s1,t3,s0
+    0.00 :   b201f6: add     s0,s0,s11
+    0.00 :   b201f8: sd      s0,8(sp)
+         : 222    idct16_1d():
+    0.00 :   b201fa: sw      a5,144(sp)
+    0.00 :   b201fc: ld      s0,96(sp)
+    0.00 :   b201fe: lui     a5,0x4
+    0.00 :   b20200: addiw   a5,a5,-1935 # 3871 <offset+0x3771>
+    0.00 :   b20204: sw      a5,148(sp)
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b20206: lui     a5,0x4
+    0.00 :   b20208: addiw   a5,a5,-705 # 3d3f <offset+0x3c3f>
+    0.00 :   b2020c: sd      s1,32(sp)
+    0.00 :   b2020e: addi    s1,s0,32
+    0.00 :   b20212: sd      s1,104(sp)
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b20214: lui     a0,0x4
+    0.00 :   b20216: lui     s1,0x1
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20218: lui     a1,0x3
+    0.00 :   b2021a: lui     a2,0x2
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b2021c: lui     a3,0x4
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b2021e: lui     a4,0x3
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b20220: sw      a5,152(sp)
+    0.00 :   b20222: lui     a5,0x1
+    0.00 :   b20224: add     s7,s7,s8
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20226: addiw   a1,a1,1335 # 3537 <offset+0x3437>
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b2022a: addiw   a5,a5,660 # 1294 <offset+0x1194>
+         : 1341   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b2022e: add     t4,t3,s11
+         : 1511   idct16_1d():
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20232: lui     s2,0x3
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b20234: lui     s4,0x2
+    0.00 :   b20236: lui     s3,0x4
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b20238: addiw   s1,s1,-900 # c7c <offset+0xb7c>
+    0.00 :   b2023c: addiw   a0,a0,-315 # 3ec5 <offset+0x3dc5>
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20240: addiw   a2,a2,910 # 238e <offset+0x228e>
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b20244: addiw   a3,a3,-79 # 3fb1 <offset+0x3eb1>
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b20248: addiw   a4,a4,377 # 3179 <offset+0x3079>
+    0.00 :   b2024c: add     s5,s5,s8
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b2024e: sw      a1,124(sp)
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b20250: sw      a5,156(sp)
+    0.00 :   b20252: sd      s7,24(sp)
+    0.00 :   b20254: add     s8,s8,t4
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20256: addiw   s2,s2,-703 # 2d41 <offset+0x2c41>
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b2025a: addiw   s4,s4,-1922 # 187e <offset+0x177e>
+    0.00 :   b2025e: addiw   s3,s3,-1247 # 3b21 <offset+0x3a21>
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b20262: sw      s1,116(sp)
+    0.00 :   b20264: sw      a0,120(sp)
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20266: sw      a2,128(sp)
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b20268: sw      a3,132(sp)
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b2026a: sw      a4,136(sp)
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b2026c: lui     a5,0x2
+         : 1327   av_clip_uint8_c():
+    0.00 :   b2026e: li      t1,255
+    0.00 :   b20272: mv      a1,s0
+         : 214    idct16_1d():
+    0.00 :   b20274: lh      t6,256(a1)
+    0.00 :   b20278: lh      s0,0(a1)
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b2027c: lh      s10,384(a1)
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20280: lh      a0,192(a1)
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b20284: lh      s1,32(a1)
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b20288: sw      s10,112(sp)
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    2.27 :   b2028a: addw    s10,s0,t6
+         : 1326   t1a  = (dctint)((IN(0) - IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b2028e: subw    s0,s0,t6
+         : 1328   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b20292: ld      t6,0(sp)
+         : 1511   idct16_1d():
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b20294: lh      a7,480(a1)
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20298: sw      a0,92(sp)
+         : 1333   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b2029a: lbu     t6,0(t6)
+         : 1511   idct16_1d():
+         : 1334   t15a = (dctint)(IN(1)  * 16305U + IN(15) *  1606U + (1 << 13)) >> 14;
+    0.00 :   b2029e: lw      a0,132(sp)
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b202a0: li      a4,1606
+    0.00 :   b202a4: mulw    s6,s1,a4
+         : 1336   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b202a8: sw      t6,96(sp)
+         : 1511   idct16_1d():
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b202aa: lh      a3,288(a1)
+    0.00 :   b202ae: lh      t3,224(a1)
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    0.00 :   b202b2: lh      t2,160(a1)
+    0.00 :   b202b6: lh      a6,352(a1)
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    2.27 :   b202ba: lh      a2,416(a1)
+    0.00 :   b202be: lh      t5,96(a1)
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    4.55 :   b202c2: lh      s11,64(a1)
+    0.00 :   b202c6: lh      t0,448(a1)
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    2.27 :   b202ca: mulw    t6,a7,a0
+    0.00 :   b202ce: addw    s6,a5,s6
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b202d2: lh      s7,320(a1)
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b202d6: lh      t4,128(a1)
+         : 1334   t15a = (dctint)(IN(1)  * 16305U + IN(15) *  1606U + (1 << 13)) >> 14;
+    2.27 :   b202da: mulw    s1,s1,a0
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b202de: subw    t6,s6,t6
+         : 1336   t14a = (dctint)(IN(9)  * 10394U + IN(7)  * 12665U + (1 << 13)) >> 14;
+    0.00 :   b202e2: lw      a0,140(sp)
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b202e4: lw      s6,136(sp)
+         : 1333   t8a  = (dctint)(IN(1)  *  1606U - IN(15) * 16305U + (1 << 13)) >> 14;
+    0.00 :   b202e6: sraiw   t6,t6,0xe
+         : 1334   t15a = (dctint)(IN(1)  * 16305U + IN(15) *  1606U + (1 << 13)) >> 14;
+    0.00 :   b202ea: mulw    a7,a7,a4
+         : 1338   t13a = (dctint)(IN(5)  * 14449U + IN(11) *  7723U + (1 << 13)) >> 14;
+    0.00 :   b202ee: lw      a4,148(sp)
+         : 1334   t15a = (dctint)(IN(1)  * 16305U + IN(15) *  1606U + (1 << 13)) >> 14;
+    0.00 :   b202f0: addw    a7,a7,s1
+         : 1336   t14a = (dctint)(IN(9)  * 10394U + IN(7)  * 12665U + (1 << 13)) >> 14;
+    0.00 :   b202f4: mulw    s1,a3,a0
+         : 1334   t15a = (dctint)(IN(1)  * 16305U + IN(15) *  1606U + (1 << 13)) >> 14;
+    0.00 :   b202f8: addw    a7,a5,a7
+    0.00 :   b202fc: sraiw   a7,a7,0xe
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b20300: mulw    a3,a3,s6
+         : 1336   t14a = (dctint)(IN(9)  * 10394U + IN(7)  * 12665U + (1 << 13)) >> 14;
+    0.00 :   b20304: mulw    s6,t3,s6
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b20308: addw    a3,a3,a5
+         : 1336   t14a = (dctint)(IN(9)  * 10394U + IN(7)  * 12665U + (1 << 13)) >> 14;
+    0.00 :   b2030a: addw    s6,s6,s1
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    2.27 :   b2030e: mulw    t3,t3,a0
+         : 1336   t14a = (dctint)(IN(9)  * 10394U + IN(7)  * 12665U + (1 << 13)) >> 14;
+    0.00 :   b20312: addw    s6,a5,s6
+    0.00 :   b20316: sraiw   s6,s6,0xe
+         : 1356   t14 = t15a - t14a;
+    4.55 :   b2031a: subw    s1,a7,s6
+         : 1357   t15 = t15a + t14a;
+    0.00 :   b2031e: addw    a7,a7,s6
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    0.00 :   b20322: lw      a0,144(sp)
+         : 1361   t9a  = (dctint)(  t14 *  6270U - t9  * 15137U  + (1 << 13)) >> 14;
+    0.00 :   b20324: mulw    s6,s4,s1
+         : 1335   t9a  = (dctint)(IN(9)  * 12665U - IN(7)  * 10394U + (1 << 13)) >> 14;
+    0.00 :   b20328: subw    a3,a3,t3
+    0.00 :   b2032c: sraiw   a3,a3,0xe
+         : 1351   t9  = t8a  - t9a;
+    0.00 :   b20330: subw    t3,t6,a3
+         : 1350   t8  = t8a  + t9a;
+    0.00 :   b20334: addw    t6,t6,a3
+         : 1361   t9a  = (dctint)(  t14 *  6270U - t9  * 15137U  + (1 << 13)) >> 14;
+    4.55 :   b20338: addw    a3,a5,s6
+    2.27 :   b2033c: mulw    s6,s3,t3
+         : 1362   t14a = (dctint)(  t14 * 15137U + t9  *  6270U  + (1 << 13)) >> 14;
+    0.00 :   b20340: mulw    s1,s3,s1
+         : 1361   t9a  = (dctint)(  t14 *  6270U - t9  * 15137U  + (1 << 13)) >> 14;
+    0.00 :   b20344: subw    s6,a3,s6
+    0.00 :   b20348: sraiw   s6,s6,0xe
+         : 1362   t14a = (dctint)(  t14 * 15137U + t9  *  6270U  + (1 << 13)) >> 14;
+    0.00 :   b2034c: mulw    t3,s4,t3
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    0.00 :   b20350: mulw    a3,t2,a0
+         : 1362   t14a = (dctint)(  t14 * 15137U + t9  *  6270U  + (1 << 13)) >> 14;
+    0.00 :   b20354: addw    t3,t3,s1
+    0.00 :   b20358: addw    t3,a5,t3
+    0.00 :   b2035c: sraiw   t3,t3,0xe
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    0.00 :   b20360: mulw    s1,a6,a4
+    0.00 :   b20364: addw    a3,a3,a5
+         : 1338   t13a = (dctint)(IN(5)  * 14449U + IN(11) *  7723U + (1 << 13)) >> 14;
+    0.00 :   b20366: mulw    t2,t2,a4
+         : 1340   t12a = (dctint)(IN(13) *  4756U + IN(3)  * 15679U + (1 << 13)) >> 14;
+    0.00 :   b2036a: lw      a4,156(sp)
+         : 1337   t10a = (dctint)(IN(5)  *  7723U - IN(11) * 14449U + (1 << 13)) >> 14;
+    0.00 :   b2036c: subw    a3,a3,s1
+    0.00 :   b2036e: sraiw   a3,a3,0xe
+         : 1338   t13a = (dctint)(IN(5)  * 14449U + IN(11) *  7723U + (1 << 13)) >> 14;
+    0.00 :   b20372: mulw    a6,a6,a0
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b20376: lw      a0,152(sp)
+         : 1340   t12a = (dctint)(IN(13) *  4756U + IN(3)  * 15679U + (1 << 13)) >> 14;
+    0.00 :   b20378: mulw    s1,a2,a4
+         : 1338   t13a = (dctint)(IN(5)  * 14449U + IN(11) *  7723U + (1 << 13)) >> 14;
+    0.00 :   b2037c: addw    a6,a6,t2
+    0.00 :   b20380: addw    a6,a5,a6
+    0.00 :   b20384: sraiw   a6,a6,0xe
+         : 1340   t12a = (dctint)(IN(13) *  4756U + IN(3)  * 15679U + (1 << 13)) >> 14;
+    0.00 :   b20388: mulw    t2,t5,a0
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b2038c: mulw    a2,a2,a0
+         : 1340   t12a = (dctint)(IN(13) *  4756U + IN(3)  * 15679U + (1 << 13)) >> 14;
+    0.00 :   b20390: addw    t2,t2,s1
+    0.00 :   b20394: addw    t2,a5,t2
+    0.00 :   b20398: sraiw   t2,t2,0xe
+         : 1355   t13 = t12a - t13a;
+    0.00 :   b2039c: subw    s1,t2,a6
+         : 1354   t12 = t12a + t13a;
+    0.00 :   b203a0: addw    a6,a6,t2
+         : 1330   t7a  = (dctint)(IN(2)  * 16069U + IN(14) *  3196U + (1 << 13)) >> 14;
+    0.00 :   b203a4: lw      a0,120(sp)
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b203a6: mulw    t5,t5,a4
+    0.00 :   b203aa: addw    a2,a2,a5
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b203ac: lw      a4,116(sp)
+         : 1339   t11a = (dctint)(IN(13) * 15679U - IN(3)  *  4756U + (1 << 13)) >> 14;
+    0.00 :   b203ae: subw    a2,a2,t5
+    0.00 :   b203b2: sraiw   t5,a2,0xe
+         : 1352   t10 = t11a - t10a;
+    0.00 :   b203b6: subw    t2,t5,a3
+         : 1363   t10a = (dctint)(-(t13 * 15137U + t10 *  6270U) + (1 << 13)) >> 14;
+    2.27 :   b203ba: mulw    a2,s3,s1
+         : 1353   t11 = t11a + t10a;
+    0.00 :   b203be: addw    a3,a3,t5
+         : 1364   t13a = (dctint)(  t13 *  6270U - t10 * 15137U  + (1 << 13)) >> 14;
+    0.00 :   b203c2: mulw    s1,s4,s1
+         : 1363   t10a = (dctint)(-(t13 * 15137U + t10 *  6270U) + (1 << 13)) >> 14;
+    0.00 :   b203c6: mulw    t5,s4,t2
+         : 1364   t13a = (dctint)(  t13 *  6270U - t10 * 15137U  + (1 << 13)) >> 14;
+    0.00 :   b203ca: addw    s1,s1,a5
+    0.00 :   b203cc: mulw    t2,s3,t2
+         : 1363   t10a = (dctint)(-(t13 * 15137U + t10 *  6270U) + (1 << 13)) >> 14;
+    2.27 :   b203d0: addw    a2,t5,a2
+    0.00 :   b203d4: subw    a2,a5,a2
+    0.00 :   b203d8: sraiw   a2,a2,0xe
+         : 1364   t13a = (dctint)(  t13 *  6270U - t10 * 15137U  + (1 << 13)) >> 14;
+    0.00 :   b203dc: subw    s1,s1,t2
+    0.00 :   b203e0: sraiw   s1,s1,0xe
+         : 1376   t10  = t9a  - t10a;
+    0.00 :   b203e4: subw    t2,s6,a2
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b203e8: mulw    t5,s11,a4
+         : 1394   out[ 6] = t6  + t9;
+    0.00 :   b203ec: addw    s6,s6,a2
+         : 1379   t13  = t14a - t13a;
+    0.00 :   b203f0: subw    a2,t3,s1
+         : 1389   out[ 1] = t1a + t14;
+    0.00 :   b203f4: addw    t3,t3,s1
+         : 1384   t13a = (dctint)((t13  + t10)  * 11585U + (1 << 13)) >> 14;
+    0.00 :   b203f8: addw    s1,t2,a2
+         : 1383   t10a = (dctint)((t13  - t10)  * 11585U + (1 << 13)) >> 14;
+    0.00 :   b203fc: subw    a2,a2,t2
+         : 1330   t7a  = (dctint)(IN(2)  * 16069U + IN(14) *  3196U + (1 << 13)) >> 14;
+    0.00 :   b20400: mulw    s11,s11,a0
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b20404: addw    t5,a5,t5
+    0.00 :   b20408: mulw    t2,t0,a0
+         : 1332   t6a  = (dctint)(IN(10) *  9102U + IN(6)  * 13623U + (1 << 13)) >> 14;
+    0.00 :   b2040c: lw      a0,128(sp)
+         : 1330   t7a  = (dctint)(IN(2)  * 16069U + IN(14) *  3196U + (1 << 13)) >> 14;
+    0.00 :   b2040e: mulw    t0,t0,a4
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20412: lw      a4,124(sp)
+         : 1329   t4a  = (dctint)(IN(2)  *  3196U - IN(14) * 16069U + (1 << 13)) >> 14;
+    0.00 :   b20414: subw    t2,t5,t2
+    0.00 :   b20418: sraiw   t2,t2,0xe
+         : 1330   t7a  = (dctint)(IN(2)  * 16069U + IN(14) *  3196U + (1 << 13)) >> 14;
+    0.00 :   b2041c: addw    t5,t0,s11
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20420: mulw    s11,s7,a4
+         : 1330   t7a  = (dctint)(IN(2)  * 16069U + IN(14) *  3196U + (1 << 13)) >> 14;
+    0.00 :   b20424: addw    t5,a5,t5
+    0.00 :   b20428: sraiw   t5,t5,0xe
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b2042c: addw    t0,a5,s11
+    0.00 :   b20430: lw      s11,92(sp)
+         : 1332   t6a  = (dctint)(IN(10) *  9102U + IN(6)  * 13623U + (1 << 13)) >> 14;
+    0.00 :   b20432: mulw    s7,s7,a0
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20436: mulw    s11,s11,a0
+         : 1332   t6a  = (dctint)(IN(10) *  9102U + IN(6)  * 13623U + (1 << 13)) >> 14;
+    0.00 :   b2043a: lw      a0,92(sp)
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b2043c: subw    s11,t0,s11
+         : 1332   t6a  = (dctint)(IN(10) *  9102U + IN(6)  * 13623U + (1 << 13)) >> 14;
+    0.00 :   b20440: mulw    t0,a0,a4
+         : 1331   t5a  = (dctint)(IN(10) * 13623U - IN(6)  *  9102U + (1 << 13)) >> 14;
+    0.00 :   b20444: sraiw   s11,s11,0xe
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b20448: lw      a0,112(sp)
+         : 1347   t5  = t4a  - t5a;
+    0.00 :   b2044a: subw    a4,t2,s11
+         : 1346   t4  = t4a  + t5a;
+    0.00 :   b2044e: addw    t2,t2,s11
+         : 1332   t6a  = (dctint)(IN(10) *  9102U + IN(6)  * 13623U + (1 << 13)) >> 14;
+    0.00 :   b20452: addw    t0,t0,s7
+    0.00 :   b20456: addw    t0,a5,t0
+    0.00 :   b2045a: sraiw   t0,t0,0xe
+         : 1348   t6  = t7a  - t6a;
+    0.00 :   b2045e: subw    s7,t5,t0
+         : 1349   t7  = t7a  + t6a;
+    0.00 :   b20462: addw    t5,t5,t0
+         : 1359   t5a  = (dctint)((t6 - t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20466: subw    t0,s7,a4
+         : 1360   t6a  = (dctint)((t6 + t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b2046a: addw    a4,a4,s7
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b2046e: mulw    s7,t4,s4
+         : 1328   t3a  = (dctint)(IN(4)  * 15137U + IN(12) *  6270U + (1 << 13)) >> 14;
+    0.00 :   b20472: mulw    s11,t4,s3
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b20476: addw    s7,a5,s7
+         : 1326   t1a  = (dctint)((IN(0) - IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b2047a: mulw    t4,s2,s0
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b2047e: mulw    s0,a0,s3
+         : 1326   t1a  = (dctint)((IN(0) - IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20482: addw    t4,a5,t4
+    0.00 :   b20486: sraiw   t4,t4,0xe
+         : 1328   t3a  = (dctint)(IN(4)  * 15137U + IN(12) *  6270U + (1 << 13)) >> 14;
+    0.00 :   b2048a: mulw    a0,a0,s4
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b2048e: subw    s0,s7,s0
+         : 1377   t11a = t8   - t11;
+    0.00 :   b20492: subw    s7,t6,a3
+         : 1395   out[ 7] = t7  + t8a;
+    0.00 :   b20496: addw    t6,t6,a3
+         : 1378   t12a = t15  - t12;
+    0.00 :   b2049a: subw    a3,a7,a6
+         : 1388   out[ 0] = t0a + t15a;
+    0.00 :   b2049e: addw    a6,a6,a7
+         : 1386   t12  = (dctint)((t12a + t11a) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b204a2: addw    a7,s7,a3
+         : 1385   t11  = (dctint)((t12a - t11a) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b204a6: subw    a3,a3,s7
+         : 1327   t2a  = (dctint)(IN(4)  *  6270U - IN(12) * 15137U + (1 << 13)) >> 14;
+    0.00 :   b204aa: sraiw   s0,s0,0xe
+         : 1344   t2  = t1a  - t2a;
+    0.00 :   b204ae: subw    s7,t4,s0
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b204b2: mulw    s10,s2,s10
+         : 1328   t3a  = (dctint)(IN(4)  * 15137U + IN(12) *  6270U + (1 << 13)) >> 14;
+    0.00 :   b204b6: addw    a0,a0,s11
+    0.00 :   b204ba: addw    a0,a0,a5
+    0.00 :   b204bc: sraiw   a0,a0,0xe
+         : 1343   t1  = t1a  + t2a;
+    0.00 :   b204c0: addw    t4,t4,s0
+         : 1359   t5a  = (dctint)((t6 - t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b204c4: mulw    t0,s2,t0
+         : 1325   t0a  = (dctint)((IN(0) + IN(8)) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b204c8: addw    s10,a5,s10
+    0.00 :   b204cc: sraiw   s10,s10,0xe
+         : 1342   t0  = t0a  + t3a;
+    0.00 :   b204d0: addw    s11,s10,a0
+         : 1388   out[ 0] = t0a + t15a;
+    0.00 :   b204d4: addw    s0,s11,t5
+         : 1345   t3  = t0a  - t3a;
+    0.00 :   b204d8: subw    a0,s10,a0
+         : 1388   out[ 0] = t0a + t15a;
+    0.00 :   b204dc: addw    s10,s0,a6
+         : 1390   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b204e0: slliw   s10,s10,0x10
+         : 1511   idct16_1d():
+         : 1403   out[15] = t0a - t15a;
+    0.00 :   b204e4: subw    s0,s0,a6
+         : 1405   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b204e8: sraiw   s10,s10,0x10
+         : 1511   idct16_1d():
+         : 1360   t6a  = (dctint)((t6 + t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b204ec: mulw    a4,s2,a4
+         : 1362   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b204f0: lw      a6,96(sp)
+         : 1511   idct16_1d():
+         : 1359   t5a  = (dctint)((t6 - t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b204f2: addw    t0,a5,t0
+         : 1361   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b204f6: addiw   s10,s10,32
+         : 1511   idct16_1d():
+         : 1359   t5a  = (dctint)((t6 - t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b204fa: sraiw   t0,t0,0xe
+         : 1361   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b204fe: sraiw   s10,s10,0x6
+         : 1511   idct16_1d():
+         : 1395   out[ 7] = t7  + t8a;
+    0.00 :   b20502: subw    t5,s11,t5
+         : 1397   idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b20506: addw    s10,a6,s10
+         : 1511   idct16_1d():
+         : 1390   out[ 2] = t2a + t13a;
+    0.00 :   b2050a: addw    s11,s7,t0
+         : 1391   out[ 3] = t3a + t12;
+    0.00 :   b2050e: addw    a6,a0,t2
+         : 1383   t10a = (dctint)((t13  - t10)  * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20512: mulw    a2,s2,a2
+         : 1360   t6a  = (dctint)((t6 + t5) * 11585U + (1 << 13)) >> 14;
+    2.27 :   b20516: addw    a4,a4,a5
+         : 1393   out[ 5] = t5  + t10a;
+    0.00 :   b20518: subw    t0,s7,t0
+         : 1360   t6a  = (dctint)((t6 + t5) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b2051c: sraiw   a4,a4,0xe
+         : 1392   out[ 4] = t4  + t11;
+    0.00 :   b20520: subw    a0,a0,t2
+         : 1395   out[ 7] = t7  + t8a;
+    0.00 :   b20524: addw    s7,t5,t6
+         : 1389   out[ 1] = t1a + t14;
+    0.00 :   b20528: addw    t2,t4,a4
+         : 1396   out[ 8] = t7  - t8a;
+    0.00 :   b2052c: subw    t5,t5,t6
+         : 1394   out[ 6] = t6  + t9;
+    0.00 :   b20530: subw    a4,t4,a4
+         : 1389   out[ 1] = t1a + t14;
+    0.00 :   b20534: addw    t4,t2,t3
+         : 1386   t12  = (dctint)((t12a + t11a) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20538: mulw    a7,s2,a7
+         : 1383   t10a = (dctint)((t13  - t10)  * 11585U + (1 << 13)) >> 14;
+    0.00 :   b2053c: addw    a2,a2,a5
+         : 1393   out[ 5] = t5  + t10a;
+    0.00 :   b2053e: srai    a2,a2,0xe
+    4.55 :   b20540: addw    t6,t0,a2
+         : 1398   out[10] = t5  - t10a;
+    0.00 :   b20544: subw    a2,t0,a2
+         : 1402   out[14] = t1a - t14;
+    0.00 :   b20548: subw    t2,t2,t3
+         : 1394   out[ 6] = t6  + t9;
+    0.00 :   b2054c: addw    t3,a4,s6
+         : 1397   out[ 9] = t6  - t9;
+    0.00 :   b20550: subw    a4,a4,s6
+         : 1389   out[ 1] = t1a + t14;
+    0.00 :   b20554: slliw   t4,t4,0x10
+         : 1393   out[ 5] = t5  + t10a;
+    0.00 :   b20558: slliw   t6,t6,0x10
+         : 1384   t13a = (dctint)((t13  + t10)  * 11585U + (1 << 13)) >> 14;
+    0.00 :   b2055c: mulw    s1,s2,s1
+         : 1386   t12  = (dctint)((t12a + t11a) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20560: addw    a7,a5,a7
+         : 1391   out[ 3] = t3a + t12;
+    0.00 :   b20564: srai    a7,a7,0xe
+    0.00 :   b20568: addw    t0,a6,a7
+         : 1400   out[12] = t3a - t12;
+    0.00 :   b2056c: subw    a7,a6,a7
+         : 1391   out[ 3] = t3a + t12;
+    0.00 :   b20570: slliw   a6,t0,0x10
+         : 1398   out[10] = t5  - t10a;
+    0.00 :   b20574: slliw   a2,a2,0x10
+         : 1402   out[14] = t1a - t14;
+    0.00 :   b20578: slliw   t2,t2,0x10
+         : 1394   out[ 6] = t6  + t9;
+    0.00 :   b2057c: slliw   t3,t3,0x10
+         : 1397   out[ 9] = t6  - t9;
+    0.00 :   b20580: slliw   a4,a4,0x10
+         : 1385   t11  = (dctint)((t12a - t11a) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20584: mulw    a3,s2,a3
+         : 1384   t13a = (dctint)((t13  + t10)  * 11585U + (1 << 13)) >> 14;
+    0.00 :   b20588: addw    s1,s1,a5
+         : 1390   out[ 2] = t2a + t13a;
+    2.27 :   b2058a: srai    s1,s1,0xe
+    0.00 :   b2058c: addw    s6,s11,s1
+         : 1401   out[13] = t2a - t13a;
+    0.00 :   b20590: subw    s1,s11,s1
+         : 1390   out[ 2] = t2a + t13a;
+    0.00 :   b20594: slliw   s6,s6,0x10
+         : 1401   out[13] = t2a - t13a;
+    0.00 :   b20598: slliw   s1,s1,0x10
+         : 1400   out[12] = t3a - t12;
+    0.00 :   b2059c: slliw   a7,a7,0x10
+         : 1403   out[15] = t0a - t15a;
+    0.00 :   b205a0: slliw   s0,s0,0x10
+         : 1395   out[ 7] = t7  + t8a;
+    0.00 :   b205a4: slliw   s7,s7,0x10
+         : 1385   t11  = (dctint)((t12a - t11a) * 11585U + (1 << 13)) >> 14;
+    0.00 :   b205a8: addw    a3,a3,a5
+         : 1392   out[ 4] = t4  + t11;
+    0.00 :   b205aa: srai    a3,a3,0xe
+    0.00 :   b205ac: addw    t0,a0,a3
+         : 1399   out[11] = t4  - t11;
+    0.00 :   b205b0: subw    a3,a0,a3
+         : 1396   out[ 8] = t7  - t8a;
+    0.00 :   b205b4: slliw   t5,t5,0x10
+         : 1392   out[ 4] = t4  + t11;
+    2.27 :   b205b8: slliw   t0,t0,0x10
+         : 1399   out[11] = t4  - t11;
+    0.00 :   b205bc: slliw   a3,a3,0x10
+         : 1390   out[ 2] = t2a + t13a;
+    0.00 :   b205c0: sraiw   s6,s6,0x10
+         : 1401   out[13] = t2a - t13a;
+    0.00 :   b205c4: sraiw   s1,s1,0x10
+         : 1389   out[ 1] = t1a + t14;
+    0.00 :   b205c8: sraiw   t4,t4,0x10
+         : 1393   out[ 5] = t5  + t10a;
+    0.00 :   b205cc: sraiw   t6,t6,0x10
+         : 1398   out[10] = t5  - t10a;
+    0.00 :   b205d0: sraiw   a2,a2,0x10
+         : 1402   out[14] = t1a - t14;
+    0.00 :   b205d4: sraiw   t2,t2,0x10
+         : 1394   out[ 6] = t6  + t9;
+    0.00 :   b205d8: sraiw   t3,t3,0x10
+         : 1397   out[ 9] = t6  - t9;
+    0.00 :   b205dc: sraiw   a4,a4,0x10
+         : 1391   out[ 3] = t3a + t12;
+    0.00 :   b205e0: sraiw   a6,a6,0x10
+         : 1400   out[12] = t3a - t12;
+    0.00 :   b205e4: sraiw   a7,a7,0x10
+         : 1403   out[15] = t0a - t15a;
+    0.00 :   b205e8: sraiw   s0,s0,0x10
+         : 1395   out[ 7] = t7  + t8a;
+    0.00 :   b205ec: sraiw   s7,s7,0x10
+         : 1396   out[ 8] = t7  - t8a;
+    0.00 :   b205f0: sraiw   t5,t5,0x10
+         : 1392   out[ 4] = t4  + t11;
+    0.00 :   b205f4: sraiw   t0,t0,0x10
+         : 1399   out[11] = t4  - t11;
+    0.00 :   b205f8: sraiw   a3,a3,0x10
+         : 1401   av_clip_uint8_c():
+    0.00 :   b205fc: bgeu    t1,s10,b20608 <idct_idct_16x16_add_c.part.0+0x87e>
+    0.00 :   b20600: not     s10,s10
+    0.00 :   b20604: sraiw   s10,s10,0x1f
+         : 215    idct_idct_16x16_add_c():
+         : 1509   itxfm_wrap(16, 6)
+    0.00 :   b20608: ld      a0,0(sp)
+    0.00 :   b2060a: addiw   t4,t4,32
+    0.00 :   b2060e: sraiw   t4,t4,0x6
+    0.00 :   b20612: sb      s10,0(a0)
+    0.00 :   b20616: ld      a0,8(sp)
+    0.00 :   b20618: lbu     a0,0(a0)
+    0.00 :   b2061c: addw    a0,a0,t4
+         : 1517   av_clip_uint8_c():
+    0.00 :   b20620: bgeu    t1,a0,b2062c <idct_idct_16x16_add_c.part.0+0x8a2>
+    0.00 :   b20624: not     a0,a0
+    0.00 :   b20628: sraiw   a0,a0,0x1f
+         : 215    idct_idct_16x16_add_c():
+    0.00 :   b2062c: ld      t4,8(sp)
+    0.00 :   b2062e: addiw   s6,s6,32
+    0.00 :   b20632: sraiw   s6,s6,0x6
+    0.00 :   b20636: sb      a0,0(t4)
+    0.00 :   b2063a: ld      a0,16(sp)
+    0.00 :   b2063c: lbu     a0,0(a0)
+    0.00 :   b20640: addw    a0,a0,s6
+         : 1516   av_clip_uint8_c():
+    0.00 :   b20644: bgeu    t1,a0,b20650 <idct_idct_16x16_add_c.part.0+0x8c6>
+    0.00 :   b20648: not     a0,a0
+    0.00 :   b2064c: sraiw   a0,a0,0x1f
+         : 215    idct_idct_16x16_add_c():
+    0.00 :   b20650: ld      t4,16(sp)
+    0.00 :   b20652: addiw   a6,a6,32
+    0.00 :   b20656: sraiw   a6,a6,0x6
+    0.00 :   b2065a: sb      a0,0(t4)
+    0.00 :   b2065e: ld      a0,24(sp)
+    0.00 :   b20660: lbu     a0,0(a0)
+    0.00 :   b20664: addw    a0,a0,a6
+         : 1516   av_clip_uint8_c():
+    0.00 :   b20668: bgeu    t1,a0,b20674 <idct_idct_16x16_add_c.part.0+0x8ea>
+    0.00 :   b2066c: not     a0,a0
+    0.00 :   b20670: sraiw   a0,a0,0x1f
+         : 215    idct_idct_16x16_add_c():
+    0.00 :   b20674: ld      a6,24(sp)
+    0.00 :   b20676: addiw   t0,t0,32
+    0.00 :   b2067a: sraiw   t0,t0,0x6
+    0.00 :   b2067e: sb      a0,0(a6)
+    2.27 :   b20682: ld      a0,32(sp)
+    0.00 :   b20684: lbu     a0,0(a0)
+    0.00 :   b20688: addw    a0,a0,t0
+         : 1516   av_clip_uint8_c():
+    0.00 :   b2068c: bgeu    t1,a0,b20698 <idct_idct_16x16_add_c.part.0+0x90e>
+    0.00 :   b20690: not     a0,a0
+    0.00 :   b20694: sraiw   a0,a0,0x1f
+         : 215    idct_idct_16x16_add_c():
+    0.00 :   b20698: ld      a6,32(sp)
+    0.00 :   b2069a: addiw   t6,t6,32
+    0.00 :   b2069e: sraiw   t6,t6,0x6
+    0.00 :   b206a2: sb      a0,0(a6)
+    0.00 :   b206a6: lbu     a0,0(s8)
+    2.27 :   b206aa: addw    a0,a0,t6
+         : 1515   av_clip_uint8_c():
+    0.00 :   b206ae: bgeu    t1,a0,b206ba <idct_idct_16x16_add_c.part.0+0x930>
+    0.00 :   b206b2: not     a0,a0
+    0.00 :   b206b6: sraiw   a0,a0,0x1f
+         : 215    idct_idct_16x16_add_c():
+    0.00 :   b206ba: sb      a0,0(s8)
+    0.00 :   b206be: ld      a0,72(sp)
+    0.00 :   b206c0: addiw   t3,t3,32
+    0.00 :   b206c4: sraiw   t3,t3,0x6
+    0.00 :   b206c8: add     a6,s8,a0
+    0.00 :   b206cc: lbu     a0,0(a6)
+    0.00 :   b206d0: addw    a0,a0,t3
+         : 1516   av_clip_uint8_c():
+    0.00 :   b206d4: bgeu    t1,a0,b206e0 <idct_idct_16x16_add_c.part.0+0x956>
+    0.00 :   b206d8: not     a0,a0
+    0.00 :   b206dc: sraiw   a0,a0,0x1f
+         : 215    idct_idct_16x16_add_c():
+    4.55 :   b206e0: sb      a0,0(a6)
+    0.00 :   b206e4: ld      a0,40(sp)
+    2.27 :   b206e6: addiw   s7,s7,32
+    0.00 :   b206ea: sraiw   s7,s7,0x6
+    0.00 :   b206ee: lbu     a0,0(a0)
+    2.27 :   b206f2: addw    a0,a0,s7
+         : 1515   av_clip_uint8_c():
+    0.00 :   b206f6: bgeu    t1,a0,b20702 <idct_idct_16x16_add_c.part.0+0x978>
+    0.00 :   b206fa: not     a0,a0
+    0.00 :   b206fe: sraiw   a0,a0,0x1f
+         : 215    idct_idct_16x16_add_c():
+    2.27 :   b20702: ld      a6,40(sp)
+    0.00 :   b20704: addiw   t5,t5,32
+    0.00 :   b20708: sraiw   t5,t5,0x6
+    0.00 :   b2070c: sb      a0,0(a6)
+    0.00 :   b20710: ld      a0,48(sp)
+    0.00 :   b20712: lbu     a0,0(a0)
+    0.00 :   b20716: addw    a0,a0,t5
+         : 1516   av_clip_uint8_c():
+    0.00 :   b2071a: bgeu    t1,a0,b20726 <idct_idct_16x16_add_c.part.0+0x99c>
+    0.00 :   b2071e: not     a0,a0
+    0.00 :   b20722: sraiw   a0,a0,0x1f
+         : 215    idct_idct_16x16_add_c():
+    2.27 :   b20726: ld      a6,48(sp)
+    0.00 :   b20728: addiw   a4,a4,32
+    0.00 :   b2072c: sraiw   a4,a4,0x6
+    0.00 :   b20730: sb      a0,0(a6)
+    0.00 :   b20734: lbu     a0,0(s9)
+    0.00 :   b20738: addw    a0,a0,a4
+         : 1515   av_clip_uint8_c():
+    0.00 :   b2073a: bgeu    t1,a0,b20746 <idct_idct_16x16_add_c.part.0+0x9bc>
+    0.00 :   b2073e: not     a0,a0
+    0.00 :   b20742: sraiw   a0,a0,0x1f
+    0.00 :   b20746: ld      a4,72(sp)
+         : 216    idct_idct_16x16_add_c():
+    0.00 :   b20748: sb      a0,0(s9)
+    4.55 :   b2074c: addiw   a2,a2,32
+    0.00 :   b20750: add     a0,s9,a4
+    0.00 :   b20754: lbu     a4,0(a0)
+    0.00 :   b20758: sraiw   a2,a2,0x6
+    0.00 :   b2075c: addw    a4,a4,a2
+         : 1515   av_clip_uint8_c():
+    0.00 :   b2075e: bgeu    t1,a4,b2076a <idct_idct_16x16_add_c.part.0+0x9e0>
+    0.00 :   b20762: not     a4,a4
+    0.00 :   b20766: sraiw   a4,a4,0x1f
+         : 215    idct_idct_16x16_add_c():
+    0.00 :   b2076a: sb      a4,0(a0)
+    2.27 :   b2076e: ld      a4,56(sp)
+    0.00 :   b20770: addiw   a3,a3,32
+    0.00 :   b20774: sraiw   a3,a3,0x6
+    0.00 :   b20778: lbu     a4,0(a4)
+    2.27 :   b2077c: addw    a4,a4,a3
+         : 1515   av_clip_uint8_c():
+    0.00 :   b2077e: bgeu    t1,a4,b2078a <idct_idct_16x16_add_c.part.0+0xa00>
+    0.00 :   b20782: not     a4,a4
+    0.00 :   b20786: sraiw   a4,a4,0x1f
+         : 215    idct_idct_16x16_add_c():
+    0.00 :   b2078a: ld      a3,56(sp)
+    0.00 :   b2078c: addiw   a7,a7,32
+    0.00 :   b20790: sraiw   a7,a7,0x6
+    0.00 :   b20794: sb      a4,0(a3)
+    0.00 :   b20798: lbu     a4,0(s5)
+    0.00 :   b2079c: addw    a4,a4,a7
+         : 1515   av_clip_uint8_c():
+    0.00 :   b207a0: bgeu    t1,a4,b207ac <idct_idct_16x16_add_c.part.0+0xa22>
+    0.00 :   b207a4: not     a4,a4
+    0.00 :   b207a8: sraiw   a4,a4,0x1f
+         : 215    idct_idct_16x16_add_c():
+    0.00 :   b207ac: sb      a4,0(s5)
+    0.00 :   b207b0: ld      a4,72(sp)
+    0.00 :   b207b2: addiw   s1,s1,32
+    0.00 :   b207b6: sraiw   s1,s1,0x6
+    0.00 :   b207ba: add     a3,s5,a4
+    0.00 :   b207be: lbu     a4,0(a3)
+    0.00 :   b207c2: addw    a4,a4,s1
+         : 1516   av_clip_uint8_c():
+    0.00 :   b207c4: bgeu    t1,a4,b207d0 <idct_idct_16x16_add_c.part.0+0xa46>
+    0.00 :   b207c8: not     a4,a4
+    0.00 :   b207cc: sraiw   a4,a4,0x1f
+         : 215    idct_idct_16x16_add_c():
+    0.00 :   b207d0: sb      a4,0(a3)
+    0.00 :   b207d4: ld      a4,64(sp)
+    0.00 :   b207d6: addiw   t2,t2,32
+    0.00 :   b207da: sraiw   t2,t2,0x6
+    0.00 :   b207de: lbu     a4,0(a4)
+    0.00 :   b207e2: addw    a4,a4,t2
+         : 1515   av_clip_uint8_c():
+    0.00 :   b207e6: bgeu    t1,a4,b207f2 <idct_idct_16x16_add_c.part.0+0xa68>
+    0.00 :   b207ea: not     a4,a4
+    0.00 :   b207ee: sraiw   a4,a4,0x1f
+         : 215    idct_idct_16x16_add_c():
+    0.00 :   b207f2: ld      a3,64(sp)
+    0.00 :   b207f4: addiw   s0,s0,32
+    0.00 :   b207f8: sraiw   s0,s0,0x6
+    0.00 :   b207fc: sb      a4,0(a3)
+    0.00 :   b20800: ld      a4,80(sp)
+    0.00 :   b20802: lbu     a4,0(a4)
+    0.00 :   b20806: addw    a4,a4,s0
+         : 1516   av_clip_uint8_c():
+    2.27 :   b20808: bgeu    t1,a4,b20814 <idct_idct_16x16_add_c.part.0+0xa8a>
+    0.00 :   b2080c: not     a4,a4
+    0.00 :   b20810: sraiw   a4,a4,0x1f
+         : 215    idct_idct_16x16_add_c():
+    0.00 :   b20814: ld      a3,80(sp)
+    0.00 :   b20816: addi    a1,a1,2
+    0.00 :   b20818: addi    s5,s5,1
+    0.00 :   b2081a: sb      a4,0(a3)
+    0.00 :   b2081e: ld      a4,0(sp)
+    0.00 :   b20820: addi    s9,s9,1
+    0.00 :   b20822: addi    s8,s8,1
+    0.00 :   b20824: addi    a4,a4,1
+    0.00 :   b20826: sd      a4,0(sp)
+    0.00 :   b20828: addi    a4,a3,1
+    0.00 :   b2082c: sd      a4,80(sp)
+    0.00 :   b2082e: ld      a4,64(sp)
+    0.00 :   b20830: addi    a4,a4,1
+    0.00 :   b20832: sd      a4,64(sp)
+    0.00 :   b20834: ld      a4,56(sp)
+    0.00 :   b20836: addi    a4,a4,1
+    0.00 :   b20838: sd      a4,56(sp)
+    0.00 :   b2083a: ld      a4,48(sp)
+    0.00 :   b2083c: addi    a4,a4,1
+    0.00 :   b2083e: sd      a4,48(sp)
+    0.00 :   b20840: ld      a4,40(sp)
+    0.00 :   b20842: addi    a4,a4,1
+    0.00 :   b20844: sd      a4,40(sp)
+    0.00 :   b20846: ld      a4,32(sp)
+    0.00 :   b20848: addi    a4,a4,1
+    0.00 :   b2084a: sd      a4,32(sp)
+    0.00 :   b2084c: ld      a4,24(sp)
+    0.00 :   b2084e: addi    a4,a4,1
+    0.00 :   b20850: sd      a4,24(sp)
+    0.00 :   b20852: ld      a4,16(sp)
+    0.00 :   b20854: addi    a4,a4,1
+    0.00 :   b20856: sd      a4,16(sp)
+    0.00 :   b20858: ld      a4,8(sp)
+    0.00 :   b2085a: addi    a4,a4,1
+    0.00 :   b2085c: sd      a4,8(sp)
+    0.00 :   b2085e: ld      a4,104(sp)
+    0.00 :   b20860: bne     a4,a1,b20274 <idct_idct_16x16_add_c.part.0+0x4ea>
+    0.00 :   b20864: auipc   a5,0xa00
+    0.00 :   b20868: ld      a5,1460(a5) # 1520e18 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   b2086c: ld      a4,680(sp)
+    0.00 :   b20870: ld      a5,0(a5)
+    0.00 :   b20872: xor     a5,a5,a4
+    0.00 :   b20874: li      a4,0
+    0.00 :   b20876: bnez    a5,b208b2 <idct_idct_16x16_add_c.part.0+0xb28>
+    0.00 :   b20878: ld      ra,792(sp)
+    0.00 :   b2087c: ld      s0,784(sp)
+    0.00 :   b20880: ld      s1,776(sp)
+    0.00 :   b20884: ld      s2,768(sp)
+    0.00 :   b20888: ld      s3,760(sp)
+    0.00 :   b2088c: ld      s4,752(sp)
+    0.00 :   b20890: ld      s5,744(sp)
+    0.00 :   b20894: ld      s6,736(sp)
+    0.00 :   b20898: ld      s7,728(sp)
+    0.00 :   b2089c: ld      s8,720(sp)
+    0.00 :   b208a0: ld      s9,712(sp)
+    0.00 :   b208a4: ld      s10,704(sp)
+    0.00 :   b208a8: ld      s11,696(sp)
+    0.00 :   b208ac: addi    sp,sp,800
+    0.00 :   b208b0: ret
+    0.00 :   b208b2: auipc   ra,0xff605
+    0.00 :   b208b6: jalr    30(ra) # 1258d0 <__stack_chk_fail@plt>

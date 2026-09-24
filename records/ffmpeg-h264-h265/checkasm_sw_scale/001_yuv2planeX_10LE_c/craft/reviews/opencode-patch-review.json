@@ -1,0 +1,31 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rv-ffmpeg-checkasm-sw-scale-001",
+ "patchCandidateId": "pc-ffmpeg-checkasm-sw-scale-001",
+ "reviewedAt": "2026-09-13",
+ "reviewer": "opencode-ai-reviewer",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "RVV kernels use zve32x-compatible instructions only; arch-scan findings 0; e32 accumulate with e16 loads via vwmacc.vx; BE byte-swap via vsrl/vsll/vor; all callee-saved registers preserved."
+ },
+ "hallucinationCheck": [
+  {
+   "dimension": "blueprint-anchor",
+   "result": "PASS"
+  },
+  {
+   "dimension": "root-cause-boundary",
+   "result": "PASS"
+  },
+  {
+   "dimension": "verification-evidence",
+   "result": "PASS"
+  },
+  {
+   "dimension": "diff-anchor",
+   "result": "PASS"
+  }
+ ],
+ "findings": []
+}

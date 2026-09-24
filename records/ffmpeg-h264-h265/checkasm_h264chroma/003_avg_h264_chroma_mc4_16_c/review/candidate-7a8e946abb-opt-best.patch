@@ -1,0 +1,264 @@
+From a808db2888135d6d29884ff1c596cec13837786e Mon Sep 17 00:00:00 2001
+From: liuyudong <liuyudong@iscas.ac.cn>
+Date: Sun, 20 Sep 2026 10:39:19 +0800
+Subject: [PATCH] lavc/riscv: add RVV high-bit-depth H.264 chroma MC for 8xH
+ blocks
+
+Add 16-bit sample interpolation for put and avg on 8xH chroma blocks.
+Handle zero, one-dimensional and bilinear offsets separately, and
+process two rows at a time with a single-row tail for odd heights.
+
+On SpacemiT X100, the RVV functions pass the H.264 chroma checkasm
+tests and a 900-frame High 10 decode produces the same frame CRCs as
+the C baseline. Single-threaded decode throughput improves by 5.2%.
+---
+ libavcodec/riscv/h264_chroma_init_riscv.c |   7 +
+ libavcodec/riscv/h264_mc_chroma.S         | 213 ++++++++++++++++++++++
+ 2 files changed, 220 insertions(+)
+
+diff --git a/libavcodec/riscv/h264_chroma_init_riscv.c b/libavcodec/riscv/h264_chroma_init_riscv.c
+index b6bde42c0a..f0f4b5f20f 100644
+--- a/libavcodec/riscv/h264_chroma_init_riscv.c
++++ b/libavcodec/riscv/h264_chroma_init_riscv.c
+@@ -32,6 +32,9 @@ void h264_avg_chroma_mc4_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t str
+ void h264_put_chroma_mc2_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t stride, int h, int x, int y);
+ void h264_avg_chroma_mc2_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t stride, int h, int x, int y);
+ 
++void ff_put_h264_chroma_mc8_16_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t stride, int h, int x, int y);
++void ff_avg_h264_chroma_mc8_16_rvv(uint8_t *p_dst, const uint8_t *p_src, ptrdiff_t stride, int h, int x, int y);
++
+ av_cold void ff_h264chroma_init_riscv(H264ChromaContext *c, int bit_depth)
+ {
+ #if HAVE_RVV
+@@ -45,6 +48,10 @@ av_cold void ff_h264chroma_init_riscv(H264ChromaContext *c, int bit_depth)
+         c->avg_h264_chroma_pixels_tab[1] = h264_avg_chroma_mc4_rvv;
+         c->put_h264_chroma_pixels_tab[2] = h264_put_chroma_mc2_rvv;
+         c->avg_h264_chroma_pixels_tab[2] = h264_avg_chroma_mc2_rvv;
++    } else if (bit_depth > 8 && bit_depth <= 16 &&
++               (flags & AV_CPU_FLAG_RVV_I32) && ff_rv_vlen_least(128)) {
++        c->put_h264_chroma_pixels_tab[0] = ff_put_h264_chroma_mc8_16_rvv;
++        c->avg_h264_chroma_pixels_tab[0] = ff_avg_h264_chroma_mc8_16_rvv;
+     }
+ #endif
+ }
+diff --git a/libavcodec/riscv/h264_mc_chroma.S b/libavcodec/riscv/h264_mc_chroma.S
+index 79394b987d..18e9e5fdfc 100644
+--- a/libavcodec/riscv/h264_mc_chroma.S
++++ b/libavcodec/riscv/h264_mc_chroma.S
+@@ -380,3 +380,216 @@ func h264_avg_chroma_mc2_rvv, zve32x
+         li      t6, 2
+         j       21b
+ endfunc
++
++.macro h264_chroma_mc16 op
++func ff_\op\()_h264_chroma_mc8_16_rvv, zve32x
++        lpad    0
++        blez    a3, 9f
++        csrwi   vxrm, 0
++        vsetivli zero, 8, e16, m1, ta, ma
++        or      t0, a4, a5
++        beqz    t0, 7f
++        beqz    a5, 3f
++        beqz    a4, 5f
++
++        li      t0, 8
++        sub     t1, t0, a4
++        sub     t2, t0, a5
++        mul     t3, t1, t2
++        mul     t4, a4, t2
++        mul     t5, t1, a5
++        mul     t6, a4, a5
++        slli    a4, a2, 1
++1:
++        addi    a6, a3, -2
++        bltz    a6, 2f
++        vle16.v v0, (a1)
++        addi    a6, a1, 2
++        vle16.v v1, (a6)
++        add     a6, a1, a2
++        vle16.v v2, (a6)
++        addi    a7, a6, 2
++        vle16.v v3, (a7)
++        vwmulu.vx v8, v0, t3
++        vwmaccu.vx v8, t4, v1
++        vwmaccu.vx v8, t5, v2
++        vwmaccu.vx v8, t6, v3
++        vnclipu.wi v12, v8, 6
++        add     a6, a6, a2
++        vle16.v v4, (a6)
++        addi    a7, a6, 2
++        vle16.v v5, (a7)
++        vwmulu.vx v10, v2, t3
++        vwmaccu.vx v10, t4, v3
++        vwmaccu.vx v10, t5, v4
++        vwmaccu.vx v10, t6, v5
++        vnclipu.wi v13, v10, 6
++.ifc \op, avg
++        vle16.v v6, (a0)
++        vaaddu.vv v12, v12, v6
++        add     a7, a0, a2
++        vle16.v v7, (a7)
++        vaaddu.vv v13, v13, v7
++.endif
++        vse16.v v12, (a0)
++        add     a7, a0, a2
++        vse16.v v13, (a7)
++        add     a1, a1, a4
++        add     a0, a0, a4
++        addi    a3, a3, -2
++        bgtz    a3, 1b
++        ret
++2:
++        vle16.v v0, (a1)
++        addi    a6, a1, 2
++        vle16.v v1, (a6)
++        add     a6, a1, a2
++        vle16.v v2, (a6)
++        addi    a7, a6, 2
++        vle16.v v3, (a7)
++        vwmulu.vx v8, v0, t3
++        vwmaccu.vx v8, t4, v1
++        vwmaccu.vx v8, t5, v2
++        vwmaccu.vx v8, t6, v3
++        vnclipu.wi v12, v8, 6
++.ifc \op, avg
++        vle16.v v6, (a0)
++        vaaddu.vv v12, v12, v6
++.endif
++        vse16.v v12, (a0)
++        ret
++
++3:
++        li      t0, 8
++        sub     t1, t0, a4
++        mv      t2, a4
++        slli    a4, a2, 1
++4:
++        addi    a6, a3, -2
++        bltz    a6, 41f
++        vle16.v v0, (a1)
++        addi    a6, a1, 2
++        vle16.v v1, (a6)
++        add     a6, a1, a2
++        vle16.v v2, (a6)
++        addi    a7, a6, 2
++        vle16.v v3, (a7)
++        vwmulu.vx v8, v0, t1
++        vwmaccu.vx v8, t2, v1
++        vwmulu.vx v10, v2, t1
++        vwmaccu.vx v10, t2, v3
++        vnclipu.wi v12, v8, 3
++        vnclipu.wi v13, v10, 3
++.ifc \op, avg
++        vle16.v v4, (a0)
++        vaaddu.vv v12, v12, v4
++        add     a7, a0, a2
++        vle16.v v5, (a7)
++        vaaddu.vv v13, v13, v5
++.endif
++        vse16.v v12, (a0)
++        add     a7, a0, a2
++        vse16.v v13, (a7)
++        add     a1, a1, a4
++        add     a0, a0, a4
++        addi    a3, a3, -2
++        bgtz    a3, 4b
++        ret
++41:
++        vle16.v v0, (a1)
++        addi    a6, a1, 2
++        vle16.v v1, (a6)
++        vwmulu.vx v8, v0, t1
++        vwmaccu.vx v8, t2, v1
++        vnclipu.wi v12, v8, 3
++.ifc \op, avg
++        vle16.v v4, (a0)
++        vaaddu.vv v12, v12, v4
++.endif
++        vse16.v v12, (a0)
++        ret
++
++5:
++        li      t0, 8
++        sub     t1, t0, a5
++        mv      t2, a5
++        slli    a4, a2, 1
++6:
++        addi    a6, a3, -2
++        bltz    a6, 61f
++        vle16.v v0, (a1)
++        add     a6, a1, a2
++        vle16.v v1, (a6)
++        add     a7, a6, a2
++        vle16.v v2, (a7)
++        vwmulu.vx v8, v0, t1
++        vwmaccu.vx v8, t2, v1
++        vwmulu.vx v10, v1, t1
++        vwmaccu.vx v10, t2, v2
++        vnclipu.wi v12, v8, 3
++        vnclipu.wi v13, v10, 3
++.ifc \op, avg
++        vle16.v v3, (a0)
++        vaaddu.vv v12, v12, v3
++        add     a7, a0, a2
++        vle16.v v4, (a7)
++        vaaddu.vv v13, v13, v4
++.endif
++        vse16.v v12, (a0)
++        add     a7, a0, a2
++        vse16.v v13, (a7)
++        add     a1, a1, a4
++        add     a0, a0, a4
++        addi    a3, a3, -2
++        bgtz    a3, 6b
++        ret
++61:
++        vle16.v v0, (a1)
++        add     a6, a1, a2
++        vle16.v v1, (a6)
++        vwmulu.vx v8, v0, t1
++        vwmaccu.vx v8, t2, v1
++        vnclipu.wi v12, v8, 3
++.ifc \op, avg
++        vle16.v v3, (a0)
++        vaaddu.vv v12, v12, v3
++.endif
++        vse16.v v12, (a0)
++        ret
++
++7:
++        slli    a4, a2, 1
++        addi    a6, a3, -2
++        bltz    a6, 8f
++        vle16.v v0, (a1)
++        add     a6, a1, a2
++        vle16.v v1, (a6)
++.ifc \op, avg
++        vle16.v v2, (a0)
++        vaaddu.vv v0, v0, v2
++        add     a7, a0, a2
++        vle16.v v3, (a7)
++        vaaddu.vv v1, v1, v3
++.endif
++        vse16.v v0, (a0)
++        add     a7, a0, a2
++        vse16.v v1, (a7)
++        add     a1, a1, a4
++        add     a0, a0, a4
++        addi    a3, a3, -2
++        bgtz    a3, 7b
++        ret
++8:
++        vle16.v v0, (a1)
++.ifc \op, avg
++        vle16.v v2, (a0)
++        vaaddu.vv v0, v0, v2
++.endif
++        vse16.v v0, (a0)
++9:
++        ret
++endfunc
++.endm
++
++        h264_chroma_mc16 put
++        h264_chroma_mc16 avg

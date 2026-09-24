@@ -1,0 +1,65 @@
+5-FFMPEG-CODEC-BENCHMARK mpeg4_encode RISC-V perf stat
+======================================================
+
+Source CSV: /workspace/results/5-ffmpeg-codec-benchmark_results.csv
+TestName: mpeg4_encode
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 3,439,604,122 |
+| task_clock | 3,631.23 |
+| cpu_cycle | 7,957,292,967 |
+| instruction | 11,725,462,688 |
+| cache_references | NA |
+| cache_misses | NA |
+| branches | 811,586,087 |
+| branch_misses | 34,716,733 |
+| L1_dcache_loads | 2,983,147,426 |
+| L1_dcache_load_misses | 35,266,330 |
+| LLC_loads | NA |
+| LLC_load_misses | NA |
+| IPC | 1.473549 |
+| ffmpeg_utime_seconds | 3.458 |
+| ffmpeg_stime_seconds | 0.167 |
+| ffmpeg_rtime_seconds | 3.426 |
+| ffmpeg_maxrss_kib | 39,696 |
+| ffmpeg_frames | 300 |
+| ffmpeg_fps | 88 |
+| fixed_frames | 300 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 3.439604 |
+| branch_miss_rate | 4.278% |
+| L1_dcache_load_miss_rate | 1.182% |
+
+perf stat style summary
+-----------------------
+         3,439,604,122  duration_time
+              3,631.23  task_clock
+         7,957,292,967  cpu_cycle
+        11,725,462,688  instruction
+                    NA  cache_references
+                    NA  cache_misses
+           811,586,087  branches
+            34,716,733  branch_misses
+         2,983,147,426  L1_dcache_loads
+            35,266,330  L1_dcache_load_misses
+                    NA  LLC_loads
+                    NA  LLC_load_misses
+              1.473549  IPC
+                 3.458  ffmpeg_utime_seconds
+                 0.167  ffmpeg_stime_seconds
+                 3.426  ffmpeg_rtime_seconds
+                39,696  ffmpeg_maxrss_kib
+                   300  ffmpeg_frames
+                    88  ffmpeg_fps
+                   300  fixed_frames
+              3.439604  duration_s
+                4.278%  branch_miss_rate
+                1.182%  L1_dcache_load_miss_rate

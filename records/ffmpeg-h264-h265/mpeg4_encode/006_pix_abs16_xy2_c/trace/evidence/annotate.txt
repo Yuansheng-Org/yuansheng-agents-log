@@ -1,0 +1,487 @@
+ Percent |	Source code & Disassembly of ffmpeg for cpu-clock (18 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      000000000080acae <pix_abs16_xy2_c>:
+         : 6      pix_abs16_xy2_c():
+         : 248    ptrdiff_t stride, int h)
+         : 249    {
+         : 250    int s = 0, i;
+         : 251    const uint8_t *pix3 = pix2 + stride;
+         :
+         : 253    for (i = 0; i < h; i++) {
+    0.00 :   80acae: blez    a4,80b01e <pix_abs16_xy2_c+0x370>
+         : 244    {
+    0.00 :   80acb2: addi    sp,sp,-96
+         : 246    const uint8_t *pix3 = pix2 + stride;
+    0.00 :   80acb4: add     t3,a2,a3
+         : 244    {
+    0.00 :   80acb8: sd      s0,88(sp)
+    0.00 :   80acba: sd      s1,80(sp)
+    0.00 :   80acbc: sd      s2,72(sp)
+    0.00 :   80acbe: sd      s3,64(sp)
+    0.00 :   80acc0: sd      s4,56(sp)
+    0.00 :   80acc2: sd      s5,48(sp)
+    0.00 :   80acc4: sd      s6,40(sp)
+    0.00 :   80acc6: sd      s7,32(sp)
+    0.00 :   80acc8: sd      s8,24(sp)
+    0.00 :   80acca: sd      s9,16(sp)
+    0.00 :   80accc: sd      s10,8(sp)
+    0.00 :   80acce: sd      s11,0(sp)
+         : 246    const uint8_t *pix3 = pix2 + stride;
+    0.00 :   80acd0: mv      a7,t3
+         : 248    for (i = 0; i < h; i++) {
+    0.00 :   80acd2: li      t1,0
+         : 245    int s = 0, i;
+    0.00 :   80acd4: li      a0,0
+    0.00 :   80acd6: j       80acda <pix_abs16_xy2_c+0x2c>
+    0.00 :   80acd8: add     t3,t3,a3
+         : 249    s    += abs(pix1[0]  - avg4(pix2[0],  pix2[1],  pix3[0],  pix3[1]));
+    0.00 :   80acda: lbu     t5,1(a2)
+    0.00 :   80acde: lbu     t0,0(a2)
+         : 250    s    += abs(pix1[1]  - avg4(pix2[1],  pix2[2],  pix3[1],  pix3[2]));
+    0.00 :   80ace2: lbu     t4,2(a2)
+         : 249    s    += abs(pix1[0]  - avg4(pix2[0],  pix2[1],  pix3[0],  pix3[1]));
+    0.00 :   80ace6: lbu     a5,0(a7)
+    5.56 :   80acea: lbu     a6,1(a7)
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80acee: lbu     s2,3(a2)
+         : 250    s    += abs(pix1[1]  - avg4(pix2[1],  pix2[2],  pix3[1],  pix3[2]));
+    0.00 :   80acf2: lbu     t6,2(a7)
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    0.00 :   80acf6: lbu     s1,4(a2)
+         : 249    s    += abs(pix1[0]  - avg4(pix2[0],  pix2[1],  pix3[0],  pix3[1]));
+    0.00 :   80acfa: addw    t0,t0,t5
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    0.00 :   80acfe: lbu     s0,5(a2)
+         : 249    s    += abs(pix1[0]  - avg4(pix2[0],  pix2[1],  pix3[0],  pix3[1]));
+    0.00 :   80ad02: addw    a5,a5,t0
+         : 250    s    += abs(pix1[1]  - avg4(pix2[1],  pix2[2],  pix3[1],  pix3[2]));
+    0.00 :   80ad06: addw    t0,t5,t4
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80ad0a: lbu     t5,3(a7)
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80ad0e: lbu     t2,6(a2)
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80ad12: addw    s3,t4,s2
+         : 249    s    += abs(pix1[0]  - avg4(pix2[0],  pix2[1],  pix3[0],  pix3[1]));
+    0.00 :   80ad16: lbu     s6,0(a1)
+    0.00 :   80ad1a: addw    a5,a6,a5
+         : 250    s    += abs(pix1[1]  - avg4(pix2[1],  pix2[2],  pix3[1],  pix3[2]));
+   16.67 :   80ad1e: addw    t0,a6,t0
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    0.00 :   80ad22: lbu     a6,4(a7)
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    0.00 :   80ad26: lbu     s11,5(a7)
+         : 250    s    += abs(pix1[1]  - avg4(pix2[1],  pix2[2],  pix3[1],  pix3[2]));
+    0.00 :   80ad2a: lbu     t4,1(a1)
+    0.00 :   80ad2e: addw    t0,t6,t0
+         : 249    s    += abs(pix1[0]  - avg4(pix2[0],  pix2[1],  pix3[0],  pix3[1]));
+    0.00 :   80ad32: addiw   a5,a5,2
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80ad34: addw    t6,t6,s3
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    0.00 :   80ad38: addw    s3,s2,s1
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    0.00 :   80ad3c: lbu     s2,7(a2)
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80ad40: lbu     s5,6(a7)
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    0.00 :   80ad44: addw    s1,s1,s0
+         : 249    s    += abs(pix1[0]  - avg4(pix2[0],  pix2[1],  pix3[0],  pix3[1]));
+    0.00 :   80ad46: sraiw   a5,a5,0x2
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80ad4a: addw    t6,t5,t6
+         : 250    s    += abs(pix1[1]  - avg4(pix2[1],  pix2[2],  pix3[1],  pix3[2]));
+    0.00 :   80ad4e: addiw   t0,t0,2
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    0.00 :   80ad50: addw    t5,t5,s3
+         : 249    s    += abs(pix1[0]  - avg4(pix2[0],  pix2[1],  pix3[0],  pix3[1]));
+    0.00 :   80ad54: subw    s6,s6,a5
+         : 250    s    += abs(pix1[1]  - avg4(pix2[1],  pix2[2],  pix3[1],  pix3[2]));
+    0.00 :   80ad58: sraiw   t0,t0,0x2
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80ad5c: addw    a5,s0,t2
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    5.56 :   80ad60: addw    t5,a6,t5
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    0.00 :   80ad64: addw    a6,a6,s1
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80ad68: lbu     s7,2(a1)
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    0.00 :   80ad6c: lbu     s9,8(a2)
+         : 249    s    += abs(pix1[0]  - avg4(pix2[0],  pix2[1],  pix3[0],  pix3[1]));
+    5.56 :   80ad70: sraiw   s0,s6,0x1f
+         : 250    s    += abs(pix1[1]  - avg4(pix2[1],  pix2[2],  pix3[1],  pix3[2]));
+    0.00 :   80ad74: subw    t4,t4,t0
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    0.00 :   80ad78: addw    a6,s11,a6
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    0.00 :   80ad7c: addw    t0,t2,s2
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80ad80: addw    s11,s11,a5
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    5.56 :   80ad84: lbu     s1,7(a7)
+         : 249    s    += abs(pix1[0]  - avg4(pix2[0],  pix2[1],  pix3[0],  pix3[1]));
+    0.00 :   80ad88: xor     s6,s6,s0
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80ad8c: addw    s11,s5,s11
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80ad90: addiw   t6,t6,2
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    0.00 :   80ad92: addw    s5,s5,t0
+         : 250    s    += abs(pix1[1]  - avg4(pix2[1],  pix2[2],  pix3[1],  pix3[2]));
+    0.00 :   80ad96: sraiw   t0,t4,0x1f
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    0.00 :   80ad9a: lbu     s8,9(a2)
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80ad9e: sraiw   t6,t6,0x2
+         : 249    s    += abs(pix1[0]  - avg4(pix2[0],  pix2[1],  pix3[0],  pix3[1]));
+    0.00 :   80ada2: subw    s6,s6,s0
+         : 250    s    += abs(pix1[1]  - avg4(pix2[1],  pix2[2],  pix3[1],  pix3[2]));
+    0.00 :   80ada6: xor     t4,t4,t0
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    0.00 :   80adaa: lbu     t2,8(a7)
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80adae: subw    a5,s7,t6
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    0.00 :   80adb2: lbu     s4,3(a1)
+         : 258    s    += abs(pix1[9]  - avg4(pix2[9],  pix2[10], pix3[9],  pix3[10]));
+    0.00 :   80adb6: lbu     s7,10(a2)
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    5.56 :   80adba: lbu     s3,4(a1)
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    0.00 :   80adbe: addw    s2,s2,s9
+         : 249    s    += abs(pix1[0]  - avg4(pix2[0],  pix2[1],  pix3[0],  pix3[1]));
+    0.00 :   80adc2: addw    s6,s6,a0
+         : 250    s    += abs(pix1[1]  - avg4(pix2[1],  pix2[2],  pix3[1],  pix3[2]));
+    0.00 :   80adc6: subw    t4,t4,t0
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80adca: lbu     s0,5(a1)
+         : 250    s    += abs(pix1[1]  - avg4(pix2[1],  pix2[2],  pix3[1],  pix3[2]));
+    0.00 :   80adce: addw    t4,t4,s6
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    0.00 :   80add2: addw    s5,s1,s5
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80add6: sraiw   s6,a5,0x1f
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    0.00 :   80adda: addw    s1,s1,s2
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    0.00 :   80adde: addiw   t5,t5,2
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    0.00 :   80ade0: lbu     s2,9(a7)
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    0.00 :   80ade4: addiw   a6,a6,2
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    0.00 :   80ade6: lbu     t6,6(a1)
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    5.56 :   80adea: addw    s9,s9,s8
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    0.00 :   80adee: sraiw   t5,t5,0x2
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    0.00 :   80adf2: sraiw   a6,a6,0x2
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80adf6: addiw   s11,s11,2
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80adf8: xor     a5,a5,s6
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    0.00 :   80adfc: lbu     s10,7(a1)
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    0.00 :   80ae00: lbu     t0,8(a1)
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    0.00 :   80ae04: subw    s4,s4,t5
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    0.00 :   80ae08: subw    s3,s3,a6
+         : 258    s    += abs(pix1[9]  - avg4(pix2[9],  pix2[10], pix3[9],  pix3[10]));
+    0.00 :   80ae0c: lbu     t5,10(a7)
+    0.00 :   80ae10: lbu     a6,9(a1)
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80ae14: sraiw   a0,s11,0x2
+         : 258    s    += abs(pix1[9]  - avg4(pix2[9],  pix2[10], pix3[9],  pix3[10]));
+    0.00 :   80ae18: addw    s8,s8,s7
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    0.00 :   80ae1c: addw    s1,t2,s1
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80ae20: subw    a5,a5,s6
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    0.00 :   80ae24: addw    t2,t2,s9
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    0.00 :   80ae28: lbu     s6,11(a2)
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    0.00 :   80ae2c: addiw   s5,s5,2
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80ae2e: subw    s0,s0,a0
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    0.00 :   80ae30: sraiw   s5,s5,0x2
+         : 260    s    += abs(pix1[11] - avg4(pix2[11], pix2[12], pix3[11], pix3[12]));
+    0.00 :   80ae34: lbu     a0,12(a2)
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    0.00 :   80ae38: addw    t2,s2,t2
+         : 258    s    += abs(pix1[9]  - avg4(pix2[9],  pix2[10], pix3[9],  pix3[10]));
+    0.00 :   80ae3c: addw    s2,s2,s8
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    0.00 :   80ae40: sraiw   s8,s4,0x1f
+         : 251    s    += abs(pix1[2]  - avg4(pix2[2],  pix2[3],  pix3[2],  pix3[3]));
+    0.00 :   80ae44: addw    a5,a5,t4
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    0.00 :   80ae48: subw    t6,t6,s5
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    0.00 :   80ae4c: lbu     t4,11(a7)
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    0.00 :   80ae50: sraiw   s5,s3,0x1f
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    0.00 :   80ae54: xor     s4,s4,s8
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    0.00 :   80ae58: addw    s7,s7,s6
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    0.00 :   80ae5c: subw    s4,s4,s8
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    0.00 :   80ae60: xor     s3,s3,s5
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+    0.00 :   80ae64: lbu     s8,13(a2)
+         : 260    s    += abs(pix1[11] - avg4(pix2[11], pix2[12], pix3[11], pix3[12]));
+    5.56 :   80ae68: lbu     s11,12(a7)
+    0.00 :   80ae6c: addw    s6,s6,a0
+         : 252    s    += abs(pix1[3]  - avg4(pix2[3],  pix2[4],  pix3[3],  pix3[4]));
+    0.00 :   80ae70: addw    s4,s4,a5
+         : 258    s    += abs(pix1[9]  - avg4(pix2[9],  pix2[10], pix3[9],  pix3[10]));
+    0.00 :   80ae74: addw    s2,t5,s2
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80ae78: lbu     a5,14(a2)
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    0.00 :   80ae7c: addw    t5,t5,s7
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    0.00 :   80ae80: subw    s3,s3,s5
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80ae84: sraiw   s7,s0,0x1f
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    0.00 :   80ae88: addiw   s1,s1,2
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+    0.00 :   80ae8a: lbu     s5,13(a7)
+         : 253    s    += abs(pix1[4]  - avg4(pix2[4],  pix2[5],  pix3[4],  pix3[5]));
+    0.00 :   80ae8e: addw    s3,s3,s4
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    0.00 :   80ae92: sraiw   s1,s1,0x2
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    0.00 :   80ae96: sraiw   s4,t6,0x1f
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80ae9a: xor     s0,s0,s7
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    0.00 :   80ae9e: addw    t5,t4,t5
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    0.00 :   80aea2: addiw   t2,t2,2
+         : 260    s    += abs(pix1[11] - avg4(pix2[11], pix2[12], pix3[11], pix3[12]));
+    0.00 :   80aea4: addw    t4,t4,s6
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    5.56 :   80aea8: lbu     s6,15(a2)
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    5.56 :   80aeac: lbu     s9,10(a1)
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    0.00 :   80aeb0: subw    s10,s10,s1
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    0.00 :   80aeb4: sraiw   t2,t2,0x2
+         : 264    s    += abs(pix1[15] - avg4(pix2[15], pix2[16], pix3[15], pix3[16]));
+    0.00 :   80aeb8: lbu     s1,16(a2)
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+    0.00 :   80aebc: addw    a0,a0,s8
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80aec0: subw    s0,s0,s7
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    0.00 :   80aec4: xor     t6,t6,s4
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80aec8: lbu     s7,14(a7)
+         : 258    s    += abs(pix1[9]  - avg4(pix2[9],  pix2[10], pix3[9],  pix3[10]));
+    0.00 :   80aecc: addiw   s2,s2,2
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    0.00 :   80aece: subw    t0,t0,t2
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80aed2: addw    a2,s8,a5
+         : 254    s    += abs(pix1[5]  - avg4(pix2[5],  pix2[6],  pix3[5],  pix3[6]));
+    0.00 :   80aed6: addw    s0,s0,s3
+         : 260    s    += abs(pix1[11] - avg4(pix2[11], pix2[12], pix3[11], pix3[12]));
+    0.00 :   80aeda: lbu     s8,11(a1)
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    0.00 :   80aede: lbu     s3,15(a7)
+         : 258    s    += abs(pix1[9]  - avg4(pix2[9],  pix2[10], pix3[9],  pix3[10]));
+    0.00 :   80aee2: sraiw   s2,s2,0x2
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    0.00 :   80aee6: sraiw   t2,s10,0x1f
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    0.00 :   80aeea: subw    t6,t6,s4
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    0.00 :   80aeee: addiw   t5,t5,2
+         : 260    s    += abs(pix1[11] - avg4(pix2[11], pix2[12], pix3[11], pix3[12]));
+    0.00 :   80aef0: addw    t4,s11,t4
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+    0.00 :   80aef4: addw    a0,s11,a0
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    0.00 :   80aef8: sraiw   s4,t0,0x1f
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80aefc: addw    a2,s5,a2
+         : 255    s    += abs(pix1[6]  - avg4(pix2[6],  pix2[7],  pix3[6],  pix3[7]));
+    0.00 :   80af00: addw    t6,t6,s0
+         : 258    s    += abs(pix1[9]  - avg4(pix2[9],  pix2[10], pix3[9],  pix3[10]));
+    0.00 :   80af04: subw    a6,a6,s2
+         : 264    s    += abs(pix1[15] - avg4(pix2[15], pix2[16], pix3[15], pix3[16]));
+    0.00 :   80af08: lbu     s0,16(a7)
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+    0.00 :   80af0c: addw    a0,s5,a0
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    0.00 :   80af10: xor     s10,s10,t2
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+    0.00 :   80af14: lbu     s5,12(a1)
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    0.00 :   80af18: sraiw   t5,t5,0x2
+         : 260    s    += abs(pix1[11] - avg4(pix2[11], pix2[12], pix3[11], pix3[12]));
+    0.00 :   80af1c: addiw   t4,t4,2
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    0.00 :   80af1e: addw    a5,a5,s6
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    0.00 :   80af22: xor     t0,t0,s4
+         : 258    s    += abs(pix1[9]  - avg4(pix2[9],  pix2[10], pix3[9],  pix3[10]));
+    0.00 :   80af26: sraiw   s2,a6,0x1f
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    0.00 :   80af2a: subw    t5,s9,t5
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    0.00 :   80af2e: addw    a5,s7,a5
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80af32: addw    s9,s7,a2
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    0.00 :   80af36: subw    t2,s10,t2
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80af3a: lbu     a2,13(a1)
+         : 260    s    += abs(pix1[11] - avg4(pix2[11], pix2[12], pix3[11], pix3[12]));
+    0.00 :   80af3e: sraiw   t4,t4,0x2
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+    0.00 :   80af42: addiw   a0,a0,2
+         : 264    s    += abs(pix1[15] - avg4(pix2[15], pix2[16], pix3[15], pix3[16]));
+    0.00 :   80af44: addw    s1,s1,s6
+         : 256    s    += abs(pix1[7]  - avg4(pix2[7],  pix2[8],  pix3[7],  pix3[8]));
+    5.56 :   80af48: addw    t2,t2,t6
+         : 258    s    += abs(pix1[9]  - avg4(pix2[9],  pix2[10], pix3[9],  pix3[10]));
+    0.00 :   80af4c: xor     a6,a6,s2
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    0.00 :   80af50: subw    t6,t0,s4
+         : 260    s    += abs(pix1[11] - avg4(pix2[11], pix2[12], pix3[11], pix3[12]));
+    0.00 :   80af54: subw    t4,s8,t4
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    0.00 :   80af58: addw    t0,s3,a5
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    0.00 :   80af5c: sraiw   s4,t5,0x1f
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    0.00 :   80af60: lbu     a5,14(a1)
+         : 264    s    += abs(pix1[15] - avg4(pix2[15], pix2[16], pix3[15], pix3[16]));
+    5.56 :   80af64: addw    s1,s3,s1
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+    0.00 :   80af68: sraiw   a0,a0,0x2
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80af6c: addiw   s9,s9,2
+         : 257    s    += abs(pix1[8]  - avg4(pix2[8],  pix2[9],  pix3[8],  pix3[9]));
+    0.00 :   80af6e: addw    s3,t6,t2
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+   11.11 :   80af72: subw    a0,s5,a0
+         : 258    s    += abs(pix1[9]  - avg4(pix2[9],  pix2[10], pix3[9],  pix3[10]));
+    0.00 :   80af76: subw    t2,a6,s2
+         : 264    s    += abs(pix1[15] - avg4(pix2[15], pix2[16], pix3[15], pix3[16]));
+    0.00 :   80af7a: addw    t6,s0,s1
+    0.00 :   80af7e: lbu     a6,15(a1)
+         : 260    s    += abs(pix1[11] - avg4(pix2[11], pix2[12], pix3[11], pix3[12]));
+    0.00 :   80af82: sraiw   s2,t4,0x1f
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    0.00 :   80af86: xor     t5,t5,s4
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80af8a: sraiw   s9,s9,0x2
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    0.00 :   80af8e: addiw   t0,t0,2
+         : 258    s    += abs(pix1[9]  - avg4(pix2[9],  pix2[10], pix3[9],  pix3[10]));
+    0.00 :   80af90: addw    t2,t2,s3
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+    5.56 :   80af94: sraiw   s0,a0,0x1f
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80af98: subw    a2,a2,s9
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    0.00 :   80af9c: subw    t5,t5,s4
+         : 260    s    += abs(pix1[11] - avg4(pix2[11], pix2[12], pix3[11], pix3[12]));
+    0.00 :   80afa0: xor     t4,t4,s2
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    0.00 :   80afa4: sraiw   t0,t0,0x2
+         : 264    s    += abs(pix1[15] - avg4(pix2[15], pix2[16], pix3[15], pix3[16]));
+    0.00 :   80afa8: addiw   t6,t6,2
+         : 259    s    += abs(pix1[10] - avg4(pix2[10], pix2[11], pix3[10], pix3[11]));
+    0.00 :   80afaa: addw    t5,t5,t2
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    0.00 :   80afae: subw    a5,a5,t0
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80afb2: sraiw   t2,a2,0x1f
+         : 260    s    += abs(pix1[11] - avg4(pix2[11], pix2[12], pix3[11], pix3[12]));
+    0.00 :   80afb6: subw    t4,t4,s2
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+    0.00 :   80afba: xor     a0,a0,s0
+         : 264    s    += abs(pix1[15] - avg4(pix2[15], pix2[16], pix3[15], pix3[16]));
+    0.00 :   80afbc: sraiw   t6,t6,0x2
+         : 260    s    += abs(pix1[11] - avg4(pix2[11], pix2[12], pix3[11], pix3[12]));
+    0.00 :   80afc0: addw    t4,t4,t5
+         : 264    s    += abs(pix1[15] - avg4(pix2[15], pix2[16], pix3[15], pix3[16]));
+    0.00 :   80afc4: subw    a6,a6,t6
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    0.00 :   80afc8: sraiw   t5,a5,0x1f
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+    0.00 :   80afcc: subw    a0,a0,s0
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80afce: xor     a2,a2,t2
+         : 261    s    += abs(pix1[12] - avg4(pix2[12], pix2[13], pix3[12], pix3[13]));
+    0.00 :   80afd2: addw    a0,a0,t4
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80afd6: subw    a2,a2,t2
+         : 264    s    += abs(pix1[15] - avg4(pix2[15], pix2[16], pix3[15], pix3[16]));
+    0.00 :   80afda: sraiw   t4,a6,0x1f
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    0.00 :   80afde: xor     a5,a5,t5
+         : 262    s    += abs(pix1[13] - avg4(pix2[13], pix2[14], pix3[13], pix3[14]));
+    0.00 :   80afe2: addw    a2,a2,a0
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    0.00 :   80afe4: subw    a5,a5,t5
+         : 264    s    += abs(pix1[15] - avg4(pix2[15], pix2[16], pix3[15], pix3[16]));
+    0.00 :   80afe8: xor     a6,a6,t4
+         : 263    s    += abs(pix1[14] - avg4(pix2[14], pix2[15], pix3[14], pix3[15]));
+    0.00 :   80afec: addw    a5,a5,a2
+         : 264    s    += abs(pix1[15] - avg4(pix2[15], pix2[16], pix3[15], pix3[16]));
+    0.00 :   80afee: subw    a6,a6,t4
+         : 248    for (i = 0; i < h; i++) {
+    0.00 :   80aff2: addiw   t1,t1,1
+         : 267    pix1 += stride;
+         : 268    pix2 += stride;
+         : 269    pix3 += stride;
+    0.00 :   80aff4: add     a7,a7,a3
+         : 265    pix1 += stride;
+    0.00 :   80aff6: add     a1,a1,a3
+         : 264    s    += abs(pix1[15] - avg4(pix2[15], pix2[16], pix3[15], pix3[16]));
+    0.00 :   80aff8: addw    a0,a6,a5
+         : 266    pix2 += stride;
+    0.00 :   80affc: mv      a2,t3
+         : 248    for (i = 0; i < h; i++) {
+    0.00 :   80affe: bne     a4,t1,80acd8 <pix_abs16_xy2_c+0x2a>
+         : 270    }
+         : 271    return s;
+         : 272    }
+    0.00 :   80b002: ld      s0,88(sp)
+    0.00 :   80b004: ld      s1,80(sp)
+    0.00 :   80b006: ld      s2,72(sp)
+    0.00 :   80b008: ld      s3,64(sp)
+    0.00 :   80b00a: ld      s4,56(sp)
+    0.00 :   80b00c: ld      s5,48(sp)
+    0.00 :   80b00e: ld      s6,40(sp)
+    5.56 :   80b010: ld      s7,32(sp)
+    0.00 :   80b012: ld      s8,24(sp)
+    0.00 :   80b014: ld      s9,16(sp)
+    0.00 :   80b016: ld      s10,8(sp)
+    0.00 :   80b018: ld      s11,0(sp)
+    0.00 :   80b01a: addi    sp,sp,96
+    0.00 :   80b01c: ret
+         : 245    int s = 0, i;
+    0.00 :   80b01e: li      a0,0
+         : 270    }
+    0.00 :   80b020: ret

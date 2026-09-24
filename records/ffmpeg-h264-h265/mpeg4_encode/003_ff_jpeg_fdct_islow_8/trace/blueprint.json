@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-ffmpeg-mpeg4_encode-003",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T11:39:51.113Z",
+    "software": "ffmpeg",
+    "testcaseIds": [
+      "mpeg4_encode"
+    ],
+    "targetHardware": "SpacemiT K3 / spacemit-x100 (RVV 1.0, VLEN=256, vlenb=32)",
+    "repositoryUrl": "https://github.com/FFmpeg/FFmpeg.git",
+    "testBranch": "master",
+    "commitHash": "1d7b14f61d66fdf18f15204c613df9d65396c319",
+    "diagnosisId": "diag-20260908T113951113Z-f9dad9e6"
+  },
+  "problem": {
+    "summary": "ff_jpeg_fdct_islow_8（JPEG FDCT 8x8）被采样为 MPEG-4 编码热点：C 标量链全量执行。证据：7dbe9c addi 行推进 / 7dbe48 lh 系数。",
+    "evidence": [
+      "perf stat: IPC=1.474, branch_miss_rate=4.278%, 88fps/300 帧",
+      "采样点: 7dbe9c addi 行推进 / 7dbe48 lh 系数",
+      "libavcodec/riscv/: 无 fdct 实现",
+      "构建 ISA: zvl128b1p0，硬件 VLEN=256"
+    ]
+  },
+  "rootCause": {
+    "summary": "JPEG FDCT（8x8 前向 DCT）为 C 标量实现：libavcodec/riscv/ 无 fdct kernel。与 MPEG-4 编码 RVV 覆盖缺口同根因。",
+    "candidateFiles": [
+      "libavcodec/riscv/fdctdsp.c"
+    ],
+    "performanceFactors": [
+      "Policy-Backed Missing RISC-V Assembly Kernel"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "JPEG FDCT 语义与编码输出逐位一致",
+      "MPVContext 状态/函数指针表布局不变",
+      "RVV_I32 gate 一致性"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "mpeg4_encode"
+    ],
+    "regressionCommand": "agent1 patch_regression --case mpeg4_encode"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "真实编码 workload 热点；FDCT 蝶形可向量化；需统一规划并实测后自动转发",
+    "reasoning": "libavcodec/riscv/ 无 ff_jpeg_fdct_islow_8 对应实现，C 标量蝶形链被采用。policy 四证齐全，准入 gate（RVV_I32）成立。FDCT 每宏块执行。定性 probable + conditional。",
+    "rootCauseType": "arch_gap",
+    "alternativeExplanations": [
+      "FDCT 蝶形变换可向量化（SEW=32 vmul/vadd）"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision；样本分散",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 FDCT 可向量化方案；与 DCT 族统一规划",
+    "affectedTarget": "RV + mpeg4_encode",
+    "recommendedFirstAction": "新增 fdctdsp RVV kernel（SEW=32 蝶形变换），init 补齐 fdct 槽",
+    "recommendedVerification": "MPEG-4 编码输出一致；K3 对比 C vs RVV 时间",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 1.474,
+        "anomalyNote": "偏低"
+      },
+      {
+        "metric": "Branch Miss Rate(%)",
+        "rv": 4.278,
+        "anomalyNote": "高"
+      },
+      {
+        "metric": "MPEG-4 fps",
+        "rv": 88,
+        "anomalyNote": "编码吞吐基准"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "ff_jpeg_fdct_islow_8",
+        "fileModule": "libavcodec/jfdctint_template.c",
+        "rvvPattern": "Policy-Backed Missing RISC-V Assembly Kernel",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.03,
+        "note": "JPEG FDCT C fallback"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "libavcodec/riscv/mpegvideoencdsp_rvv.S",
+      "relatedKnowledge": "https://code.ffmpeg.org/FFmpeg/FFmpeg/commit/79adb692a2720647e9dbe57de33fd50b41db295c",
+      "evidenceExplanation": "FFmpeg PR 23712 shape-first 实例提供同构修复先例；hevc/h264 idct RVV 提供蝶形先例。"
+    }
+  }
+}

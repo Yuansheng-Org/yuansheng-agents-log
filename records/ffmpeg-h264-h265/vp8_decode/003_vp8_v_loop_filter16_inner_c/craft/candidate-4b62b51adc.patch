@@ -1,0 +1,628 @@
+diff --git a/libavcodec/riscv/vp8dsp_init.c b/libavcodec/riscv/vp8dsp_init.c
+index fecf6ef9b0..59b1776f6f 100644
+--- a/libavcodec/riscv/vp8dsp_init.c
++++ b/libavcodec/riscv/vp8dsp_init.c
+@@ -31,6 +31,22 @@ void ff_vp8_idct_add_rvv(uint8_t *dst, int16_t block[16], ptrdiff_t stride);
+ void ff_vp8_idct_dc_add_rvv(uint8_t *dst, int16_t block[16], ptrdiff_t stride);
+ void ff_vp8_idct_dc_add4y_rvv(uint8_t *dst, int16_t block[4][16], ptrdiff_t stride);
+ void ff_vp8_idct_dc_add4uv_rvv(uint8_t *dst, int16_t block[4][16], ptrdiff_t stride);
++void ff_vp8_v_loop_filter16_inner_rvv(uint8_t *dst, ptrdiff_t stride,
++                                      int flim_E, int flim_I, int hev_thresh);
++void ff_vp8_h_loop_filter16_inner_rvv(uint8_t *dst, ptrdiff_t stride,
++                                      int flim_E, int flim_I, int hev_thresh);
++void ff_vp8_v_loop_filter16_rvv(uint8_t *dst, ptrdiff_t stride,
++                                int flim_E, int flim_I, int hev_thresh);
++void ff_vp8_h_loop_filter16_rvv(uint8_t *dst, ptrdiff_t stride,
++                                int flim_E, int flim_I, int hev_thresh);
++void ff_vp8_v_loop_filter8uv_inner_rvv(uint8_t *dstU, uint8_t *dstV, ptrdiff_t stride,
++                                      int flim_E, int flim_I, int hev_thresh);
++void ff_vp8_h_loop_filter8uv_inner_rvv(uint8_t *dstU, uint8_t *dstV, ptrdiff_t stride,
++                                      int flim_E, int flim_I, int hev_thresh);
++void ff_vp8_v_loop_filter8uv_rvv(uint8_t *dstU, uint8_t *dstV, ptrdiff_t stride,
++                                int flim_E, int flim_I, int hev_thresh);
++void ff_vp8_h_loop_filter8uv_rvv(uint8_t *dstU, uint8_t *dstV, ptrdiff_t stride,
++                                int flim_E, int flim_I, int hev_thresh);
+ 
+ VP8_EPEL(16, rvi);
+ VP8_EPEL(8,  rvi);
+@@ -125,6 +141,14 @@ av_cold void ff_vp8dsp_init_riscv(VP8DSPContext *c)
+         if (flags & AV_CPU_FLAG_RVV_I64)
+             c->vp8_luma_dc_wht = ff_vp8_luma_dc_wht_rvv;
+         c->vp8_idct_add = ff_vp8_idct_add_rvv;
++        c->vp8_v_loop_filter16y_inner = ff_vp8_v_loop_filter16_inner_rvv;
++        c->vp8_h_loop_filter16y_inner = ff_vp8_h_loop_filter16_inner_rvv;
++        c->vp8_v_loop_filter16y = ff_vp8_v_loop_filter16_rvv;
++        c->vp8_h_loop_filter16y = ff_vp8_h_loop_filter16_rvv;
++        c->vp8_v_loop_filter8uv_inner = ff_vp8_v_loop_filter8uv_inner_rvv;
++        c->vp8_h_loop_filter8uv_inner = ff_vp8_h_loop_filter8uv_inner_rvv;
++        c->vp8_v_loop_filter8uv = ff_vp8_v_loop_filter8uv_rvv;
++        c->vp8_h_loop_filter8uv = ff_vp8_h_loop_filter8uv_rvv;
+ #endif
+         c->vp8_idct_dc_add = ff_vp8_idct_dc_add_rvv;
+         c->vp8_idct_dc_add4y = ff_vp8_idct_dc_add4y_rvv;
+diff --git a/libavcodec/riscv/vp8dsp_rvv.S b/libavcodec/riscv/vp8dsp_rvv.S
+index ed08f72cdc..eb3c99209a 100644
+--- a/libavcodec/riscv/vp8dsp_rvv.S
++++ b/libavcodec/riscv/vp8dsp_rvv.S
+@@ -556,3 +556,581 @@ epel_hv \len 6 4
+ epel_hv \len 4 6
+ #endif
+ .endr
++
++/* VP8 loop filters (16 columns / 8 rows), vectorized.
++ * C reference: vp8dsp.c (vp8_filter_common / vp8_normal_limit / hev)
++ * filter_common (vp8, IS_VP8):
++ *   a = 3*(q0-p0); if (is4tap) a += clip_int8(p1-q1); a = clip_int8(a)
++ *   f1 = FFMIN(a+4, 127)>>3; f2 = FFMIN(a+3, 127)>>3
++ *   p[-1] = cm[p0+f2]; p[0] = cm[q0-f1]
++ *   if (!is4tap) { a=(f1+1)>>1; p[-2]=cm[p1+a]; p[1]=cm[q1-a] }
++ * normal_limit: 2*|p0-q0| + (|p1-q1|>>1) <= E && all |pn-pm|<=I
++ * hev: |p1-p0| > thresh || |q1-q0| > thresh
++ */
++
++/* e16 abs difference: vd = |vsa - vsb| (uses v28) */
++.macro vp8_absdiff16 vd, vsa, vsb
++        vsub.vv        \vd, \vsa, \vsb
++        vneg.v         v28, \vd
++        vmax.vv        \vd, \vd, v28
++.endm
++
++/* clip signed e16 to [-128,127] in place (uses t5) */
++.macro vp8_clip_i8 v
++        li      t5, -128
++        vmax.vx        \v, \v, t5
++        li      t5, 127
++        vmin.vx        \v, \v, t5
++.endm
++
++/* vp8_filter_common vector core on 16 columns (e16 domain).
++ * In:  v2..v9 = e16 p3,p2,p1,p0,q0,q1,q2,q3
++ *      v10 = normal mask, v11 = hev mask (e16, 0/-1)
++ * Out: v2..v9 updated pixels (e16). vxrm=0.
++ */
++.macro vp8_filter_common_vec
++        li      t5, 3
++        vsub.vv v12, v6, v5          /* q0-p0 */
++        vmul.vx v12, v12, t5
++        vsub.vv v13, v4, v3          /* p1-q1 */
++        vp8_clip_i8 v13
++        vadd.vv v12, v12, v13        /* a4 */
++        vp8_clip_i8 v12
++        vsub.vv v14, v6, v5
++        vmul.vx v14, v14, t5
++        vp8_clip_i8 v14              /* a8 */
++        li      t5, 127
++        vadd.vi v15, v12, 4
++        vmin.vx v15, v15, t5
++        vsra.vi v15, v15, 3          /* f1_4 */
++        vadd.vi v16, v12, 3
++        vmin.vx v16, v16, t5
++        vsra.vi v16, v16, 3          /* f2_4 */
++        vadd.vi v17, v14, 4
++        vmin.vx v17, v17, t5
++        vsra.vi v17, v17, 3          /* f1_8 */
++        vadd.vi v18, v14, 3
++        vmin.vx v18, v18, t5
++        vsra.vi v18, v18, 3          /* f2_8 */
++        vadd.vv v19, v5, v16         /* p0'4 */
++        vsub.vv v20, v6, v15         /* q0'4 */
++        vadd.vv v21, v5, v18         /* p0'8 */
++        vsub.vv v22, v6, v17         /* q0'8 */
++        vadd.vi v23, v17, 1
++        vsra.vi v23, v23, 1          /* a2 */
++        vadd.vv v24, v3, v23         /* p1'8 */
++        vsub.vv v25, v4, v23         /* q1'8 */
++        /* arithmetic select: r = b ^ ((a ^ b) & mask)  => mask ? a : b */
++        vxor.vv v26, v21, v19
++        vand.vv v26, v26, v11
++        vxor.vv v19, v19, v26          /* p0' = hev ? 4tap : 8tap */
++        vxor.vv v26, v22, v20
++        vand.vv v26, v26, v11
++        vxor.vv v20, v20, v26          /* q0' */
++        vxor.vv v26, v19, v5
++        vand.vv v26, v26, v10
++        vxor.vv v5, v5, v26            /* p0 = normal ? p0' : p0 */
++        vxor.vv v26, v20, v6
++        vand.vv v26, v26, v10
++        vxor.vv v6, v6, v26            /* q0 */
++        vxor.vv v26, v3, v24
++        vand.vv v26, v26, v11
++        vxor.vv v24, v24, v26          /* p1 = hev ? orig : 8tap */
++        vxor.vv v26, v4, v25
++        vand.vv v26, v26, v11
++        vxor.vv v25, v25, v26          /* q1 */
++        vxor.vv v26, v3, v24
++        vand.vv v26, v26, v10
++        vxor.vv v3, v3, v26            /* p1 = normal ? sel : orig */
++        vxor.vv v26, v4, v25
++        vand.vv v26, v26, v10
++        vxor.vv v4, v4, v26            /* q1 */
++.endm
++
++/* load 8 e8 rows (16 cols each) for vertical filtering, widen to e16 v2..v9
++ * a0 = dst (top-left of edge), a1 = stride */
++.macro vp8_load_v16
++        vsetivli        zero, 16, e8, mf2, ta, ma
++        li      t5, 4
++        mul     t5, t5, a1
++        sub     t6, a0, t5           /* dst - 4*stride */
++        vle8.v  v10, (t6)
++        add     t6, t6, a1
++        vle8.v  v11, (t6)
++        add     t6, t6, a1
++        vle8.v  v12, (t6)
++        add     t6, t6, a1
++        vle8.v  v13, (t6)
++        add     t6, t6, a1
++        vle8.v  v14, (t6)
++        add     t6, t6, a1
++        vle8.v  v15, (t6)
++        add     t6, t6, a1
++        vle8.v  v16, (t6)
++        add     t6, t6, a1
++        vle8.v  v17, (t6)
++        vwcvt.x.x.v     v2, v10
++        vwcvt.x.x.v     v3, v11
++        vwcvt.x.x.v     v4, v12
++        vwcvt.x.x.v     v5, v13
++        vwcvt.x.x.v     v6, v14
++        vwcvt.x.x.v     v7, v15
++        vwcvt.x.x.v     v8, v16
++        vwcvt.x.x.v     v9, v17
++        vsetivli        zero, 16, e16, m1, ta, ma
++.endm
++
++/* store v2..v9 (e16) back as e8 rows for vertical filtering */
++.macro vp8_store_v16
++        vsetivli        zero, 16, e16, m1, ta, ma
++        vnsrl.wi        v10, v2, 0
++        vnsrl.wi        v11, v3, 0
++        vnsrl.wi        v12, v4, 0
++        vnsrl.wi        v13, v5, 0
++        vnsrl.wi        v14, v6, 0
++        vnsrl.wi        v15, v7, 0
++        vnsrl.wi        v16, v8, 0
++        vnsrl.wi        v17, v9, 0
++        vsetivli        zero, 16, e8, mf2, ta, ma
++        li      t5, 4
++        mul     t5, t5, a1
++        sub     t6, a0, t5
++        vse8.v  v10, (t6)
++        add     t6, t6, a1
++        vse8.v  v11, (t6)
++        add     t6, t6, a1
++        vse8.v  v12, (t6)
++        add     t6, t6, a1
++        vse8.v  v13, (t6)
++        add     t6, t6, a1
++        vse8.v  v14, (t6)
++        add     t6, t6, a1
++        vse8.v  v15, (t6)
++        add     t6, t6, a1
++        vse8.v  v16, (t6)
++        add     t6, t6, a1
++        vse8.v  v17, (t6)
++.endm
++
++/* compute normal mask (v10) and hev mask (v11) on e16 v2..v9.
++ * a2=E a3=I a4=hev_thresh */
++.macro vp8_masks16 Ereg, Ireg, Treg
++        vp8_absdiff16  v18, v2, v3     /* |p3-p2| */
++        vp8_absdiff16  v19, v3, v4     /* |p2-p1| */
++        vp8_absdiff16  v20, v4, v5     /* |p1-p0| */
++        vp8_absdiff16  v21, v9, v8     /* |q3-q2| */
++        vp8_absdiff16  v22, v8, v7     /* |q2-q1| */
++        vp8_absdiff16  v23, v7, v6     /* |q1-q0| */
++        vp8_absdiff16  v24, v5, v6     /* |p0-q0| */
++        vp8_absdiff16  v25, v4, v7     /* |p1-q1| */
++        vmsleu.vx       v10, v18, \Ireg
++        vmsleu.vx       v26, v19, \Ireg
++        vand.vv         v10, v10, v26
++        vmsleu.vx       v26, v20, \Ireg
++        vand.vv         v10, v10, v26
++        vmsleu.vx       v26, v21, \Ireg
++        vand.vv         v10, v10, v26
++        vmsleu.vx       v26, v22, \Ireg
++        vand.vv         v10, v10, v26
++        vmsleu.vx       v26, v23, \Ireg
++        vand.vv         v10, v10, v26
++        /* simple_limit: 2*|p0-q0| + (|p1-q1|>>1) <= E */
++        vsrl.vi         v25, v25, 1
++        vadd.vv         v24, v24, v24
++        vadd.vv         v24, v24, v25
++        vmsleu.vx       v26, v24, \Ereg
++        vand.vv         v10, v10, v26
++        /* hev: |p1-p0| > thresh || |q1-q0| > thresh */
++        vmsgtu.vx       v11, v20, \Treg
++        vmsgtu.vx       v26, v23, \Treg
++        vor.vv          v11, v11, v26
++.endm
++
++/* vp8_v_loop_filter16y_inner: a0=dst a1=stride a2=E a3=I a4=thresh */
++func ff_vp8_v_loop_filter16_inner_rvv, zve32x
++        lpad    0
++        csrwi           vxrm, 0
++        vp8_load_v16
++        vp8_masks16  a2, a3, a4
++        vp8_filter_common_vec
++        vp8_store_v16
++        ret
++endfunc
++
++/* filter_mbedge vector core (e16 v2..v9, masks v10 normal / v11 hev).
++ *   w = clip_i8(clip_i8(p1-q1) + 3*(q0-p0))
++ *   a0 = (27*w+63)>>7; a1 = (18*w+63)>>7; a2 = (9*w+63)>>7
++ *   p2'=p2+a2 p1'=p1+a1 p0'=p0+a0 q0'=q0-a0 q1'=q1-a1 q2'=q2-a2
++ * 4tap (hev) only updates p0/q0. Temp vectors v24..v27, v29..v31.
++ */
++.macro vp8_filter_mbedge_vec
++        li      t5, 3
++        vsub.vv v12, v4, v7          /* p1-q1 */
++        vp8_clip_i8 v12
++        vsub.vv v13, v6, v5
++        vmul.vx v13, v13, t5
++        vadd.vv v12, v12, v13
++        vp8_clip_i8 v12               /* w */
++        li      t5, 27
++        vmul.vx v13, v12, t5
++        li      t5, 63
++        vadd.vx v13, v13, t5
++        vsra.vi v13, v13, 7           /* a0 */
++        li      t5, 18
++        vmul.vx v14, v12, t5
++        li      t5, 63
++        vadd.vx v14, v14, t5
++        vsra.vi v14, v14, 7           /* a1 */
++        li      t5, 9
++        vmul.vx v15, v12, t5
++        li      t5, 63
++        vadd.vx v15, v15, t5
++        vsra.vi v15, v15, 7           /* a2 */
++        vadd.vv v16, v2, v15          /* p2' */
++        vadd.vv v17, v3, v14          /* p1' */
++        vadd.vv v18, v5, v13          /* p0' */
++        vsub.vv v19, v6, v13          /* q0' */
++        vsub.vv v20, v7, v14          /* q1' */
++        vsub.vv v21, v8, v15          /* q2' */
++        /* 4tap p0/q0 */
++        li      t5, 3
++        vsub.vv v22, v6, v5
++        vmul.vx v22, v22, t5
++        vsub.vv v23, v4, v7
++        vp8_clip_i8 v23
++        vadd.vv v22, v22, v23
++        vp8_clip_i8 v22               /* a4 */
++        li      t5, 127
++        vadd.vi v24, v22, 4
++        vmin.vx v24, v24, t5
++        vsra.vi v24, v24, 3           /* f1 */
++        vadd.vi v25, v22, 3
++        vmin.vx v25, v25, t5
++        vsra.vi v25, v25, 3           /* f2 */
++        vadd.vv v26, v5, v25          /* p0'4 */
++        vsub.vv v27, v6, v24          /* q0'4 */
++        /* p0/q0 = hev ? 4tap : mbedge */
++        vxor.vv v29, v26, v18
++        vand.vv v29, v29, v11
++        vxor.vv v18, v18, v29
++        vxor.vv v29, v27, v19
++        vand.vv v29, v29, v11
++        vxor.vv v19, v19, v29
++        /* p1/p2/q1/q2 = hev ? orig : mbedge */
++        vxor.vv v29, v3, v17
++        vand.vv v29, v29, v11
++        vxor.vv v17, v17, v29
++        vxor.vv v29, v7, v20
++        vand.vv v29, v29, v11
++        vxor.vv v20, v20, v29
++        vxor.vv v29, v2, v16
++        vand.vv v29, v29, v11
++        vxor.vv v16, v16, v29
++        vxor.vv v29, v8, v21
++        vand.vv v29, v29, v11
++        vxor.vv v21, v21, v29
++        /* apply normal mask (v10) */
++        vxor.vv v29, v18, v5
++        vand.vv v29, v29, v10
++        vxor.vv v5, v5, v29
++        vxor.vv v29, v19, v6
++        vand.vv v29, v29, v10
++        vxor.vv v6, v6, v29
++        vxor.vv v29, v17, v3
++        vand.vv v29, v29, v10
++        vxor.vv v3, v3, v29
++        vxor.vv v29, v20, v7
++        vand.vv v29, v29, v10
++        vxor.vv v7, v7, v29
++        vxor.vv v29, v16, v2
++        vand.vv v29, v29, v10
++        vxor.vv v2, v2, v29
++        vxor.vv v29, v21, v8
++        vand.vv v29, v29, v10
++        vxor.vv v8, v8, v29
++.endm
++
++
++/* load 8 e8 rows (16 cols) with stride for horizontal filtering, e16 v2..v9
++ * a0 = dst (row 0 edge), a1 = stride */
++.macro vp8_load_h16
++        vsetivli        zero, 16, e8, mf2, ta, ma
++        addi    t6, a0, -4
++        vlse8.v v10, (t6), a1
++        addi    t6, t6, 1
++        vlse8.v v11, (t6), a1
++        addi    t6, t6, 1
++        vlse8.v v12, (t6), a1
++        addi    t6, t6, 1
++        vlse8.v v13, (t6), a1
++        addi    t6, t6, 1
++        vlse8.v v14, (t6), a1
++        addi    t6, t6, 1
++        vlse8.v v15, (t6), a1
++        addi    t6, t6, 1
++        vlse8.v v16, (t6), a1
++        addi    t6, t6, 1
++        vlse8.v v17, (t6), a1
++        vwcvt.x.x.v     v2, v10
++        vwcvt.x.x.v     v3, v11
++        vwcvt.x.x.v     v4, v12
++        vwcvt.x.x.v     v5, v13
++        vwcvt.x.x.v     v6, v14
++        vwcvt.x.x.v     v7, v15
++        vwcvt.x.x.v     v8, v16
++        vwcvt.x.x.v     v9, v17
++        vsetivli        zero, 16, e16, m1, ta, ma
++.endm
++
++.macro vp8_store_h16
++        vsetivli        zero, 16, e16, m1, ta, ma
++        vnsrl.wi        v10, v2, 0
++        vnsrl.wi        v11, v3, 0
++        vnsrl.wi        v12, v4, 0
++        vnsrl.wi        v13, v5, 0
++        vnsrl.wi        v14, v6, 0
++        vnsrl.wi        v15, v7, 0
++        vnsrl.wi        v16, v8, 0
++        vnsrl.wi        v17, v9, 0
++        vsetivli        zero, 16, e8, mf2, ta, ma
++        addi    t6, a0, -4
++        vsse8.v v10, (t6), a1
++        addi    t6, t6, 1
++        vsse8.v v11, (t6), a1
++        addi    t6, t6, 1
++        vsse8.v v12, (t6), a1
++        addi    t6, t6, 1
++        vsse8.v v13, (t6), a1
++        addi    t6, t6, 1
++        vsse8.v v14, (t6), a1
++        addi    t6, t6, 1
++        vsse8.v v15, (t6), a1
++        addi    t6, t6, 1
++        vsse8.v v16, (t6), a1
++        addi    t6, t6, 1
++        vsse8.v v17, (t6), a1
++.endm
++
++func ff_vp8_h_loop_filter16_inner_rvv, zve32x
++        lpad    0
++        csrwi           vxrm, 0
++        vp8_load_h16
++        vp8_masks16  a2, a3, a4
++        vp8_filter_common_vec
++        vp8_store_h16
++        ret
++endfunc
++
++func ff_vp8_v_loop_filter16_rvv, zve32x
++        lpad    0
++        csrwi           vxrm, 0
++        vp8_load_v16
++        vp8_masks16  a2, a3, a4
++        vp8_filter_mbedge_vec
++        vp8_store_v16
++        ret
++endfunc
++
++func ff_vp8_h_loop_filter16_rvv, zve32x
++        lpad    0
++        csrwi           vxrm, 0
++        vp8_load_h16
++        vp8_masks16  a2, a3, a4
++        vp8_filter_mbedge_vec
++        vp8_store_h16
++        ret
++endfunc
++
++/* 8-column variants (8uv: U and V planes each filtered on 8 columns).
++ * a0=dstU a1=dstV a2=stride a3=E a4=I a5=hev_thresh (6 args).
++ * vl=8 (e8 mf4 / e16 mf2).
++ */
++.macro vp8_load_v8
++        vsetivli        zero, 8, e8, mf4, ta, ma
++        li      t5, 4
++        mul     t5, t5, a2
++        sub     t6, a0, t5
++        vle8.v  v10, (t6)
++        add     t6, t6, a2
++        vle8.v  v11, (t6)
++        add     t6, t6, a2
++        vle8.v  v12, (t6)
++        add     t6, t6, a2
++        vle8.v  v13, (t6)
++        add     t6, t6, a2
++        vle8.v  v14, (t6)
++        add     t6, t6, a2
++        vle8.v  v15, (t6)
++        add     t6, t6, a2
++        vle8.v  v16, (t6)
++        add     t6, t6, a2
++        vle8.v  v17, (t6)
++        vwcvt.x.x.v     v2, v10
++        vwcvt.x.x.v     v3, v11
++        vwcvt.x.x.v     v4, v12
++        vwcvt.x.x.v     v5, v13
++        vwcvt.x.x.v     v6, v14
++        vwcvt.x.x.v     v7, v15
++        vwcvt.x.x.v     v8, v16
++        vwcvt.x.x.v     v9, v17
++        vsetivli        zero, 8, e16, mf2, ta, ma
++.endm
++
++.macro vp8_store_v8
++        vsetivli        zero, 8, e16, mf2, ta, ma
++        vnsrl.wi        v10, v2, 0
++        vnsrl.wi        v11, v3, 0
++        vnsrl.wi        v12, v4, 0
++        vnsrl.wi        v13, v5, 0
++        vnsrl.wi        v14, v6, 0
++        vnsrl.wi        v15, v7, 0
++        vnsrl.wi        v16, v8, 0
++        vnsrl.wi        v17, v9, 0
++        vsetivli        zero, 8, e8, mf4, ta, ma
++        li      t5, 4
++        mul     t5, t5, a2
++        sub     t6, a0, t5
++        vse8.v  v10, (t6)
++        add     t6, t6, a2
++        vse8.v  v11, (t6)
++        add     t6, t6, a2
++        vse8.v  v12, (t6)
++        add     t6, t6, a2
++        vse8.v  v13, (t6)
++        add     t6, t6, a2
++        vse8.v  v14, (t6)
++        add     t6, t6, a2
++        vse8.v  v15, (t6)
++        add     t6, t6, a2
++        vse8.v  v16, (t6)
++        add     t6, t6, a2
++        vse8.v  v17, (t6)
++.endm
++
++.macro vp8_load_h8
++        vsetivli        zero, 8, e8, mf4, ta, ma
++        addi    t6, a0, -4
++        vlse8.v v10, (t6), a2
++        addi    t6, t6, 1
++        vlse8.v v11, (t6), a2
++        addi    t6, t6, 1
++        vlse8.v v12, (t6), a2
++        addi    t6, t6, 1
++        vlse8.v v13, (t6), a2
++        addi    t6, t6, 1
++        vlse8.v v14, (t6), a2
++        addi    t6, t6, 1
++        vlse8.v v15, (t6), a2
++        addi    t6, t6, 1
++        vlse8.v v16, (t6), a2
++        addi    t6, t6, 1
++        vlse8.v v17, (t6), a2
++        vwcvt.x.x.v     v2, v10
++        vwcvt.x.x.v     v3, v11
++        vwcvt.x.x.v     v4, v12
++        vwcvt.x.x.v     v5, v13
++        vwcvt.x.x.v     v6, v14
++        vwcvt.x.x.v     v7, v15
++        vwcvt.x.x.v     v8, v16
++        vwcvt.x.x.v     v9, v17
++        vsetivli        zero, 8, e16, mf2, ta, ma
++.endm
++
++.macro vp8_store_h8
++        vsetivli        zero, 8, e16, mf2, ta, ma
++        vnsrl.wi        v10, v2, 0
++        vnsrl.wi        v11, v3, 0
++        vnsrl.wi        v12, v4, 0
++        vnsrl.wi        v13, v5, 0
++        vnsrl.wi        v14, v6, 0
++        vnsrl.wi        v15, v7, 0
++        vnsrl.wi        v16, v8, 0
++        vnsrl.wi        v17, v9, 0
++        vsetivli        zero, 8, e8, mf4, ta, ma
++        addi    t6, a0, -4
++        vsse8.v v10, (t6), a2
++        addi    t6, t6, 1
++        vsse8.v v11, (t6), a2
++        addi    t6, t6, 1
++        vsse8.v v12, (t6), a2
++        addi    t6, t6, 1
++        vsse8.v v13, (t6), a2
++        addi    t6, t6, 1
++        vsse8.v v14, (t6), a2
++        addi    t6, t6, 1
++        vsse8.v v15, (t6), a2
++        addi    t6, t6, 1
++        vsse8.v v16, (t6), a2
++        addi    t6, t6, 1
++        vsse8.v v17, (t6), a2
++.endm
++
++.macro vp8_8uv_body load, store, inner
++        /* U plane (a0) */
++        \load
++        vp8_masks16  a3, a4, a5
++.if \inner
++        vp8_filter_common_vec
++.else
++        vp8_filter_mbedge_vec
++.endif
++        \store
++        /* V plane (s0 = saved dstV) */
++        mv      a0, s0
++        \load
++        vp8_masks16  a3, a4, a5
++.if \inner
++        vp8_filter_common_vec
++.else
++        vp8_filter_mbedge_vec
++.endif
++        \store
++.endm
++
++func ff_vp8_v_loop_filter8uv_inner_rvv, zve32x
++        lpad    0
++        csrwi           vxrm, 0
++        addi    sp, sp, -16
++        sd      s0, 0(sp)
++        mv      s0, a1
++        vp8_8uv_body vp8_load_v8, vp8_store_v8, 1
++        ld      s0, 0(sp)
++        addi    sp, sp, 16
++        ret
++endfunc
++
++func ff_vp8_h_loop_filter8uv_inner_rvv, zve32x
++        lpad    0
++        csrwi           vxrm, 0
++        addi    sp, sp, -16
++        sd      s0, 0(sp)
++        mv      s0, a1
++        vp8_8uv_body vp8_load_h8, vp8_store_h8, 1
++        ld      s0, 0(sp)
++        addi    sp, sp, 16
++        ret
++endfunc
++
++func ff_vp8_v_loop_filter8uv_rvv, zve32x
++        lpad    0
++        csrwi           vxrm, 0
++        addi    sp, sp, -16
++        sd      s0, 0(sp)
++        mv      s0, a1
++        vp8_8uv_body vp8_load_v8, vp8_store_v8, 0
++        ld      s0, 0(sp)
++        addi    sp, sp, 16
++        ret
++endfunc
++
++func ff_vp8_h_loop_filter8uv_rvv, zve32x
++        lpad    0
++        csrwi           vxrm, 0
++        addi    sp, sp, -16
++        sd      s0, 0(sp)
++        mv      s0, a1
++        vp8_8uv_body vp8_load_h8, vp8_store_h8, 0
++        ld      s0, 0(sp)
++        addi    sp, sp, 16
++        ret
++endfunc

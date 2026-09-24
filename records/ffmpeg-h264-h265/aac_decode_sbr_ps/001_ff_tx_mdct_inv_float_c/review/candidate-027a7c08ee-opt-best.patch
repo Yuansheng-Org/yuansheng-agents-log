@@ -1,0 +1,280 @@
+diff --git a/libavutil/riscv/Makefile b/libavutil/riscv/Makefile
+index 82a534824a..bb58b76ba1 100644
+--- a/libavutil/riscv/Makefile
++++ b/libavutil/riscv/Makefile
+@@ -7,3 +7,6 @@ RVV-OBJS += riscv/float_dsp_rvv.o \
+             riscv/fixed_dsp_rvv.o \
+             riscv/lls_rvv.o
+ RVV-OBJS-$(CONFIG_PIXELUTILS) += riscv/pixelutils_rvv.o
++
++OBJS += riscv/tx_float_init.o
++RVV-OBJS += riscv/tx_float_rvv.o
+diff --git a/libavutil/riscv/tx_float_init.c b/libavutil/riscv/tx_float_init.c
+new file mode 100644
+index 0000000000..db847a96e3
+--- /dev/null
++++ b/libavutil/riscv/tx_float_init.c
+@@ -0,0 +1,55 @@
++/*
++ * Copyright (c) The FFmpeg developers
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#define TX_FLOAT
++#include "libavutil/tx_priv.h"
++#include "libavutil/riscv/cpu.h"
++
++#if HAVE_RVV && (__riscv_xlen == 64)
++TX_DECL_FN(mdct_inv, rvv)
++
++static av_cold int rvv_mdct_init(AVTXContext *s, const FFTXCodelet *cd,
++                                 uint64_t flags, FFTXCodeletOptions *opts,
++                                 int len, int inv, const void *scale)
++{
++    if (!(av_get_cpu_flags() & AV_CPU_FLAG_RVV_I64))
++        return AVERROR(ENOSYS);
++    return ff_tx_mdct_init_float(s, cd, flags, opts, len, inv, scale);
++}
++#endif
++
++const FFTXCodelet * const ff_tx_codelet_list_float_riscv[] = {
++#if HAVE_RVV && (__riscv_xlen == 64)
++    &(const FFTXCodelet){
++        .name       = NULL_IF_CONFIG_SMALL("mdct_inv_float_rvv"),
++        .function   = ff_tx_mdct_inv_float_rvv,
++        .type       = TX_TYPE(MDCT),
++        .flags      = FF_TX_ALIGNED | FF_TX_OUT_OF_PLACE | FF_TX_INVERSE_ONLY,
++        .factors    = { 2, TX_FACTOR_ANY },
++        .nb_factors = 2,
++        .min_len    = 64,
++        .max_len    = TX_LEN_UNLIMITED,
++        .init       = rvv_mdct_init,
++        .cpu_flags  = AV_CPU_FLAG_RVV_F32,
++        .prio       = 128,
++    },
++#endif
++    NULL,
++};
+diff --git a/libavutil/riscv/tx_float_rvv.S b/libavutil/riscv/tx_float_rvv.S
+new file mode 100644
+index 0000000000..8e5b67339a
+--- /dev/null
++++ b/libavutil/riscv/tx_float_rvv.S
+@@ -0,0 +1,151 @@
++/*
++ * Copyright (c) The FFmpeg developers
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "asm.S"
++
++#if __riscv_xlen == 64
++
++// Inverse MDCT, out of place.
++// a0 = context, a1 = output, a2 = input, a3 = stride
++func ff_tx_mdct_inv_float_rvv, zve32f, zve64x
++        lpad    0
++        lw      a4, 0(a0)               // s->len
++        ld      a5, 16(a0)              // s->exp
++        ld      a6, 8(a0)               // s->map
++        srai    a4, a4, 1               // len2
++        mv      t1, a3                  // byte stride, full ptrdiff_t width
++        slli    t3, a4, 1               // 2*len2
++        addi    t3, t3, -1              // 2*len2 - 1
++        mul     t3, t3, t1              // c = (2*len2-1)*stride
++
++        addi    sp, sp, -32
++        sd      ra, 0(sp)
++        sd      s0, 8(sp)
++        sd      s1, 16(sp)
++        sd      s2, 24(sp)
++        mv      s0, a1                  // z base (kept across the sub-FFT call)
++        mv      s1, a0                  // s
++        mv      s2, a1                  // advancing z pointer (loop 1)
++
++        // Folding and pre-twiddle
++        li      t0, 4
++        bne     t1, t0, 1f
++0:
++        vsetvli t2, a4, e32, m4, ta, ma
++        vle32.v v0, (a6)
++        vsll.vi v0, v0, 2               // map indices to byte offsets
++        vrsub.vx v4, v0, t3             // mirrored byte offsets
++        vluxei32.v v8, (a2), v4         // tmp.re
++        vluxei32.v v12, (a2), v0        // tmp.im
++        vlseg2e32.v v16, (a5)           // exp[i] -> v16 re, v20 im
++        vfmul.vv v24, v8, v16
++        vfnmsac.vv v24, v12, v20        // z[i].re = re*er - im*ei
++        vfmul.vv v28, v8, v20
++        vfmacc.vv v28, v12, v16         // z[i].im = re*ei + im*er
++        vsseg2e32.v v24, (s2)
++        slli    t4, t2, 3
++        add     s2, s2, t4
++        add     a5, a5, t4
++        slli    t4, t2, 2
++        add     a6, a6, t4
++        sub     a4, a4, t2
++        bnez    a4, 0b
++        j       4f
++1:
++        vsetvli t2, a4, e32, m2, ta, ma // vl = min(remaining len2, VLMAX)
++        vle32.v v0, (a6)                // map, 32-bit elements
++        vsetvli zero, zero, e64, m4, ta, ma
++        vsext.vf2 v4, v0                // 64-bit byte offsets
++        vmul.vx v4, v4, t1
++        vrsub.vx v8, v4, t3             // mirrored byte offsets
++        vsetvli zero, zero, e32, m2, ta, ma
++        vluxei64.v v12, (a2), v8        // tmp.re
++        vluxei64.v v14, (a2), v4        // tmp.im
++        vlseg2e32.v v16, (a5)           // exp[i] -> v16 re, v18 im
++        vfmul.vv v20, v12, v16          // re*er
++        vfnmsac.vv v20, v14, v18        // z[i].re = re*er - im*ei
++        vfmul.vv v22, v12, v18          // re*ei
++        vfmacc.vv v22, v14, v16         // z[i].im = re*ei + im*er
++        vsseg2e32.v v20, (s2)           // z[i] = (re, im) interleaved
++        slli    t4, t2, 3               // vl*8
++        add     s2, s2, t4              // z += vl complex
++        add     a5, a5, t4              // exp += vl complex
++        slli    t4, t2, 2               // vl*4
++        add     a6, a6, t4              // map += vl ints
++        sub     a4, a4, t2              // remaining -= vl
++        bnez    a4, 1b
++
++4:
++        // Sub-FFT
++        ld      t0, 40(s1)              // s->fn[0]
++        ld      a0, 32(s1)              // &s->sub[0]
++        mv      a1, s0
++        mv      a2, s0
++        li      a3, 8
++        jalr    t0
++
++        // Post-twiddle
++        lw      a4, 0(s1)               // s->len
++        srai    a4, a4, 1               // len2
++        srai    t0, a4, 1               // len4 (remaining counter)
++        ld      a5, 16(s1)              // s->exp
++        slli    t6, a4, 3               // len2*8
++        add     a5, a5, t6              // exp2 = s->exp + len2
++        slli    t6, t0, 3               // len4*8
++        add     t1, s0, t6              // p_z0 = z + len4*8        (+vl*8/iter)
++        addi    t2, t1, -8              // p_z1 = z + (len4-1)*8     (-vl*8/iter)
++        slli    t6, t0, 3
++        add     t3, a5, t6              // p_e0 = exp2 + len4*8      (+vl*8/iter)
++        addi    t4, t3, -8              // p_e1 = exp2 + (len4-1)*8  (-vl*8/iter)
++        li      t5, -8                  // byte stride for the mirror walk
++        beqz    t0, 3f
++2:
++        vsetvli t6, t0, e32, m2, ta, ma // vl pairs
++        vlseg2e32.v  v0, (t1)           // z[i0].re, z[i0].im
++        vlsseg2e32.v v4, (t2), t5       // z[i1].re, z[i1].im
++        vlseg2e32.v  v8, (t3)           // exp2[i0].re, exp2[i0].im
++        vlsseg2e32.v v12, (t4), t5      // exp2[i1].re, exp2[i1].im
++        vfmul.vv v20, v6, v14
++        vfnmsac.vv v20, v4, v12         // outA_re
++        vfmul.vv v18, v6, v12
++        vfmacc.vv v18, v4, v14          // outA_im
++        vfmul.vv v16, v2, v10
++        vfnmsac.vv v16, v0, v8          // outB_re
++        vfmul.vv v22, v2, v8
++        vfmacc.vv v22, v0, v10          // outB_im
++        vsseg2e32.v  v16, (t1)          // z[i0] = (outB_re, outA_im)
++        vssseg2e32.v v20, (t2), t5      // z[i1] = (outA_re, outB_im)
++        mv      a6, t6                  // save vl
++        slli    t6, a6, 3               // vl*8
++        add     t1, t1, t6
++        sub     t2, t2, t6
++        add     t3, t3, t6
++        sub     t4, t4, t6
++        sub     t0, t0, a6              // remaining -= vl
++        bnez    t0, 2b
++3:
++        ld      ra, 0(sp)
++        ld      s0, 8(sp)
++        ld      s1, 16(sp)
++        ld      s2, 24(sp)
++        addi    sp, sp, 32
++        ret
++endfunc
++#endif
+diff --git a/libavutil/tx.c b/libavutil/tx.c
+index 05c132ada1..9c75b83a11 100644
+--- a/libavutil/tx.c
++++ b/libavutil/tx.c
+@@ -342,6 +342,9 @@ static const FFTXCodelet * const * const codelet_list[] = {
+     ff_tx_codelet_list_double_c,
+     ff_tx_codelet_list_int32_c,
+     ff_tx_null_list,
++#if ARCH_RISCV
++    ff_tx_codelet_list_float_riscv,
++#endif
+ #if HAVE_X86ASM
+     ff_tx_codelet_list_float_x86,
+ #endif
+diff --git a/libavutil/tx_priv.h b/libavutil/tx_priv.h
+index d3fcdbf563..7988db402a 100644
+--- a/libavutil/tx_priv.h
++++ b/libavutil/tx_priv.h
+@@ -380,7 +380,12 @@ int ff_tx_mdct_gen_exp_float (AVTXContext *s, int *pre_tab);
+ int ff_tx_mdct_gen_exp_double(AVTXContext *s, int *pre_tab);
+ int ff_tx_mdct_gen_exp_int32 (AVTXContext *s, int *pre_tab);
+ 
++int ff_tx_mdct_init_float(AVTXContext *s, const FFTXCodelet *cd,
++                          uint64_t flags, FFTXCodeletOptions *opts,
++                          int len, int inv, const void *scale);
++
+ /* Lists of codelets */
++extern const FFTXCodelet * const ff_tx_codelet_list_float_riscv   [];
+ extern const FFTXCodelet * const ff_tx_codelet_list_float_c       [];
+ extern const FFTXCodelet * const ff_tx_codelet_list_float_x86     [];
+ extern const FFTXCodelet * const ff_tx_codelet_list_float_aarch64 [];
+diff --git a/libavutil/tx_template.c b/libavutil/tx_template.c
+index ecee572e40..c03c179eb7 100644
+--- a/libavutil/tx_template.c
++++ b/libavutil/tx_template.c
+@@ -1270,6 +1270,15 @@ static av_cold int TX_NAME(ff_tx_mdct_init)(AVTXContext *s,
+     return 0;
+ }
+ 
++#ifdef TX_FLOAT
++av_cold int ff_tx_mdct_init_float(AVTXContext *s, const FFTXCodelet *cd,
++                                  uint64_t flags, FFTXCodeletOptions *opts,
++                                  int len, int inv, const void *scale)
++{
++    return TX_NAME(ff_tx_mdct_init)(s, cd, flags, opts, len, inv, scale);
++}
++#endif
++
+ static void TX_NAME(ff_tx_mdct_fwd)(AVTXContext *s, void *_dst, void *_src,
+                                     ptrdiff_t stride)
+ {

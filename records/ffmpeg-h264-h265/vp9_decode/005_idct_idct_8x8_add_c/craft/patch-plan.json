@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-ffmpeg-vp9-decode-005",
+  "blueprintId": "bp-ffmpeg-vp9_decode-005",
+  "createdAt": "2026-09-14T03:12:17.246Z",
+  "objective": "VP9 idct 8x8 反变换为 C 标量蝶形实现：vp9dsp_init.c 仅 ff_dc_8x8_rvv 有 RVV，idct 8x8 无。与 VP9 解码 RVV 覆盖缺口同根因。",
+  "changes": [
+    {
+      "filePath": "libavcodec/riscv/vp9dsp_init.c",
+      "action": "modify",
+      "rationale": "VP9 idct 8x8 反变换为 C 标量蝶形实现：vp9dsp_init.c 仅 ff_dc_8x8_rvv 有 RVV，idct 8x8 无。与 VP9 解码 RVV 覆盖缺口同根因。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "libavcodec/riscv/vp9dsp_rvv.S",
+      "action": "modify",
+      "rationale": "VP9 idct 8x8 反变换为 C 标量蝶形实现：vp9dsp_init.c 仅 ff_dc_8x8_rvv 有 RVV，idct 8x8 无。与 VP9 解码 RVV 覆盖缺口同根因。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 libavcodec/riscv/vp9dsp_init.c, libavcodec/riscv/vp9dsp_rvv.S 来解决 blueprint bp-ffmpeg-vp9_decode-005。"
+}

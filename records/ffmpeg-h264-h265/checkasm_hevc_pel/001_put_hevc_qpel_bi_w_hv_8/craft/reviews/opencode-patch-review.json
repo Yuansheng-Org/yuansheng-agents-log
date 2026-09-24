@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-ffmpeg-checkasm_hevc_pel-001",
+  "patchCandidateId": "pc-bp-ffmpeg-checkasm_hevc_pel-001",
+  "reviewedAt": "2026-09-12T08:00:00.000Z",
+  "reviewer": "opencode-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "Adds RVV (zve32x) HEVC qpel/epel weighted-pel kernels: 30 functions (qpel/epel x uni_w/bi_w x h/v/hv x 8/9/10/12-bit) covering all checkasm_hevc_pel weighted hotspots. Uses e8/e16 source loads, vwmaccsu/vwmacc signed-signed accumulate into e32, vnsrl narrowing, vmax/vmin clipping. Runtime filter selection via PC-relative table lookup; calls follow the 13-arg convention (extra args on stack, branchless ops only). No unsupported extensions beyond RVV 1.0 zve32x; zve32x func attribute matches RVV_I32 gate. Stack frame 12800 B with full callee-saved restore before return."
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "reference_grounding",
+      "result": "PASS"
+    },
+    {
+      "dimension": "code_location",
+      "result": "PASS"
+    },
+    {
+      "dimension": "no_phantom_fix",
+      "result": "PASS"
+    },
+    {
+      "dimension": "claim_verifiability",
+      "result": "PASS"
+    }
+  ],
+  "findings": []
+}

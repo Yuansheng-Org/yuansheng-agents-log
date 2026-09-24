@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-ffmpeg-vp8-decode-003",
+  "blueprintId": "bp-ffmpeg-vp8_decode-003",
+  "createdAt": "2026-09-13T11:35:35.337Z",
+  "objective": "VP8 loop filter（垂直 16 inner）为 C 标量实现：vp8dsp_init.c 无 loop_filter 注册。与 VP8 解码 RVV 覆盖缺口同根因。",
+  "changes": [
+    {
+      "filePath": "libavcodec/riscv/vp8dsp_init.c",
+      "action": "modify",
+      "rationale": "VP8 loop filter（垂直 16 inner）为 C 标量实现：vp8dsp_init.c 无 loop_filter 注册。与 VP8 解码 RVV 覆盖缺口同根因。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "libavcodec/vp8dsp.c",
+      "action": "modify",
+      "rationale": "VP8 loop filter（垂直 16 inner）为 C 标量实现：vp8dsp_init.c 无 loop_filter 注册。与 VP8 解码 RVV 覆盖缺口同根因。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 libavcodec/riscv/vp8dsp_init.c, libavcodec/vp8dsp.c 来解决 blueprint bp-ffmpeg-vp8_decode-003。"
+}

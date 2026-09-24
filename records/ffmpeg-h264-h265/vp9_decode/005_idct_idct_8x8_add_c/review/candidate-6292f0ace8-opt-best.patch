@@ -1,0 +1,296 @@
+diff --git a/libavcodec/riscv/Makefile b/libavcodec/riscv/Makefile
+index 0299215120..1f8860c770 100644
+--- a/libavcodec/riscv/Makefile
++++ b/libavcodec/riscv/Makefile
+@@ -89,7 +89,8 @@ RVV-OBJS-$(CONFIG_VP8DSP) += riscv/vp8dsp_rvv.o
+ OBJS-$(CONFIG_VP9_DECODER) += riscv/vp9dsp_init.o
+ RV-OBJS-$(CONFIG_VP9_DECODER) += riscv/vp9_mc_rvi.o
+ RVV-OBJS-$(CONFIG_VP9_DECODER) += riscv/vp9_intra_rvv.o \
+-                                  riscv/vp9_mc_rvv.o
++                                  riscv/vp9_mc_rvv.o \
++                                  riscv/vp9itxfm_rvv.o
+ OBJS-$(CONFIG_VORBIS_DECODER) += riscv/vorbisdsp_init.o
+ RVV-OBJS-$(CONFIG_VORBIS_DECODER) += riscv/vorbisdsp_rvv.o
+ 
+diff --git a/libavcodec/riscv/vp9dsp.h b/libavcodec/riscv/vp9dsp.h
+index 2422cd83e2..c4b7a52161 100644
+--- a/libavcodec/riscv/vp9dsp.h
++++ b/libavcodec/riscv/vp9dsp.h
+@@ -75,6 +75,9 @@ void ff_tm_8x8_rvv(uint8_t *dst, ptrdiff_t stride, const uint8_t *l,
+ void ff_tm_4x4_rvv(uint8_t *dst, ptrdiff_t stride, const uint8_t *l,
+                    const uint8_t *a);
+ 
++void ff_vp9_idct_idct_8x8_add_rvv(uint8_t *dst, ptrdiff_t stride,
++                                  int16_t *block, int eob);
++
+ #define VP9_8TAP_RISCV_RVV_FUNC(SIZE, type, type_idx)                         \
+ void ff_put_8tap_##type##_##SIZE##h_rvv(uint8_t *dst, ptrdiff_t dststride,   \
+                                         const uint8_t *src,                  \
+diff --git a/libavcodec/riscv/vp9dsp_init.c b/libavcodec/riscv/vp9dsp_init.c
+index 67c227cf3d..d8d4c522c8 100644
+--- a/libavcodec/riscv/vp9dsp_init.c
++++ b/libavcodec/riscv/vp9dsp_init.c
+@@ -140,8 +140,19 @@ static av_cold void vp9dsp_intrapred_init_riscv(VP9DSPContext *dsp, int bpp)
+ #endif
+ }
+ 
++static av_cold void vp9dsp_itxfm_init_riscv(VP9DSPContext *dsp, int bpp)
++{
++#if HAVE_RVV
++    int flags = av_get_cpu_flags();
++
++    if (bpp == 8 && (flags & AV_CPU_FLAG_RVV_I32) && ff_rv_vlen_least(128))
++        dsp->itxfm_add[TX_8X8][DCT_DCT] = ff_vp9_idct_idct_8x8_add_rvv;
++#endif
++}
++
+ av_cold void ff_vp9dsp_init_riscv(VP9DSPContext *dsp, int bpp, int bitexact)
+ {
+     vp9dsp_intrapred_init_riscv(dsp, bpp);
++    vp9dsp_itxfm_init_riscv(dsp, bpp);
+     vp9dsp_mc_init_riscv(dsp, bpp);
+ }
+diff --git a/libavcodec/riscv/vp9itxfm_rvv.S b/libavcodec/riscv/vp9itxfm_rvv.S
+new file mode 100644
+index 0000000000..7d0a361394
+--- /dev/null
++++ b/libavcodec/riscv/vp9itxfm_rvv.S
+@@ -0,0 +1,238 @@
++/*
++ * VP9 8x8 inverse DCT for RISC-V Vector
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "libavutil/riscv/asm.S"
++
++.macro vp9_idct8_1d
++        vadd.vv v8,  v0, v4
++        vmul.vx v8,  v8, a4
++        vadd.vx v8,  v8, a3
++        vsra.vi v8,  v8, 14
++        vsub.vv v9,  v0, v4
++        vmul.vx v9,  v9, a4
++        vadd.vx v9,  v9, a3
++        vsra.vi v9,  v9, 14
++        vmul.vx v10, v2, a5
++        vmul.vx v11, v6, a6
++        vsub.vv v10, v10, v11
++        vadd.vx v10, v10, a3
++        vsra.vi v10, v10, 14
++        vmul.vx v11, v2, a6
++        vmul.vx v12, v6, a5
++        vadd.vv v11, v11, v12
++        vadd.vx v11, v11, a3
++        vsra.vi v11, v11, 14
++        vmul.vx v12, v1, a7
++        li      t6, 16069
++        vmul.vx v13, v7, t6
++        vsub.vv v12, v12, v13
++        vadd.vx v12, v12, a3
++        vsra.vi v12, v12, 14
++        li      t6, 13623
++        vmul.vx v13, v5, t6
++        li      t6, 9102
++        vmul.vx v14, v3, t6
++        vsub.vv v13, v13, v14
++        vadd.vx v13, v13, a3
++        vsra.vi v13, v13, 14
++        vmul.vx v14, v5, t6
++        li      t6, 13623
++        vmul.vx v15, v3, t6
++        vadd.vv v14, v14, v15
++        vadd.vx v14, v14, a3
++        vsra.vi v14, v14, 14
++        li      t6, 16069
++        vmul.vx v15, v1, t6
++        vmul.vx v16, v7, a7
++        vadd.vv v15, v15, v16
++        vadd.vx v15, v15, a3
++        vsra.vi v15, v15, 14
++
++        vadd.vv v17, v8,  v11
++        vsub.vv v18, v8,  v11
++        vadd.vv v19, v9,  v10
++        vsub.vv v20, v9,  v10
++        vadd.vv v21, v12, v13
++        vsub.vv v13, v12, v13
++        vadd.vv v22, v15, v14
++        vsub.vv v14, v15, v14
++
++        vsub.vv v23, v14, v13
++        vmul.vx v23, v23, a4
++        vadd.vx v23, v23, a3
++        vsra.vi v23, v23, 14
++        vadd.vv v24, v14, v13
++        vmul.vx v24, v24, a4
++        vadd.vx v24, v24, a3
++        vsra.vi v24, v24, 14
++
++        vadd.vv v0,  v17, v22
++        vadd.vv v1,  v19, v24
++        vadd.vv v2,  v20, v23
++        vadd.vv v3,  v18, v21
++        vsub.vv v4,  v18, v21
++        vsub.vv v5,  v20, v23
++        vsub.vv v6,  v19, v24
++        vsub.vv v7,  v17, v22
++.endm
++
++func ff_vp9_idct_idct_8x8_add_rvv, zve32x
++        lpad    0
++        li      t0, 1
++        beq     a3, t0, .Ldc
++
++        addi    sp, sp, -128
++        li      a3, 8192
++        li      a4, 11585
++        li      a5, 6270
++        li      a6, 15137
++        li      a7, 3196
++
++        li      t4, 8
++        li      t5, 0
++1:
++        vsetvli t3, t4, e32, m1, ta, ma
++        slli    t0, t5, 1
++        add     t0, a2, t0
++        .irp reg, 0,1,2,3,4,5,6,7
++        vle16.v v31, (t0)
++        vsext.vf2 v\reg, v31
++        addi    t0, t0, 16
++        .endr
++        vp9_idct8_1d
++
++        vsetvli zero, t3, e16, mf2, ta, ma
++        slli    t0, t5, 4
++        add     t0, sp, t0
++        vnsrl.wi v16, v0, 0
++        vnsrl.wi v17, v1, 0
++        vnsrl.wi v18, v2, 0
++        vnsrl.wi v19, v3, 0
++        vnsrl.wi v20, v4, 0
++        vnsrl.wi v21, v5, 0
++        vnsrl.wi v22, v6, 0
++        vnsrl.wi v23, v7, 0
++        vsseg8e16.v v16, (t0)
++        sub     t4, t4, t3
++        add     t5, t5, t3
++        bnez    t4, 1b
++
++        li      t0, 64
++        vsetvli zero, t0, e16, m8, ta, ma
++        vmv.v.i v0, 0
++        vse16.v v0, (a2)
++
++        csrwi   vxrm, 0
++        li      t4, 8
++        li      t5, 0
++2:
++        vsetvli t3, t4, e32, m1, ta, ma
++        slli    t0, t5, 1
++        add     t0, sp, t0
++        .irp reg, 0,1,2,3,4,5,6,7
++        vle16.v v31, (t0)
++        vsext.vf2 v\reg, v31
++        addi    t0, t0, 16
++        .endr
++        vp9_idct8_1d
++
++        vsetvli zero, t3, e16, mf2, ta, ma
++        vnsrl.wi v16, v0, 0
++        vnsrl.wi v17, v1, 0
++        vnsrl.wi v18, v2, 0
++        vnsrl.wi v19, v3, 0
++        vnsrl.wi v20, v4, 0
++        vnsrl.wi v21, v5, 0
++        vnsrl.wi v22, v6, 0
++        vnsrl.wi v23, v7, 0
++        vssra.vi v16, v16, 5
++        vssra.vi v17, v17, 5
++        vssra.vi v18, v18, 5
++        vssra.vi v19, v19, 5
++        vssra.vi v20, v20, 5
++        vssra.vi v21, v21, 5
++        vssra.vi v22, v22, 5
++        vssra.vi v23, v23, 5
++        li      t2, -128
++        .irp reg, 16,17,18,19,20,21,22,23
++        vadd.vx v\reg, v\reg, t2
++        .endr
++
++        add     t0, a0, t5
++        li      t2, 128
++        vsetvli zero, t3, e8, mf4, ta, ma
++        .irp reg, 16,17,18,19,20,21,22,23
++        vle8.v  v31, (t0)
++        vwaddu.wv v24, v\reg, v31
++        vnclip.wi v31, v24, 0
++        vxor.vx v31, v31, t2
++        vse8.v  v31, (t0)
++        add     t0, t0, a1
++        .endr
++
++        sub     t4, t4, t3
++        add     t5, t5, t3
++        bnez    t4, 2b
++        addi    sp, sp, 128
++        ret
++
++.Ldc:
++        lh      t2, (a2)
++        li      t0, 11585
++        li      t1, 8192
++        mul     t2, t2, t0
++        add     t2, t2, t1
++        srai    t2, t2, 14
++        mul     t2, t2, t0
++        add     t2, t2, t1
++        srai    t2, t2, 14
++        addi    t2, t2, 16
++        srai    t2, t2, 5
++        sh      zero, (a2)
++
++        li      t1, 255
++        bgez    t2, 4f
++        neg     t2, t2
++        bleu    t2, t1, 3f
++        mv      t2, t1
++3:
++        vsetivli zero, 8, e8, m1, ta, ma
++        mv      t0, a0
++        .rept   8
++        vle8.v  v0, (t0)
++        vssubu.vx v0, v0, t2
++        vse8.v  v0, (t0)
++        add     t0, t0, a1
++        .endr
++        ret
++4:
++        bleu    t2, t1, 5f
++        mv      t2, t1
++5:
++        vsetivli zero, 8, e8, m1, ta, ma
++        mv      t0, a0
++        .rept   8
++        vle8.v  v0, (t0)
++        vsaddu.vx v0, v0, t2
++        vse8.v  v0, (t0)
++        add     t0, t0, a1
++        .endr
++        ret
++endfunc
