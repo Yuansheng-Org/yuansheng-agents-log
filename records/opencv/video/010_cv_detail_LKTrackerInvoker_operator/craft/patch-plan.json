@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-opencv-video-010",
+  "blueprintId": "bp-opencv-video-010",
+  "createdAt": "2026-09-12T12:41:16.829Z",
+  "objective": "LK 光流跟踪为标量为主实现（特征点迭代：坐标/索引计算 + 梯度图像读取），部分向量化（vsetvli e16/e8 patch 梯度计算）。特征点坐标数据相关使坐标/索引计算（≈16%）与迭代分支（4.22%）为固有开销；已向量化部分（≈13%）为 patch 计算。",
+  "changes": [
+    {
+      "filePath": "modules/video/src/lkpyramid.cpp",
+      "action": "modify",
+      "rationale": "LK 光流跟踪为标量为主实现（特征点迭代：坐标/索引计算 + 梯度图像读取），部分向量化（vsetvli e16/e8 patch 梯度计算）。特征点坐标数据相关使坐标/索引计算（≈16%）与迭代分支（4.22%）为固有开销；已向量化部分（≈13%）为 patch 计算。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 modules/video/src/lkpyramid.cpp 来解决 blueprint bp-opencv-video-010。"
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-opencv-core-027",
+  "blueprintId": "bp-opencv-core-027",
+  "createdAt": "2026-09-09T06:26:45.355Z",
+  "objective": "REDUCE_SUM 平方和 row 归约热循环已向量化但 LMUL=m1 欠利用 VLEN=256（每轮 8 元素，峰值 live 仅 2 个 vector 寄存器组），迭代与循环控制开销偏高，src 流式 load（76.38%）随过多迭代重复。",
+  "changes": [
+    {
+      "filePath": "modules/core/src/matrix_operations.cpp",
+      "action": "modify",
+      "rationale": "REDUCE_SUM 平方和 row 归约热循环已向量化但 LMUL=m1 欠利用 VLEN=256（每轮 8 元素，峰值 live 仅 2 个 vector 寄存器组），迭代与循环控制开销偏高，src 流式 load（76.38%）随过多迭代重复。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 modules/core/src/matrix_operations.cpp 来解决 blueprint bp-opencv-core-027。"
+}

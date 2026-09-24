@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-opencv-core-030",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-09T05:31:36.384Z",
+    "software": "opencv",
+    "testcaseIds": [
+      "core"
+    ],
+    "diagnosisId": "diag-20260909T053136384Z-a198b13a",
+    "targetHardware": "SpacemiT X100 (K3, spacemit-x100)",
+    "repositoryUrl": "https://github.com/opencv/opencv.git",
+    "testBranch": "5.x",
+    "commitHash": "f8ef5fd4c699671c9553f73d28c051abc6cf8e3d"
+  },
+  "problem": {
+    "summary": "OpenCV core 基准中 cv::cpu_baseline::reduceRowSum_8u32s（u8→u16 饱和行方向累加，rank 30，414 samples）为计算/延迟受限热点。主循环以固定 vlanes8=32（e8,m1）逐行累加，u16 累加域用 e16,m1（仅 16 lane/指令，VLEN=256 的一半）被迫按 lo/hi 拆分处理；每迭代开销主导：vsetvli 占 57.5% 样本（单条 e16 VLMAX vsetvli 即 47.83%）、整型记账约 34%，而实际向量数据处理仅约 6%。",
+    "evidence": [
+      "perf annotate（414 samples, cpu-clock, local period）：vsetvli s0,zero,e16,m1,ta,ma = 47.83%（2f4d20，循环不变 VLMAX 派生逐迭代重建）、add a4,a4,s1 = 27.05%（2f4d50，循环计数器）、vsetvli zero,s1,e8,m1,ta,ma = 7.73%（2f4d28）——主循环 vsetvli 合计 57.5%，整型记账合计约 34%，向量数据处理仅约 6%",
+      "perf stat：IPC=0.917553、L1_dcache_load_miss_rate=1.359%、branch_miss_rate=1.673% → compute/latency-bound（非 memory/branch-bound）",
+      "源码 modules/core/src/reduce.simd.hpp:848-854：vlanes8=32、vlanes16=16；v_expand(vx_load(src+i),lo,hi) 后两个 v_store(buf16+i, …)/v_store(buf16+i+vlanes16, …) 按 e16,m1 半区处理 → v_uint16=u16m1 类型映射导致 LMUL 欠利用与 lo/hi 拆分",
+      "buf16-hi 地址每迭代从 Mat 字段重载重建（2f4d40-2f4d4a：ld/lw/add/slli/add），索引计数器构成循环携带整型链"
+    ]
+  },
+  "rootCause": {
+    "summary": "reduceRowSum_8u32s 主累加循环以 LMUL=1（e16,m1 每指令 16 lane）处理 u16 累加域，v_expand 加宽出的 e16m2 组被拆成 lo/hi 两个 m1 半区消费，叠加循环不变 vsetvli 每迭代 4 次重建（VLMAX 派生）与索引地址每迭代重算，使配置与记账开销（约 90% 样本）主导、实际向量处理仅约 6%。",
+    "candidateFiles": [
+      "modules/core/src/reduce.simd.hpp"
+    ],
+    "performanceFactors": [
+      "RVV Register-Group Utilization and LMUL Sizing",
+      "RVV Vector-State Management",
+      "Loop Induction Variable Strength Reduction"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "vsaddu u16 饱和累加语义（255*256=65280 < 65535 的 flush_at=256 合同）",
+      "每 256 行 flush 到 u32 的累加顺序与结果",
+      "tail 行为：len 非 vlanes8 倍数时由标量余数循环承接，不得 off-by-one",
+      "x86/NEON 通用 universal-intrinsic 路径不被破坏（LMUL 改动仅限 RVV 专用路径）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "core"
+    ],
+    "regressionCommand": "agent1 patch_regression --case core"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.8,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=0.917553 且 L1_dcache_load_miss_rate=1.359%、branch_miss_rate=1.673% 均低，判定为计算/延迟受限；perf annotate 中主累加循环（0x2f4d14–0x2f4d5e）的 vsetvli 指令簇独占 57.5% 样本（单条循环不变 e16,m1 VLMAX 派生 2f4d20 即 47.83%），整型记账约 34%，实际向量数据指令仅约 6%——配置/记账开销主导；源码 reduce.simd.hpp:848-854 确认 vlanes16=16（e16,m1）使 32-lane 数据按 lo/hi 拆分，v_uint16=u16m1 类型映射造成 LMUL 欠利用，buf16-hi 地址每迭代重算；知识层命中 rvv_register_group_utilization / rvv_vector_state_management / loop_induction_variable_strength_reduction 三个已定义 pattern，其 Related PR 佐证 LMUL 选型、vsetvli 合并与归纳变量削减方向。综合判断根因为固定-VL 主循环每迭代开销（vsetvli + 整型记账）主导，结构根因是 u16 域 LMUL=1 欠利用。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "采样 IP precision 未确认（precise_ip 未知），47.83% 的单行 vsetvli 占比可能包含相邻指令 skid；但区间聚合 + 指令形态（每迭代 4 次 vsetvli 服务 7 条向量指令）+ 源码结构仍指向配置/记账开销主导",
+      "编译器调度选择（把 buf16-lo 的 vle16 提前到 vwcvtu 之前造成 e16→e8→e16 乒乓）可能是独立贡献者，但提升 LMUL 消除 lo/hi 拆分后该信号自然大幅缩小"
+    ],
+    "currentGaps": "未提供 precise_ip/Exact-IP 能力（baseline_gap: sampling IP precision），单指令归因受限、以区间聚合为准；无函数级 workload 贡献占比（baseline_gap: sampling metadata），收益上界仅为函数内局部样本份额且三个 finding 份额重叠不可相加；本批次为纯 RISC-V profile，无 ARM 侧 perf stat/执行时长对比",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + opencv core",
+    "recommendedFirstAction": "在 modules/core/src/reduce.simd.hpp 的 reduceRowSum_8u32s 主累加循环（:848-854）RVV 路径将 u16 累加域提升至 e16,m2（32 lane 单条 vle16/vsaddu/vse16，消除 lo/hi 拆分；必要时 e8 升 m2 摊薄每迭代开销），把循环不变 vsetvli（VLMAX 派生）提出循环外，并将 src/buf16 地址访问改为指针递增 + 预计算端指针比较",
+    "recommendedVerification": "重跑 opencv_perf_core 的 reduce 基准并对同一函数重新 perf annotate：主循环 vsetvli 计数从 4/迭代降至 ≤2、e16,m1 vsetvli（2f4d20）份额消失、2f4d40-2f4d4a 地址重建簇消失；饱和累加输出与现实现逐元素一致（含 len=0、短行、非 32 倍数 tail）",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.917553,
+        "anomalyNote": "IPC≈0.92，主循环被配置/记账开销主导（vsetvli 57.5% + 整型记账 34%），向量数据处理仅约 6%"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 1.359,
+        "anomalyNote": "低 miss 率，排除 memory-bound，指向 compute/latency-bound"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 1.673,
+        "anomalyNote": "低 miss 率，排除 branch-bound"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "cv::cpu_baseline::reduceRowSum_8u32s(cv::Mat const&, cv::Mat&)::{lambda(cv::Range const&)#1}::operator()(cv::Range const&) const [clone .isra.0]",
+        "fileModule": "modules/core/src/reduce.simd.hpp",
+        "rvvPattern": "RVV Register-Group Utilization and LMUL Sizing",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.9,
+        "note": "图像/矩阵归约（u8→u16 饱和行方向累加）；u16 累加域 e16,m1 仅 16 lane（VLEN 一半），v_expand 的 e16m2 组被按 lo/hi 两个 m1 半区消费，vsetvli 57.5% + 整型记账 34% 的结构根因（与 F2/F3 份额重叠，不可相加）"
+      },
+      {
+        "hotspotFunction": "cv::cpu_baseline::reduceRowSum_8u32s(cv::Mat const&, cv::Mat&)::{lambda(cv::Range const&)#1}::operator()(cv::Range const&) const [clone .isra.0]",
+        "fileModule": "modules/core/src/reduce.simd.hpp",
+        "rvvPattern": "RVV Vector-State Management",
+        "patternConfidence": "MEDIUM",
+        "benefitUpperbound": 0.5749,
+        "note": "主循环每迭代 4 次 vsetvli（2f4d18/20/28/32），含循环不变 VLMAX 派生（avl=x0）逐迭代重建与 e16→e8→e16 乒乓；单条 2f4d20 即 47.83%"
+      },
+      {
+        "hotspotFunction": "cv::cpu_baseline::reduceRowSum_8u32s(cv::Mat const&, cv::Mat&)::{lambda(cv::Range const&)#1}::operator()(cv::Range const&) const [clone .isra.0]",
+        "fileModule": "modules/core/src/reduce.simd.hpp",
+        "rvvPattern": "Loop Induction Variable Strength Reduction",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.34,
+        "note": "buf16+i+vlanes16 地址每迭代从 Mat 字段重载重建（2f4d40-2f4d4a），索引计数器 add a4,a4,s1=27.05% 构成循环携带整型链；访问为连续固定 stride"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "modules/core/src/reduce.simd.hpp:848-854 (for (; i <= len - vlanes8; i += vlanes8) { v_expand(vx_load(src + i), lo, hi); v_store(buf16 + i, v_add(vx_load(buf16 + i), lo)); v_store(buf16 + i + vlanes16, v_add(vx_load(buf16 + i + vlanes16), hi)); })",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/26318, https://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5, https://github.com/opencv/opencv/pull/25586, https://github.com/torvalds/linux/commit/a4348546332c9fae12b29acb514535e0a52b9b3c, https://github.com/torvalds/linux/commit/a894e8ed09c6c7fa239711819db83b8c050eb7b0, https://github.com/torvalds/linux/commit/c2a658d419246108c9bf065ec347355de5ba8a05, https://github.com/openjdk/jdk/commit/bdd37b0e5eaa984e2ad2e9010af37dcd612cc05e, https://github.com/OpenMathLib/OpenBLAS/commit/cc1b5794a0409493ed470f4cced313ea0b560870, https://github.com/OpenMathLib/OpenBLAS/commit/d69be17b6ff7eea5371b03a199db9c112aa6dc4b, https://github.com/OpenMathLib/OpenBLAS/commit/4a12cf53ec116c06e5d74073b54a3bca6046cb17, https://github.com/OpenMathLib/OpenBLAS/commit/240695862984d4de845f1c42821a883946932df7, https://github.com/v8/v8/commit/3844339936068c529170dcb4f2aa160654d25943, https://github.com/vllm-project/vllm/pull/47538, https://github.com/v8/v8/commit/c81ffb7a356dc408940d479fbbec1d048181be71, https://github.com/qemu/qemu/commit/d57dfe4b37ae542cec84a0cf751ecef313614cb6, https://github.com/qemu/qemu/commit/944b6dfd3d67236882f2bc09d1d30ed923268e16, https://github.com/qemu/qemu/commit/25669d275ce70346b94e3d5e4475d619eb979f5e, https://github.com/qemu/qemu/commit/bd2c82283d21e3400d7d89676a221935904c2fe6, https://github.com/qemu/qemu/commit/81b9ef995a3b2fa5b08fab0615a1c9ed7cbe053e, https://github.com/qemu/qemu/commit/949b6bcb27295eb04350afac32a45b698fc50104, https://github.com/qemu/qemu/commit/b8e1f32cda7805236c2bd497106a9356431c2d60, https://github.com/llvm/llvm-project/pull/148246, https://github.com/llvm/llvm-project/commit/d0554ae4cf264dd05024a753c66e15e4d16bf6e8, https://github.com/llvm/llvm-project/pull/118285, https://github.com/llvm/llvm-project/pull/123878, https://github.com/llvm/llvm-project/commit/f59307bfdc01c584bfa7cd31a55226831bf5590f, https://github.com/torvalds/linux/commit/18be4ca5cb4e5a86833de97d331f5bc14a6c5a6d, https://github.com/OpenMathLib/OpenBLAS/commit/477dd40f073c371d175d48e8b264ea40449515df, https://github.com/OpenMathLib/OpenBLAS/commit/d832ee50868a48bb8a16d4343d428c11d80065ec",
+      "evidenceExplanation": "源码 reduce.simd.hpp:848-854 确认主循环固定 vlanes8=32/vlanes16=16，v_uint16=u16m1 类型映射迫使 32-lane 数据按 lo/hi 两个 e16m1 半区处理、地址表达式 buf16+i+vlanes16 每迭代重建；annotate 在对应位置出现 4 次/迭代 vsetvli（57.5%，单条 47.83%）与整型记账（约 34%）——代码、profile 与三个 pattern 知识三方指向同一 LMUL 欠利用 + vsetvli/归纳变量每迭代开销根因；Related PR 展示同类 LMUL 选型与 vsetvli 合并优化在 OpenCV/OpenBLAS/LLVM 的既有实践"
+    }
+  }
+}

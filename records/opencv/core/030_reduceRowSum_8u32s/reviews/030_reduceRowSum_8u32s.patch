@@ -1,0 +1,268 @@
+From 0e49b204644ef2b7929c882330bfb8d2a4ee6da3 Mon Sep 17 00:00:00 2001
+From: Zhang Jinhan <zhangjinhan@isrc.iscas.ac.cn>
+Date: Thu, 10 Sep 2026 16:59:18 +0800
+Subject: [PATCH 1/3] core: rvv: optimize 8U row reduce sum with vwaddu.wv
+
+Optimize the RVV path of reduceRowSum_8u32s by using the native
+widening add instruction vwaddu.wv.
+
+The generic scalable-vector path expands each u8m1 input vector into
+two u16m1 halves and performs two separate load/add/store sequences
+for the u16 accumulation buffer.
+
+On RVV, an u8m1 vector and an u16m2 vector have the same number of
+elements. Use an u16m2 accumulator directly and combine widening and
+addition with vwaddu.wv:
+
+    u16m2 = u16m2 + u8m1
+
+This removes the explicit widening and low/high u16 accumulator split,
+reducing the vector operations in the hot accumulation loop while
+keeping the existing scalar tail and 256-row u16-to-u32 flush logic
+unchanged.
+
+The implementation is VLEN-agnostic.
+
+Functional test:
+
+    ./bin/opencv_test_core \
+        --gtest_filter='*Reduce*:*reduce*'
+
+Performance test:
+
+    OPENCV_FOR_THREADS_NUM=1 ./bin/opencv_perf_core \
+        --gtest_filter='*Reduce*:*reduce*'
+
+Performance was measured on SpacemiT K3 / X100 with RVV 1.0,
+VLEN=256, GCC 14.3.0, a Release build, and a single thread.
+
+Median execution time:
+
+    Size / type       Baseline    RVV vwaddu.wv    Speedup
+    640x480  8UC1       0.09          0.05          1.80x
+    640x480  8UC4       0.36          0.16          2.25x
+    1280x720 8UC1       0.27          0.12          2.25x
+    1280x720 8UC4       1.08          0.56          1.93x
+    1920x1080 8UC1      0.62          0.29          2.14x
+    1920x1080 8UC4      2.43          1.11          2.19x
+
+Geometric mean speedup: ~2.09x.
+
+REDUCE_MIN, REDUCE_MAX, and REDUCE_SUM2 performance remains
+essentially unchanged, indicating that the speedup is localized to
+the optimized 8-bit row SUM path.
+
+Co-authored-by: Yang Wang <yangwang@iscas.ac.cn>
+Co-authored-by: Yuansheng <yuansheng@iscas.ac.cn>
+---
+ modules/core/src/reduce.simd.hpp | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/modules/core/src/reduce.simd.hpp b/modules/core/src/reduce.simd.hpp
+index 374853bb29c1..fa24f8712815 100644
+--- a/modules/core/src/reduce.simd.hpp
++++ b/modules/core/src/reduce.simd.hpp
+@@ -845,6 +845,18 @@ static void reduceRowSum_8u32s(const Mat& srcmat, Mat& dstmat)
+             }
+ #else
+             const int vlanes8 = VTraits<v_uint8>::vlanes();
++#if defined(__riscv_v) && __riscv_v >= 1000000
++            // RISC-V RVV: accumulate u8m1 directly into the u16m2 accumulator.
++            // vwaddu.wv performs u16m2 += u8m1 in one widening-add operation.
++            // flush_at=256 guarantees 256*255=65280, so u16 accumulation cannot overflow.
++            for (; i <= len - vlanes8; i += vlanes8)
++            {
++                vuint8m1_t vs = __riscv_vle8_v_u8m1(src + i, vlanes8);
++                vuint16m2_t va = __riscv_vle16_v_u16m2(buf16 + i, vlanes8);
++                va = __riscv_vwaddu_wv_u16m2(va, vs, vlanes8);
++                __riscv_vse16_v_u16m2(buf16 + i, va, vlanes8);
++            }
++#else
+             for (; i <= len - vlanes8; i += vlanes8)
+             {
+                 v_uint16 lo, hi;
+@@ -852,6 +864,7 @@ static void reduceRowSum_8u32s(const Mat& srcmat, Mat& dstmat)
+                 v_store(buf16 + i, v_add(vx_load(buf16 + i), lo));
+                 v_store(buf16 + i + vlanes16, v_add(vx_load(buf16 + i + vlanes16), hi));
+             }
++#endif
+ #endif
+             for (; i < len; i++)
+                 buf16[i] += (ushort)src[i];
+
+From cb3d17ebd0f9dda35370d943d0e945b7c9fbe3d8 Mon Sep 17 00:00:00 2001
+From: Zhang Jinhan <zhangjinhan@isrc.iscas.ac.cn>
+Date: Tue, 15 Sep 2026 09:09:00 +0800
+Subject: [PATCH 2/3] core: update RVV 8u row sum to use m2/m4 vectors
+
+Replace u8m1/u16m2 vectors with u8m2/u16m4 and use __riscv_vsetvlmax_e8m2() to determine the loop width. Switch the RVV guard to CV_RVV while retaining widening accumulation into the 16-bit buffer.
+---
+ modules/core/src/reduce.simd.hpp | 20 ++++++--------
+ modules/core/test/test_mat.cpp   | 46 ++++++++++++++++++++++++++++++++
+ 2 files changed, 54 insertions(+), 12 deletions(-)
+
+diff --git a/modules/core/src/reduce.simd.hpp b/modules/core/src/reduce.simd.hpp
+index fa24f8712815..fd7b28529e5e 100644
+--- a/modules/core/src/reduce.simd.hpp
++++ b/modules/core/src/reduce.simd.hpp
+@@ -843,20 +843,17 @@ static void reduceRowSum_8u32s(const Mat& srcmat, Mat& dstmat)
+                 vst1q_u16(buf16 + i,     vaddw_u8(acc_lo, vget_low_u8(v)));
+                 vst1q_u16(buf16 + i + 8, vaddw_high_u8(acc_hi, v));
+             }
+-#else
+-            const int vlanes8 = VTraits<v_uint8>::vlanes();
+-#if defined(__riscv_v) && __riscv_v >= 1000000
+-            // RISC-V RVV: accumulate u8m1 directly into the u16m2 accumulator.
+-            // vwaddu.wv performs u16m2 += u8m1 in one widening-add operation.
+-            // flush_at=256 guarantees 256*255=65280, so u16 accumulation cannot overflow.
+-            for (; i <= len - vlanes8; i += vlanes8)
++#elif CV_RVV
++            const int vl = (int)__riscv_vsetvlmax_e8m2();
++            for (; i <= len - vl; i += vl)
+             {
+-                vuint8m1_t vs = __riscv_vle8_v_u8m1(src + i, vlanes8);
+-                vuint16m2_t va = __riscv_vle16_v_u16m2(buf16 + i, vlanes8);
+-                va = __riscv_vwaddu_wv_u16m2(va, vs, vlanes8);
+-                __riscv_vse16_v_u16m2(buf16 + i, va, vlanes8);
++                vuint8m2_t vs = __riscv_vle8_v_u8m2(src + i, vl);
++                vuint16m4_t va = __riscv_vle16_v_u16m4(buf16 + i, vl);
++                va = __riscv_vwaddu_wv_u16m4(va, vs, vl);
++                __riscv_vse16_v_u16m4(buf16 + i, va, vl);
+             }
+ #else
++            const int vlanes8 = VTraits<v_uint8>::vlanes();
+             for (; i <= len - vlanes8; i += vlanes8)
+             {
+                 v_uint16 lo, hi;
+@@ -864,7 +861,6 @@ static void reduceRowSum_8u32s(const Mat& srcmat, Mat& dstmat)
+                 v_store(buf16 + i, v_add(vx_load(buf16 + i), lo));
+                 v_store(buf16 + i + vlanes16, v_add(vx_load(buf16 + i + vlanes16), hi));
+             }
+-#endif
+ #endif
+             for (; i < len; i++)
+                 buf16[i] += (ushort)src[i];
+diff --git a/modules/core/test/test_mat.cpp b/modules/core/test/test_mat.cpp
+index 5400111957ab..95131617cdf2 100644
+--- a/modules/core/test/test_mat.cpp
++++ b/modules/core/test/test_mat.cpp
+@@ -1620,6 +1620,52 @@ TEST(Reduce, regression_should_fail_bug_4594)
+     EXPECT_NO_THROW(cv::reduce(src, dst, 0, REDUCE_SUM2, CV_32S));
+ }
+ 
++TEST(Reduce, sum8u_row_boundaries)
++{
++    const int heights[] = {1, 2, 255, 256, 257, 258, 511, 512, 513, 1025};
++    const int widths[] = {1, 7, 15, 16, 17, 31, 32, 33, 63, 64, 65, 127, 129};
++    const int channels[] = {1, 3, 4};
++    RNG rng(0x29923);
++    for (int cn : channels)
++    for (int height : heights)
++    for (int width : widths)
++    for (int roi = 0; roi < 2; roi++)
++    for (int pattern = 0; pattern < 2; pattern++)
++    {
++        SCOPED_TRACE(cv::format("width=%d height=%d cn=%d roi=%d pattern=%d",
++                               width, height, cn, roi, pattern));
++        Mat storage(height + 2 * roi, width + 2 * roi, CV_8UC(cn));
++        Mat src = storage(Rect(roi, roi, width, height));
++        if (pattern == 0)
++            src.setTo(Scalar::all(255));
++        else
++            rng.fill(src, RNG::UNIFORM, 0, 256);
++
++        Mat expected = Mat::zeros(1, width, CV_32SC(cn));
++        for (int y = 0; y < height; y++)
++        for (int x = 0; x < width * cn; x++)
++            expected.ptr<int>()[x] += src.ptr<uchar>(y)[x];
++
++        // An offset destination also checks that stores stay inside the ROI.
++        Mat outStorage(3, width + 2, CV_32SC(cn), Scalar::all(-1));
++        Mat actual = outStorage(Rect(1, 1, width, 1));
++        cv::reduce(src, actual, 0, REDUCE_SUM, CV_32S);
++        EXPECT_EQ(0, cv::norm(expected, actual, NORM_INF));
++        for (int y = 0; y < outStorage.rows; y++)
++        for (int x = 0; x < outStorage.cols * cn; x++)
++            if (y != 1 || x < cn || x >= (width + 1) * cn)
++                EXPECT_EQ(-1, outStorage.ptr<int>(y)[x]);
++
++        Mat expectedFloat, actualFloat;
++        expected.convertTo(expectedFloat, CV_32F);
++        cv::reduce(src, actualFloat, 0, REDUCE_SUM, CV_32F);
++        EXPECT_EQ(0, cv::norm(expectedFloat, actualFloat, NORM_INF));
++        expected.convertTo(expectedFloat, CV_32F, 1.0 / height);
++        cv::reduce(src, actualFloat, 0, REDUCE_AVG, CV_32F);
++        EXPECT_LE(cv::norm(expectedFloat, actualFloat, NORM_INF), 1e-4);
++    }
++}
++
+ TEST(Mat, push_back_vector)
+ {
+     cv::Mat result(1, 5, CV_32FC1);
+
+From 49a540441daf39a20bd7856bf48526b02bfb5dcf Mon Sep 17 00:00:00 2001
+From: Zhang Jinhan <zhangjinhan@isrc.iscas.ac.cn>
+Date: Tue, 15 Sep 2026 09:14:36 +0800
+Subject: [PATCH 3/3] core: revert unintended test_mat.cpp changes
+
+---
+ modules/core/test/test_mat.cpp | 46 ----------------------------------
+ 1 file changed, 46 deletions(-)
+
+diff --git a/modules/core/test/test_mat.cpp b/modules/core/test/test_mat.cpp
+index 95131617cdf2..5400111957ab 100644
+--- a/modules/core/test/test_mat.cpp
++++ b/modules/core/test/test_mat.cpp
+@@ -1620,52 +1620,6 @@ TEST(Reduce, regression_should_fail_bug_4594)
+     EXPECT_NO_THROW(cv::reduce(src, dst, 0, REDUCE_SUM2, CV_32S));
+ }
+ 
+-TEST(Reduce, sum8u_row_boundaries)
+-{
+-    const int heights[] = {1, 2, 255, 256, 257, 258, 511, 512, 513, 1025};
+-    const int widths[] = {1, 7, 15, 16, 17, 31, 32, 33, 63, 64, 65, 127, 129};
+-    const int channels[] = {1, 3, 4};
+-    RNG rng(0x29923);
+-    for (int cn : channels)
+-    for (int height : heights)
+-    for (int width : widths)
+-    for (int roi = 0; roi < 2; roi++)
+-    for (int pattern = 0; pattern < 2; pattern++)
+-    {
+-        SCOPED_TRACE(cv::format("width=%d height=%d cn=%d roi=%d pattern=%d",
+-                               width, height, cn, roi, pattern));
+-        Mat storage(height + 2 * roi, width + 2 * roi, CV_8UC(cn));
+-        Mat src = storage(Rect(roi, roi, width, height));
+-        if (pattern == 0)
+-            src.setTo(Scalar::all(255));
+-        else
+-            rng.fill(src, RNG::UNIFORM, 0, 256);
+-
+-        Mat expected = Mat::zeros(1, width, CV_32SC(cn));
+-        for (int y = 0; y < height; y++)
+-        for (int x = 0; x < width * cn; x++)
+-            expected.ptr<int>()[x] += src.ptr<uchar>(y)[x];
+-
+-        // An offset destination also checks that stores stay inside the ROI.
+-        Mat outStorage(3, width + 2, CV_32SC(cn), Scalar::all(-1));
+-        Mat actual = outStorage(Rect(1, 1, width, 1));
+-        cv::reduce(src, actual, 0, REDUCE_SUM, CV_32S);
+-        EXPECT_EQ(0, cv::norm(expected, actual, NORM_INF));
+-        for (int y = 0; y < outStorage.rows; y++)
+-        for (int x = 0; x < outStorage.cols * cn; x++)
+-            if (y != 1 || x < cn || x >= (width + 1) * cn)
+-                EXPECT_EQ(-1, outStorage.ptr<int>(y)[x]);
+-
+-        Mat expectedFloat, actualFloat;
+-        expected.convertTo(expectedFloat, CV_32F);
+-        cv::reduce(src, actualFloat, 0, REDUCE_SUM, CV_32F);
+-        EXPECT_EQ(0, cv::norm(expectedFloat, actualFloat, NORM_INF));
+-        expected.convertTo(expectedFloat, CV_32F, 1.0 / height);
+-        cv::reduce(src, actualFloat, 0, REDUCE_AVG, CV_32F);
+-        EXPECT_LE(cv::norm(expectedFloat, actualFloat, NORM_INF), 1e-4);
+-    }
+-}
+-
+ TEST(Mat, push_back_vector)
+ {
+     cv::Mat result(1, 5, CV_32FC1);

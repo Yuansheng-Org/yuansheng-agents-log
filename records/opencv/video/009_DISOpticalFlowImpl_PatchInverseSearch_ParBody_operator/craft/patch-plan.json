@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-opencv-video-009",
+  "blueprintId": "bp-opencv-video-009",
+  "createdAt": "2026-09-12T12:40:06.831Z",
+  "objective": "DIS patch 逆搜索已向量化（patch 差异向量计算），但每 patch 计算后立即 vfmv.f.s 归约取标量（合计 ≈46%，含采样归属放大）——patch 尺寸小（向量 lane 利用受限）使向量化提取/归约开销占比高。可探索跨 patch 批量处理（多 patch 并行 lane）摊薄取标量，或小 patch 用标量。",
+  "changes": [
+    {
+      "filePath": "modules/video/src/dis_flow.cpp",
+      "action": "modify",
+      "rationale": "DIS patch 逆搜索已向量化（patch 差异向量计算），但每 patch 计算后立即 vfmv.f.s 归约取标量（合计 ≈46%，含采样归属放大）——patch 尺寸小（向量 lane 利用受限）使向量化提取/归约开销占比高。可探索跨 patch 批量处理（多 patch 并行 lane）摊薄取标量，或小 patch 用标量。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 modules/video/src/dis_flow.cpp 来解决 blueprint bp-opencv-video-009。"
+}

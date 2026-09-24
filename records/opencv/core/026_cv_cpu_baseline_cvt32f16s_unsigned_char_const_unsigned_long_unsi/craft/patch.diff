@@ -1,0 +1,32 @@
+diff --git a/modules/core/src/convert.simd.hpp b/modules/core/src/convert.simd.hpp
+index e6a20be002..ec7c2de5c3 100644
+--- a/modules/core/src/convert.simd.hpp
++++ b/modules/core/src/convert.simd.hpp
+@@ -153,8 +153,17 @@ cvt_( const _Ts* src, size_t sstep, _Td* dst, size_t dstep, Size size )
+     for( int i = 0; i < size.height; i++, src += sstep, dst += dstep )
+     {
+         int j = 0;
+-// Excluding GNU in CV_SIMD_SCALABLE because of "opencv/issues/26936"
+-#if (CV_SIMD || (CV_SIMD_SCALABLE && !(defined(__GNUC__) && !defined(__clang__))) )
++// #26936 temporary GCC workaround, narrowed for cvt32f16s: the RVV universal
++// intrinsic conversion path was disabled on GCC builds because of
++// "opencv/issues/26936".  Only the float->short pair (DEF_CVT_FUNC 32f16s)
++// re-enables the vector path here; every other pair keeps the scalar fallback
++// on GCC, preserving the original workaround surface.  The condition is a
++// compile-time constant per instantiation, so no runtime branch remains.
++#if (CV_SIMD || CV_SIMD_SCALABLE)
++        const bool useSimd = CV_SIMD != 0 || !defined(__GNUC__) || defined(__clang__) ||
++            (std::is_same<_Ts, float>::value && std::is_same<_Td, short>::value);
++        if( useSimd )
++        {
+         const int VECSZ = VTraits<_Twvec>::vlanes()*2;
+         for( ; j < size.width; j += VECSZ )
+         {
+@@ -168,6 +177,7 @@ cvt_( const _Ts* src, size_t sstep, _Td* dst, size_t dstep, Size size )
+             vx_load_pair_as(src + j, v0, v1);
+             v_store_pair_as(dst + j, v0, v1);
+         }
++        }
+ #endif
+         for( ; j < size.width; j++ )
+             dst[j] = saturate_cast<_Td>(src[j]);

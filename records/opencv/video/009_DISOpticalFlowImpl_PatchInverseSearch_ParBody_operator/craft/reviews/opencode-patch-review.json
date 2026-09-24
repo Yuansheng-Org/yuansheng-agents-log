@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "pr-bp-opencv-video-009",
+  "patchCandidateId": "pc-bp-opencv-video-009",
+  "reviewedAt": "2026-09-12T12:10:00.000Z",
+  "reviewer": "ys-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "补丁把 dis_flow 的 5 处 #if CV_SIMD128 块改为 (CV_SIMD128||CV_SIMD_SCALABLE)，fixed-width 类型（v_float32x4/v_int16x8/v_uint16x8/v_uint32x4/v_int32x4）替换为 scalable（v_float32/v_int16/v_uint16/v_uint32/v_int32）。注意：8x8 patch 每行 8 像素，scalable v_uint16=16-lane，v_load_expand 加载 16 个连续元素可能与 patch 行 stride 访问不匹配，lane 布局需后续编译验证并可能用 vsetvli+mf4/mf2 调整。所用类型均为 universal intrinsic，无 x86/ARM 指令。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": []
+}

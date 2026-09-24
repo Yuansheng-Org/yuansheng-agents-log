@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-opencv-core-015",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-09T05:15:39.353Z",
+    "software": "opencv",
+    "testcaseIds": [
+      "core"
+    ],
+    "diagnosisId": "diag-20260909T051539353Z-1b122db2",
+    "targetHardware": "SpacemiT K3 (spacemit-x100, OoO, RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://github.com/opencv/opencv.git",
+    "testBranch": "5.x",
+    "commitHash": "f8ef5fd4c699671c9553f73d28c051abc6cf8e3d"
+  },
+  "problem": {
+    "summary": "opencv perf core 的 cv::reduce REDUCE_MIN 行向归约（ReduceR_Invoker<uchar, OpMin<uchar>>）在硬件支持 RVV 1.0（VLEN=256）、build ISA 含 v1p0 的目标上完全未向量化：逐行 min 归约主循环全函数 zero v*，逐 byte 执行 CV_MIN_8U 查表（lbu 双 load + subw + addiw+256 偏置 + add tab 基址 + lbu 查表 + subw + sb），主循环持有约 99% 函数内样本。",
+    "evidence": [
+      "perf stat: IPC=0.9176、L1_dcache_load_miss_rate=1.359%、branch_miss_rate=1.673% — compute/latency-bound，非 memory-bound",
+      "perf annotate (cpu-clock, 730 samples, local period): 逐行 min 归约主循环 [0x243f90..0x2440a6] 约 99% 函数内样本；244002 addiw a3,a3,256 13.70%（CV_MIN_8U 偏置）、243ff6 lbu 11.51%（buf load）、243ffa subw 8.49%（buf-src）、244012 lbu 7.40%（min tab 查表）、244016 addiw 4.66%（循环控制）",
+      "build ISA Tag_RISCV_arch 含 v1p0、zve64d（metadata 快照 opencv_perf_core-elf-A），hardware ISA 含 v（rv64imafdcvh_...）— 向量化能力就绪但该内核 zero v*"
+    ]
+  },
+  "rootCause": {
+    "summary": "cv::reduce REDUCE_MIN 的 ReduceR_Invoker<uchar> 行向归约内核在 RVV 1.0 能力就绪的目标上仍全量执行 scalar 逐 byte CV_MIN_8U 查表实现（zero v*）：每列跨行维护 running min，逐元素支付双 lbu load、subw 差值、addiw+256 偏置、tab 查表、写回，主循环约 99% 函数内样本。",
+    "candidateFiles": [
+      "modules/core/src/arithm.cpp"
+    ],
+    "performanceFactors": [
+      "RVV Extrema Reduction Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "low",
+    "mustPreserve": [
+      "min 结果逐元素 bit 一致（CV_MIN_8U 查表 == vminu，两者均返回 uchar min，无 FP 语义）",
+      "跨行 running min 的 seed/累积语义不变；tail 列沿用 scalar CV_MIN_8U 并续接同一状态",
+      "buf（WT=uchar）与 dst 写出 (ST)buf[i] 不变；range.start!=0 时只处理指定列区间",
+      "外循环（行迭代 for(;--height;)）与 buf 初始化逻辑不变"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "core"
+    ],
+    "regressionCommand": "agent1 patch_regression --case core"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=0.918、L1 miss 1.36%、branch miss 1.67%，归类为 compute/latency-bound，确认本地计算结构修复是第一杠杆；perf annotate 显示逐行 min 归约主循环 [0x243f90..0x2440a6] 持有约 99% 函数内样本，最高行 244002 addiw+256（13.70%）/243ff6 lbu（11.51%）/243ffa subw（8.49%）均为 CV_MIN_8U 查表实现的标量指令，整个函数 zero v*；hardware ISA 暴露 v 且 build Tag_RISCV_arch 含 v1p0、zve64d，向量化能力就绪而内核未使用；source 语义 OpMin<uchar>=CV_MIN_8U 为无符号 min（value-only 无 index），模式命中 RVV Extrema Reduction Kernels（route High，supporting: No vectorization）；知识检索给出 oneDNN/MNN 的 RVV min/max reduction 实现（#5361、#4036 等）佐证 vminu/vredminu 方案。因 sampling 为 local period 且无 precise_ip，收益上界只表述为函数内局部份额（约 0.99）。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "OpenCV 该 reduce 路径可能已有 rvv_hal 或 universal-intrinsic 的 RVV 实现未被 dispatch 选中（source_context_gap：未核对源码）——若存在应走 kernel-selection/registration 修复而非重写第二份 kernel",
+      "短列宽（range.end-range.start < vl=32）时向量化 setup 开销可能抵消收益——需 crossover 阈值与短输入验证"
+    ],
+    "currentGaps": "percent type 为 local period（非 global-period），无法计算 workload 级样本贡献；Sampling IP precision 未知（baseline_gap: sampling IP precision）；未提供 ys-trace-execution-summary 的 rv_duration/arm_duration ratio；source_context_gap：未核对该路径是否已有 RVV reduce 实现及列宽分布",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV / core（cv::reduce REDUCE_MIN 行向归约路径）",
+    "recommendedFirstAction": "modules/core/src/arithm.cpp：将 ReduceR_Invoker<unsigned char, OpMin<unsigned char>> 主循环的 CV_MIN_8U 逐 byte 查表（subw+addiw+256+add+tab lbu）改为 RVV e8m1 向量 min——vsetvli + vle8.v（src/buf 双 load）+ vminu.vv（uchar 无符号 min）+ vse8.v 写回，tail 列沿用 scalar CV_MIN_8U 续接同一 running-min 状态",
+    "recommendedVerification": "对 cv::ReduceR_Invoker<uchar,OpMin> 重新 perf annotate，确认主循环出现 vsetvli/vle8.v/vminu.vv/vse8.v 且 244002 addiw（13.70%）/243ff6 lbu（11.51%）/243ffa subw（8.49%）等 scalar 查表指令样本显著下降；对拍 empty/单列/vl 整倍数/tail、全相等/极值在首尾、range.start!=0、多行归约，min 结果与 scalar CV_MIN_8U reference 逐元素 bit 一致；perf stat 复核 IPC 与每元素指令数",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.9176,
+        "anomalyNote": "整体 IPC 0.918，compute/latency-bound；scalar 逐 byte 查表归约指令密度低"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 1.359,
+        "anomalyNote": "miss rate 1.36% 较低，排除 memory-bound，确认向量化计算结构是第一杠杆"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 1.673,
+        "anomalyNote": "branch miss 1.67% 不高；查表路径无分支，循环控制是固定开销"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const",
+        "fileModule": "libopencv_core.so.5.1.0 (modules/core/src/arithm.cpp)",
+        "rvvPattern": "RVV Extrema Reduction Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.99,
+        "note": "行向 min 归约（cv::reduce REDUCE_MIN）；逐行维护每列 running min，主循环约 99% 函数内样本，CV_MIN_8U 查表标量实现全函数 zero v*"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "modules/core/src/arithm.cpp: ReduceR_Invoker<unsigned char, OpMin<unsigned char>> operator()（annotate 源码行 361-385 对应；OpMin<uchar>=CV_MIN_8U 行 251）",
+      "relatedKnowledge": "https://github.com/uxlfoundation/oneDNN/pull/5361 | https://github.com/uxlfoundation/oneDNN/commit/a95f0060cfcb75aeee7b937f18dbb2ff32064f50 | https://github.com/alibaba/MNN/pull/4036 | https://github.com/alibaba/MNN/commit/09c339c65cb73dda7c055c3e49e9026dfd998e3e | https://github.com/alibaba/MNN/pull/4433",
+      "evidenceExplanation": "OpenCV 的 reduce-min 内核当前执行路径全 scalar（zero v*），与 metadata 显示的 build ISA（v1p0）和 hardware ISA（v）直接矛盾，证明是 autovec gap / RVV kernel 未构建而非硬件能力缺失；rvv_extrema_reduction_kernels pattern 的 oneDNN（#5361）与 MNN（#4036/#4433）RVV min/max reduction 实现展示 vminu/vredminu 分块归约形态，支撑将 CV_MIN_8U 查表改为 RVV vminu 的修复方向"
+    }
+  }
+}

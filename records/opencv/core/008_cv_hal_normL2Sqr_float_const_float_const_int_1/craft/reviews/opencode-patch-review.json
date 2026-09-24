@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-bp-opencv-core-008-r1",
+  "patchCandidateId": "pc-bp-opencv-core-008",
+  "reviewedAt": "2026-09-09T06:05:00.000Z",
+  "reviewer": "opencode-ai-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 判定 archSpecific=true（命中 rvv-intrinsic 与 riscv-macro 规则）。RISC-V 专项核验通过：1) 新增 intrinsic（vle32_v_f32m1 / vfsub_vv_f32m1 / vfmacc_vv_f32m1_tu）均为 RVV 1.0 标准 intrinsic（_tu = tail-undisturbed 变体），SpacemiT X100（RVV 1.0, VLEN=256）ISA 内；2) vtype 一致：全部 e32,m1，与 v_float32=vfloat32m1_t 匹配；3) bounded avl=r（0<r<vl）load 无 over-read，符合 blueprint constraints 第 3 条；4) tail-undisturbed vfmacc 保证 lane r..vlmax-1 保留主循环部分和，单次 vfredusum 归约语义正确；5) 无 x86/ARM 指令。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F-008-01",
+      "file": "modules/core/src/norm.dispatch.cpp",
+      "line": 180,
+      "evidence": "patch.diff hunk: `+#if defined(__riscv_v) && __riscv_v == 1000000` / `+    if( j < n )` / `+        vfloat32m1_t ta = __riscv_vle32_v_f32m1(a + j, r);` / `+        v_d0 = __riscv_vfmacc_vv_f32m1_tu(v_d0, td, td, r);`",
+      "severity": "suggestion",
+      "category": "verification-gap",
+      "suggestion": "本环境无 riscv64 交叉编译器，无法本地编译验证。建议目标机构建后对 normL2Sqr_ 重做 perf annotate，确认 2a8d9c bnez 回边消失、tail interval 样本占比显著下降；并用 n=0/1..vl-1/vl 整倍数/4*vl±1 对拍验证数值在 OpenCV norm 容差内。blueprint diagnosis.currentGaps 已标注 implementation_shape_gap 与长度分布未实测。"
+    }
+  ]
+}

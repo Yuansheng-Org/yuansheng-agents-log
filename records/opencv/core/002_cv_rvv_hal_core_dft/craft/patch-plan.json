@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-opencv-core-002",
+  "blueprintId": "bp-opencv-core-002",
+  "createdAt": "2026-09-09T05:41:32.842Z",
+  "objective": "解决 cv::rvv_hal::core::dft 在 SpacemiT X100（VLEN=256, RVV 1.0）上的 LMUL 选型过保守：f32 DFT 内核固定继承 RVV_F32MF2，每向量 op 仅 4 个 f32 lane（m1 为 8 lane），导致蝶形/重排循环迭代数、回边分支与 vsetvli 配置开销翻倍。将 f32 提升到 RVV_F32M1（8 lane/op），并同步内层 odd-radix 路径的 index 向量 vtype（e32,mf2 → e32,m1），消除 vl 不变时的 vtype 往返切换。f64（RVV_F64M1）保持不变：蓝图将其 spill 归因于活寄存器集压力，m1→m2 会进一步增大寄存器压力且无法在本环境验证无新增 vector spill，故不在本补丁范围内。",
+  "changes": [
+    {
+      "filePath": "hal/riscv-rvv/src/core/dxt.cpp",
+      "action": "modify",
+      "rationale": "dxt.cpp:15 把 rvv<float> 固定继承 RVV_F32MF2（types.hpp:89 定义 LMUL_f2），VLEN=256 下 f32 每向量 op 仅 4 lane；annotate 证据显示 radix 蝶形/重排循环全程 e32,mf2 vtype、回边分支合计约 4.63%、循环内重复 vsetvli/vlenb 推导。提升到 RVV_F32M1 使每 op 8 lane，迭代数与回边开销减半；LMUL 改变不改变复数蝶形逐 lane 独立 FP 运算顺序与数值结果（constraints.mustPreserve 第 2 条）。f64 分支保持 m1（提升会放大活寄存器集压力）。",
+      "instructions": [
+        "将 dxt.cpp:15 的 `template<> struct rvv<float> : RVV_F32MF2` 改为 `template<> struct rvv<float> : RVV_F32M1`（RVV_F32M1 已在 include/types.hpp:85 定义，无需改 types.hpp）。",
+        "将 dxt.cpp:17 的 `using T = RVV_F32MF2::VecType;` 改为 `using T = RVV_F32M1::VecType;`。",
+        "在 rvv<float> 特化内新增 `using IdxV = RVV_U32M1;`：f32m1 数据的 vloxei32 index 向量 LMUL 必须等于 LMUL_data × EEW_index/SEW_data = 1×32/32 = 1（u32m1），否则与 float 分支的 vloxei32 重载签名不匹配。",
+        "将 dxt.cpp:20 的 `vlseg` 内两个 intrinsic 改为 m1 变体：`__riscv_vlseg2e32_v_f32mf2x2` → `__riscv_vlseg2e32_v_f32m1x2`，`__riscv_vget_v_f32mf2x2_f32mf2` → `__riscv_vget_v_f32m1x2_f32m1`（保持两处 vget 参数顺序一致）。",
+        "将 dxt.cpp:21 的 `vlsseg` 内 intrinsic 改为 m1 变体：`__riscv_vlsseg2e32_v_f32mf2x2` → `__riscv_vlsseg2e32_v_f32m1x2`，两个 `__riscv_vget_v_f32mf2x2_f32mf2` → `__riscv_vget_v_f32m1x2_f32m1`。",
+        "将 dxt.cpp:22 的 `vsseg` 内两个 vset intrinsic 改为 m1 变体：`__riscv_vset_v_f32mf2_f32mf2x2` → `__riscv_vset_v_f32m1_f32m1x2`，外层类型 `vfloat32mf2x2_t` → `vfloat32m1x2_t`。`__riscv_vsseg2e32(a, ..., d)` 签名不含 LMUL 后缀（按值类型重载），保持原调用形式。",
+        "在 rvv<double> 特化内新增 `using IdxV = RVV_U32MF2;`（保持 u32mf2）：f64m1 数据的 vloxei32 index 向量 LMUL 必须为 1×32/64 = mf2（vuint32mf2_t）。double 分支的 LMUL 与 intrinsic 一律保持不变（RVV_F64M1），避免放大活寄存器集压力引入新增 vector spill。",
+        "在 dft() 内新增 `using IdxV = typename rvv<T>::IdxV;`（与 VT/TabType/TabTypeF 并列）。",
+        "将 dxt.cpp:469-470 的 `vl = __riscv_vsetvlmax_e32mf2(); auto vec_dd = __riscv_vid_v_u32mf2(vl);` 改为 `vl = IdxV::setvlmax(); auto vec_dd = IdxV::vid(vl);`。该段位于 shared 的 odd-radix 路径：float 分支 IdxV=RVV_U32M1（e32,m1）与新的 rvv<float>::setvl（e32,m1）vtype 一致，消除 float 分支的 vtype 往返切换；double 分支 IdxV=RVV_U32MF2 保持原 e32,mf2 语义，且与 f64m1 的 vloxei32 重载签名匹配。",
+        "不修改 TabType/TabTypeF（RVV_U32M8/RVV_SameLen<float,RVV_U32M8>）——itab shuffle 循环的位宽语义与 vloxei32 index 位宽不变。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "仅修改 hal/riscv-rvv/src/core/dxt.cpp：rvv<float> 基类 RVV_F32MF2 → RVV_F32M1 并同步 vlseg/vlsseg/vsseg 三个 segment intrinsic 为 f32m1 变体；rvv<float> 与 rvv<double> 各新增 IdxV 类型别名（u32m1 / u32mf2），odd-radix 路径 index 向量 setvlmax/vid 改用 IdxV 分派。不触碰 rvv<double> 的 LMUL、TabType 与 include/types.hpp。预期 diff 为 dxt.cpp 单文件 4 处 hunk、约 10 处改动。"
+}

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-opencv-core-015",
+  "blueprintId": "bp-opencv-core-015",
+  "createdAt": "2026-09-09T06:30:00.000Z",
+  "objective": "解决 cv::reduce REDUCE_MIN 行向归约 ReduceR_Invoker<uchar, OpMin<uchar>> 完全未向量化的问题（全函数 zero v*，主循环约 99% 函数内样本）：逐 byte 执行 CV_MIN_8U 查表（lbu 双 load + subw + addiw+256 + tab 查表 + sb）。将 CV_MIN_8U 查表替换为 RVV e8m1 vminu（vsetvli + vle8 双 load + vminu.vv + vse8 写回），tail 由 bounded vl 覆盖并与 scalar 续接同一 running-min 状态。",
+  "changes": [
+    {
+      "filePath": "modules/core/src/matrix_operations.cpp",
+      "action": "modify",
+      "rationale": "blueprint rootCause：ReduceR_Invoker<uchar,OpMin> 行向 min 归约主循环（annotate 244002 addiw+256 13.70%、243ff6 lbu 11.51%、243ffa subw 8.49%、244012 lbu 7.40%）全 scalar CV_MIN_8U 查表，zero v*。实际代码位于 modules/core/src/matrix_operations.cpp 的 ReduceR_SIMD 挂载点（blueprint 标注的 arithm.cpp 为符号源文件归属误差，ReduceR_Invoker 定义在 matrix_operations.cpp）。OpMin<uchar> = CV_MIN_8U（precomp.hpp:111/246）为查表 min，与无符号向量 min vminu 逐位一致（无 FP 语义），可直接向量化。",
+      "instructions": [
+        "在 matrix_operations.cpp 的通用 `struct ReduceR_SIMD`（无 SIMD 时返回 start 的 no-op）定义之后，新增 `#if defined(__riscv_v) && __riscv_v == 1000000` 守卫的模板特化 `template <> struct ReduceR_SIMD<uchar, uchar, OpMin<uchar> >`（守卫与 rvv_hal.hpp:12 的 CV_HAL_RVV_1P0_ENABLED 一致）。",
+        "特化 operator()：`int i = start; size_t vl; for( ; i < end; i += (int)vl ) { vl = __riscv_vsetvl_e8m1(end - i); vuint8m1_t vs = __riscv_vle8_v_u8m1(src + i, vl); vuint8m1_t vb = __riscv_vle8_v_u8m1(buf + i, vl); vb = __riscv_vminu_vv_u8m1(vb, vs, vl); __riscv_vse8_v_u8m1(buf + i, vb, vl); } return i;`。",
+        "块循环以 vl = min(vlmax, end-i) 覆盖 [start, end) 全部列（含 bounded tail），返回 end 使调用方 CV_ENABLE_UNROLLED 循环与标量循环直接跳过——与 scalar 的 running-min 状态续接等价（vminu 逐元素与 CV_MIN_8U 一致）。",
+        "riscv_vector.h 已由 precomp.hpp → cv_cpu_dispatch.h 在 RVV 构建下引入，无需额外 include。",
+        "不改动 ReduceR_Invoker 主体、buf 初始化、dst 写出与 range.start!=0 列区间语义；非 RVV 构建走通用 no-op + 标量 CV_MIN_8U 路径。"
+      ],
+      "risk": "low"
+    }
+  ],
+  "expectedDiffSummary": "仅修改 modules/core/src/matrix_operations.cpp：通用 ReduceR_SIMD 之后新增 RVV 1.0 守卫的 ReduceR_SIMD<uchar, uchar, OpMin<uchar>> 特化（vminu 向量 min，约 +27 行）。"
+}

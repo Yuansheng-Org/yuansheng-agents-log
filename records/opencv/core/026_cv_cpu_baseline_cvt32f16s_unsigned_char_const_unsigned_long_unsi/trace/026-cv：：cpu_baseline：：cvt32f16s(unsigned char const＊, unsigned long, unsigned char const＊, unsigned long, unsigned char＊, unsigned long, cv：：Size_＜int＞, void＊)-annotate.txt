@@ -1,0 +1,168 @@
+ Percent |	Source code & Disassembly of libopencv_core.so.5.1.0 for cpu-clock (498 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000177c9e <cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)>:
+         : 6      cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*):
+         : 415    ////////////////////// 32f -> ... ////////////////////////
+         :
+         : 417    DEF_CVT_FUNC(32f8u,  cvt_, float, uchar,  v_float32)
+         : 418    DEF_CVT_FUNC(32f8s,  cvt_, float, schar,  v_float32)
+         : 419    DEF_CVT_FUNC(32f16u, cvt_, float, ushort, v_float32)
+         : 420    DEF_CVT_FUNC(32f16s, cvt_, float, short,  v_float32)
+    0.00 :   177c9e: addi    sp,sp,-160
+    0.00 :   177ca0: addi    a3,sp,24
+    0.00 :   177ca2: sd      s5,104(sp)
+    0.00 :   177ca4: mv      s5,a4
+    0.00 :   177ca6: auipc   a4,0x264
+    0.00 :   177caa: ld      a4,290(a4) # 3dbdc8 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   177cae: sd      s4,112(sp)
+    0.00 :   177cb0: sd      s7,88(sp)
+    0.00 :   177cb2: sd      s8,80(sp)
+    0.00 :   177cb4: mv      s4,a0
+    0.00 :   177cb6: mv      s7,a1
+    0.00 :   177cb8: mv      a0,a3
+    0.00 :   177cba: auipc   a1,0x254
+    0.00 :   177cbe: addi    a1,a1,1862 # 3cc400 <cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)::__cv_trace_location_fn415>
+    0.00 :   177cc2: mv      s8,a5
+    0.00 :   177cc4: ld      a5,0(a4)
+    0.00 :   177cc6: sd      a5,40(sp)
+    0.00 :   177cc8: li      a5,0
+    0.00 :   177cca: sd      s9,72(sp)
+    0.00 :   177ccc: sd      ra,152(sp)
+    0.00 :   177cce: sd      a6,8(sp)
+    0.00 :   177cd0: sd      a3,0(sp)
+    0.00 :   177cd2: auipc   ra,0xffed2
+    0.00 :   177cd6: jalr    -1890(ra) # 49570 <cv::utils::trace::details::Region::Region(cv::utils::trace::details::Region::LocationStaticStorage const&)@plt>
+    0.00 :   177cda: lw      s9,12(sp)
+         : 153    for( int i = 0; i < size.height; i++, src += sstep, dst += dstep )
+    0.00 :   177cdc: blez    s9,177d7a <cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)+0xdc>
+         : 155    cvt_<float, short int, __vector([4,4]) float>():
+    0.00 :   177ce0: lw      a4,8(sp)
+    0.00 :   177ce2: blez    a4,177d7a <cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)+0xdc>
+    0.00 :   177ce6: slli    a4,a4,0x2
+    0.00 :   177ce8: sd      s0,144(sp)
+    0.00 :   177cea: sd      s1,136(sp)
+    0.00 :   177cec: sd      s2,128(sp)
+    0.00 :   177cee: sd      s3,120(sp)
+    0.00 :   177cf0: sd      s6,96(sp)
+    0.00 :   177cf2: sd      s10,64(sp)
+    0.00 :   177cf4: sd      s11,56(sp)
+    0.00 :   177cf6: add     s0,s4,a4
+    0.00 :   177cfa: andi    s7,s7,-4
+    0.00 :   177cfe: andi    s8,s8,-2
+    0.00 :   177d02: li      s6,0
+         : 155    short cv::saturate_cast<short>(int):
+         : 131    template<> inline ushort saturate_cast<ushort>(double v)     { int iv = cvRound(v); return saturate_cast<ushort>(iv); }
+         : 132    template<> inline ushort saturate_cast<ushort>(int64 v)      { return (ushort)((uint64)v <= (uint64)USHRT_MAX ? v : v > 0 ? USHRT_MAX : 0); }
+         : 133    template<> inline ushort saturate_cast<ushort>(uint64 v)     { return (ushort)std::min(v, (uint64)USHRT_MAX); }
+         :
+         : 135    template<> inline short saturate_cast<short>(ushort v)       { return (short)std::min((int)v, SHRT_MAX); }
+         : 136    template<> inline short saturate_cast<short>(int v)          { return (short)((unsigned)(v - SHRT_MIN) <= (unsigned)USHRT_MAX ? v : v > 0 ? SHRT_MAX : SHRT_MIN); }
+    0.00 :   177d04: lui     s2,0x8
+    0.00 :   177d06: lui     s1,0x10
+    0.00 :   177d08: lui     s3,0xffff8
+         : 132    cvt_<float, short int, __vector([4,4]) float>():
+         : 172    for( ; j < size.width; j++ )
+    5.62 :   177d0a: mv      s11,s4
+         : 174    cvRound(float):
+         : 353    return t;
+         : 354    #elif defined CV__FASTMATH_ENABLE_GCC_MATH_BUILTINS || \
+         : 355    defined CV__FASTMATH_ENABLE_CLANG_MATH_BUILTINS
+         : 356    return (int)__builtin_lrintf(value);
+         : 357    #else
+         : 358    return (int)lrintf(value);
+    1.00 :   177d0c: flw     fa0,0(s11)
+    4.82 :   177d10: mv      s10,s5
+    0.60 :   177d12: auipc   ra,0xffed0
+    0.00 :   177d16: jalr    -1522(ra) # 47720 <lrintf@plt>
+         : 363    short cv::saturate_cast<short>(int):
+    0.00 :   177d1a: addw    a3,s2,a0
+         : 132    cvRound(float):
+    7.63 :   177d1e: sext.w  a5,a0
+         : 354    short cv::saturate_cast<short>(int):
+    0.00 :   177d22: bltu    a3,s1,177d56 <cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)+0xb8>
+    0.40 :   177d26: sgtz    a5,a5
+    0.00 :   177d2a: negw    a5,a5
+    1.61 :   177d2e: xor     a5,a5,s3
+         : 133    cvt_<float, short int, __vector([4,4]) float>():
+         : 173    dst[j] = saturate_cast<_Td>(src[j]);
+    0.00 :   177d32: sh      a5,0(s10)
+         : 172    for( ; j < size.width; j++ )
+    0.20 :   177d36: addi    s11,s11,4
+    0.00 :   177d38: beq     s0,s11,177d60 <cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)+0xc2>
+         : 173    cvRound(float):
+    0.00 :   177d3c: flw     fa0,0(s11)
+         : 354    cvt_<float, short int, __vector([4,4]) float>():
+   24.70 :   177d40: addi    s10,s10,2
+         : 173    cvRound(float):
+    0.00 :   177d42: auipc   ra,0xffed0
+    0.00 :   177d46: jalr    -1570(ra) # 47720 <lrintf@plt>
+         : 355    short cv::saturate_cast<short>(int):
+    0.00 :   177d4a: addw    a3,s2,a0
+         : 132    cvRound(float):
+   29.52 :   177d4e: sext.w  a5,a0
+         : 354    short cv::saturate_cast<short>(int):
+    0.00 :   177d52: bgeu    a3,s1,177d26 <cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)+0x88>
+   20.28 :   177d56: sh      a0,0(s10)
+         : 132    cvt_<float, short int, __vector([4,4]) float>():
+    1.00 :   177d5a: addi    s11,s11,4
+    0.00 :   177d5c: bne     s0,s11,177d3c <cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)+0x9e>
+         : 153    for( int i = 0; i < size.height; i++, src += sstep, dst += dstep )
+    0.00 :   177d60: addiw   s6,s6,1
+    0.00 :   177d62: add     s4,s4,s7
+    0.00 :   177d64: add     s5,s5,s8
+    2.41 :   177d66: add     s0,s0,s7
+    0.20 :   177d68: bne     s6,s9,177d0a <cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)+0x6c>
+    0.00 :   177d6c: ld      s0,144(sp)
+    0.00 :   177d6e: ld      s1,136(sp)
+    0.00 :   177d70: ld      s2,128(sp)
+    0.00 :   177d72: ld      s3,120(sp)
+    0.00 :   177d74: ld      s6,96(sp)
+    0.00 :   177d76: ld      s10,64(sp)
+    0.00 :   177d78: ld      s11,56(sp)
+         : 155    cv::utils::trace::details::Region::~Region():
+         : 83     };
+         :
+         : 85     Region(const LocationStaticStorage& location);
+         : 86     inline ~Region()
+         : 87     {
+         : 88     if (implFlags != 0)
+    0.00 :   177d7a: lw      a5,32(sp)
+    0.00 :   177d7c: bnez    a5,177da0 <cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)+0x102>
+         : 91     cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*):
+         : 415    DEF_CVT_FUNC(32f16s, cvt_, float, short,  v_float32)
+    0.00 :   177d7e: auipc   a5,0x264
+    0.00 :   177d82: ld      a5,74(a5) # 3dbdc8 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   177d86: ld      a4,40(sp)
+    0.00 :   177d88: ld      a5,0(a5)
+    0.00 :   177d8a: xor     a5,a5,a4
+    0.00 :   177d8c: li      a4,0
+    0.00 :   177d8e: bnez    a5,177dac <cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)+0x10e>
+    0.00 :   177d90: ld      ra,152(sp)
+    0.00 :   177d92: ld      s4,112(sp)
+    0.00 :   177d94: ld      s5,104(sp)
+    0.00 :   177d96: ld      s7,88(sp)
+    0.00 :   177d98: ld      s8,80(sp)
+    0.00 :   177d9a: ld      s9,72(sp)
+    0.00 :   177d9c: addi    sp,sp,160
+    0.00 :   177d9e: ret
+         : 431    cv::utils::trace::details::Region::~Region():
+         : 84     destroy();
+    0.00 :   177da0: ld      a0,0(sp)
+    0.00 :   177da2: auipc   ra,0xffed0
+    0.00 :   177da6: jalr    270(ra) # 47eb0 <cv::utils::trace::details::Region::destroy()@plt>
+         : 88     cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*):
+    0.00 :   177daa: j       177d7e <cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)+0xe0>
+    0.00 :   177dac: sd      s0,144(sp)
+    0.00 :   177dae: sd      s1,136(sp)
+    0.00 :   177db0: sd      s2,128(sp)
+    0.00 :   177db2: sd      s3,120(sp)
+    0.00 :   177db4: sd      s6,96(sp)
+    0.00 :   177db6: sd      s10,64(sp)
+    0.00 :   177db8: sd      s11,56(sp)
+    0.00 :   177dba: auipc   ra,0xffed2
+    0.00 :   177dbe: jalr    1270(ra) # 4a2b0 <__stack_chk_fail@plt>

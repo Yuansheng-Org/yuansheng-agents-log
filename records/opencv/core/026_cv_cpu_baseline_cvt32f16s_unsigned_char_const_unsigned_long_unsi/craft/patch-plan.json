@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-opencv-core-026",
+  "blueprintId": "bp-opencv-core-026",
+  "createdAt": "2026-09-09T06:24:41.865Z",
+  "objective": "cvt32f16s 的 RVV 向量转换路径被 convert.simd.hpp:156-157 的编译期 #if 条件在 GCC 构建下排除（issues/26936），热循环退化为逐元素标量转换（lrintf@plt + saturate_cast 分支 + sh），无法利用硬件 RVV 1.0 的向量转换/饱和窄化指令。",
+  "changes": [
+    {
+      "filePath": "modules/core/src/convert.simd.hpp",
+      "action": "modify",
+      "rationale": "cvt32f16s 的 RVV 向量转换路径被 convert.simd.hpp:156-157 的编译期 #if 条件在 GCC 构建下排除（issues/26936），热循环退化为逐元素标量转换（lrintf@plt + saturate_cast 分支 + sh），无法利用硬件 RVV 1.0 的向量转换/饱和窄化指令。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 modules/core/src/convert.simd.hpp 来解决 blueprint bp-opencv-core-026。"
+}

@@ -1,0 +1,111 @@
+diff --git a/modules/video/src/lkpyramid.cpp b/modules/video/src/lkpyramid.cpp
+index c91e1796bd..a3d2255a5b 100644
+--- a/modules/video/src/lkpyramid.cpp
++++ b/modules/video/src/lkpyramid.cpp
+@@ -189,12 +189,12 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
+         acctype iA11 = 0, iA12 = 0, iA22 = 0;
+         float A11, A12, A22;
+ 
+-#if CV_SIMD128 && !CV_NEON
+-        v_int16x8 qw0((short)(iw00), (short)(iw01), (short)(iw00), (short)(iw01), (short)(iw00), (short)(iw01), (short)(iw00), (short)(iw01));
+-        v_int16x8 qw1((short)(iw10), (short)(iw11), (short)(iw10), (short)(iw11), (short)(iw10), (short)(iw11), (short)(iw10), (short)(iw11));
+-        v_int32x4 qdelta_d = v_setall_s32(1 << (W_BITS1-1));
+-        v_int32x4 qdelta = v_setall_s32(1 << (W_BITS1-5-1));
+-        v_float32x4 qA11 = v_setzero_f32(), qA12 = v_setzero_f32(), qA22 = v_setzero_f32();
++#if (CV_SIMD128 || CV_SIMD_SCALABLE) && !CV_NEON
++        v_int16 qw0((short)(iw00), (short)(iw01), (short)(iw00), (short)(iw01), (short)(iw00), (short)(iw01), (short)(iw00), (short)(iw01));
++        v_int16 qw1((short)(iw10), (short)(iw11), (short)(iw10), (short)(iw11), (short)(iw10), (short)(iw11), (short)(iw10), (short)(iw11));
++        v_int32 qdelta_d = v_setall_s32(1 << (W_BITS1-1));
++        v_int32 qdelta = v_setall_s32(1 << (W_BITS1-5-1));
++        v_float32 qA11 = v_setzero_f32(), qA12 = v_setzero_f32(), qA22 = v_setzero_f32();
+ #endif
+ 
+ #if CV_NEON
+@@ -224,11 +224,11 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
+ 
+             x = 0;
+ 
+-#if CV_SIMD128 && !CV_NEON
++#if (CV_SIMD128 || CV_SIMD_SCALABLE) && !CV_NEON
+             for( ; x <= winSize.width*cn - 8; x += 8, dsrc += 8*2, dIptr += 8*2 )
+             {
+-                v_int32x4 t0, t1;
+-                v_int16x8 v00, v01, v10, v11, t00, t01, t10, t11;
++                v_int32 t0, t1;
++                v_int16 v00, v01, v10, v11, t00, t01, t10, t11;
+ 
+                 v00 = v_reinterpret_as_s16(v_load_expand(src + x));
+                 v01 = v_reinterpret_as_s16(v_load_expand(src + x + cn));
+@@ -262,8 +262,8 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
+                 v00 = v_reinterpret_as_s16(v_interleave_pairs(v_reinterpret_as_s32(v_interleave_pairs(v00))));
+                 v_expand(v00, t1, t0);
+ 
+-                v_float32x4 fy = v_cvt_f32(t0);
+-                v_float32x4 fx = v_cvt_f32(t1);
++                v_float32 fy = v_cvt_f32(t0);
++                v_float32 fx = v_cvt_f32(t1);
+ 
+                 qA22 = v_muladd(fy, fy, qA22);
+                 qA12 = v_muladd(fx, fy, qA12);
+@@ -399,7 +399,7 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
+             }
+         }
+ 
+-#if CV_SIMD128 && !CV_NEON
++#if (CV_SIMD128 || CV_SIMD_SCALABLE) && !CV_NEON
+         iA11 += v_reduce_sum(qA11);
+         iA12 += v_reduce_sum(qA12);
+         iA22 += v_reduce_sum(qA22);
+@@ -455,10 +455,10 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
+             iw11 = (1 << W_BITS) - iw00 - iw01 - iw10;
+             acctype ib1 = 0, ib2 = 0;
+             float b1, b2;
+-#if CV_SIMD128 && !CV_NEON
+-            qw0 = v_int16x8((short)(iw00), (short)(iw01), (short)(iw00), (short)(iw01), (short)(iw00), (short)(iw01), (short)(iw00), (short)(iw01));
+-            qw1 = v_int16x8((short)(iw10), (short)(iw11), (short)(iw10), (short)(iw11), (short)(iw10), (short)(iw11), (short)(iw10), (short)(iw11));
+-            v_float32x4 qb0 = v_setzero_f32(), qb1 = v_setzero_f32();
++#if (CV_SIMD128 || CV_SIMD_SCALABLE) && !CV_NEON
++            qw0 = v_int16((short)(iw00), (short)(iw01), (short)(iw00), (short)(iw01), (short)(iw00), (short)(iw01), (short)(iw00), (short)(iw01));
++            qw1 = v_int16((short)(iw10), (short)(iw11), (short)(iw10), (short)(iw11), (short)(iw10), (short)(iw11), (short)(iw10), (short)(iw11));
++            v_float32 qb0 = v_setzero_f32(), qb1 = v_setzero_f32();
+ #endif
+ 
+ #if CV_NEON
+@@ -483,17 +483,17 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
+ 
+                 x = 0;
+ 
+-#if CV_SIMD128 && !CV_NEON
++#if (CV_SIMD128 || CV_SIMD_SCALABLE) && !CV_NEON
+                 for( ; x <= winSize.width*cn - 8; x += 8, dIptr += 8*2 )
+                 {
+-                    v_int16x8 diff0 = v_reinterpret_as_s16(v_load(Iptr + x)), diff1, diff2;
+-                    v_int16x8 v00 = v_reinterpret_as_s16(v_load_expand(Jptr + x));
+-                    v_int16x8 v01 = v_reinterpret_as_s16(v_load_expand(Jptr + x + cn));
+-                    v_int16x8 v10 = v_reinterpret_as_s16(v_load_expand(Jptr + x + stepJ));
+-                    v_int16x8 v11 = v_reinterpret_as_s16(v_load_expand(Jptr + x + stepJ + cn));
+-
+-                    v_int32x4 t0, t1;
+-                    v_int16x8 t00, t01, t10, t11;
++                    v_int16 diff0 = v_reinterpret_as_s16(v_load(Iptr + x)), diff1, diff2;
++                    v_int16 v00 = v_reinterpret_as_s16(v_load_expand(Jptr + x));
++                    v_int16 v01 = v_reinterpret_as_s16(v_load_expand(Jptr + x + cn));
++                    v_int16 v10 = v_reinterpret_as_s16(v_load_expand(Jptr + x + stepJ));
++                    v_int16 v11 = v_reinterpret_as_s16(v_load_expand(Jptr + x + stepJ + cn));
++
++                    v_int32 t0, t1;
++                    v_int16 t00, t01, t10, t11;
+                     v_zip(v00, v01, t00, t01);
+                     v_zip(v10, v11, t10, t11);
+ 
+@@ -649,8 +649,8 @@ void cv::detail::LKTrackerInvoker::operator()(const Range& range) const
+                 }
+             }
+ 
+-#if CV_SIMD128 && !CV_NEON
+-            v_float32x4 qf0, qf1;
++#if (CV_SIMD128 || CV_SIMD_SCALABLE) && !CV_NEON
++            v_float32 qf0, qf1;
+             v_recombine(v_interleave_pairs(v_add(qb0, qb1)), v_setzero_f32(), qf0, qf1);
+             ib1 += v_reduce_sum(qf0);
+             ib2 += v_reduce_sum(qf1);

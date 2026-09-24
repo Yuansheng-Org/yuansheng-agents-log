@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-opencv-core-026",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-09T05:32:12.855Z",
+    "software": "opencv",
+    "testcaseIds": [
+      "core"
+    ],
+    "diagnosisId": "diag-20260909T053212855Z-3a9a81df",
+    "targetHardware": "SpacemiT X100 (SpacemiT K3)",
+    "repositoryUrl": "https://github.com/opencv/opencv.git",
+    "testBranch": "5.x",
+    "commitHash": "f8ef5fd4c699671c9553f73d28c051abc6cf8e3d"
+  },
+  "problem": {
+    "summary": "OpenCV core 的 float32→int16 转换函数 cv::cpu_baseline::cvt32f16s 是 rank 026 热点。该函数在 GCC+RVV 构建下的 SIMD 转换路径被 convert.simd.hpp:156-157 的 #if 条件编译期排除（注释 opencv/issues/26936），导致热循环完全退化为标量：每元素调用 lrintf@plt（libm）+ saturate_cast 饱和分支 + sh 存储。",
+    "evidence": [
+      "perf annotate（cpu-clock, local period, 498 samples）：hot loop 0x177d0a-0x177d5c 全标量，zero v*；`sext.w a5,a0` 占 29.52%、`addi s10,s10,2` 占 24.70%、`sh a0,0(s10)` 占 20.28%，每元素 `jalr lrintf@plt`（0.00% 但每迭代执行）",
+      "源码 convert.simd.hpp:156-157：`#if (CV_SIMD || (CV_SIMD_SCALABLE && !(defined(__GNUC__) && !defined(__clang__))))`，注释 `// Excluding GNU in CV_SIMD_SCALABLE because of \"opencv/issues/26936\"` — GCC 下转换 SIMD 路径整体编译掉",
+      "函数命名空间为 cv::cpu_baseline::，执行的是 baseline 标量实现",
+      "perf stat 整体：IPC=0.9176，L1_dcache_load_miss_rate=1.359%，branch_miss_rate=1.673%（函数级 bound 数据缺失）；hardware 与 build 均含 RVV 1.0"
+    ]
+  },
+  "rootCause": {
+    "summary": "cvt32f16s 的 RVV 向量转换路径被 convert.simd.hpp:156-157 的编译期 #if 条件在 GCC 构建下排除（issues/26936），热循环退化为逐元素标量转换（lrintf@plt + saturate_cast 分支 + sh），无法利用硬件 RVV 1.0 的向量转换/饱和窄化指令。",
+    "candidateFiles": [
+      "modules/core/src/convert.simd.hpp"
+    ],
+    "performanceFactors": [
+      "RVV Precision Conversion Kernels",
+      "No vectorization"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "float32→int16 转换的 cvRound/lrintf rounding 语义",
+      "saturate_cast<short> 的饱和边界（SHRT_MIN/SHRT_MAX、NaN→0、±Inf）逐元素一致",
+      "+0/-0、denormal、overflow/underflow 与 tie 语义与 scalar reference 一致",
+      "函数公共 API 与 CV_32F→CV_16S 转换结果"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "core"
+    ],
+    "regressionCommand": "agent1 patch_regression --case core"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf annotate 显示 cvt32f16s 热循环完全标量（0x177d0a-0x177d5c，zero v*），每元素执行 flw+lrintf@plt+saturate_cast（sext.w 29.52%/bltu/sgtz/negw/xor）+sh（20.28%），而 hardware 与 build 均含 RVV 1.0（VLEN=256）；源码 convert.simd.hpp:156-157 用 #if 将 GCC 排除在 CV_SIMD_SCALABLE 之外（注释指向 opencv/issues/26936），这是 SIMD 路径编译期失效的决定性证据。perf stat 整体 IPC=0.9176、L1 miss 1.36% 佐证并非访存主导。根因类型为代码路径/编译配置（code_path），与 rvv_precision_conversion_kernels.md 的向量 fast path+特殊值窄修复方向一致。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "issues/26936 若涉及 GCC 向量化代码生成 bug，解除 #if 排除前需复现确认，修复成本可能高于预期",
+      "cvRound 使用 lrintf 的 rounding 语义与 vfcvt.x.f.v 的 FRM 语义差异（默认 round-to-nearest-even vs 实际 FRM）可能使向量替换需要额外的 rounding-mode 处理"
+    ],
+    "currentGaps": "函数级 perf stat（单函数 IPC/instructions）缺失；sampling IP precision 未知（cpu-clock 非精确）；issues/26936 的具体 GCC 缺陷未在本地复现确认；未实测 vfcvt/vnclip 向量路径的 rounding 语义与 benchmark",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + 测试用例 core",
+    "recommendedFirstAction": "在 modules/core/src/convert.simd.hpp:156-157 恢复 cvt32f16s 在 GCC+RVV 构建下的向量转换路径（收窄/解除对 GCC 的 CV_SIMD_SCALABLE 排除并验证 issues/26936 场景），使 DEF_CVT_FUNC 模板发射 vfcvt.x.f.v + vnclip 的向量转换+饱和窄化",
+    "recommendedVerification": "重跑 opencv core perf（CV_32F→CV_16S 转换用例），对比该函数 CPU 时间与 annotate 中 lrintf@plt/sext.w/sh sample share 是否下降；用 objdump/perf annotate 确认主循环出现 vfcvt.*/vnclip，并逐元素比对 CV_32F→CV_16S 输出（覆盖 NaN/±Inf/±0/denormal/overflow/rounding）",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.9176,
+        "anomalyNote": "整体 workload IPC=0.9176，非函数级；热循环全标量+libm 调用，指令效率受限"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate",
+        "rv": 1.359,
+        "anomalyNote": "整体 1.359%，非 memory-bound 主导；函数成本在转换 helper 与饱和分支"
+      },
+      {
+        "metric": "branch_miss_rate",
+        "rv": 1.673,
+        "anomalyNote": "整体 1.673%，saturate_cast 饱和分支逐元素执行，非 branch-bound 但分支数量随元素数放大"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "cv::cpu_baseline::cvt32f16s(unsigned char const*, unsigned long, unsigned char const*, unsigned long, unsigned char*, unsigned long, cv::Size_<int>, void*)",
+        "fileModule": "modules/core/src/convert.simd.hpp",
+        "rvvPattern": "RVV Precision Conversion Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.9738,
+        "note": "float32→int16 精度转换函数；SIMD 路径被 convert.simd.hpp:156-157 编译期排除（GCC/issues 26936），热循环退化为逐元素 lrintf@plt + saturate_cast 标量转换"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "modules/core/src/convert.simd.hpp:156-157 (#if 编译期排除条件)；DEF_CVT_FUNC(32f16s) 在 convert.simd.hpp:420",
+      "relatedKnowledge": "https://github.com/openjdk/jdk/commit/d7273ac8b1ad8bc5d0a17fff5dc941c735fdae24 ; https://github.com/openjdk/jdk/pull/17698 ; https://github.com/openjdk/jdk/commit/bacd046062bffb4c95ec7a508a1080ad651a94a4 ; https://github.com/openjdk/jdk/pull/16382 ; https://github.com/v8/v8/commit/f67745295ddf52fe22793c63dbe1482e880aec11",
+      "evidenceExplanation": "convert.simd.hpp:156-157 的 #if 将 GCC 排除在 CV_SIMD_SCALABLE 外，导致 cvt32f16s 在含 v 的 RVV 构建下仍走 cv::cpu_baseline:: 标量实现（annotate 每元素 lrintf@plt+saturate_cast 佐证）；OpenJDK/V8 的浮点到整数向量 rounding 转换提交与该根因的修复方向一致（vfcvt 向量路径+特殊值窄修复），说明恢复向量 fast path 是正确方向"
+    }
+  }
+}

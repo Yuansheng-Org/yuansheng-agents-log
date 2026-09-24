@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-bp-opencv-core-026-r1",
+  "patchCandidateId": "pc-bp-opencv-core-026",
+  "reviewedAt": "2026-09-09T06:58:00.000Z",
+  "reviewer": "opencode-ai-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 判定 archSpecific=true（命中 riscv-macro）。RISC-V 专项核验通过：1) 该补丁本身不引入新 intrinsic，而是恢复 convert.simd.hpp:157 通用向量路径对 32f16s（float→short）在 GCC+RVV 构建下的编译（vx_load_pair_as/v_store_pair_as 为 universal intrinsics，其 RVV 实现 vle32/vfcvt.x.f.v/vnclip 等为 RVV 1.0 标准指令，VLEN=256 支持）；2) 收窄语义：useSimd 为编译期常量——GCC+RVV 下仅 (float,short) 实例为 true，其余转换与 cvt_64f/第三处 #26936 排除点保持原状，回归面最小；3) 语义一致性依赖 universal intrinsic 的 saturate_cast<short> 路径（cvRound/lrintf rounding 经 vfcvt FRM、饱和边界经 vnclip），与 scalar reference 的对照需目标机验证（blueprint currentGaps 已标注 issues/26936 未本地复现）；4) 无新增 x86/ARM 指令。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F-026-01",
+      "file": "modules/core/src/convert.simd.hpp",
+      "line": 156,
+      "evidence": "patch.diff hunk: `-// Excluding GNU in CV_SIMD_SCALABLE because of \"opencv/issues/26936\"` / `-#if (CV_SIMD || (CV_SIMD_SCALABLE && !(defined(__GNUC__) && !defined(__clang__))) )` / `+#if (CV_SIMD || CV_SIMD_SCALABLE)` / `+        const bool useSimd = CV_SIMD != 0 || !defined(__GNUC__) || defined(__clang__) ||` / `+            (std::is_same<_Ts, float>::value && std::is_same<_Td, short>::value);`",
+      "severity": "suggestion",
+      "category": "verification-gap",
+      "suggestion": "本环境无 riscv64 交叉编译器，无法本地复现 opencv/issues/26936 的 GCC 缺陷范围。建议目标机（GCC+RVV 构建）重跑 opencv_test_core 与 opencv perf core（CV_32F→CV_16S 用例），确认 cvt32f16s 主循环出现 vfcvt/vnclip 向量指令、lrintf@plt/sext.w/sh 样本显著下降，且 CV_32F→CV_16S 输出对拍（覆盖 NaN/±Inf/±0/denormal/overflow/rounding）与 scalar reference 逐元素一致；若 32f16s 命中 #26936 缺陷，回退该 pair 并改用显式 RVV intrinsic 路径。"
+    }
+  ]
+}

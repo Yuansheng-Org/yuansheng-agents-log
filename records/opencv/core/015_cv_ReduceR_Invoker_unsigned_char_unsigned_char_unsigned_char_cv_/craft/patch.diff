@@ -1,0 +1,38 @@
+diff --git a/modules/core/src/matrix_operations.cpp b/modules/core/src/matrix_operations.cpp
+index 5d63a885cd..3bae0cca39 100644
+--- a/modules/core/src/matrix_operations.cpp
++++ b/modules/core/src/matrix_operations.cpp
+@@ -337,6 +337,33 @@ struct ReduceR_SIMD
+     }
+ };
+ 
++#if defined(__riscv_v) && __riscv_v == 1000000
++// RISC-V RVV 1.0 row-wise min reduction for cv::reduce REDUCE_MIN on uchar.
++// OpMin<uchar> is CV_MIN_8U (a lookup-table min), which is bit-identical to the
++// unsigned vector min vminu.vv — no FP semantics, so the running-min result is
++// preserved elementwise.  The block loop covers every column in [start, end)
++// (the last block is a bounded tail), and returns end so the caller's scalar
++// CV_MIN_8U loops are skipped.
++template <>
++struct ReduceR_SIMD<uchar, uchar, OpMin<uchar> >
++{
++    int operator()(const uchar* src, int start, int end, uchar* buf, const OpMin<uchar>&) const
++    {
++        int i = start;
++        size_t vl;
++        for( ; i < end; i += (int)vl )
++        {
++            vl = __riscv_vsetvl_e8m1(end - i);
++            vuint8m1_t vs = __riscv_vle8_v_u8m1(src + i, vl);
++            vuint8m1_t vb = __riscv_vle8_v_u8m1(buf + i, vl);
++            vb = __riscv_vminu_vv_u8m1(vb, vs, vl);
++            __riscv_vse8_v_u8m1(buf + i, vb, vl);
++        }
++        return i;
++    }
++};
++#endif
++
+ 
+ template<typename T, typename ST, typename WT, class Op, class OpInit>
+ class ReduceR_Invoker : public ParallelLoopBody

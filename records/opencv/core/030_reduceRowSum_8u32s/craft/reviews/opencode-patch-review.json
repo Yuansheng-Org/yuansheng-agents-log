@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-bp-opencv-core-030-r1",
+  "patchCandidateId": "pc-bp-opencv-core-030",
+  "reviewedAt": "2026-09-09T07:20:00.000Z",
+  "reviewer": "opencode-ai-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 判定 archSpecific=true（命中 rvv-intrinsic 与 riscv-macro）。RISC-V 专项核验通过：1) 新增 intrinsic（vle8_v_u8m1 / vwcvtu_x 重载 / vle16_v_u16m2 / vsaddu_vv_u16m2 / vse16_v_u16m2）均为 RVV 1.0 标准指令，vwcvtu 重载在 intrin_rvv_scalable.hpp:605 有既有用法，vsaddu 与 universal v_add（v_uint16 → __riscv_vsaddu，line 749）语义完全一致；2) LMUL 论证：u16 累加域 e16,m1（16 lane/op，VLEN 一半）→ e16,m2（32 lane/op），消除 v_expand 的 e16m1 lo/hi 拆分；寄存器峰值 ~5 组（vs u8m1 + vw/va u16m2），远低于 32 预算，无 spill；3) 饱和语义：vsaddu u16 饱和累加与 universal v_add 契约一致，flush_at=256 合同（255×256=65280<65535）内不触发饱和；4) 加宽语义：vwcvtu 零扩展 u8→u16 与 v_expand 一致；5) tail：循环条件 i <= len - vlanes8 与标量余数循环承接不变（vlanes8=32），无 off-by-one；6) 无 x86/ARM 指令。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F-030-01",
+      "file": "modules/core/src/reduce.simd.hpp",
+      "line": 848,
+      "evidence": "patch.diff hunk: `@@ -848,12 +848,27 @@` / `+#if defined(__riscv_v) && __riscv_v == 1000000` / `+            for (; i <= len - vlanes8; i += vlanes8)` / `+            {` / `+                vuint8m1_t vs = __riscv_vle8_v_u8m1(src + i, vlanes8);`",
+      "severity": "suggestion",
+      "category": "verification-gap",
+      "suggestion": "本环境无 riscv64 交叉编译器，无法本地编译/性能验证。建议目标机构建后对 reduceRowSum_8u32s 重做 perf annotate 确认 e16,m1 vsetvli（2f4d20，47.83%）与 lo/hi 拆分消失、主循环 vsetvli 计数降至每迭代 ≤2、2f4d40-2f4d4a 地址重建簇消失；对拍饱和累加输出逐元素一致（覆盖 len=0、短行、非 32 倍数 tail、多行/256 行 flush 边界）。"
+    }
+  ]
+}

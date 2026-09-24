@@ -1,0 +1,302 @@
+ Percent |	Source code & Disassembly of libopencv_core.so.5.1.0 for cpu-clock (730 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000243f5e <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const>:
+         : 6      cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+         : 349    public:
+         : 350    ReduceR_Invoker(const Mat& aSrcmat, Mat& aDstmat, Op& aOp, OpInit& aOpInit)
+         : 351    :srcmat(aSrcmat),dstmat(aDstmat),op(aOp),opInit(aOpInit),buffer(srcmat.size().width*srcmat.channels())
+         : 352    {
+         : 353    }
+         : 354    void operator()(const Range& range) const CV_OVERRIDE
+    0.00 :   243f5e: addi    sp,sp,-80
+         : 351    {
+         : 352    const T* src = srcmat.ptr<T>();
+    0.00 :   243f60: ld      a4,8(a0)
+         : 354    unsigned char* cv::Mat::ptr<unsigned char>(int):
+         :
+         : 860    template<typename _Tp> inline
+         : 861    _Tp* Mat::ptr(int y)
+         : 862    {
+         : 863    CV_DbgAssert( y == 0 || (data && dims >= 1 && (unsigned)y < (unsigned)size.p[0]) );
+         : 864    return (_Tp*)(data + step.p[0] * y);
+    0.00 :   243f62: ld      a2,16(a0)
+         : 866    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+         : 357    const size_t srcstep = srcmat.step/sizeof(src[0]);
+         : 358    WT* buf = buffer.data();
+         : 359    ST* dst = dstmat.ptr<ST>();
+         : 360    int i = 0;
+         :
+         : 362    for( i = range.start ; i < range.end; i++ )
+    0.00 :   243f64: lw      a5,0(a1)
+    0.00 :   243f66: lw      a3,4(a1)
+         : 349    void operator()(const Range& range) const CV_OVERRIDE
+    0.00 :   243f68: sd      s0,64(sp)
+    0.00 :   243f6a: auipc   s0,0x198
+    0.00 :   243f6e: ld      s0,-418(s0) # 3dbdc8 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   243f72: ld      a6,0(s0)
+    0.00 :   243f76: sd      a6,40(sp)
+    0.00 :   243f78: li      a6,0
+    0.00 :   243f7a: sd      ra,72(sp)
+         : 357    unsigned char const* cv::Mat::ptr<unsigned char>(int) const:
+         :
+         : 867    template<typename _Tp> inline
+         : 868    const _Tp* Mat::ptr(int y) const
+         : 869    {
+         : 870    CV_DbgAssert( y == 0 || (data && dims >= 1 && (unsigned)y < (unsigned)size.p[0]) );
+         : 871    return (const _Tp*)(data + step.p[0] * y);
+    0.00 :   243f7c: ld      a6,24(a4)
+         : 873    cv::MatStep::operator unsigned long() const:
+         : 1450   return p[i];
+         : 1451   }
+         :
+         : 1453   inline MatStep::operator size_t() const
+         : 1454   {
+         : 1455   return p[0];
+    0.00 :   243f80: ld      t3,128(a4)
+         : 1457   unsigned char* cv::Mat::ptr<unsigned char>(int):
+         : 859    return (_Tp*)(data + step.p[0] * y);
+    0.00 :   243f84: ld      t1,24(a2)
+         : 861    cv::AutoBuffer<unsigned char, 1032ul>::data():
+         : 143    //! returns the current buffer size
+         : 144    size_t size() const;
+         : 145    //! returns the current capacity (allocated element count; always >= size())
+         : 146    size_t capacity() const;
+         : 147    //! returns pointer to the real buffer, stack-allocated or heap-allocated
+         : 148    inline _Tp* data() { return ptr; }
+    0.00 :   243f88: ld      a7,40(a0)
+         : 150    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+         : 357    for( i = range.start ; i < range.end; i++ )
+    0.00 :   243f8c: bge     a5,a3,243fae <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x50>
+         : 358    buf[i] = opInit(src[i]);
+    0.00 :   243f90: add     a4,a6,a5
+    0.00 :   243f94: lbu     a3,0(a4)
+    0.00 :   243f98: add     a4,a7,a5
+         : 357    for( i = range.start ; i < range.end; i++ )
+    0.00 :   243f9c: addi    a5,a5,1
+         : 358    buf[i] = opInit(src[i]);
+    0.00 :   243f9e: sb      a3,0(a4)
+         : 357    for( i = range.start ; i < range.end; i++ )
+    0.14 :   243fa2: lw      a3,4(a1)
+    0.00 :   243fa4: sext.w  a4,a5
+    0.00 :   243fa8: blt     a4,a3,243f90 <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x32>
+         :
+         : 361    int height = srcmat.size().height;
+    0.00 :   243fac: ld      a4,8(a0)
+         : 363    cv::MatShape::operator()() const:
+         : 109    CV_Assert(dims <= 2);
+    0.00 :   243fae: lw      a5,72(a4)
+    0.00 :   243fb0: li      a2,2
+    0.00 :   243fb2: blt     a2,a5,2440dc <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x17e>
+         : 111    int rows = dims > 1 ? p[0] : int(dims >= 0);
+    0.00 :   243fb6: not     a0,a5
+    0.00 :   243fba: srliw   a0,a0,0x1f
+    0.00 :   243fbe: bne     a5,a2,243fc4 <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x66>
+    0.00 :   243fc2: lw      a0,84(a4)
+         : 112    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+         : 361    for( ; --height; )
+    0.00 :   243fc4: addiw   a0,a0,-1
+    0.00 :   243fc6: auipc   a2,0x198
+    0.00 :   243fca: ld      a2,-278(a2) # 3dbeb0 <_GLOBAL_OFFSET_TABLE_+0x168>
+    0.00 :   243fce: beqz    a0,2440a8 <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x14a>
+         : 365    {
+         : 366    src += srcstep;
+         : 367    ReduceR_SIMD<T, WT, Op> simd_op;
+         : 368    i = simd_op(src, range.start, range.end, buf, op);
+    0.00 :   243fd0: lw      t4,0(a1)
+         : 367    #if CV_ENABLE_UNROLLED
+         : 368    for(; i <= range.end - 4; i += 4 )
+    0.00 :   243fd4: addiw   a5,a3,-3
+         : 363    src += srcstep;
+    0.00 :   243fd8: add     a6,a6,t3
+         : 367    for(; i <= range.end - 4; i += 4 )
+    0.14 :   243fda: bge     t4,a5,24406e <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x110>
+    0.14 :   243fde: add     a5,a7,t4
+    0.00 :   243fe2: add     t5,a6,t4
+         : 371    cv::OpMin<unsigned char>::operator()(unsigned char, unsigned char) const:
+         : 246    { return saturate_cast<short>(std::abs(a - b)); }
+         :
+         : 248    template<> inline schar OpAbsDiff<schar>::operator ()(schar a, schar b) const
+         : 249    { return saturate_cast<schar>(std::abs(a - b)); }
+         :
+         : 251    template<> inline uchar OpMin<uchar>::operator ()(uchar a, uchar b) const { return CV_MIN_8U(a, b); }
+    1.51 :   243fe6: lbu     a3,0(t5)
+    2.33 :   243fea: lbu     a4,1(t5)
+         : 254    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+         : 370    {
+         : 371    WT s0, s1;
+         : 372    s0 = op(buf[i], (WT)src[i]);
+    3.70 :   243fee: lbu     t2,0(a5)
+         : 371    s1 = op(buf[i+1], (WT)src[i+1]);
+    6.85 :   243ff2: lbu     t6,1(a5)
+         : 375    buf[i] = s0; buf[i+1] = s1;
+         :
+         : 377    s0 = op(buf[i+2], (WT)src[i+2]);
+         : 378    s1 = op(buf[i+3], (WT)src[i+3]);
+   11.51 :   243ff6: lbu     t0,3(a5)
+         : 380    cv::OpMin<unsigned char>::operator()(unsigned char, unsigned char) const:
+    8.49 :   243ffa: subw    a3,t2,a3
+    0.27 :   243ffe: subw    a4,t6,a4
+   13.70 :   244002: addiw   a3,a3,256
+    2.47 :   244006: addiw   a4,a4,256
+    0.00 :   24400a: add     a3,a3,a2
+    0.55 :   24400c: add     a4,a4,a2
+    2.05 :   24400e: lbu     a3,0(a3)
+    7.40 :   244012: lbu     a4,0(a4)
+         : 254    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+         : 367    for(; i <= range.end - 4; i += 4 )
+    4.66 :   244016: addiw   t4,t4,4
+         : 369    cv::OpMin<unsigned char>::operator()(unsigned char, unsigned char) const:
+    0.00 :   244018: subw    t2,t2,a3
+    0.14 :   24401c: subw    t6,t6,a4
+         : 248    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+         : 372    buf[i] = s0; buf[i+1] = s1;
+    0.68 :   244020: sb      t6,1(a5)
+    2.05 :   244024: sb      t2,0(a5)
+         : 375    cv::OpMin<unsigned char>::operator()(unsigned char, unsigned char) const:
+    1.37 :   244028: lbu     a3,3(t5)
+    0.68 :   24402c: lbu     a4,2(t5)
+         : 248    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+         : 374    s0 = op(buf[i+2], (WT)src[i+2]);
+    1.51 :   244030: lbu     t6,2(a5)
+         : 376    cv::OpMin<unsigned char>::operator()(unsigned char, unsigned char) const:
+    4.38 :   244034: subw    a3,t0,a3
+    0.00 :   244038: addiw   a3,a3,256
+    0.41 :   24403c: subw    a4,t6,a4
+    1.37 :   244040: addiw   a4,a4,256
+    0.00 :   244044: add     a3,a3,a2
+    5.34 :   244046: add     a4,a4,a2
+    2.33 :   244048: lbu     a3,0(a3)
+    4.11 :   24404c: lbu     a4,0(a4)
+         : 254    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+         : 367    for(; i <= range.end - 4; i += 4 )
+    2.47 :   244050: addi    t5,t5,4
+         : 369    cv::OpMin<unsigned char>::operator()(unsigned char, unsigned char) const:
+    0.00 :   244052: subw    t0,t0,a3
+    0.68 :   244056: subw    t6,t6,a4
+         : 248    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+         : 376    buf[i+2] = s0; buf[i+3] = s1;
+    2.05 :   24405a: sb      t0,3(a5)
+    0.82 :   24405e: sb      t6,2(a5)
+         : 367    for(; i <= range.end - 4; i += 4 )
+    1.64 :   244062: lw      a3,4(a1)
+    0.27 :   244064: addi    a5,a5,4
+    0.00 :   244066: addiw   a4,a3,-3
+    1.23 :   24406a: blt     t4,a4,243fe6 <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x88>
+         : 379    }
+         : 380    #endif
+         : 381    for( ; i < range.end; i++ )
+    0.14 :   24406e: bge     t4,a3,2440a4 <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x146>
+    0.00 :   244072: mv      a4,t4
+    0.00 :   244074: add     t4,t4,a7
+         : 380    buf[i] = op(buf[i], (WT)src[i]);
+    0.00 :   244076: add     a5,a6,a4
+    0.00 :   24407a: lbu     a3,0(t4)
+         : 383    cv::OpMin<unsigned char>::operator()(unsigned char, unsigned char) const:
+    0.00 :   24407e: lbu     a5,0(a5)
+         : 247    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+         : 379    for( ; i < range.end; i++ )
+    0.00 :   244082: addi    a4,a4,1
+    0.00 :   244084: sext.w  t5,a4
+         : 382    cv::OpMin<unsigned char>::operator()(unsigned char, unsigned char) const:
+    0.00 :   244088: subw    a5,a3,a5
+    0.00 :   24408c: addiw   a5,a5,256
+    0.00 :   244090: add     a5,a5,a2
+    0.00 :   244092: lbu     a5,0(a5)
+         : 250    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+    0.00 :   244096: addi    t4,t4,1
+         : 380    cv::OpMin<unsigned char>::operator()(unsigned char, unsigned char) const:
+    0.00 :   244098: subw    a3,a3,a5
+         : 247    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+         : 380    buf[i] = op(buf[i], (WT)src[i]);
+    0.00 :   24409a: sb      a3,-1(t4)
+         : 379    for( ; i < range.end; i++ )
+    0.00 :   24409e: lw      a3,4(a1)
+    0.00 :   2440a0: blt     t5,a3,244076 <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x118>
+         : 361    for( ; --height; )
+    0.00 :   2440a4: addiw   a0,a0,-1
+    0.00 :   2440a6: bnez    a0,243fd0 <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x72>
+         : 383    }
+         :
+         : 385    for( i = range.start ; i < range.end; i++ )
+    0.00 :   2440a8: lw      a5,0(a1)
+    0.00 :   2440aa: bge     a5,a3,2440ca <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x16c>
+         : 384    dst[i] = (ST)buf[i];
+    0.00 :   2440ae: add     a4,a7,a5
+    0.00 :   2440b2: lbu     a3,0(a4)
+    0.00 :   2440b6: add     a4,t1,a5
+         : 383    for( i = range.start ; i < range.end; i++ )
+    0.00 :   2440ba: addi    a5,a5,1
+         : 384    dst[i] = (ST)buf[i];
+    0.00 :   2440bc: sb      a3,0(a4)
+         : 383    for( i = range.start ; i < range.end; i++ )
+    0.14 :   2440c0: lw      a3,4(a1)
+    0.00 :   2440c2: sext.w  a4,a5
+    0.00 :   2440c6: blt     a4,a3,2440ae <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x150>
+         : 385    }
+    0.00 :   2440ca: ld      a4,40(sp)
+    0.00 :   2440cc: ld      a5,0(s0)
+    0.14 :   2440ce: xor     a5,a5,a4
+    0.14 :   2440d0: li      a4,0
+    0.00 :   2440d2: bnez    a5,244118 <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x1ba>
+    0.00 :   2440d4: ld      ra,72(sp)
+    0.00 :   2440d6: ld      s0,64(sp)
+    0.00 :   2440d8: addi    sp,sp,80
+    0.00 :   2440da: ret
+         : 395    cv::MatShape::operator()() const:
+         : 109    CV_Assert(dims <= 2);
+    0.00 :   2440dc: addi    a0,sp,8
+    0.00 :   2440de: auipc   a1,0xf3
+    0.00 :   2440e2: addi    a1,a1,50 # 337110 <cv::rvv_hal::core::transpose2d(unsigned char const*, unsigned long, unsigned char*, unsigned long, int, int, int)+0x3ca>
+    0.00 :   2440e6: jal     23ada2 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string<std::allocator<char> >(char const*, std::allocator<char> const&) [clone .constprop.0]>
+    0.00 :   2440ea: ld      a4,40(sp)
+    0.00 :   2440ec: ld      a5,0(s0)
+    0.00 :   2440ee: xor     a5,a5,a4
+    0.00 :   2440f0: li      a4,0
+    0.00 :   2440f2: bnez    a5,244118 <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x1ba>
+    0.00 :   2440f4: li      a4,109
+    0.00 :   2440f8: auipc   a3,0xf3
+    0.00 :   2440fc: addi    a3,a3,-144 # 337068 <cv::rvv_hal::core::transpose2d(unsigned char const*, unsigned long, unsigned char*, unsigned long, int, int, int)+0x322>
+    0.00 :   244100: auipc   a2,0xf3
+    0.00 :   244104: addi    a2,a2,32 # 337120 <cv::rvv_hal::core::transpose2d(unsigned char const*, unsigned long, unsigned char*, unsigned long, int, int, int)+0x3da>
+    0.00 :   244108: addi    a1,sp,8
+    0.00 :   24410a: li      a0,-215
+    0.00 :   24410e: sd      s2,48(sp)
+    0.00 :   244110: auipc   ra,0xffe05
+    0.00 :   244114: jalr    -64(ra) # 490d0 <cv::error(cv::Error::Code, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, char const*, char const*, int)@plt>
+    0.00 :   244118: sd      s1,56(sp)
+    0.00 :   24411a: sd      s2,48(sp)
+         : 111    cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const:
+    0.00 :   24411c: auipc   ra,0xffe06
+    0.00 :   244120: jalr    404(ra) # 4a2b0 <__stack_chk_fail@plt>
+         : 387    std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::~basic_string():
+         : 896    /**
+         : 897    *  @brief  Destroy the string instance.
+         : 898    */
+         : 899    _GLIBCXX20_CONSTEXPR
+         : 900    ~basic_string()
+         : 901    { _M_dispose(); }
+    0.00 :   244124: mv      s2,a0
+    0.00 :   244126: addi    a0,sp,8
+    0.00 :   244128: auipc   ra,0xffe05
+    0.00 :   24412c: jalr    904(ra) # 494b0 <std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_dispose()@plt>
+         : 906    std::__new_allocator<char>::~__new_allocator():
+         : 104    #if __cplusplus >= 201103L
+         : 105    __new_allocator& operator=(const __new_allocator&) = default;
+         : 106    #endif
+         :
+         : 108    #if __cplusplus <= 201703L
+         : 109    ~__new_allocator() _GLIBCXX_USE_NOEXCEPT { }
+    0.00 :   244130: ld      a4,40(sp)
+    0.00 :   244132: ld      a5,0(s0)
+    0.00 :   244134: xor     a5,a5,a4
+    0.00 :   244136: li      a4,0
+    0.00 :   244138: sd      s1,56(sp)
+    0.00 :   24413a: bnez    a5,24411c <cv::ReduceR_Invoker<unsigned char, unsigned char, unsigned char, cv::OpMin<unsigned char>, cv::OpNop<unsigned char, unsigned char, unsigned char> >::operator()(cv::Range const&) const+0x1be>
+    0.00 :   24413c: mv      a0,s2
+    0.00 :   24413e: auipc   ra,0xffe06
+    0.00 :   244142: jalr    610(ra) # 4a3a0 <_Unwind_Resume@plt>

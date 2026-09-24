@@ -1,0 +1,99 @@
+From 0a18bee0e8efd9d4d491774a983e0f58229274fa Mon Sep 17 00:00:00 2001
+From: Zhang Jinhan <zhangjinhan@isrc.iscas.ac.cn>
+Date: Mon, 14 Sep 2026 10:02:21 +0800
+Subject: [PATCH] core: optimize normL2Sqr for RISC-V RVV
+
+Add an RVV-specific implementation of hal::normL2Sqr_ using native
+RVV intrinsics.
+
+Use four independent e32,m2 accumulators to process four vector groups
+per iteration. This increases instruction-level parallelism and reduces
+the impact of the loop-carried accumulation dependency while keeping
+vector register pressure moderate.
+
+Keep the existing universal-intrinsics implementation as the fallback
+for non-RVV targets.
+
+Performance benchmark:
+
+OPENCV_FOR_THREADS_NUM=1 \
+./bin/opencv_perf_core \
+    --gtest_filter='*hal_normL2Sqr*'
+
+Functional regression:
+
+./bin/opencv_test_core \
+    --gtest_filter='*KMeans*:*BatchDistance*:*batchDistance*'
+
+All selected functional regression tests passed.
+
+Performance measured with the hal_normL2Sqr benchmark on SpacemiT K3
+(RVV 1.0, VLEN=256):
+
+length       baseline median     RVV median     improvement
+300000       0.18 ms             0.11 ms        38.9%
+2000000      2.71 ms             2.11 ms        22.1%
+
+Co-authored-by: Yang Wang <yangwang@iscas.ac.cn>
+Co-authored-by: Yuansheng <yuansheng@isrc.iscas.ac.cn>
+---
+ modules/core/src/norm.dispatch.cpp | 46 +++++++++++++++++++++++++++++-
+ 1 file changed, 45 insertions(+), 1 deletion(-)
+
+diff --git a/modules/core/src/norm.dispatch.cpp b/modules/core/src/norm.dispatch.cpp
+index ca9aac1f2672..666891465291 100644
+--- a/modules/core/src/norm.dispatch.cpp
++++ b/modules/core/src/norm.dispatch.cpp
+@@ -156,7 +156,51 @@ int normHamming(const uchar* a, const uchar* b, int n, int cellSize)
+ float normL2Sqr_(const float* a, const float* b, int n)
+ {
+     int j = 0; float d = 0.f;
+-#if (CV_SIMD || CV_SIMD_SCALABLE)
++#if CV_RVV
++    const int vl = (int)__riscv_vsetvlmax_e32m2();
++    vfloat32m2_t v_d0 = __riscv_vfmv_v_f_f32m2(0.f, vl);
++    vfloat32m2_t v_d1 = __riscv_vfmv_v_f_f32m2(0.f, vl);
++    vfloat32m2_t v_d2 = __riscv_vfmv_v_f_f32m2(0.f, vl);
++    vfloat32m2_t v_d3 = __riscv_vfmv_v_f_f32m2(0.f, vl);
++
++    for (; j <= n - 4 * vl; j += 4 * vl)
++    {
++        vfloat32m2_t t0 = __riscv_vfsub_vv_f32m2(
++                __riscv_vle32_v_f32m2(a + j, vl),
++                __riscv_vle32_v_f32m2(b + j, vl), vl);
++        vfloat32m2_t t1 = __riscv_vfsub_vv_f32m2(
++                __riscv_vle32_v_f32m2(a + j + vl, vl),
++                __riscv_vle32_v_f32m2(b + j + vl, vl), vl);
++        v_d0 = __riscv_vfmacc_vv_f32m2(v_d0, t0, t0, vl);
++
++        vfloat32m2_t t2 = __riscv_vfsub_vv_f32m2(
++                __riscv_vle32_v_f32m2(a + j + 2 * vl, vl),
++                __riscv_vle32_v_f32m2(b + j + 2 * vl, vl), vl);
++        v_d1 = __riscv_vfmacc_vv_f32m2(v_d1, t1, t1, vl);
++
++        vfloat32m2_t t3 = __riscv_vfsub_vv_f32m2(
++                __riscv_vle32_v_f32m2(a + j + 3 * vl, vl),
++                __riscv_vle32_v_f32m2(b + j + 3 * vl, vl), vl);
++        v_d2 = __riscv_vfmacc_vv_f32m2(v_d2, t2, t2, vl);
++        v_d3 = __riscv_vfmacc_vv_f32m2(v_d3, t3, t3, vl);
++    }
++
++    v_d0 = __riscv_vfadd_vv_f32m2(
++            __riscv_vfadd_vv_f32m2(v_d0, v_d1, vl),
++            __riscv_vfadd_vv_f32m2(v_d2, v_d3, vl), vl);
++
++    for (; j <= n - vl; j += vl)
++    {
++        vfloat32m2_t t0 = __riscv_vfsub_vv_f32m2(
++                __riscv_vle32_v_f32m2(a + j, vl),
++                __riscv_vle32_v_f32m2(b + j, vl), vl);
++        v_d0 = __riscv_vfmacc_vv_f32m2(v_d0, t0, t0, vl);
++    }
++
++    vfloat32m1_t zero = __riscv_vfmv_v_f_f32m1(0.f, 1);
++    d = __riscv_vfmv_f_s_f32m1_f32(
++            __riscv_vfredusum_vs_f32m2_f32m1(v_d0, zero, vl));
++#elif (CV_SIMD || CV_SIMD_SCALABLE)
+     const int vl = VTraits<v_float32>::vlanes();
+     v_float32 v_d0 = vx_setzero_f32(), v_d1 = vx_setzero_f32();
+     v_float32 v_d2 = vx_setzero_f32(), v_d3 = vx_setzero_f32();
