@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-go-BenchmarkMallocgc_scan_noscan_size_176_kind_mallocgc-028",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-16T14:15:26.815Z",
+    "software": "go",
+    "testcaseIds": [
+      "BenchmarkMallocgc_scan_noscan_size_176_kind_mallocgc"
+    ],
+    "diagnosisId": "diag-20260916T141526815Z-b04f4472",
+    "targetHardware": "SOPHGO SG2044 / T-Head XuanTie C920v2 (RVV 1.0, VLEN=128)",
+    "repositoryUrl": "https://github.com/golang/go.git",
+    "testBranch": "master",
+    "commitHash": "82215dc6c01ed6efb6f4f236cd5c87ceb6dc318a"
+  },
+  "problem": {
+    "summary": "Go runtime 分配快路径 runtime.nextFreeFast 在 RISC-V 上以默认 GORISCV64=rva20u64 构建，把 sys.TrailingZeros64(allocCache) 编译为 10 条 De Bruijn 软件序列（含两次常量池访问），而 C920v2 硬件暴露 Zbb 扩展提供单指令 ctz。该函数占整记录 0.65%（3/465 cpu-clock 样本），其中 2/3 样本落在 ctz 区间；perf stat 显示混合 bound（IPC 0.676）。根因是构建配置未利用硬件 Zbb 扩展，且编译器未把已存在的 Zbb 运行时检测接到 TrailingZeros64。",
+    "evidence": [
+      "perf stat: cpu_cycle=13,395,212,213, instruction=9,061,658,039, IPC=0.676；L1_dcache_load_miss_rate=1.40%，LLC_load_miss_rate=21.48%，branch_miss_rate=4.85%，ns_per_op=376.3（benchmark 自报 409.0 ns/op）",
+      "perf annotate: runtime.nextFreeFast 整记录 0.65%（3/465）；33.33% @ 2b2f6 neg a1,s1 与 33.33% @ 2b304 mul a1,a1,a2 落在 ctz64 De Bruijn 区间 2b2f6–2b314（10 条指令合成 ctz）；另两处 slli+srli 零扩展对（2b32a-2b32e、2b370-2b374）",
+      "代码知识: 硬件 cpuinfo ISA 含 zbb；默认 rva20u64 构建无 Zbb 代码生成；同 commit 工具链在 GORISCV64=rva22u64 下已将 TrailingZeros64 内联化为单条 ctz（cmd/compile/internal/ssagen/intrinsics.go:962）并把 MOVHU 零扩展降为 zext.h（cmd/internal/obj/riscv/obj.go:4088）"
+    ]
+  },
+  "rootCause": {
+    "summary": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+    "candidateFiles": [
+      "src/cmd/compile/internal/ssagen/intrinsics.go",
+      "src/cmd/internal/obj/riscv/obj.go"
+    ],
+    "performanceFactors": [
+      "RISC-V ISA Extension-Specific Instruction Substitution"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "sys.TrailingZeros64(0)=64 语义（RISC-V ctz 对 x=0 返回 XLEN=64，逐位一致）",
+      "runtime.nextFreeFast 分配算法语义（freeidx 的 &63 / ==nelems 边界检查、result<nelems 守卫）",
+      "rva20u64 / 非 Zbb 硬件上的 De Bruijn fallback 行为与原版本一致"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "BenchmarkMallocgc_scan_noscan_size_176_kind_mallocgc",
+      "math/bits",
+      "runtime"
+    ]
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.6,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "修复需全量 GORISCV64=rva22u64 重建（影响整个二进制与发布策略）或扩展编译器运行时 dispatch，属于工具链级决策；且 profile 证据仅 3 个 cpu-clock 样本、IP precision 未知、样本多来自 go 驱动进程而非 benchmark 本体，收益上界仅为局部份额（ctz 区间 2/3 函数内样本），需人工确认重建范围与收益验证方案后再转发。",
+    "reasoning": "perf stat 显示该分配密集型基准为混合 bound（IPC=0.676，L1 miss 1.40%，branch miss 4.85%）；perf annotate 中 runtime.nextFreeFast 占整记录 0.65%（3/465），其中 2/3 样本落在 2b2f6–2b314 的 ctz64 De Bruijn 区间，该区间是 sys.TrailingZeros64 的纯 Go 软件实现（neg/and/常量池 mul/srli/查表 共 10 条指令），而硬件 cpuinfo 明确包含 zbb（单指令 ctz），同 commit Go 工具链已在 GORISCV64=rva22u64 下实现 ctz 内联化（intrinsics.go:962）与 zext.h（obj.go:4088）——证据链共同指向构建配置未利用硬件 Zbb（config_mismatch），且编译器未把已存在的 riscv64HasZbb dispatch 接到 TrailingZeros64；相关 Go 提交（3659b8756a2b 等）佐证该替换是 Go 生态已采纳的 ISA substitution 方向。",
+    "rootCauseType": "config_mismatch",
+    "alternativeExplanations": [
+      "仅 3 个 cpu-clock 样本，ctz 区间 2/3 的份额存在统计噪声，不能排除采样偏差",
+      "样本来自 go 驱动进程而非 benchmark 本体 runtime.test（未符号化），benchmark 自身分配路径的真实收益可能更低",
+      "rva22u64 全量重建会对整个二进制生效，其它函数的 Zbb 替换可能带来额外收益或引入新行为差异"
+    ],
+    "currentGaps": "build ISA 无 readelf -A artifact（baseline_gap: build ISA，反汇编形态为间接证据）；sampling IP precision 未知（cpu-clock@99Hz，baseline_gap: sampling IP precision）；函数样本量仅 3；perf record 混合 go/link/compile 多进程且 runtime.test 未符号化；无 ARM 侧 perf stat 对比；收益上界仅为当前 sampled event 的局部样本份额（ctz 区间 2/3 函数内、整记录 0.43%），不得外推为 workload 级 Amdahl 上界。",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认是否接受全量 GORISCV64=rva22u64 重建（影响整个二进制与发布策略），或优先实现编译器运行时 Zbb dispatch 扩展；确认以 rva20u64/rva22u64 双路径跑完整 Go 测试套件（math/bits、runtime、crypto）作为正确性验证基线。",
+    "affectedTarget": "RV: BenchmarkMallocgc_scan_noscan_size_176_kind_mallocgc",
+    "recommendedFirstAction": "在构建环境设置 GORISCV64=rva22u64（go env / 构建脚本）重建 Go 工具链与 runtime 后重测；如需默认构建也受益，在 src/cmd/compile/internal/ssagen/intrinsics.go:962 处为 TrailingZeros64 补齐 Zbb 运行时 dispatch（仿照 makeOnesCountRISCV64，加载 runtime.riscv64HasZbb 分支到 OpCtz64，非 Zbb 走 De Bruijn fallback）。",
+    "recommendedVerification": "重建后重跑 BenchmarkMallocgc_scan_noscan_size_176_kind_mallocgc 并 perf annotate runtime.nextFreeFast：2b2f6–2b314 区间应消失并出现 ctz，slli+srli 零扩展对应变为 zext.h；跑 go test math/bits runtime 及完整测试套件确认 rva20u64 与 rva22u64 两路径结果逐位一致；对比 ns/op 与函数样本份额变化。",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.676,
+        "anomalyNote": "分配密集型基准混合 bound；0.676 说明指令级并行利用率中等偏低，非纯 compute-bound 也非纯 memory-bound"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 1.4,
+        "anomalyNote": "27,404,365/1,960,966,330=1.40%，L1 命中良好，不支持 memory-bound 归因"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 21.48,
+        "anomalyNote": "34,567,740/160,905,440=21.48%，LLC 层有相当 miss 但函数级影响未知"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 4.85,
+        "anomalyNote": "44,658,901/921,049,855=4.85%，分支预测较好，非 branch-bound"
+      },
+      {
+        "metric": "ns_per_op",
+        "rv": 376.3,
+        "anomalyNote": "perf stat 汇总 ns_per_op=376.3；go benchmark 自报 409.0 ns/op（-64 并发），差异来自统计口径"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "runtime.nextFreeFast",
+        "fileModule": "src/runtime/malloc.go（perf annotate 无 DWARF 源路径，经同 commit go 源码核对 malloc.go:969）",
+        "rvvPattern": "RISC-V ISA Extension-Specific Instruction Substitution",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.667,
+        "note": "内存分配器快路径（标量控制型，非向量算子）；ctz64 De Bruijn 区间 2b2f6–2b314 持 2/3 函数内样本（整记录 0.43%），3 对 slli+srli 零扩展为 MOVHU 合成"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "src/cmd/compile/internal/ssagen/intrinsics.go:962（TrailingZeros64 仅 goriscv64>=22 内联化为 OpCtz64）+ src/runtime/malloc.go:969（nextFreeFast 调用 sys.TrailingZeros64）+ src/cmd/internal/obj/riscv/obj.go:4088/4620（rva22u64 下 ZEXTH/ACTZ 发射）",
+      "relatedKnowledge": "https://github.com/golang/go/commit/3659b8756a2b81766e589e34d4fe9613b5917de0; https://github.com/golang/go/commit/a6ecdf29e34ddc82b6ed2315aaedf4c4d522b96c; https://github.com/golang/go/pull/59488; https://github.com/golang/go/commit/63ab68ddc5f1307e552cf27ae7a6f0dfda2bb962; https://github.com/golang/go/commit/1951afc9193f8e197cb7dfaf6afed70ea02404cb",
+      "evidenceExplanation": "硬件 cpuinfo 含 zbb 而默认 rva20u64 构建的 annotate 显示 De Bruijn 软件 ctz 与 slli+srli 零扩展，说明二进制未利用 Zbb；同 commit 工具链源码证明 ctz/zext.h 代码生成路径已存在（仅被 GORISCV64>=22 gate），且 runtime 已通过 riscv_hwprobe 检测 Zbb（internal/cpu.RISCV64.HasZbb、runtime.riscv64HasZbb）但编译器只对 OnesCount 做 dispatch；pattern 本地 Related PRs 的 Go 提交（3659b8756a2b 等）佐证 ISA substitution 是 Go 生态已采纳的修复方向。"
+    }
+  }
+}

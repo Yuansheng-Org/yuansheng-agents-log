@@ -1,0 +1,60 @@
+02-GO-FULL-PROFILE BenchmarkMallocgc_scan_noscan_size_176_kind_mallocgc RISC-V perf stat
+========================================================================================
+
+Source CSV: /home/yuansheng-ci/benchmarks/go-perf-20260813/workspace/results-full-profile/go_results.csv
+TestName: BenchmarkMallocgc/scan=noscan/size=176/kind=mallocgc
+BenchmarkName: BenchmarkMallocgc_scan_noscan_size_176_kind_mallocgc
+Package: runtime
+Architecture: riscv64
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 22,806,414 |
+| ns_per_op | 376.3 |
+| task_clock | 5444.74 |
+| cpu_cycle | 13,395,212,213 |
+| instruction | 9,061,658,039 |
+| IPC | 0.676 |
+| cache_references | 160,888,137 |
+| cache_misses | 160,891,131 |
+| branches | 921,049,855 |
+| branch_misses | 44,658,901 |
+| L1_dcache_loads | 1,960,966,330 |
+| L1_dcache_load_misses | 27,404,365 |
+| LLC_loads | 160,905,440 |
+| LLC_load_misses | 34,567,740 |
+| iterations | 60,607 |
+
+perf stat style summary
+-----------------------
+          22,806,414  duration_time
+               376.3  ns_per_op
+             5444.74  task_clock
+      13,395,212,213  cpu_cycle
+       9,061,658,039  instruction
+               0.676  IPC
+         160,888,137  cache_references
+         160,891,131  cache_misses
+         921,049,855  branches
+          44,658,901  branch_misses
+       1,960,966,330  L1_dcache_loads
+          27,404,365  L1_dcache_load_misses
+         160,905,440  LLC_loads
+          34,567,740  LLC_load_misses
+
+Go benchmark output
+-------------------
+goos: linux
+goarch: riscv64
+pkg: runtime
+BenchmarkMallocgc
+BenchmarkMallocgc/scan=noscan
+BenchmarkMallocgc/scan=noscan/size=176
+BenchmarkMallocgc/scan=noscan/size=176/kind=mallocgc
+BenchmarkMallocgc/scan=noscan/size=176/kind=mallocgc-64         	   60607	       409.0 ns/op
+PASS
+ok  	runtime	0.073s
+[ perf record: Woken up 1 times to write data ]
+[ perf record: Captured and wrote 0.059 MB /workspace/results-full-profile/perf_record/runtime--BenchmarkMallocgc_scan_noscan_size_176_kind_mallocgc/perf.data (465 samples) ]

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rv-bp-go-benchmarkaddmulvvww-words-100000-impl-asm-001",
+  "patchCandidateId": "pc-bp-go-benchmarkaddmulvvww-words-100000-impl-asm-001",
+  "reviewedAt": "2026-09-10T14:40:00Z",
+  "reviewer": "opencode-craft-ai-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 命中 asm-source-file。新增 REV8 为 RISC-V Zbb 指令，已用 #ifdef hasZbb（asm_riscv64.h 在 GORISCV64>=rva22 时定义）做构建期门控：rva20 无 Zbb 时仍走原 MOVBU 字节拼装，rva22+ 走 MOVWU+REV8+SRL 快路径；两者均已在 riscv64 交叉编译通过。REV8 字节反转语义与 SRL $32 下移组合后与原 4×MOVBU+移位+OR 的 big-endian 拼装逐位一致。无 x86/ARM 指令混入。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F-001-1",
+      "file": "src/crypto/internal/fips140/sha256/sha256block_riscv64.s",
+      "evidence": "REV8 X5, X5 (byte-reverse of the zero-extended word load)",
+      "severity": "suggestion",
+      "category": "verification",
+      "suggestion": "SHA-256 输出必须与标量实现逐位一致；本次仅在 riscv64 交叉编译层面验证了 rva20/rva22 两档可汇编，未在真实 C920v2 上跑 crypto/sha256 与 FIPS140 自检测试验证 bit-identical。建议后续用 go test crypto/sha256、crypto/internal/fips140/sha256 及 FIPS selftest 复核。"
+    }
+  ]
+}

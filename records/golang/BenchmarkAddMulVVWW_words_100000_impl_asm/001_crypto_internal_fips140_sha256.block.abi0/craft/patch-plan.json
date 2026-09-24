@@ -1,0 +1,318 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-go-benchmarkaddmulvvww-words-100000-impl-asm-001",
+  "blueprintId": "bp-go-BenchmarkAddMulVVWW_words_100000_impl_asm-001",
+  "createdAt": "2026-09-11T01:37:35.241Z",
+  "objective": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+  "changes": [
+    {
+      "filePath": "crypto/internal/fips140/sha256.block.abi0",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "roriw/rev8",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "math/big",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "crypto/FIPS140",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "5364a2/5364a6/5364aa",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "Zvknha/Zvknhb",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "crypto/internal/fips140/sha256",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "A/E",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "crypto/internal/fips140/sha256/sha256block_riscv64",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "amd64/arm64",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "crypto/internal/fips140/sha256/sha256block",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "cmd/compile/internal/ssa/gen/RISCV64",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "roriw/rori",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "crypto/sha256",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "vle32/vadd.vv/vrgather.vv",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "ror/rev8",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "19/19",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/crypto/internal/fips140/sha256/sha256block_riscv64",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "32/64-bit",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "crypto/internal/fips140/sha256/sha256block_riscv64.s（新增：Zbb 或 base-RVV block kernel，与 amd64/arm64 sha256block_*.s 对齐）",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "crypto/internal/fips140/sha256/sha256block.go（现 riscv64 实际执行的通用标量实现，修改为按 GOARCH 选择实现）",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "cmd/compile/internal/ssa/gen/RISCV64.rules（可选载体：增加 roriw/rori 与 lwu+rev8+srli 的 lowering，feature-gated 于 Zbb）",
+      "action": "modify",
+      "rationale": "Go 标准库 crypto/internal/fips140/sha256 在 riscv64 无专用 block 实现（无 sha256block_riscv64.s，build-time GOARCH 文件选择），回退纯 Go 通用标量 64 轮；同时 Go riscv64 后端未对哈希轮做 Zbb 指令选择（旋转合成 srliw+slliw+or、BE 字逐字节拼装），而目标硬件明确支持 Zbb（roriw/rori/rev8）。硬件无 zvk*，向量 SHA-256 专用轮指令 route 不可用，向量化只能走 base-RVV（W schedule 4-lane + A/E 双链打包）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应围绕 crypto/internal/fips140/sha256.block.abi0, roriw/rev8, math/big, crypto/FIPS140, 5364a2/5364a6/5364aa, Zvknha/Zvknhb, crypto/internal/fips140/sha256, A/E, crypto/internal/fips140/sha256/sha256block_riscv64, amd64/arm64, crypto/internal/fips140/sha256/sha256block, cmd/compile/internal/ssa/gen/RISCV64, roriw/rori, crypto/sha256, vle32/vadd.vv/vrgather.vv, ror/rev8, 19/19, src/crypto/internal/fips140/sha256/sha256block_riscv64, 32/64-bit, crypto/internal/fips140/sha256/sha256block_riscv64.s（新增：Zbb 或 base-RVV block kernel，与 amd64/arm64 sha256block_*.s 对齐）, crypto/internal/fips140/sha256/sha256block.go（现 riscv64 实际执行的通用标量实现，修改为按 GOARCH 选择实现）, cmd/compile/internal/ssa/gen/RISCV64.rules（可选载体：增加 roriw/rori 与 lwu+rev8+srli 的 lowering，feature-gated 于 Zbb） 解决 blueprint bp-go-BenchmarkAddMulVVWW_words_100000_impl_asm-001 指出的根因。允许涉及 构建系统、平台适配、构建参数、注册入口；源码实现、汇编/kernel/intrinsic/SIMD/vector 后端、分发表。"
+}

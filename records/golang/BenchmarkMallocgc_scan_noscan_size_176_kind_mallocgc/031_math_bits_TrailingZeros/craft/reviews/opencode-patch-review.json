@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "review-bp-go-BenchmarkMallocgc_scan_noscan_size_176_kind_mallocgc-028-r0",
+  "patchCandidateId": "pc-bp-go-benchmarkmallocgc_scan_noscan_size_176_kind_mallocgc-028",
+  "reviewedAt": "2026-09-17T11:30:00.000Z",
+  "reviewer": "opencode-ai-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan archSpecific=true 系新增注释中的 'RISCV64' 字样命中 riscv-macro 规则（非内联汇编）。ISA 核对：目标 SG2044/C920v2 cpuinfo 含 zbb；补丁新增的 CTZ 指令由 runtime.riscv64HasZbb 运行时门控，非 Zbb 硬件走纯 Go 回退；rva22u64+ 直接 intrinsic 行为不变。实测交叉编译 + objdump 确认 MOVBU(riscv64HasZbb)/BEQZ/CTZ/CALL 序列。"
+  },
+  "hallucinationCheck": [
+    {"dimension": "技术精度", "result": "PASS"},
+    {"dimension": "声明溯源", "result": "PASS"},
+    {"dimension": "可解释性", "result": "PASS"},
+    {"dimension": "内部一致性", "result": "PASS"},
+    {"dimension": "安全", "result": "PASS"}
+  ],
+  "findings": []
+}

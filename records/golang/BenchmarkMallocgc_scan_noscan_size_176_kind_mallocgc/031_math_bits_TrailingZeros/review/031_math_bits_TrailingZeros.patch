@@ -1,0 +1,168 @@
+diff --git a/src/cmd/compile/internal/ssagen/intrinsics.go b/src/cmd/compile/internal/ssagen/intrinsics.go
+index 6a0c4e41..76b7792f 100644
+--- a/src/cmd/compile/internal/ssagen/intrinsics.go
++++ b/src/cmd/compile/internal/ssagen/intrinsics.go
+@@ -962,28 +962,42 @@ func initIntrinsics(cfg *intrinsicBuildConfig) {
+ 		},
+ 		sys.AMD64, sys.ARM, sys.ARM64, sys.I386, sys.MIPS, sys.Loong64, sys.PPC64, sys.S390X, sys.Wasm)
+ 
+-	if cfg.goriscv64 >= 22 {
+-		addF("math/bits", "TrailingZeros64",
+-			func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
+-				return s.newValue1(ssaop.OpCtz64, types.Types[types.TINT], args[0])
+-			},
+-			sys.RISCV64)
+-		addF("math/bits", "TrailingZeros32",
+-			func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
+-				return s.newValue1(ssaop.OpCtz32, types.Types[types.TINT], args[0])
+-			},
+-			sys.RISCV64)
+-		addF("math/bits", "TrailingZeros16",
+-			func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
+-				return s.newValue1(ssaop.OpCtz16, types.Types[types.TINT], args[0])
+-			},
+-			sys.RISCV64)
+-		addF("math/bits", "TrailingZeros8",
+-			func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
+-				return s.newValue1(ssaop.OpCtz8, types.Types[types.TINT], args[0])
+-			},
+-			sys.RISCV64)
++	makeTrailingZerosRISCV64 := func(op ssaop.Op) func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
++		return func(s *state, n *ir.CallExpr, args []*ssa.Value) *ssa.Value {
++			if cfg.goriscv64 >= 22 {
++				return s.newValue1(op, types.Types[types.TINT], args[0])
++			}
++
++			addr := s.entryNewValue1A(ssaop.OpAddr, types.Types[types.TBOOL].PtrTo(), ir.Syms.RISCV64HasZbb, s.sb)
++			v := s.load(types.Types[types.TBOOL], addr)
++			b := s.endBlock()
++			b.Kind = block.BlockIf
++			b.SetControl(v)
++			bTrue := s.f.NewBlock(block.BlockPlain)
++			bFalse := s.f.NewBlock(block.BlockPlain)
++			bEnd := s.f.NewBlock(block.BlockPlain)
++			b.AddEdgeTo(bTrue)
++			b.AddEdgeTo(bFalse)
++			b.Likely = ssa.BranchLikely // Most RISC-V systems support Zbb.
++
++			// Use the Zbb instruction when it is available.
++			s.startBlock(bTrue)
++			s.vars[n] = s.newValue1(op, types.Types[types.TINT], args[0])
++			s.endBlock().AddEdgeTo(bEnd)
++
++			// Call the pure Go implementation otherwise.
++			s.startBlock(bFalse)
++			s.vars[n] = s.callResult(n, callNormal) // types.Types[TINT]
++			s.endBlock().AddEdgeTo(bEnd)
++
++			s.startBlock(bEnd)
++			return s.variable(n, types.Types[types.TINT])
++		}
+ 	}
++	addF("math/bits", "TrailingZeros64", makeTrailingZerosRISCV64(ssaop.OpCtz64), sys.RISCV64)
++	addF("math/bits", "TrailingZeros32", makeTrailingZerosRISCV64(ssaop.OpCtz32), sys.RISCV64)
++	addF("math/bits", "TrailingZeros16", makeTrailingZerosRISCV64(ssaop.OpCtz16), sys.RISCV64)
++	addF("math/bits", "TrailingZeros8", makeTrailingZerosRISCV64(ssaop.OpCtz8), sys.RISCV64)
+ 
+ 	// ReverseBytes inlines correctly, no need to intrinsify it.
+ 	alias("math/bits", "ReverseBytes64", "internal/runtime/sys", "Bswap64", all...)
+@@ -1289,9 +1303,21 @@ func initIntrinsics(cfg *intrinsicBuildConfig) {
+ 		sys.AMD64)
+ 	alias("math/bits", "Div", "math/bits", "Div64", sys.ArchAMD64)
+ 
+-	alias("internal/runtime/sys", "TrailingZeros8", "math/bits", "TrailingZeros8", all...)
+-	alias("internal/runtime/sys", "TrailingZeros32", "math/bits", "TrailingZeros32", all...)
+-	alias("internal/runtime/sys", "TrailingZeros64", "math/bits", "TrailingZeros64", all...)
++	runtimeTrailingZerosArchs := all
++	if cfg.goriscv64 < 22 {
++		// Runtime hot paths call TrailingZeros often enough that the feature
++		// check can cost more than the rva20u64 implementation it replaces.
++		// Keep their generic implementation unless Zbb is guaranteed.
++		runtimeTrailingZerosArchs = make([]*sys.Arch, 0, len(all)-1)
++		for _, arch := range all {
++			if arch.Family != sys.RISCV64 {
++				runtimeTrailingZerosArchs = append(runtimeTrailingZerosArchs, arch)
++			}
++		}
++	}
++	alias("internal/runtime/sys", "TrailingZeros8", "math/bits", "TrailingZeros8", runtimeTrailingZerosArchs...)
++	alias("internal/runtime/sys", "TrailingZeros32", "math/bits", "TrailingZeros32", runtimeTrailingZerosArchs...)
++	alias("internal/runtime/sys", "TrailingZeros64", "math/bits", "TrailingZeros64", runtimeTrailingZerosArchs...)
+ 	alias("internal/runtime/sys", "Len8", "math/bits", "Len8", all...)
+ 	alias("internal/runtime/sys", "Len64", "math/bits", "Len64", all...)
+ 	alias("internal/runtime/sys", "OnesCount64", "math/bits", "OnesCount64", all...)
+diff --git a/src/cmd/compile/internal/ssagen/intrinsics_test.go b/src/cmd/compile/internal/ssagen/intrinsics_test.go
+index 3de8b07a..38d183ea 100644
+--- a/src/cmd/compile/internal/ssagen/intrinsics_test.go
++++ b/src/cmd/compile/internal/ssagen/intrinsics_test.go
+@@ -1447,4 +1447,21 @@ func TestIntrinsicBuilders(t *testing.T) {
+ 	if intrinsics.lookup(sys.ArchPPC64, "internal/runtime/sys", "Bswap64") == nil {
+ 		t.Errorf("No intrinsic for internal/runtime/sys.Bswap64 on arch %v", sys.ArchPPC64)
+ 	}
++
++	for _, level := range []int{20, 22} {
++		cfg := &intrinsicBuildConfig{goriscv64: level}
++		initIntrinsics(cfg)
++		for _, fn := range []string{"TrailingZeros8", "TrailingZeros16", "TrailingZeros32", "TrailingZeros64"} {
++			if intrinsics.lookup(sys.ArchRISCV64, "math/bits", fn) == nil {
++				t.Errorf("GORISCV64=rva%du64: missing math/bits.%s intrinsic", level, fn)
++			}
++		}
++		for _, fn := range []string{"TrailingZeros8", "TrailingZeros32", "TrailingZeros64"} {
++			got := intrinsics.lookup(sys.ArchRISCV64, "internal/runtime/sys", fn) != nil
++			want := level >= 22
++			if got != want {
++				t.Errorf("GORISCV64=rva%du64: internal/runtime/sys.%s intrinsic present = %v, want %v", level, fn, got, want)
++			}
++		}
++	}
+ }
+diff --git a/test/codegen/mathbits.go b/test/codegen/mathbits.go
+index 03401928..5c0850a5 100644
+--- a/test/codegen/mathbits.go
++++ b/test/codegen/mathbits.go
+@@ -496,7 +496,7 @@ func TrailingZeros(n uint) int {
+ 	// loong64:"CTZV"
+ 	// ppc64x/power8:"ANDN" "POPCNTD"
+ 	// ppc64x/power9: "CNTTZD"
+-	// riscv64/rva22u64,riscv64/rva23u64: "CTZ "
++	// riscv64:"CTZ "
+ 	// s390x:"FLOGR"
+ 	// wasm:"I64Ctz"
+ 	return bits.TrailingZeros(n)
+@@ -510,7 +510,7 @@ func TrailingZeros64(n uint64) int {
+ 	// loong64:"CTZV"
+ 	// ppc64x/power8:"ANDN" "POPCNTD"
+ 	// ppc64x/power9: "CNTTZD"
+-	// riscv64/rva22u64,riscv64/rva23u64: "CTZ "
++	// riscv64:"CTZ "
+ 	// s390x:"FLOGR"
+ 	// wasm:"I64Ctz"
+ 	return bits.TrailingZeros64(n)
+@@ -531,7 +531,7 @@ func TrailingZeros32(n uint32) int {
+ 	// loong64:"CTZW"
+ 	// ppc64x/power8:"ANDN" "POPCNTW"
+ 	// ppc64x/power9: "CNTTZW"
+-	// riscv64/rva22u64,riscv64/rva23u64: "CTZW"
++	// riscv64:"CTZW"
+ 	// s390x:"FLOGR" "MOVWZ"
+ 	// wasm:"I64Ctz"
+ 	return bits.TrailingZeros32(n)
+@@ -545,7 +545,7 @@ func TrailingZeros16(n uint16) int {
+ 	// loong64:"CTZV"
+ 	// ppc64x/power8:"POPCNTW" "ADD [$]-1"
+ 	// ppc64x/power9:"CNTTZD" "ORIS [$]1"
+-	// riscv64/rva22u64,riscv64/rva23u64: "ORI [$]65536" "CTZW"
++	// riscv64:"ORI [$]65536" "CTZW"
+ 	// s390x:"FLOGR" "OR [$]65536"
+ 	// wasm:"I64Ctz"
+ 	return bits.TrailingZeros16(n)
+@@ -559,7 +559,7 @@ func TrailingZeros8(n uint8) int {
+ 	// loong64:"CTZV"
+ 	// ppc64x/power8:"POPCNTB" "ADD [$]-1"
+ 	// ppc64x/power9:"CNTTZD" "OR [$]256"
+-	// riscv64/rva22u64,riscv64/rva23u64: "ORI [$]256" "CTZW"
++	// riscv64:"ORI [$]256" "CTZW"
+ 	// s390x:"FLOGR" "OR [$]256"
+ 	// wasm:"I64Ctz"
+ 	return bits.TrailingZeros8(n)

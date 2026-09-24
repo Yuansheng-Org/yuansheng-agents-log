@@ -1,0 +1,178 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-go-benchmarkmallocgc-scan-noscan-size-176-kind-mallocgc-028",
+  "blueprintId": "bp-go-BenchmarkMallocgc_scan_noscan_size_176_kind_mallocgc-028",
+  "createdAt": "2026-09-17T11:25:29.328Z",
+  "objective": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+  "changes": [
+    {
+      "filePath": "3/465",
+      "action": "modify",
+      "rationale": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "2/3",
+      "action": "modify",
+      "rationale": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "cmd/compile/internal/ssagen/intrinsics.go",
+      "action": "modify",
+      "rationale": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "cmd/internal/obj/riscv/obj.go",
+      "action": "modify",
+      "rationale": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/cmd/compile/internal/ssagen/intrinsics.go",
+      "action": "modify",
+      "rationale": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/cmd/internal/obj/riscv/obj.go",
+      "action": "modify",
+      "rationale": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "go/link/compile",
+      "action": "modify",
+      "rationale": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/runtime/malloc",
+      "action": "modify",
+      "rationale": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "src/runtime/malloc.go",
+      "action": "modify",
+      "rationale": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "ZEXTH/ACTZ",
+      "action": "modify",
+      "rationale": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "ctz/zext.h",
+      "action": "modify",
+      "rationale": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "internal/cpu.RISCV64",
+      "action": "modify",
+      "rationale": "构建配置默认 GORISCV64=rva20u64 未启用硬件已具备的 Zbb 扩展，导致 malloc 分配快路径 nextFreeFast 内的 TrailingZeros64 以 10 条 De Bruijn 软件序列（含常量池取数）实现，而硬件单指令 ctz 可达；编译器也未把已接线的 runtime Zbb dispatch 扩展到 TrailingZeros64。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应围绕 3/465, 2/3, cmd/compile/internal/ssagen/intrinsics.go, cmd/internal/obj/riscv/obj.go, src/cmd/compile/internal/ssagen/intrinsics.go, src/cmd/internal/obj/riscv/obj.go, go/link/compile, src/runtime/malloc, src/runtime/malloc.go, ZEXTH/ACTZ, ctz/zext.h, internal/cpu.RISCV64 解决 blueprint bp-go-BenchmarkMallocgc_scan_noscan_size_176_kind_mallocgc-028 指出的根因。允许涉及 构建系统、平台适配、构建参数、注册入口；源码实现、汇编/kernel/intrinsic/SIMD/vector 后端、分发表。"
+}

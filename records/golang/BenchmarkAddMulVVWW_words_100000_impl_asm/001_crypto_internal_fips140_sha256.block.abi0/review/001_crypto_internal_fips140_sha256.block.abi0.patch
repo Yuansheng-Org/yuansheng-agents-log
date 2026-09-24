@@ -1,0 +1,104 @@
+diff --git a/src/crypto/internal/fips140/sha256/sha256block_riscv64.s b/src/crypto/internal/fips140/sha256/sha256block_riscv64.s
+index bd2ec4f..ee55ca0 100755
+--- a/src/crypto/internal/fips140/sha256/sha256block_riscv64.s
++++ b/src/crypto/internal/fips140/sha256/sha256block_riscv64.s
+@@ -5,6 +5,7 @@
+ //go:build !purego
+ 
+ #include "textflag.h"
++#include "asm_riscv64.h"
+ 
+ // SHA256 block routine. See sha256block.go for Go equivalent.
+ //
+@@ -47,7 +48,7 @@
+ // H7 = h + H7
+ 
+ // Wt = Mt; for 0 <= t <= 15
+-#define MSGSCHEDULE0(index) \
++#define MSGSCHEDULE0_BYTE(index) \
+ 	MOVBU	((index*4)+0)(X29), X5; \
+ 	MOVBU	((index*4)+1)(X29), X6; \
+ 	MOVBU	((index*4)+2)(X29), X7; \
+@@ -60,6 +61,14 @@
+ 	OR	X5, X8, X5; \
+ 	MOVW	X5, (index*4)(X19)
+ 
++#ifdef hasZbb
++#define MSGSCHEDULE0_WIDE(index) \
++	MOVWU	(index*4)(X29), X5; \
++	REV8	X5, X5; \
++	SRL	$32, X5; \
++	MOVW	X5, (index*4)(X19)
++#endif
++
+ // Wt = SIGMA1(Wt-2) + Wt-7 + SIGMA0(Wt-15) + Wt-16; for 16 <= t <= 63
+ //   SIGMA0(x) = ROTR(7,x) XOR ROTR(18,x) XOR SHR(3,x)
+ //   SIGMA1(x) = ROTR(17,x) XOR ROTR(19,x) XOR SHR(10,x)
+@@ -129,9 +138,20 @@
+ 	ADD	X5, d; \
+ 	ADD	X6, X5, h
+ 
+-#define SHA256ROUND0(index, a, b, c, d, e, f, g, h) \
+-	MSGSCHEDULE0(index); \
++#ifdef hasZbb
++#define SHA256ROUND0(index, a, b, c, d, e, f, g, h, byte, ready) \
++	BNE	X22, X0, byte; \
++	MSGSCHEDULE0_WIDE(index); \
++	JMP	ready; \
++byte: \
++	MSGSCHEDULE0_BYTE(index); \
++ready: \
+ 	SHA256ROUND(index, a, b, c, d, e, f, g, h)
++#else
++#define SHA256ROUND0(index, a, b, c, d, e, f, g, h, byte, ready) \
++	MSGSCHEDULE0_BYTE(index); \
++	SHA256ROUND(index, a, b, c, d, e, f, g, h)
++#endif
+ 
+ #define SHA256ROUND1(index, a, b, c, d, e, f, g, h) \
+ 	MSGSCHEDULE1(index); \
+@@ -163,23 +183,28 @@ TEXT ·blockScalar(SB),0,$64-32
+ 	MOVWU	(6*4)(X20), X16		// g = H6
+ 	MOVWU	(7*4)(X20), X17		// h = H7
+ 
++#ifdef hasZbb
++	// Adding 64 bytes for each block preserves the initial alignment.
++	AND	$3, X29, X22
++#endif
++
+ loop:
+-	SHA256ROUND0(0, X10, X11, X12, X13, X14, X15, X16, X17)
+-	SHA256ROUND0(1, X17, X10, X11, X12, X13, X14, X15, X16)
+-	SHA256ROUND0(2, X16, X17, X10, X11, X12, X13, X14, X15)
+-	SHA256ROUND0(3, X15, X16, X17, X10, X11, X12, X13, X14)
+-	SHA256ROUND0(4, X14, X15, X16, X17, X10, X11, X12, X13)
+-	SHA256ROUND0(5, X13, X14, X15, X16, X17, X10, X11, X12)
+-	SHA256ROUND0(6, X12, X13, X14, X15, X16, X17, X10, X11)
+-	SHA256ROUND0(7, X11, X12, X13, X14, X15, X16, X17, X10)
+-	SHA256ROUND0(8, X10, X11, X12, X13, X14, X15, X16, X17)
+-	SHA256ROUND0(9, X17, X10, X11, X12, X13, X14, X15, X16)
+-	SHA256ROUND0(10, X16, X17, X10, X11, X12, X13, X14, X15)
+-	SHA256ROUND0(11, X15, X16, X17, X10, X11, X12, X13, X14)
+-	SHA256ROUND0(12, X14, X15, X16, X17, X10, X11, X12, X13)
+-	SHA256ROUND0(13, X13, X14, X15, X16, X17, X10, X11, X12)
+-	SHA256ROUND0(14, X12, X13, X14, X15, X16, X17, X10, X11)
+-	SHA256ROUND0(15, X11, X12, X13, X14, X15, X16, X17, X10)
++	SHA256ROUND0(0, X10, X11, X12, X13, X14, X15, X16, X17, byte0, ready0)
++	SHA256ROUND0(1, X17, X10, X11, X12, X13, X14, X15, X16, byte1, ready1)
++	SHA256ROUND0(2, X16, X17, X10, X11, X12, X13, X14, X15, byte2, ready2)
++	SHA256ROUND0(3, X15, X16, X17, X10, X11, X12, X13, X14, byte3, ready3)
++	SHA256ROUND0(4, X14, X15, X16, X17, X10, X11, X12, X13, byte4, ready4)
++	SHA256ROUND0(5, X13, X14, X15, X16, X17, X10, X11, X12, byte5, ready5)
++	SHA256ROUND0(6, X12, X13, X14, X15, X16, X17, X10, X11, byte6, ready6)
++	SHA256ROUND0(7, X11, X12, X13, X14, X15, X16, X17, X10, byte7, ready7)
++	SHA256ROUND0(8, X10, X11, X12, X13, X14, X15, X16, X17, byte8, ready8)
++	SHA256ROUND0(9, X17, X10, X11, X12, X13, X14, X15, X16, byte9, ready9)
++	SHA256ROUND0(10, X16, X17, X10, X11, X12, X13, X14, X15, byte10, ready10)
++	SHA256ROUND0(11, X15, X16, X17, X10, X11, X12, X13, X14, byte11, ready11)
++	SHA256ROUND0(12, X14, X15, X16, X17, X10, X11, X12, X13, byte12, ready12)
++	SHA256ROUND0(13, X13, X14, X15, X16, X17, X10, X11, X12, byte13, ready13)
++	SHA256ROUND0(14, X12, X13, X14, X15, X16, X17, X10, X11, byte14, ready14)
++	SHA256ROUND0(15, X11, X12, X13, X14, X15, X16, X17, X10, byte15, ready15)
+ 
+ 	SHA256ROUND1(16, X10, X11, X12, X13, X14, X15, X16, X17)
+ 	SHA256ROUND1(17, X17, X10, X11, X12, X13, X14, X15, X16)

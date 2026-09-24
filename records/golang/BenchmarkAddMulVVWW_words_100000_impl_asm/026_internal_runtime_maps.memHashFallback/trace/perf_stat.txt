@@ -1,0 +1,58 @@
+02-GO-FULL-PROFILE BenchmarkAddMulVVWW_words_100000_impl_asm RISC-V perf stat
+=============================================================================
+
+Source CSV: /home/yuansheng-ci/benchmarks/go-perf-20260813/workspace/results-full-profile/go_results.csv
+TestName: BenchmarkAddMulVVWW/words=100000/impl=asm
+BenchmarkName: BenchmarkAddMulVVWW_words_100000_impl_asm
+Package: math/big
+Architecture: riscv64
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 506,075,136 |
+| ns_per_op | 301,056 |
+| task_clock | 3208.38 |
+| cpu_cycle | 7,894,466,427 |
+| instruction | 6,127,841,358 |
+| IPC | 0.776 |
+| cache_references | 210,602,294 |
+| cache_misses | 210,604,389 |
+| branches | 424,843,559 |
+| branch_misses | 20,607,457 |
+| L1_dcache_loads | 1,158,850,266 |
+| L1_dcache_load_misses | 14,311,913 |
+| LLC_loads | 210,614,900 |
+| LLC_load_misses | 25,918,181 |
+| iterations | 1,681 |
+
+perf stat style summary
+-----------------------
+         506,075,136  duration_time
+             301,056  ns_per_op
+             3208.38  task_clock
+       7,894,466,427  cpu_cycle
+       6,127,841,358  instruction
+               0.776  IPC
+         210,602,294  cache_references
+         210,604,389  cache_misses
+         424,843,559  branches
+          20,607,457  branch_misses
+       1,158,850,266  L1_dcache_loads
+          14,311,913  L1_dcache_load_misses
+         210,614,900  LLC_loads
+          25,918,181  LLC_load_misses
+
+Go benchmark output
+-------------------
+goos: linux
+goarch: riscv64
+pkg: math/big
+BenchmarkAddMulVVWW
+BenchmarkAddMulVVWW/words=100000/impl=asm
+BenchmarkAddMulVVWW/words=100000/impl=asm-64         	    1681	    291751 ns/op	2742.06 MB/s
+PASS
+ok  	math/big	0.596s
+[ perf record: Woken up 1 times to write data ]
+[ perf record: Captured and wrote 0.039 MB /workspace/results-full-profile/perf_record/math_big--BenchmarkAddMulVVWW_words_100000_impl_asm/perf.data (264 samples) ]

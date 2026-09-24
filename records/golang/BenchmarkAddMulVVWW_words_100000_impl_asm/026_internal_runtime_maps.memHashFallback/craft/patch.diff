@@ -1,0 +1,114 @@
+diff --git a/src/internal/runtime/maps/runtime_alg.go b/src/internal/runtime/maps/runtime_alg.go
+index 1c80e7b9c1..4054343592 100644
+--- a/src/internal/runtime/maps/runtime_alg.go
++++ b/src/internal/runtime/maps/runtime_alg.go
+@@ -5,7 +5,6 @@
+ package maps
+ 
+ import (
+-	"internal/byteorder"
+ 	"internal/cpu"
+ 	"internal/goarch"
+ 	"unsafe"
+@@ -74,20 +73,3 @@ func initAlgAES() {
+ func add(p unsafe.Pointer, x uintptr) unsafe.Pointer {
+ 	return unsafe.Pointer(uintptr(p) + x)
+ }
+-
+-// Note: These routines perform the read with a native endianness.
+-func readUnaligned32(p unsafe.Pointer) uint32 {
+-	q := (*[4]byte)(p)
+-	if goarch.BigEndian {
+-		return byteorder.BEUint32(q[:])
+-	}
+-	return byteorder.LEUint32(q[:])
+-}
+-
+-func readUnaligned64(p unsafe.Pointer) uint64 {
+-	q := (*[8]byte)(p)
+-	if goarch.BigEndian {
+-		return byteorder.BEUint64(q[:])
+-	}
+-	return byteorder.LEUint64(q[:])
+-}
+diff --git a/src/internal/runtime/maps/runtime_alg_le.go b/src/internal/runtime/maps/runtime_alg_le.go
+new file mode 100644
+index 0000000000..72f1420e85
+--- /dev/null
++++ b/src/internal/runtime/maps/runtime_alg_le.go
+@@ -0,0 +1,30 @@
++// Copyright 2026 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build !riscv64
++
++package maps
++
++import (
++	"internal/byteorder"
++	"internal/goarch"
++	"unsafe"
++)
++
++// Note: These routines perform the read with a native endianness.
++func readUnaligned32(p unsafe.Pointer) uint32 {
++	q := (*[4]byte)(p)
++	if goarch.BigEndian {
++		return byteorder.BEUint32(q[:])
++	}
++	return byteorder.LEUint32(q[:])
++}
++
++func readUnaligned64(p unsafe.Pointer) uint64 {
++	q := (*[8]byte)(p)
++	if goarch.BigEndian {
++		return byteorder.BEUint64(q[:])
++	}
++	return byteorder.LEUint64(q[:])
++}
+diff --git a/src/internal/runtime/maps/runtime_alg_riscv64.go b/src/internal/runtime/maps/runtime_alg_riscv64.go
+new file mode 100644
+index 0000000000..8eca1bb72a
+--- /dev/null
++++ b/src/internal/runtime/maps/runtime_alg_riscv64.go
+@@ -0,0 +1,39 @@
++// Copyright 2026 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build riscv64
++
++package maps
++
++import (
++	"internal/byteorder"
++	"unsafe"
++)
++
++// Note: These routines perform the read with a native endianness. riscv64 is
++// little-endian only, so the byteorder BE branch of the portable version is
++// dead here and omitted.
++//
++// On riscv64 the compiler lowers the byte-wise byteorder helpers to a
++// load/shift/or chain (plus a bounds check) of many instructions, because it
++// cannot prove the pointer alignment; memHashFallback pays this for every
++// 8-byte word it reads. When the source address is naturally aligned a single
++// native load (lwu/ld, which zero-extends) materializes the bit-identical
++// little-endian value, so take that path. The portable byte-wise path is kept
++// for misaligned addresses and stays correct on strict-alignment cores.
++func readUnaligned32(p unsafe.Pointer) uint32 {
++	q := (*[4]byte)(p)
++	if uintptr(unsafe.Pointer(&q[0]))&3 == 0 {
++		return *(*uint32)(unsafe.Pointer(&q[0]))
++	}
++	return byteorder.LEUint32(q[:])
++}
++
++func readUnaligned64(p unsafe.Pointer) uint64 {
++	q := (*[8]byte)(p)
++	if uintptr(unsafe.Pointer(&q[0]))&7 == 0 {
++		return *(*uint64)(unsafe.Pointer(&q[0]))
++	}
++	return byteorder.LEUint64(q[:])
++}
