@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-onnxruntime-onnxruntime-bert-perf-test-bert-like-seq128-t4-002",
+  "blueprintId": "bp-onnxruntime-onnxruntime_bert_perf_test_bert_like_seq128_t4-002",
+  "createdAt": "2026-09-12T04:26:30.020Z",
+  "objective": "WorkerLoop 的 idle 自旋/等待机制在 RISC-V 上以全速运行：SpinPause() 缺失架构 spin hint（Zihintpause），退避循环每轮只执行一次编译器屏障，无法降低轮询密度与资源争用，使该函数 ~90% 的本地样本沉淀在轮询机制上。",
+  "changes": [
+    {
+      "filePath": "onnxruntime/core/common/spin_pause.cc",
+      "action": "modify",
+      "rationale": "WorkerLoop 的 idle 自旋/等待机制在 RISC-V 上以全速运行：SpinPause() 缺失架构 spin hint（Zihintpause），退避循环每轮只执行一次编译器屏障，无法降低轮询密度与资源争用，使该函数 ~90% 的本地样本沉淀在轮询机制上。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "include/onnxruntime/core/platform/EigenNonBlockingThreadPool.h",
+      "action": "modify",
+      "rationale": "WorkerLoop 的 idle 自旋/等待机制在 RISC-V 上以全速运行：SpinPause() 缺失架构 spin hint（Zihintpause），退避循环每轮只执行一次编译器屏障，无法降低轮询密度与资源争用，使该函数 ~90% 的本地样本沉淀在轮询机制上。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 onnxruntime/core/common/spin_pause.cc, include/onnxruntime/core/platform/EigenNonBlockingThreadPool.h 来解决 blueprint bp-onnxruntime-onnxruntime_bert_perf_test_bert_like_seq128_t4-002。"
+}

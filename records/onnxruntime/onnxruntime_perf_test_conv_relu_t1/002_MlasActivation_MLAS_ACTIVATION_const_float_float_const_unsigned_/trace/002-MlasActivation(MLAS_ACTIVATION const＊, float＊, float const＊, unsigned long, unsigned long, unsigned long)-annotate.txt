@@ -1,0 +1,1260 @@
+ Percent |	Source code & Disassembly of libonnxruntime.so.1.30.0 for cpu-clock (191 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000d98594 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)>:
+         : 6      MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         :
+         : 448    None.
+         :
+         : 450    --*/
+         : 451    {
+         : 452    switch (Activation->ActivationKind) {
+    0.00 :   d98594: lw      a7,0(a0)
+    0.00 :   d98598: li      a6,7
+    0.00 :   d9859a: bltu    a6,a7,d98d9a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x806>
+         : 446    {
+    0.52 :   d9859e: addi    sp,sp,-64
+    0.00 :   d985a0: sd      s0,48(sp)
+    0.00 :   d985a2: sd      s1,40(sp)
+    0.00 :   d985a4: sd      s2,32(sp)
+    0.00 :   d985a6: sd      ra,56(sp)
+    0.00 :   d985a8: addi    s0,sp,64
+    0.00 :   d985aa: mv      s2,a4
+         : 447    switch (Activation->ActivationKind) {
+    0.00 :   d985ac: lwu     a4,0(a0)
+    0.00 :   d985b0: mv      s1,a1
+    0.00 :   d985b2: auipc   a1,0x3db
+    0.00 :   d985b6: addi    a1,a1,-1042 # 11731a0 <typeinfo name for onnxruntime::concurrency::ThreadPool::TryBatchParallelFor<MlasPool(MLAS_POOLING_KIND, unsigned long, long const*, long const*, long const*, long const*, long const*, float const*, float*, onnxruntime::concurrency::ThreadPool*)::{lambda(long)#1}>(onnxruntime::concurrency::ThreadPool*, long, MlasPool(MLAS_POOLING_KIND, unsigned long, long const*, long const*, long const*, long const*, long const*, float const*, float*, onnxruntime::concurrency::ThreadPool*)::{lambda(long)#1}&&, long)::{lambda(long)#1}+0x90>
+    0.00 :   d985ba: slli    a4,a4,0x2
+    0.00 :   d985bc: add     a4,a4,a1
+    0.00 :   d985be: lw      a4,0(a4)
+    0.00 :   d985c0: add     a4,a4,a1
+    0.00 :   d985c2: jr      a4
+         : 457    MlasBroadcastFloat32x4(float const*):
+         : 2462   #elif defined(MLAS_VSX_INTRINSICS) || defined(MLAS_ZVECTOR_INTRINSICS)
+         : 2463   return vec_splats(*Value);
+         : 2464   #elif defined(MLAS_LSX_INTRINSICS)
+         : 2465   return MLAS_FLOAT32X4{*Value, *Value, *Value, *Value};
+         : 2466   #else
+         : 2467   return MLAS_FLOAT32X4{*Value, *Value, *Value, *Value};
+    0.00 :   d985c4: flw     fa4,4(a0)
+    0.00 :   d985c8: flw     fa5,8(a0)
+    0.00 :   d985cc: vsetivli        zero,4,e32,m1,ta,ma
+    0.00 :   d985d0: vfmv.v.f        v4,fa4
+    0.00 :   d985d4: vfmv.v.f        v5,fa5
+         : 2473   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d985d8: addi    a1,a3,-1
+         : 284    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 402    if (Bias != nullptr) {
+    0.00 :   d985dc: beqz    a2,d98ca2 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x70e>
+         : 404    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d985e0: beqz    a3,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d985e2: lui     a4,0x3f800
+    0.00 :   d985e6: vmv.v.x v8,a4
+         : 286    MLAS_ACTIVATION_FUNCTION<(MLAS_ACTIVATION_KIND)6>::Activate(float):
+         : 228    Value = MlasExtractLaneFloat32x4<0>(AlphaBroadcast) * Value + MlasExtractLaneFloat32x4<0>(BetaBroadcast);
+    0.00 :   d985ea: vsetvli a4,zero,e32,m1,ta,ma
+    0.00 :   d985ee: vfmv.v.f        v10,fa5
+    0.00 :   d985f2: vfmv.v.f        v11,fa4
+    0.00 :   d985f6: vsetivli        zero,4,e32,m1,ta,mu
+    0.00 :   d985fa: vmv.v.i v7,0
+    0.00 :   d985fe: auipc   a4,0x39a
+    0.00 :   d98602: flw     fa5,-1670(a4) # 1131f78 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x10>
+    0.00 :   d98606: srli    t1,s2,0x2
+         : 237    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 308    Buffer += ldc;
+    0.00 :   d9860a: slli    a5,a5,0x2
+    0.00 :   d9860c: slli    t1,t1,0x4
+         : 289    if (n >= 4) {
+    0.00 :   d9860e: li      a0,3
+         : 282    while (M-- > 0) {
+    0.00 :   d98610: li      a7,-1
+         : 284    MLAS_BIAS_ADDITION<true>::LoadNext(float const*&):
+         : 33     BiasBroadcast = MlasBroadcastFloat32x4(Bias++);
+    0.00 :   d98612: addi    a2,a2,4
+         : 35     MlasBroadcastFloat32x4(float const*):
+    0.00 :   d98614: flw     fa4,-4(a2)
+         : 2463   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 289    if (n >= 4) {
+    0.00 :   d98618: bltu    a0,s2,d989f8 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x464>
+         : 285    size_t n = N;
+    0.00 :   d9861c: mv      a4,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d9861e: mv      a3,s1
+         : 301    while (n > 0) {
+    0.00 :   d98620: beqz    a4,d98662 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xce>
+    0.00 :   d98622: vsetvli zero,a4,e32,m1,ta,ma
+         : 304    MLAS_ACTIVATION_FUNCTION<(MLAS_ACTIVATION_KIND)6>::Activate(float):
+         : 228    Value = MlasExtractLaneFloat32x4<0>(AlphaBroadcast) * Value + MlasExtractLaneFloat32x4<0>(BetaBroadcast);
+    0.00 :   d98626: vle32.v v3,(a3)
+    0.00 :   d9862a: vmv1r.v v1,v11
+    0.00 :   d9862e: auipc   a6,0x39a
+    0.00 :   d98632: addi    a6,a6,-1718 # 1131f78 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x10>
+    0.00 :   d98636: flw     fa3,0(a6)
+         : 234    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d9863a: vmv.v.i v2,0
+         : 306    MLAS_ACTIVATION_FUNCTION<(MLAS_ACTIVATION_KIND)6>::Activate(float):
+         : 228    Value = MlasExtractLaneFloat32x4<0>(AlphaBroadcast) * Value + MlasExtractLaneFloat32x4<0>(BetaBroadcast);
+    0.00 :   d9863e: vfadd.vf        v3,v3,fa4
+    0.00 :   d98642: vfmv.v.f        v9,fa3
+    0.00 :   d98646: vfmadd.vv       v1,v3,v10
+    0.00 :   d9864a: vmfgt.vf        v0,v1,fa5
+    0.00 :   d9864e: vmerge.vvm      v1,v1,v9,v0
+         : 234    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d98652: vmflt.vv        v0,v1,v2
+    0.00 :   d98656: vmerge.vvm      v1,v1,v2,v0
+    0.00 :   d9865a: vse32.v v1,(a3)
+         : 301    while (n > 0) {
+    0.00 :   d9865e: vsetivli        zero,4,e32,m1,ta,mu
+         : 282    while (M-- > 0) {
+    0.00 :   d98662: addi    a1,a1,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98664: add     s1,s1,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d98666: bne     a1,a7,d98612 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x7e>
+         : 284    MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 521    {
+         : 522    MLAS_THROW_EX(std::runtime_error, "bad mlas activation kind");
+         : 523    break;
+         : 524    }
+         : 525    }
+         : 526    }
+    0.00 :   d9866a: ld      ra,56(sp)
+    0.00 :   d9866c: ld      s0,48(sp)
+    0.00 :   d9866e: ld      s1,40(sp)
+    0.00 :   d98670: ld      s2,32(sp)
+    0.00 :   d98672: addi    sp,sp,64
+    0.00 :   d98674: ret
+         : 533    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 402    if (Bias != nullptr) {
+    0.00 :   d98676: beqz    a2,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+         : 404    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d98678: beqz    a3,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d9867a: srli    a7,s2,0x2
+         : 289    if (n >= 4) {
+    0.00 :   d9867e: li      a0,3
+         : 291    MLAS_BIAS_ADDITION<true>::LoadNext(float const*&):
+         : 33     BiasBroadcast = MlasBroadcastFloat32x4(Bias++);
+    0.00 :   d98680: addi    a2,a2,4
+         : 35     void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d98682: addi    a3,a3,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98684: slli    a5,a5,0x2
+    0.00 :   d98686: slli    a7,a7,0x4
+         : 282    while (M-- > 0) {
+    0.00 :   d98688: li      a6,-1
+    0.00 :   d9868a: vsetivli        zero,4,e32,m1,ta,ma
+         : 285    MlasBroadcastFloat32x4(float const*):
+    0.00 :   d9868e: flw     fa5,-4(a2)
+         : 2463   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 289    if (n >= 4) {
+    0.00 :   d98692: bltu    a0,s2,d986c2 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x12e>
+         : 285    size_t n = N;
+    0.00 :   d98696: mv      a4,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d98698: mv      a1,s1
+         : 301    while (n > 0) {
+    0.00 :   d9869a: beqz    a4,d986b0 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x11c>
+    0.00 :   d9869c: vsetvli zero,a4,e32,m1,ta,ma
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d986a0: vle32.v v1,(a1)
+    0.00 :   d986a4: vfadd.vf        v1,v1,fa5
+    0.00 :   d986a8: vse32.v v1,(a1)
+         : 301    while (n > 0) {
+    0.00 :   d986ac: vsetivli        zero,4,e32,m1,ta,ma
+         : 282    while (M-- > 0) {
+    0.00 :   d986b0: addi    a3,a3,-1
+         : 308    Buffer += ldc;
+    0.00 :   d986b2: add     s1,s1,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d986b4: beq     a3,a6,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+         : 284    MLAS_BIAS_ADDITION<true>::LoadNext(float const*&):
+         : 33     BiasBroadcast = MlasBroadcastFloat32x4(Bias++);
+    0.00 :   d986b8: addi    a2,a2,4
+         : 35     MlasBroadcastFloat32x4(float const*):
+    0.00 :   d986ba: flw     fa5,-4(a2)
+         : 2463   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 289    if (n >= 4) {
+    0.00 :   d986be: bgeu    a0,s2,d98696 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x102>
+         : 291    MlasBroadcastFloat32x4(float const*):
+    0.00 :   d986c2: vfmv.v.f        v2,fa5
+         : 2463   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 285    size_t n = N;
+    0.00 :   d986c6: mv      a1,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d986c8: mv      a4,s1
+         : 286    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+         : 2719   #elif defined(MLAS_VSX_INTRINSICS)
+         : 2720   return vec_add(Vector1, Vector2);
+         : 2721   #elif defined(MLAS_LSX_INTRINSICS)
+         : 2722   return __lsx_vfadd_s(Vector1, Vector2);
+         : 2723   #else
+         : 2724   return Vector1 + Vector2;
+    0.00 :   d986ca: vle32.v v1,(a4)
+         : 2726   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 296    n -= 4;
+    0.00 :   d986ce: addi    a1,a1,-4
+         : 298    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+    0.00 :   d986d0: vfadd.vv        v1,v1,v2
+         : 2720   MlasStoreFloat32x4(float*, float __vector(4)):
+         : 2522   *((MLAS_FLOAT32X4*)Buffer) = Vector;
+    0.00 :   d986d4: vse32.v v1,(a4)
+         : 2524   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 295    buffer += 4;
+    0.00 :   d986d8: addi    a4,a4,16
+         : 298    } while (n >= 4);
+    0.00 :   d986da: bltu    a0,a1,d986ca <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x136>
+    0.00 :   d986de: andi    a4,s2,3
+    0.00 :   d986e2: add     a1,s1,a7
+    0.00 :   d986e6: j       d9869a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x106>
+         : 282    while (M-- > 0) {
+    0.00 :   d986e8: addi    a1,a3,-1
+         : 284    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 402    if (Bias != nullptr) {
+    0.00 :   d986ec: beqz    a2,d98c2a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x696>
+         : 404    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d986f0: beqz    a3,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d986f2: srli    a7,s2,0x2
+         : 289    if (n >= 4) {
+    0.00 :   d986f6: li      a0,3
+         : 291    MLAS_BIAS_ADDITION<true>::LoadNext(float const*&):
+         : 33     BiasBroadcast = MlasBroadcastFloat32x4(Bias++);
+    0.00 :   d986f8: addi    a2,a2,4
+         : 35     void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 308    Buffer += ldc;
+    0.00 :   d986fa: slli    a5,a5,0x2
+    0.00 :   d986fc: slli    a7,a7,0x4
+         : 282    while (M-- > 0) {
+    0.00 :   d986fe: li      a6,-1
+    0.00 :   d98700: vsetivli        zero,4,e32,m1,ta,ma
+         : 285    MlasBroadcastFloat32x4(float const*):
+         : 2462   return MLAS_FLOAT32X4{*Value, *Value, *Value, *Value};
+    0.00 :   d98704: flw     fa5,-4(a2)
+         : 2464   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 289    if (n >= 4) {
+    0.00 :   d98708: bltu    a0,s2,d98748 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x1b4>
+         : 285    size_t n = N;
+    0.00 :   d9870c: mv      a4,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d9870e: mv      a3,s1
+         : 301    while (n > 0) {
+    0.00 :   d98710: beqz    a4,d98736 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x1a2>
+    0.00 :   d98712: vsetvli zero,a4,e32,m1,ta,ma
+         : 304    MLAS_BIAS_ADDITION<true>::Add(float):
+         : 43     return Value + MlasExtractLaneFloat32x4<0>(BiasBroadcast);
+    0.00 :   d98716: vle32.v v1,(a3)
+         : 45     void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d9871a: vmv.v.i v0,0
+    0.00 :   d9871e: vmv1r.v v2,v0
+         : 307    MLAS_BIAS_ADDITION<true>::Add(float):
+         : 43     return Value + MlasExtractLaneFloat32x4<0>(BiasBroadcast);
+    0.00 :   d98722: vfadd.vf        v1,v1,fa5
+         : 45     void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d98726: vmflt.vv        v0,v1,v0
+    0.00 :   d9872a: vmerge.vvm      v1,v1,v2,v0
+    0.00 :   d9872e: vse32.v v1,(a3)
+         : 301    while (n > 0) {
+    0.00 :   d98732: vsetivli        zero,4,e32,m1,ta,ma
+         : 282    while (M-- > 0) {
+    0.00 :   d98736: addi    a1,a1,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98738: add     s1,s1,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d9873a: beq     a1,a6,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+         : 284    MLAS_BIAS_ADDITION<true>::LoadNext(float const*&):
+         : 33     BiasBroadcast = MlasBroadcastFloat32x4(Bias++);
+    0.00 :   d9873e: addi    a2,a2,4
+         : 35     MlasBroadcastFloat32x4(float const*):
+    0.00 :   d98740: flw     fa5,-4(a2)
+         : 2463   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 289    if (n >= 4) {
+    0.00 :   d98744: bgeu    a0,s2,d9870c <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x178>
+         : 291    MlasBroadcastFloat32x4(float const*):
+    0.00 :   d98748: vfmv.v.f        v2,fa5
+    0.00 :   d9874c: vmv.v.i v3,0
+         : 2464   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 285    size_t n = N;
+    0.00 :   d98750: mv      a3,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d98752: mv      a4,s1
+         : 286    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+         : 2719   return Vector1 + Vector2;
+    0.00 :   d98754: vle32.v v1,(a4)
+         : 2721   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 296    n -= 4;
+    0.00 :   d98758: addi    a3,a3,-4
+         : 298    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+    0.00 :   d9875a: vfadd.vv        v1,v2,v1
+         : 2720   MlasMaximumFloat32x4(float __vector(4), float __vector(4)):
+         : 2933   #elif defined(MLAS_WASM_SIMD_INTRINSICS)
+         : 2934   return wasm_f32x4_max(Vector1, Vector2);
+         : 2935   #elif defined(MLAS_LSX_INTRINSICS)
+         : 2936   return __lsx_vfmax_s(Vector1, Vector2);
+         : 2937   #else
+         : 2938   return MlasBlendFloat32x4(Vector2, Vector1, Vector1 > Vector2);
+    0.00 :   d9875e: vmflt.vv        v0,v1,v3
+         : 2940   MlasReinterpretAsFloat32x4(int __vector(4)):
+         : 2422   return MLAS_FLOAT32X4(Vector);
+    0.00 :   d98762: vmerge.vim      v1,v1,0,v0
+         : 2424   MlasStoreFloat32x4(float*, float __vector(4)):
+         : 2522   *((MLAS_FLOAT32X4*)Buffer) = Vector;
+    0.00 :   d98766: vse32.v v1,(a4)
+         : 2524   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 295    buffer += 4;
+    0.00 :   d9876a: addi    a4,a4,16
+         : 298    } while (n >= 4);
+    0.00 :   d9876c: bltu    a0,a3,d98754 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x1c0>
+    0.00 :   d98770: andi    a4,s2,3
+    0.00 :   d98774: add     a3,s1,a7
+    0.00 :   d98778: j       d98710 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x17c>
+         : 300    MlasBroadcastFloat32x4(float const*):
+         : 2462   return MLAS_FLOAT32X4{*Value, *Value, *Value, *Value};
+    0.00 :   d9877a: flw     fa4,4(a0)
+    0.00 :   d9877e: vsetivli        zero,4,e32,m1,ta,mu
+         : 2465   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d98782: addi    a1,a3,-1
+         : 284    MlasBroadcastFloat32x4(float const*):
+    0.00 :   d98786: vfmv.v.f        v5,fa4
+         : 2463   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 402    if (Bias != nullptr) {
+    0.00 :   d9878a: beqz    a2,d98b92 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x5fe>
+         : 404    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d9878e: beqz    a3,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d98792: srli    t1,s2,0x2
+         : 289    if (n >= 4) {
+    0.00 :   d98796: li      a0,3
+         : 291    MLAS_BIAS_ADDITION<true>::LoadNext(float const*&):
+         : 33     BiasBroadcast = MlasBroadcastFloat32x4(Bias++);
+    0.00 :   d98798: addi    a2,a2,4
+    0.00 :   d9879a: vmv.v.i v7,0
+         : 36     void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 308    Buffer += ldc;
+    0.00 :   d9879e: slli    a5,a5,0x2
+    0.00 :   d987a0: slli    t1,t1,0x4
+         : 282    while (M-- > 0) {
+    0.00 :   d987a2: li      a6,-1
+         : 284    MlasBroadcastFloat32x4(float const*):
+    0.00 :   d987a4: flw     fa5,-4(a2)
+         : 2463   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 289    if (n >= 4) {
+    0.00 :   d987a8: bltu    a0,s2,d987f8 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x264>
+         : 285    size_t n = N;
+    0.00 :   d987ac: mv      a4,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d987ae: mv      a3,s1
+         : 301    while (n > 0) {
+    0.00 :   d987b0: beqz    a4,d987e6 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x252>
+    0.00 :   d987b2: vsetvli a4,a4,e8,mf4,ta,ma
+         : 304    MLAS_BIAS_ADDITION<true>::Add(float):
+         : 43     return Value + MlasExtractLaneFloat32x4<0>(BiasBroadcast);
+    0.00 :   d987b6: vle32.v v2,(a3)
+         : 45     MLAS_ACTIVATION_FUNCTION<(MLAS_ACTIVATION_KIND)2>::Activate(float):
+         : 160    return (Value >= 0.0f) ? Value : ValueTimesAlpha;
+    0.00 :   d987ba: vsetvli a7,zero,e32,m1,ta,ma
+    0.00 :   d987be: vmv.v.i v1,0
+         : 163    MLAS_BIAS_ADDITION<true>::Add(float):
+         : 43     return Value + MlasExtractLaneFloat32x4<0>(BiasBroadcast);
+    0.00 :   d987c2: vsetvli zero,a4,e32,m1,tu,mu
+    0.00 :   d987c6: vfadd.vf        v2,v2,fa5
+         : 46     MLAS_ACTIVATION_FUNCTION<(MLAS_ACTIVATION_KIND)2>::Activate(float):
+         : 160    return (Value >= 0.0f) ? Value : ValueTimesAlpha;
+    0.00 :   d987ca: vmfle.vv        v3,v1,v2
+         : 162    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d987ce: vmnot.m v0,v3
+    0.00 :   d987d2: vfmul.vf        v1,v2,fa4,v0.t
+    0.00 :   d987d6: vmv1r.v v0,v3
+    0.00 :   d987da: vmerge.vvm      v1,v1,v2,v0
+    0.00 :   d987de: vse32.v v1,(a3)
+         : 301    while (n > 0) {
+    0.00 :   d987e2: vsetivli        zero,4,e32,m1,ta,mu
+         : 282    while (M-- > 0) {
+    0.00 :   d987e6: addi    a1,a1,-1
+         : 308    Buffer += ldc;
+    0.00 :   d987e8: add     s1,s1,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d987ea: beq     a1,a6,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+         : 284    MLAS_BIAS_ADDITION<true>::LoadNext(float const*&):
+         : 33     BiasBroadcast = MlasBroadcastFloat32x4(Bias++);
+    0.00 :   d987ee: addi    a2,a2,4
+         : 35     MlasBroadcastFloat32x4(float const*):
+    0.00 :   d987f0: flw     fa5,-4(a2)
+         : 2463   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 289    if (n >= 4) {
+    0.00 :   d987f4: bgeu    a0,s2,d987ac <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x218>
+         : 291    MlasBroadcastFloat32x4(float const*):
+    0.00 :   d987f8: vfmv.v.f        v6,fa5
+    0.00 :   d987fc: vmv.v.i v3,0
+         : 2464   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 285    size_t n = N;
+    0.00 :   d98800: mv      a3,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d98802: mv      a4,s1
+         : 286    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+         : 2719   return Vector1 + Vector2;
+    0.00 :   d98804: vle32.v v1,(a4)
+         : 2721   MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d98808: vmv1r.v v2,v7
+         : 2302   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 296    n -= 4;
+    0.00 :   d9880c: addi    a3,a3,-4
+         : 298    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+         : 2719   return Vector1 + Vector2;
+    0.00 :   d9880e: vfadd.vv        v1,v6,v1
+         : 2721   MlasMultiplyFloat32x4(float __vector(4), float __vector(4)):
+         : 2760   return Vector1 * Vector2;
+    0.00 :   d98812: vfmul.vv        v4,v1,v5
+         : 2762   MLAS_ACTIVATION_FUNCTION<(MLAS_ACTIVATION_KIND)2>::Activate(float __vector(4)):
+         : 149    return MlasBlendFloat32x4(ValueTimesAlpha, Value, ZeroFloat32x4 < Value);
+    0.00 :   d98816: vmflt.vv        v0,v3,v1
+         : 151    MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d9881a: vxor.vv v2,v1,v4,v0.t
+    0.00 :   d9881e: vxor.vv v1,v2,v4
+         : 2303   MlasStoreFloat32x4(float*, float __vector(4)):
+         : 2522   *((MLAS_FLOAT32X4*)Buffer) = Vector;
+    0.00 :   d98822: vse32.v v1,(a4)
+         : 2524   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 295    buffer += 4;
+    0.00 :   d98826: addi    a4,a4,16
+         : 298    } while (n >= 4);
+    0.00 :   d98828: bltu    a0,a3,d98804 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x270>
+    0.00 :   d9882c: andi    a4,s2,3
+    0.00 :   d98830: add     a3,s1,t1
+    0.00 :   d98834: j       d987b0 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x21c>
+    0.00 :   d98836: sd      s3,24(sp)
+         : 301    MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 469    if (Bias != nullptr) {
+    0.00 :   d98838: beqz    a2,d98a9e <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x50a>
+         : 471    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d9883c: beqz    a3,d98acc <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x538>
+    0.00 :   d98840: addi    a0,a3,-1
+    0.00 :   d98844: srli    t4,s2,0x2
+    0.00 :   d98848: mv      t1,a0
+    0.00 :   d9884a: slli    t4,t4,0x4
+         : 308    Buffer += ldc;
+    0.00 :   d9884c: slli    s3,a5,0x2
+    0.00 :   d98850: mv      a7,s1
+         : 289    if (n >= 4) {
+    0.00 :   d98852: li      a6,3
+         : 282    while (M-- > 0) {
+    0.00 :   d98854: li      t3,-1
+    0.00 :   d98856: vsetivli        zero,4,e32,m1,ta,ma
+         : 285    MLAS_BIAS_ADDITION<true>::LoadNext(float const*&):
+         : 33     BiasBroadcast = MlasBroadcastFloat32x4(Bias++);
+    0.00 :   d9885a: addi    a2,a2,4
+         : 35     MlasBroadcastFloat32x4(float const*):
+         : 2462   return MLAS_FLOAT32X4{*Value, *Value, *Value, *Value};
+    0.00 :   d9885c: flw     fa5,-4(a2)
+         : 2464   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 289    if (n >= 4) {
+    0.00 :   d98860: bltu    a6,s2,d98a64 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x4d0>
+         : 285    size_t n = N;
+    0.00 :   d98864: mv      a4,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d98866: mv      a1,a7
+         : 301    while (n > 0) {
+    0.00 :   d98868: beqz    a4,d9887e <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x2ea>
+    0.00 :   d9886a: vsetvli zero,a4,e32,m1,ta,ma
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d9886e: vle32.v v1,(a1)
+    0.00 :   d98872: vfadd.vf        v1,v1,fa5
+    0.00 :   d98876: vse32.v v1,(a1)
+         : 301    while (n > 0) {
+    0.00 :   d9887a: vsetivli        zero,4,e32,m1,ta,ma
+         : 282    while (M-- > 0) {
+    0.00 :   d9887e: addi    t1,t1,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98880: add     a7,a7,s3
+         : 282    while (M-- > 0) {
+    0.00 :   d98882: bne     t1,t3,d9885a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x2c6>
+         : 284    MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 473    if (N == ldc) {
+    0.00 :   d98886: beq     s2,a5,d98ad0 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x53c>
+         : 476    while (M-- > 0) {
+    0.00 :   d9888a: mv      a5,a0
+         : 477    MlasComputeTanh(Buffer, Buffer, N);
+    0.00 :   d9888c: mv      a1,s1
+    0.00 :   d9888e: mv      a0,s1
+    0.00 :   d98890: mv      a2,s2
+    0.00 :   d98892: sd      a5,-56(s0)
+    0.00 :   d98896: jal     d9966c <void MlasComputeTanh<float>(float const*, float*, unsigned long)>
+         : 476    while (M-- > 0) {
+    0.00 :   d9889a: ld      a5,-56(s0)
+    0.00 :   d9889e: li      a4,-1
+         : 478    Buffer += ldc;
+    0.00 :   d988a0: add     s1,s1,s3
+         : 476    while (M-- > 0) {
+    0.00 :   d988a2: addi    a5,a5,-1
+    0.00 :   d988a4: bne     a5,a4,d9888c <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x2f8>
+    0.00 :   d988a8: ld      s3,24(sp)
+         : 521    }
+    0.00 :   d988aa: ld      ra,56(sp)
+    0.00 :   d988ac: ld      s0,48(sp)
+    0.00 :   d988ae: ld      s1,40(sp)
+    0.00 :   d988b0: ld      s2,32(sp)
+    0.00 :   d988b2: addi    sp,sp,64
+    0.00 :   d988b4: ret
+    0.00 :   d988b6: sd      s3,24(sp)
+         : 487    if (Bias != nullptr) {
+    0.00 :   d988b8: beqz    a2,d98a8a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x4f6>
+         : 489    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d988bc: beqz    a3,d98ab2 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x51e>
+    0.00 :   d988c0: addi    a0,a3,-1
+    0.00 :   d988c4: srli    t4,s2,0x2
+    0.00 :   d988c8: mv      t1,a0
+    0.00 :   d988ca: slli    t4,t4,0x4
+         : 308    Buffer += ldc;
+    0.00 :   d988cc: slli    s3,a5,0x2
+    0.00 :   d988d0: mv      a7,s1
+         : 289    if (n >= 4) {
+    0.00 :   d988d2: li      a6,3
+         : 282    while (M-- > 0) {
+    0.00 :   d988d4: li      t3,-1
+    0.00 :   d988d6: vsetivli        zero,4,e32,m1,ta,ma
+         : 285    MLAS_BIAS_ADDITION<true>::LoadNext(float const*&):
+         : 33     BiasBroadcast = MlasBroadcastFloat32x4(Bias++);
+    0.00 :   d988da: addi    a2,a2,4
+         : 35     MlasBroadcastFloat32x4(float const*):
+    0.00 :   d988dc: flw     fa5,-4(a2)
+         : 2463   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 289    if (n >= 4) {
+    0.00 :   d988e0: bltu    a6,s2,d98a3e <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x4aa>
+         : 285    size_t n = N;
+    0.00 :   d988e4: mv      a4,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d988e6: mv      a1,a7
+         : 301    while (n > 0) {
+    0.00 :   d988e8: beqz    a4,d988fe <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x36a>
+    0.00 :   d988ea: vsetvli zero,a4,e32,m1,ta,ma
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d988ee: vle32.v v1,(a1)
+    0.00 :   d988f2: vfadd.vf        v1,v1,fa5
+    0.00 :   d988f6: vse32.v v1,(a1)
+         : 301    while (n > 0) {
+    0.00 :   d988fa: vsetivli        zero,4,e32,m1,ta,ma
+         : 282    while (M-- > 0) {
+    0.00 :   d988fe: addi    t1,t1,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98900: add     a7,a7,s3
+         : 282    while (M-- > 0) {
+    0.00 :   d98902: bne     t1,t3,d988da <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x346>
+         : 284    MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 491    if (N == ldc) {
+    0.00 :   d98906: beq     s2,a5,d98ab6 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x522>
+         : 494    while (M-- > 0) {
+    0.00 :   d9890a: mv      a5,a0
+         : 495    MlasComputeLogistic(Buffer, Buffer, N);
+    0.00 :   d9890c: mv      a1,s1
+    0.00 :   d9890e: mv      a0,s1
+    0.00 :   d98910: mv      a2,s2
+    0.00 :   d98912: sd      a5,-56(s0)
+    0.00 :   d98916: jal     d9921c <MlasComputeLogistic(float const*, float*, unsigned long)>
+         : 494    while (M-- > 0) {
+    0.00 :   d9891a: ld      a5,-56(s0)
+    0.00 :   d9891e: li      a4,-1
+         : 496    Buffer += ldc;
+    0.00 :   d98920: add     s1,s1,s3
+         : 494    while (M-- > 0) {
+    0.00 :   d98922: addi    a5,a5,-1
+    0.00 :   d98924: bne     a5,a4,d9890c <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x378>
+    0.00 :   d98928: ld      s3,24(sp)
+    0.00 :   d9892a: j       d988aa <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x316>
+         : 499    MlasBroadcastFloat32x4(float const*):
+    0.00 :   d9892c: flw     fa4,4(a0)
+    0.00 :   d98930: flw     fa5,8(a0)
+    0.00 :   d98934: vsetivli        zero,4,e32,m1,ta,ma
+    0.00 :   d98938: vfmv.v.f        v4,fa4
+    0.00 :   d9893c: vfmv.v.f        v5,fa5
+         : 2467   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d98940: addi    a1,a3,-1
+         : 284    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)5>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 402    if (Bias != nullptr) {
+    0.00 :   d98944: beqz    a2,d98ae8 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x554>
+         : 404    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)5, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d98948: beqz    a3,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d9894c: vsetvli a4,zero,e32,m1,ta,ma
+    0.00 :   d98950: vfmv.v.f        v7,fa5
+    0.00 :   d98954: vfmv.v.f        v8,fa4
+    0.00 :   d98958: srli    a7,s2,0x2
+    0.00 :   d9895c: vsetivli        zero,4,e32,m1,ta,mu
+         : 289    if (n >= 4) {
+    0.00 :   d98960: li      a0,3
+         : 291    MLAS_BIAS_ADDITION<true>::LoadNext(float const*&):
+         : 33     BiasBroadcast = MlasBroadcastFloat32x4(Bias++);
+    0.00 :   d98962: addi    a2,a2,4
+    0.00 :   d98964: vmv.v.i v3,0
+         : 36     void MlasActivationKernel<(MLAS_ACTIVATION_KIND)5, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 308    Buffer += ldc;
+    0.00 :   d98968: slli    a5,a5,0x2
+    0.00 :   d9896a: slli    a7,a7,0x4
+         : 282    while (M-- > 0) {
+    0.00 :   d9896c: li      a6,-1
+         : 284    MlasBroadcastFloat32x4(float const*):
+    0.00 :   d9896e: flw     fa5,-4(a2)
+         : 2463   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)5, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 289    if (n >= 4) {
+    0.00 :   d98972: bltu    a0,s2,d989b2 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x41e>
+         : 285    size_t n = N;
+    0.00 :   d98976: mv      a4,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d98978: mv      a3,s1
+         : 301    while (n > 0) {
+    0.00 :   d9897a: beqz    a4,d989a0 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x40c>
+    0.00 :   d9897c: vsetvli zero,a4,e32,m1,ta,ma
+         : 304    MLAS_BIAS_ADDITION<true>::Add(float):
+         : 43     return Value + MlasExtractLaneFloat32x4<0>(BiasBroadcast);
+    0.00 :   d98980: vle32.v v1,(a3)
+    0.00 :   d98984: vfadd.vf        v1,v1,fa5
+    0.00 :   d98988: vmflt.vv        v0,v1,v8
+    0.00 :   d9898c: vmerge.vvm      v1,v1,v8,v0
+         : 48     void MlasActivationKernel<(MLAS_ACTIVATION_KIND)5, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d98990: vmflt.vv        v0,v7,v1
+    0.00 :   d98994: vmerge.vvm      v1,v1,v7,v0
+    0.00 :   d98998: vse32.v v1,(a3)
+         : 301    while (n > 0) {
+    0.00 :   d9899c: vsetivli        zero,4,e32,m1,ta,mu
+         : 282    while (M-- > 0) {
+    0.00 :   d989a0: addi    a1,a1,-1
+         : 308    Buffer += ldc;
+    0.00 :   d989a2: add     s1,s1,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d989a4: beq     a1,a6,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+         : 284    MLAS_BIAS_ADDITION<true>::LoadNext(float const*&):
+         : 33     BiasBroadcast = MlasBroadcastFloat32x4(Bias++);
+    0.00 :   d989a8: addi    a2,a2,4
+         : 35     MlasBroadcastFloat32x4(float const*):
+    0.00 :   d989aa: flw     fa5,-4(a2)
+         : 2463   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)5, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 289    if (n >= 4) {
+    0.00 :   d989ae: bgeu    a0,s2,d98976 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x3e2>
+         : 291    MlasBroadcastFloat32x4(float const*):
+    0.00 :   d989b2: vfmv.v.f        v6,fa5
+         : 2463   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)5, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 285    size_t n = N;
+    0.00 :   d989b6: mv      a3,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d989b8: mv      a4,s1
+         : 286    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+         : 2719   return Vector1 + Vector2;
+    0.00 :   d989ba: vle32.v v2,(a4)
+         : 2721   MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d989be: vmv1r.v v1,v3
+         : 2302   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)5, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 296    n -= 4;
+    0.00 :   d989c2: addi    a3,a3,-4
+         : 298    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+         : 2719   return Vector1 + Vector2;
+    0.00 :   d989c4: vfadd.vv        v2,v6,v2
+         : 2721   MlasMaximumFloat32x4(float __vector(4), float __vector(4)):
+         : 2933   return MlasBlendFloat32x4(Vector2, Vector1, Vector1 > Vector2);
+    0.00 :   d989c8: vmflt.vv        v0,v2,v4
+         : 2935   MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d989cc: vxor.vv v1,v4,v2,v0.t
+    0.00 :   d989d0: vxor.vv v1,v1,v2
+    0.00 :   d989d4: vmv1r.v v2,v3
+         : 2304   MlasMinimumFloat32x4(float __vector(4), float __vector(4)):
+         : 2955   #elif defined(MLAS_WASM_SIMD_INTRINSICS)
+         : 2956   return wasm_f32x4_min(Vector1, Vector2);
+         : 2957   #elif defined(MLAS_LSX_INTRINSICS)
+         : 2958   return __lsx_vfmin_s(Vector1, Vector2);
+         : 2959   #else
+         : 2960   return MlasBlendFloat32x4(Vector2, Vector1, Vector2 > Vector1);
+    0.00 :   d989d8: vmflt.vv        v0,v5,v1
+         : 2962   MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d989dc: vxor.vv v2,v1,v5,v0.t
+    0.00 :   d989e0: vxor.vv v1,v2,v1
+         : 2303   MlasStoreFloat32x4(float*, float __vector(4)):
+         : 2522   *((MLAS_FLOAT32X4*)Buffer) = Vector;
+    0.00 :   d989e4: vse32.v v1,(a4)
+         : 2524   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)5, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 295    buffer += 4;
+    0.00 :   d989e8: addi    a4,a4,16
+         : 298    } while (n >= 4);
+    0.00 :   d989ea: bltu    a0,a3,d989ba <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x426>
+    0.00 :   d989ee: andi    a4,s2,3
+    0.00 :   d989f2: add     a3,s1,a7
+    0.00 :   d989f6: j       d9897a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x3e6>
+         : 300    MlasBroadcastFloat32x4(float const*):
+         : 2462   return MLAS_FLOAT32X4{*Value, *Value, *Value, *Value};
+    0.00 :   d989f8: vfmv.v.f        v6,fa4
+    0.00 :   d989fc: vmv.v.i v3,0
+         : 2465   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 285    size_t n = N;
+    0.00 :   d98a00: mv      a3,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d98a02: mv      a4,s1
+         : 286    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+         : 2719   return Vector1 + Vector2;
+    0.00 :   d98a04: vle32.v v1,(a4)
+         : 2721   MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d98a08: vmv1r.v v2,v7
+         : 2302   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 296    n -= 4;
+    0.00 :   d98a0c: addi    a3,a3,-4
+         : 298    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+         : 2719   return Vector1 + Vector2;
+    0.00 :   d98a0e: vfadd.vv        v1,v6,v1
+         : 2721   MlasMultiplyAddFloat32x4(float __vector(4), float __vector(4), float __vector(4)):
+         : 2788   return Vector1 * Vector2 + Vector3;
+    0.00 :   d98a12: vfmadd.vv       v1,v4,v5
+         : 2790   MlasMinimumFloat32x4(float __vector(4), float __vector(4)):
+         : 2955   return MlasBlendFloat32x4(Vector2, Vector1, Vector2 > Vector1);
+    0.00 :   d98a16: vmfgt.vf        v0,v1,fa5
+         : 2957   MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d98a1a: vxor.vv v2,v8,v1,v0.t
+    0.00 :   d98a1e: vxor.vv v1,v2,v1
+         : 2303   MlasMaximumFloat32x4(float __vector(4), float __vector(4)):
+         : 2933   return MlasBlendFloat32x4(Vector2, Vector1, Vector1 > Vector2);
+    0.00 :   d98a22: vmflt.vv        v0,v1,v3
+         : 2935   MlasReinterpretAsFloat32x4(int __vector(4)):
+         : 2422   return MLAS_FLOAT32X4(Vector);
+    0.00 :   d98a26: vmerge.vim      v1,v1,0,v0
+         : 2424   MlasStoreFloat32x4(float*, float __vector(4)):
+         : 2522   *((MLAS_FLOAT32X4*)Buffer) = Vector;
+    0.00 :   d98a2a: vse32.v v1,(a4)
+         : 2524   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 295    buffer += 4;
+    0.00 :   d98a2e: addi    a4,a4,16
+         : 298    } while (n >= 4);
+    0.00 :   d98a30: bltu    a0,a3,d98a04 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x470>
+    0.00 :   d98a34: andi    a4,s2,3
+    0.00 :   d98a38: add     a3,s1,t1
+    0.00 :   d98a3c: j       d98620 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x8c>
+         : 300    MlasBroadcastFloat32x4(float const*):
+         : 2462   return MLAS_FLOAT32X4{*Value, *Value, *Value, *Value};
+    0.00 :   d98a3e: vfmv.v.f        v2,fa5
+         : 2464   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 285    size_t n = N;
+    0.00 :   d98a42: mv      a1,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d98a44: mv      a4,a7
+         : 286    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+         : 2719   return Vector1 + Vector2;
+    0.00 :   d98a46: vle32.v v1,(a4)
+         : 2721   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 296    n -= 4;
+    0.00 :   d98a4a: addi    a1,a1,-4
+         : 298    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+    0.00 :   d98a4c: vfadd.vv        v1,v1,v2
+         : 2720   MlasStoreFloat32x4(float*, float __vector(4)):
+         : 2522   *((MLAS_FLOAT32X4*)Buffer) = Vector;
+    0.00 :   d98a50: vse32.v v1,(a4)
+         : 2524   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 295    buffer += 4;
+    0.00 :   d98a54: addi    a4,a4,16
+         : 298    } while (n >= 4);
+    0.00 :   d98a56: bltu    a6,a1,d98a46 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x4b2>
+    0.00 :   d98a5a: andi    a4,s2,3
+    0.00 :   d98a5e: add     a1,a7,t4
+    0.00 :   d98a62: j       d988e8 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x354>
+         : 300    MlasBroadcastFloat32x4(float const*):
+         : 2462   return MLAS_FLOAT32X4{*Value, *Value, *Value, *Value};
+    0.00 :   d98a64: vfmv.v.f        v2,fa5
+         : 2464   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 285    size_t n = N;
+    0.00 :   d98a68: mv      a1,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d98a6a: mv      a4,a7
+         : 286    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+         : 2719   return Vector1 + Vector2;
+    0.00 :   d98a6c: vle32.v v1,(a4)
+         : 2721   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 296    n -= 4;
+    0.00 :   d98a70: addi    a1,a1,-4
+         : 298    MlasAddFloat32x4(float __vector(4), float __vector(4)):
+    0.00 :   d98a72: vfadd.vv        v1,v1,v2
+         : 2720   MlasStoreFloat32x4(float*, float __vector(4)):
+         : 2522   *((MLAS_FLOAT32X4*)Buffer) = Vector;
+    0.00 :   d98a76: vse32.v v1,(a4)
+         : 2524   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)0, true>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 295    buffer += 4;
+    0.00 :   d98a7a: addi    a4,a4,16
+         : 298    } while (n >= 4);
+    0.00 :   d98a7c: bltu    a6,a1,d98a6c <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x4d8>
+    0.00 :   d98a80: andi    a4,s2,3
+    0.00 :   d98a84: add     a1,a7,t4
+    0.00 :   d98a88: j       d98868 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x2d4>
+         : 300    MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 491    if (N == ldc) {
+    0.00 :   d98a8a: beq     s2,a5,d98ab6 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x522>
+         : 494    while (M-- > 0) {
+    0.00 :   d98a8e: slli    s3,a5,0x2
+    0.00 :   d98a92: addi    a0,a3,-1
+    0.00 :   d98a96: bnez    a3,d9890a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x376>
+    0.00 :   d98a9a: ld      s3,24(sp)
+    0.00 :   d98a9c: j       d988aa <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x316>
+         : 473    if (N == ldc) {
+    0.00 :   d98a9e: beq     s2,a5,d98ad0 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x53c>
+         : 476    while (M-- > 0) {
+    0.00 :   d98aa2: slli    s3,a5,0x2
+    0.00 :   d98aa6: addi    a0,a3,-1
+    0.00 :   d98aaa: bnez    a3,d9888a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x2f6>
+    0.00 :   d98aae: ld      s3,24(sp)
+    0.00 :   d98ab0: j       d988aa <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x316>
+         : 491    if (N == ldc) {
+    0.00 :   d98ab2: bne     s2,a5,d988a8 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x314>
+         : 492    MlasComputeLogistic(Buffer, Buffer, M * N);
+    0.00 :   d98ab6: mul     a2,a3,s2
+         : 521    }
+    0.00 :   d98aba: ld      s0,48(sp)
+         : 492    MlasComputeLogistic(Buffer, Buffer, M * N);
+    0.00 :   d98abc: ld      s3,24(sp)
+         : 521    }
+    0.00 :   d98abe: ld      ra,56(sp)
+    0.00 :   d98ac0: ld      s2,32(sp)
+         : 492    MlasComputeLogistic(Buffer, Buffer, M * N);
+    0.00 :   d98ac2: mv      a1,s1
+    0.00 :   d98ac4: mv      a0,s1
+         : 521    }
+    0.00 :   d98ac6: ld      s1,40(sp)
+    0.00 :   d98ac8: addi    sp,sp,64
+         : 492    MlasComputeLogistic(Buffer, Buffer, M * N);
+    0.00 :   d98aca: j       d9921c <MlasComputeLogistic(float const*, float*, unsigned long)>
+         : 473    if (N == ldc) {
+    0.00 :   d98acc: bne     s2,a5,d988a8 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x314>
+         : 474    MlasComputeTanh(Buffer, Buffer, M * N);
+    0.00 :   d98ad0: mul     a2,a3,s2
+         : 521    }
+    0.00 :   d98ad4: ld      s0,48(sp)
+         : 474    MlasComputeTanh(Buffer, Buffer, M * N);
+    0.00 :   d98ad6: ld      s3,24(sp)
+         : 521    }
+    0.00 :   d98ad8: ld      ra,56(sp)
+    0.00 :   d98ada: ld      s2,32(sp)
+         : 474    MlasComputeTanh(Buffer, Buffer, M * N);
+    0.00 :   d98adc: mv      a1,s1
+    0.00 :   d98ade: mv      a0,s1
+         : 521    }
+    0.00 :   d98ae0: ld      s1,40(sp)
+    0.00 :   d98ae2: addi    sp,sp,64
+         : 474    MlasComputeTanh(Buffer, Buffer, M * N);
+    0.00 :   d98ae4: j       d9966c <void MlasComputeTanh<float>(float const*, float*, unsigned long)>
+         : 476    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)5, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d98ae8: beqz    a3,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d98aec: vsetvli a4,zero,e32,m1,ta,ma
+    0.00 :   d98af0: vfmv.v.f        v7,fa4
+    0.00 :   d98af4: vfmv.v.f        v6,fa5
+    0.00 :   d98af8: vsetivli        zero,4,e32,m1,ta,mu
+    0.00 :   d98afc: vmv.v.i v3,0
+    0.00 :   d98b00: srli    a6,s2,0x2
+         : 289    if (n >= 4) {
+    0.00 :   d98b04: li      a2,3
+         : 308    Buffer += ldc;
+    0.00 :   d98b06: slli    a5,a5,0x2
+    0.00 :   d98b08: slli    a6,a6,0x4
+    0.00 :   d98b0a: and     a7,s2,a2
+         : 282    while (M-- > 0) {
+    0.00 :   d98b0e: li      a0,-1
+         : 289    if (n >= 4) {
+    0.00 :   d98b10: bltu    a2,s2,d98b52 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x5be>
+         : 301    while (n > 0) {
+    0.00 :   d98b14: mv      a3,s1
+    0.00 :   d98b16: mv      a4,s2
+    0.00 :   d98b18: beqz    s2,d98b3c <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x5a8>
+    0.00 :   d98b1c: vsetvli zero,a4,e32,m1,ta,ma
+         : 303    float Scalar = BiasAddition.Add(*buffer);
+    0.00 :   d98b20: vle32.v v1,(s1)
+    0.00 :   d98b24: vmflt.vv        v0,v1,v7
+    0.00 :   d98b28: vmerge.vvm      v1,v1,v7,v0
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d98b2c: vmflt.vv        v0,v6,v1
+    0.00 :   d98b30: vmerge.vvm      v1,v1,v6,v0
+    0.00 :   d98b34: vse32.v v1,(s1)
+         : 301    while (n > 0) {
+    0.00 :   d98b38: vsetivli        zero,4,e32,m1,ta,mu
+         : 282    while (M-- > 0) {
+    0.00 :   d98b3c: addi    a1,a1,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98b3e: add     s1,a3,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d98b42: bne     a1,a0,d98b10 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x57c>
+    0.00 :   d98b46: j       d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d98b48: addi    a1,a1,-1
+    0.00 :   d98b4a: li      a4,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98b4c: add     s1,s1,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d98b4e: beq     a1,a4,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+         : 285    size_t n = N;
+    0.00 :   d98b52: mv      a3,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d98b54: mv      a4,s1
+         : 286    MlasLoadFloat32x4(float const*):
+         : 2501   return *((MLAS_FLOAT32X4*)Buffer);
+    0.00 :   d98b56: vle32.v v2,(a4)
+         : 2503   MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d98b5a: vmv1r.v v1,v3
+         : 2302   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)5, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 296    n -= 4;
+    0.00 :   d98b5e: addi    a3,a3,-4
+         : 298    MlasMaximumFloat32x4(float __vector(4), float __vector(4)):
+         : 2933   return MlasBlendFloat32x4(Vector2, Vector1, Vector1 > Vector2);
+    0.00 :   d98b60: vmflt.vv        v0,v2,v4
+         : 2935   MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d98b64: vxor.vv v1,v4,v2,v0.t
+    0.00 :   d98b68: vxor.vv v1,v1,v2
+    0.00 :   d98b6c: vmv1r.v v2,v3
+         : 2304   MlasMinimumFloat32x4(float __vector(4), float __vector(4)):
+         : 2955   return MlasBlendFloat32x4(Vector2, Vector1, Vector2 > Vector1);
+    0.00 :   d98b70: vmflt.vv        v0,v5,v1
+         : 2957   MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d98b74: vxor.vv v2,v1,v5,v0.t
+    0.00 :   d98b78: vxor.vv v1,v2,v1
+         : 2303   MlasStoreFloat32x4(float*, float __vector(4)):
+         : 2522   *((MLAS_FLOAT32X4*)Buffer) = Vector;
+    0.00 :   d98b7c: vse32.v v1,(a4)
+         : 2524   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)5, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 295    buffer += 4;
+    0.00 :   d98b80: addi    a4,a4,16
+         : 298    } while (n >= 4);
+    0.00 :   d98b82: bltu    a2,a3,d98b56 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x5c2>
+    0.00 :   d98b86: mv      a4,a7
+         : 301    while (n > 0) {
+    0.00 :   d98b88: beqz    a7,d98b48 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x5b4>
+    0.00 :   d98b8c: mv      a3,s1
+         : 295    buffer += 4;
+    0.00 :   d98b8e: add     s1,s1,a6
+    0.00 :   d98b90: j       d98b1c <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x588>
+         : 298    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d98b92: beqz    a3,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d98b96: vmv.v.i v6,0
+    0.00 :   d98b9a: srli    a7,s2,0x2
+         : 289    if (n >= 4) {
+    0.00 :   d98b9e: li      a2,3
+         : 308    Buffer += ldc;
+    0.00 :   d98ba0: slli    a5,a5,0x2
+    0.00 :   d98ba2: slli    a7,a7,0x4
+    0.00 :   d98ba4: and     t1,s2,a2
+         : 282    while (M-- > 0) {
+    0.00 :   d98ba8: li      a0,-1
+         : 289    if (n >= 4) {
+    0.00 :   d98baa: bltu    a2,s2,d98bf2 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x65e>
+         : 301    while (n > 0) {
+    0.00 :   d98bae: mv      a3,s1
+    0.00 :   d98bb0: mv      a4,s2
+    0.00 :   d98bb2: beqz    s2,d98be6 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x652>
+    0.00 :   d98bb6: vsetvli a4,a4,e8,mf4,ta,ma
+         : 303    float Scalar = BiasAddition.Add(*buffer);
+    0.00 :   d98bba: vle32.v v2,(s1)
+         : 305    MLAS_ACTIVATION_FUNCTION<(MLAS_ACTIVATION_KIND)2>::Activate(float):
+         : 160    return (Value >= 0.0f) ? Value : ValueTimesAlpha;
+    0.00 :   d98bbe: vsetvli a6,zero,e32,m1,ta,ma
+    0.00 :   d98bc2: vmv.v.i v1,0
+    0.00 :   d98bc6: vsetvli zero,a4,e32,m1,tu,mu
+    0.00 :   d98bca: vmfle.vv        v3,v1,v2
+         : 165    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d98bce: vmnot.m v0,v3
+    0.00 :   d98bd2: vfmul.vf        v1,v2,fa4,v0.t
+    0.00 :   d98bd6: vmv1r.v v0,v3
+    0.00 :   d98bda: vmerge.vvm      v1,v1,v2,v0
+    0.00 :   d98bde: vse32.v v1,(s1)
+         : 301    while (n > 0) {
+    0.00 :   d98be2: vsetivli        zero,4,e32,m1,ta,mu
+         : 282    while (M-- > 0) {
+    0.00 :   d98be6: addi    a1,a1,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98be8: add     s1,a3,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d98bec: bne     a1,a0,d98baa <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x616>
+    0.00 :   d98bf0: j       d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d98bf2: vmv.v.i v3,0
+         : 285    size_t n = N;
+    0.00 :   d98bf6: mv      a3,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d98bf8: mv      a4,s1
+         : 286    MlasLoadFloat32x4(float const*):
+         : 2501   return *((MLAS_FLOAT32X4*)Buffer);
+    0.00 :   d98bfa: vle32.v v2,(a4)
+         : 2503   MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d98bfe: vmv1r.v v1,v6
+         : 2302   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 296    n -= 4;
+    0.00 :   d98c02: addi    a3,a3,-4
+         : 298    MlasMultiplyFloat32x4(float __vector(4), float __vector(4)):
+         : 2760   return Vector1 * Vector2;
+    0.00 :   d98c04: vfmul.vv        v4,v2,v5
+         : 2762   MLAS_ACTIVATION_FUNCTION<(MLAS_ACTIVATION_KIND)2>::Activate(float __vector(4)):
+         : 149    return MlasBlendFloat32x4(ValueTimesAlpha, Value, ZeroFloat32x4 < Value);
+    0.00 :   d98c08: vmflt.vv        v0,v3,v2
+         : 151    MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d98c0c: vxor.vv v1,v2,v4,v0.t
+    0.00 :   d98c10: vxor.vv v1,v1,v4
+         : 2303   MlasStoreFloat32x4(float*, float __vector(4)):
+         : 2522   *((MLAS_FLOAT32X4*)Buffer) = Vector;
+    0.00 :   d98c14: vse32.v v1,(a4)
+         : 2524   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 295    buffer += 4;
+    0.00 :   d98c18: addi    a4,a4,16
+         : 298    } while (n >= 4);
+    0.00 :   d98c1a: bltu    a2,a3,d98bfa <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x666>
+    0.00 :   d98c1e: mv      a4,t1
+         : 301    while (n > 0) {
+    0.00 :   d98c20: beqz    t1,d98d76 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x7e2>
+    0.00 :   d98c24: mv      a3,s1
+         : 295    buffer += 4;
+    0.00 :   d98c26: add     s1,s1,a7
+    0.00 :   d98c28: j       d98bb6 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x622>
+         : 298    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 308    Buffer += ldc;
+    0.00 :   d98c2a: slli    a5,a5,0x2
+         : 282    while (M-- > 0) {
+    0.00 :   d98c2c: beqz    a3,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d98c30: srli    a7,s2,0x2
+         : 289    if (n >= 4) {
+    0.00 :   d98c34: li      a2,3
+    0.00 :   d98c36: slli    a7,a7,0x4
+    0.00 :   d98c38: and     a6,s2,a2
+         : 282    while (M-- > 0) {
+    0.00 :   d98c3c: li      a0,-1
+         : 289    if (n >= 4) {
+    0.00 :   d98c3e: bltu    a2,s2,d98c72 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x6de>
+         : 301    while (n > 0) {
+    0.00 :   d98c42: mv      a3,s1
+    0.00 :   d98c44: mv      a4,s2
+    0.00 :   d98c46: beqz    s2,d98c66 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x6d2>
+    0.00 :   d98c4a: vsetvli zero,a4,e32,m1,ta,ma
+         : 303    float Scalar = BiasAddition.Add(*buffer);
+    0.00 :   d98c4e: vle32.v v1,(s1)
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d98c52: vmv.v.i v0,0
+    0.00 :   d98c56: vmv1r.v v2,v0
+    0.00 :   d98c5a: vmflt.vv        v0,v1,v0
+    0.00 :   d98c5e: vmerge.vvm      v1,v1,v2,v0
+    0.00 :   d98c62: vse32.v v1,(s1)
+         : 282    while (M-- > 0) {
+    0.00 :   d98c66: addi    a1,a1,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98c68: add     s1,a3,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d98c6c: bne     a1,a0,d98c3e <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x6aa>
+    0.00 :   d98c70: j       d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d98c72: vsetivli        zero,4,e32,m1,ta,ma
+    0.00 :   d98c76: vmv.v.i v3,0
+         : 285    size_t n = N;
+    0.00 :   d98c7a: mv      a3,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d98c7c: mv      a4,s1
+         : 286    MlasLoadFloat32x4(float const*):
+         : 2501   return *((MLAS_FLOAT32X4*)Buffer);
+    0.00 :   d98c7e: vle32.v v1,(a4)
+         : 2503   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 296    n -= 4;
+   91.10 :   d98c82: addi    a3,a3,-4
+         : 298    MlasMaximumFloat32x4(float __vector(4), float __vector(4)):
+         : 2933   return MlasBlendFloat32x4(Vector2, Vector1, Vector1 > Vector2);
+    0.00 :   d98c84: vmflt.vv        v0,v1,v3
+         : 2935   MlasReinterpretAsFloat32x4(int __vector(4)):
+         : 2422   return MLAS_FLOAT32X4(Vector);
+    0.52 :   d98c88: vmerge.vim      v1,v1,0,v0
+         : 2424   MlasStoreFloat32x4(float*, float __vector(4)):
+         : 2522   *((MLAS_FLOAT32X4*)Buffer) = Vector;
+    0.00 :   d98c8c: vse32.v v1,(a4)
+         : 2524   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 295    buffer += 4;
+    7.85 :   d98c90: addi    a4,a4,16
+         : 298    } while (n >= 4);
+    0.00 :   d98c92: bltu    a2,a3,d98c7e <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x6ea>
+    0.00 :   d98c96: mv      a4,a6
+         : 301    while (n > 0) {
+    0.00 :   d98c98: beqz    a6,d98d82 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x7ee>
+    0.00 :   d98c9c: mv      a3,s1
+         : 295    buffer += 4;
+    0.00 :   d98c9e: add     s1,s1,a7
+    0.00 :   d98ca0: j       d98c4a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x6b6>
+         : 298    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d98ca2: beqz    a3,d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+         : 284    MLAS_ACTIVATION_FUNCTION<(MLAS_ACTIVATION_KIND)6>::Activate(float):
+         : 228    Value = MlasExtractLaneFloat32x4<0>(AlphaBroadcast) * Value + MlasExtractLaneFloat32x4<0>(BetaBroadcast);
+    0.00 :   d98ca6: vsetvli a4,zero,e32,m1,ta,ma
+    0.00 :   d98caa: vfmv.v.f        v9,fa5
+    0.00 :   d98cae: lui     a4,0x3f800
+    0.00 :   d98cb2: vfmv.v.f        v10,fa4
+    0.00 :   d98cb6: vsetivli        zero,4,e32,m1,ta,mu
+    0.00 :   d98cba: vmv.v.x v7,a4
+    0.00 :   d98cbe: vmv.v.i v6,0
+    0.00 :   d98cc2: auipc   a4,0x399
+    0.00 :   d98cc6: flw     fa5,694(a4) # 1131f78 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x10>
+    0.00 :   d98cca: srli    a7,s2,0x2
+         : 239    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 289    if (n >= 4) {
+    0.00 :   d98cce: li      a0,3
+         : 308    Buffer += ldc;
+    0.00 :   d98cd0: slli    a5,a5,0x2
+    0.00 :   d98cd2: slli    a7,a7,0x4
+    0.00 :   d98cd4: and     t1,s2,a0
+         : 282    while (M-- > 0) {
+    0.00 :   d98cd8: li      a6,-1
+         : 289    if (n >= 4) {
+    0.00 :   d98cda: bltu    a0,s2,d98d2e <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x79a>
+         : 301    while (n > 0) {
+    0.00 :   d98cde: beqz    s2,d98d72 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x7de>
+    0.00 :   d98ce2: fmv.s   fa4,fa5
+    0.00 :   d98ce6: mv      a2,s1
+    0.00 :   d98ce8: mv      a3,s2
+    0.00 :   d98cea: vsetvli zero,a3,e32,m1,ta,ma
+         : 307    MLAS_ACTIVATION_FUNCTION<(MLAS_ACTIVATION_KIND)6>::Activate(float):
+         : 228    Value = MlasExtractLaneFloat32x4<0>(AlphaBroadcast) * Value + MlasExtractLaneFloat32x4<0>(BetaBroadcast);
+    0.00 :   d98cee: vle32.v v1,(s1)
+    0.00 :   d98cf2: auipc   a3,0x399
+    0.00 :   d98cf6: addi    a3,a3,646 # 1131f78 <std::_Sp_make_shared_tag::_S_ti()::__tag+0x10>
+    0.00 :   d98cfa: flw     fa3,0(a3)
+         : 233    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d98cfe: vmv.v.i v2,0
+    0.00 :   d98d02: vfmv.v.f        v8,fa3
+         : 307    MLAS_ACTIVATION_FUNCTION<(MLAS_ACTIVATION_KIND)6>::Activate(float):
+         : 228    Value = MlasExtractLaneFloat32x4<0>(AlphaBroadcast) * Value + MlasExtractLaneFloat32x4<0>(BetaBroadcast);
+    0.00 :   d98d06: vfmadd.vv       v1,v10,v9
+    0.00 :   d98d0a: vmfgt.vf        v0,v1,fa4
+    0.00 :   d98d0e: vmerge.vvm      v1,v1,v8,v0
+         : 232    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 304    *buffer++ = ActivationFunction.Activate(Scalar);
+    0.00 :   d98d12: vmflt.vv        v0,v1,v2
+    0.00 :   d98d16: vmerge.vvm      v1,v1,v2,v0
+    0.00 :   d98d1a: vse32.v v1,(s1)
+         : 301    while (n > 0) {
+    0.00 :   d98d1e: vsetivli        zero,4,e32,m1,ta,mu
+         : 282    while (M-- > 0) {
+    0.00 :   d98d22: addi    a1,a1,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98d24: add     s1,a2,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d98d28: bne     a1,a6,d98cda <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x746>
+    0.00 :   d98d2c: j       d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d98d2e: vmv.v.i v3,0
+    0.00 :   d98d32: fmv.s   fa4,fa5
+    0.00 :   d98d36: mv      a3,t1
+         : 285    size_t n = N;
+    0.00 :   d98d38: mv      a2,s2
+         : 284    float* buffer = Buffer;
+    0.00 :   d98d3a: mv      a4,s1
+         : 286    MlasMultiplyAddFloat32x4(float __vector(4), float __vector(4), float __vector(4)):
+         : 2788   return Vector1 * Vector2 + Vector3;
+    0.00 :   d98d3c: vle32.v v2,(a4)
+         : 2790   MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d98d40: vmv1r.v v1,v6
+         : 2302   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 296    n -= 4;
+    0.00 :   d98d44: addi    a2,a2,-4
+         : 298    MlasMultiplyAddFloat32x4(float __vector(4), float __vector(4), float __vector(4)):
+         : 2788   return Vector1 * Vector2 + Vector3;
+    0.00 :   d98d46: vfmadd.vv       v2,v4,v5
+         : 2790   MlasMinimumFloat32x4(float __vector(4), float __vector(4)):
+         : 2955   return MlasBlendFloat32x4(Vector2, Vector1, Vector2 > Vector1);
+    0.00 :   d98d4a: vmfgt.vf        v0,v2,fa5
+         : 2957   MlasOrInt32x4(int __vector(4), int __vector(4)):
+         : 2300   return Vector1 | Vector2;
+    0.00 :   d98d4e: vxor.vv v1,v7,v2,v0.t
+    0.00 :   d98d52: vxor.vv v1,v1,v2
+         : 2303   MlasMaximumFloat32x4(float __vector(4), float __vector(4)):
+         : 2933   return MlasBlendFloat32x4(Vector2, Vector1, Vector1 > Vector2);
+    0.00 :   d98d56: vmflt.vv        v0,v1,v3
+         : 2935   MlasReinterpretAsFloat32x4(int __vector(4)):
+         : 2422   return MLAS_FLOAT32X4(Vector);
+    0.00 :   d98d5a: vmerge.vim      v1,v1,0,v0
+         : 2424   MlasStoreFloat32x4(float*, float __vector(4)):
+         : 2522   *((MLAS_FLOAT32X4*)Buffer) = Vector;
+    0.00 :   d98d5e: vse32.v v1,(a4)
+         : 2524   void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 295    buffer += 4;
+    0.00 :   d98d62: addi    a4,a4,16
+         : 298    } while (n >= 4);
+    0.00 :   d98d64: bltu    a0,a2,d98d3c <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x7a8>
+         : 301    while (n > 0) {
+    0.00 :   d98d68: beqz    t1,d98d8e <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x7fa>
+    0.00 :   d98d6c: mv      a2,s1
+         : 295    buffer += 4;
+    0.00 :   d98d6e: add     s1,s1,a7
+    0.00 :   d98d70: j       d98cea <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x756>
+         : 301    while (n > 0) {
+    0.00 :   d98d72: mv      a2,s1
+    0.00 :   d98d74: j       d98d22 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x78e>
+         : 304    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)2, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 282    while (M-- > 0) {
+    0.00 :   d98d76: addi    a1,a1,-1
+    0.00 :   d98d78: li      a4,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98d7a: add     s1,s1,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d98d7c: bne     a1,a4,d98bf6 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x662>
+    0.00 :   d98d80: j       d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+         : 285    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)1, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+    0.00 :   d98d82: addi    a1,a1,-1
+    0.00 :   d98d84: li      a4,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98d86: add     s1,s1,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d98d88: bne     a1,a4,d98c7a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x6e6>
+    0.00 :   d98d8c: j       d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+         : 285    void MlasActivationKernel<(MLAS_ACTIVATION_KIND)6, false>(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+    0.00 :   d98d8e: addi    a1,a1,-1
+    0.00 :   d98d90: li      a4,-1
+         : 308    Buffer += ldc;
+    0.00 :   d98d92: add     s1,s1,a5
+         : 282    while (M-- > 0) {
+    0.00 :   d98d94: bne     a1,a4,d98d38 <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0x7a4>
+    0.00 :   d98d98: j       d9866a <MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)+0xd6>
+    0.00 :   d98d9a: ret
+         : 286    MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long):
+         : 517    MLAS_THROW_EX(std::runtime_error, "bad mlas activation kind");
+    0.00 :   d98d9c: li      a0,16
+    0.00 :   d98d9e: auipc   ra,0xff337
+    0.00 :   d98da2: jalr    -1726(ra) # cf6e0 <__cxa_allocate_exception@plt>
+    0.00 :   d98da6: auipc   a1,0x359
+    0.00 :   d98daa: addi    a1,a1,-1518 # 10f17b8 <absl::lts_20250814::base_internal::LowLevelAlloc::Alloc(unsigned long)+0xb24ca>
+    0.00 :   d98dae: mv      s1,a0
+    0.00 :   d98db0: auipc   ra,0xff336
+    0.00 :   d98db4: jalr    1696(ra) # cf450 <std::runtime_error::runtime_error(char const*)@plt>
+    0.00 :   d98db8: mv      a0,s1
+    0.00 :   d98dba: auipc   a2,0x6e7
+    0.00 :   d98dbe: ld      a2,-274(a2) # 147fca8 <std::runtime_error::~runtime_error()@GLIBCXX_3.4>
+    0.00 :   d98dc2: auipc   a1,0x6e9
+    0.00 :   d98dc6: ld      a1,1374(a1) # 1482320 <typeinfo for std::runtime_error@GLIBCXX_3.4>
+    0.00 :   d98dca: sd      s3,24(sp)
+    0.00 :   d98dcc: auipc   ra,0xff337
+    0.00 :   d98dd0: jalr    -764(ra) # cfad0 <__cxa_throw@plt>
+    0.00 :   d98dd4: mv      s2,a0
+    0.00 :   d98dd6: mv      a0,s1
+    0.00 :   d98dd8: sd      s3,24(sp)
+    0.00 :   d98dda: auipc   ra,0xff337
+    0.00 :   d98dde: jalr    342(ra) # cff30 <__cxa_free_exception@plt>
+    0.00 :   d98de2: mv      a0,s2
+    0.00 :   d98de4: auipc   ra,0xff337
+    0.00 :   d98de8: jalr    -644(ra) # cfb60 <_Unwind_Resume@plt>

@@ -1,0 +1,6 @@
+# started on Sun Aug 16 04:07:37 2026
+
+7303832298,ns,duration_time,7303832298,100.00,553.002,M/sec
+13207.60,msec,task-clock,13207599575,100.00,1.808,CPUs utilized
+29044472040,,cycles,13207599575,100.00,2.199,GHz
+35584357019,,instructions,13207599575,100.00,1.23,insn per cycle

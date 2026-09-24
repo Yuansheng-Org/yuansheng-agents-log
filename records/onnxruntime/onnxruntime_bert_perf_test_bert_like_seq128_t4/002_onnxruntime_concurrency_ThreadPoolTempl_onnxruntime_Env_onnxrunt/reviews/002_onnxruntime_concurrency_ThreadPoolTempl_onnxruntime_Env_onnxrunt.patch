@@ -1,0 +1,37 @@
+From 2568f08bcc2df4ddadac2f72fb7e856723335696 Mon Sep 17 00:00:00 2001
+From: wanghongyan <wanghongyan2025@iscas.ac.cn>
+Date: Mon, 14 Sep 2026 11:02:30 +0800
+Subject: [PATCH] Add RISC-V pause hint support to SpinPause SpinPause()
+ currently uses only a compiler barrier on RISC-V. Add a PAUSE hint so
+ spin-wait loops can use hardware pause support.
+
+Use the pause mnemonic when __riscv_zihintpause is defined and emit
+the raw instruction encoding otherwise, avoiding additional compiler
+flags or assembler extension requirements. Keep a memory clobber
+to preserve the compiler barrier.
+
+Co-authored-by: Yang Wang <yangwang@iscas.ac.cn>
+
+Co-authored-by: Yuansheng <yuansheng@isrc.iscas.ac.cn>
+---
+ onnxruntime/core/common/spin_pause.cc | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/onnxruntime/core/common/spin_pause.cc b/onnxruntime/core/common/spin_pause.cc
+index 6868232ce9283..f1ec3250207a2 100644
+--- a/onnxruntime/core/common/spin_pause.cc
++++ b/onnxruntime/core/common/spin_pause.cc
+@@ -54,6 +54,13 @@ void SpinPause() {
+   __asm__ __volatile__("yield" ::: "memory");
+ #elif defined(__arm__)
+   __asm__ __volatile__("yield" ::: "memory");
++#elif defined(__riscv)
++#if defined(__riscv_zihintpause)
++  __asm__ __volatile__("pause" ::: "memory");
++#else
++  // Encode PAUSE directly for assemblers without Zihintpause support.
++  __asm__ __volatile__(".4byte 0x0100000f" ::: "memory");
++#endif
+ #else
+   // Generic fallback: a compiler barrier. This prevents the optimizer from
+   // collapsing the SpinPause() calls in the calibration loop into nothing.

@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-onnxruntime-onnxruntime-bert-perf-test-bert-like-seq128-t4-002",
+  "patchPlanId": "pp-bp-onnxruntime-onnxruntime-bert-perf-test-bert-like-seq128-t4-002",
+  "createdAt": "2026-09-12T04:27:30.784Z",
+  "changedFiles": [
+    "onnxruntime/core/common/spin_pause.cc"
+  ],
+  "gitDiff": "diff --git a/onnxruntime/core/common/spin_pause.cc b/onnxruntime/core/common/spin_pause.cc\nindex 6868232ce9..dd30f27e2c 100644\n--- a/onnxruntime/core/common/spin_pause.cc\n+++ b/onnxruntime/core/common/spin_pause.cc\n@@ -54,6 +54,12 @@ void SpinPause() {\n   __asm__ __volatile__(\"yield\" ::: \"memory\");\n #elif defined(__arm__)\n   __asm__ __volatile__(\"yield\" ::: \"memory\");\n+#elif defined(__riscv) && defined(__riscv_zihintpause)\n+  // RISC-V Zihintpause: emits the standard `pause` hint so the hardware can\n+  // reduce issue rate/power on spin loops. This is only a hint and does not\n+  // change memory ordering (kept as an asm statement so the optimizer cannot\n+  // elide it from the calibration loop).\n+  __asm__ __volatile__(\"pause\" ::: \"memory\");\n #else\n   // Generic fallback: a compiler barrier. This prevents the optimizer from\n   // collapsing the SpinPause() calls in the calibration loop into nothing.\n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

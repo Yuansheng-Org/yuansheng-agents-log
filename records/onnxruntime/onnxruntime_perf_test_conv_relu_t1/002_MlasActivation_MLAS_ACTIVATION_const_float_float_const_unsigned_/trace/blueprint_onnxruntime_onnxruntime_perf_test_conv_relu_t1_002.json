@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-onnxruntime-onnxruntime_perf_test_conv_relu_t1-002",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-11T08:31:15.653Z",
+    "software": "onnxruntime",
+    "testcaseIds": [
+      "onnxruntime_perf_test_conv_relu_t1"
+    ],
+    "diagnosisId": "diag-20260911T083115653Z-1f3bbec3",
+    "targetHardware": "SpacemiT X100 (spacemit-x100, RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://github.com/microsoft/onnxruntime.git",
+    "testBranch": "main",
+    "commitHash": "d4d792f545760ab292c5e68b2bb547d89306a7f0"
+  },
+  "problem": {
+    "summary": "onnxruntime_perf_test_conv_relu_t1 中 fused Relu 激活路径 MlasActivation 是排名第 2 的热点函数（函数内 191 samples）。其 MlasActivationKernel 主循环被编译为固定 vsetivli zero,4,e32,m1（每轮仅 4 个 float），在 VLEN=256 的 spacemit-x100 上只利用 4/8 lane 半宽，98.95% 函数内样本落在 loop induction 指令上，循环与配置开销主导热点区间。",
+    "evidence": [
+      "perf stat：IPC=2.22（54401011884 instructions / 24470762914 cycles），task-clock 11129.14ms，CPUs utilized 0.993",
+      "perf annotate：MlasActivation 191 samples（cpu-clock, local period）；91.10% 落在 d98c82 addi a3,a3,-4，7.85% 落在 d98c90 addi a4,a4,16，热点区间 d98c7a-d98c92 合计 98.95%",
+      "源码证据：mlasi.h:2204 定义 MLAS_FLOAT32X4 为 float __attribute__((vector_size(16)))（固定 128-bit/4-lane 类型），activate.cpp:282-355 MlasActivationKernel 按固定 4-float 块循环",
+      "反汇编证据：d98c72 vsetivli zero,4,e32,m1,ta,ma 固定 4-lane；同一 TU 的 tail loop 已是 runtime-VL（d98c4a vsetvli zero,a4,e32,m1,ta,ma）"
+    ]
+  },
+  "rootCause": {
+    "summary": "MlasActivationKernel 使用编译期固定 128-bit（4-float）的 MLAS_FLOAT32X4 抽象，RVV lowering 固定为 vsetivli zero,4,e32,m1，在 VLEN=256 下仅利用一半 lane 带宽，每轮 4 个 float 摊销的循环 induction 开销主导热点区间（98.95% 样本）。",
+    "candidateFiles": [
+      "onnxruntime/core/mlas/lib/activate.cpp"
+    ],
+    "performanceFactors": [
+      "RVV Register-Group Utilization and LMUL Sizing"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "MlasActivation 公共 API 签名与行为不变",
+      "激活输出逐元素数值一致（含 NaN 语义，如 Relu 的 max(0,NaN)=0）",
+      "in-place 读改写顺序语义不变",
+      "非 RVV 构建（NEON/SSE/LSX 等）的固定宽度路径保持原状"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "onnxruntime_perf_test_conv_relu_t1"
+    ],
+    "regressionCommand": "agent1 patch_regression --case onnxruntime_perf_test_conv_relu_t1"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "overallConfidence 0.72 < 0.80；采样语义缺 global-period、Sampling IP precision 未知、无 cache/memory counter 细分 bound type，需人工确认收益评估前提后转发",
+    "reasoning": "perf stat 显示 IPC=2.22 的系统级指令吞吐，MlasActivation 为函数内 191 samples 的热点（rank 002）；annotate 中 98.95% 样本落在 Relu kernel 主循环 d98c7a-d98c92 的 induction 指令（addi a3,a3,-4=91.10%、addi a4,a4,16=7.85%），该循环由 d98c72 vsetivli zero,4,e32,m1 固定为每轮 4 个 float；源码证明 MLAS_FLOAT32X4 在 RISC-V 下是 vector_size(16) 固定 128-bit 类型（mlasi.h:2204），而同一 TU 的 tail loop 已被编译器生成 runtime-VL 形态（d98c4a），说明固定 4-lane 是源码固定宽度类型的直接映射而非 toolchain 能力限制；对照 pattern RVV Register-Group Utilization and LMUL Sizing，当前 lane 数小于合法候选边界（peak live=2 group+mask，m2/m4/m8 均满足 LMUL*peak_live<=32），修复方向为将主循环改为 runtime-VL（vsetvli）以用满 VLEN=256 的 8+ lanes，减半每元素循环开销；因采样语义与 IP precision 缺项，收益幅度按函数内局部份额 98.95% 表达，不推 workload 级 Amdahl。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "该 kernel 为流式读改写（每元素 1 load + 1 store），在特定输入上可能转为 memory-bandwidth-bound，LMUL 提升收益受带宽上限约束而非线性放大",
+      "cpu-clock 采样 IP 精度未知，样本集中于 addi 可能部分反映 load-use stall 的 skid，而非纯 loop-induction 计算开销"
+    ],
+    "currentGaps": "采样语义不完整（percent-type=local period 而非 global-period，函数占 workload 贡献未知）；Sampling IP precision（precise_ip/Exact-IP）未知；perf stat 无 cache/memory counter，bound type 无法细分 memory/cache-bound",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + onnxruntime_perf_test_conv_relu_t1",
+    "recommendedFirstAction": "在 onnxruntime/core/mlas/lib/activate.cpp 的 MlasActivationKernel 主循环（activate.cpp:334-344）为 RVV 构建（#if defined(__riscv_v)）增加 runtime-VL 路径：用 __riscv_vsetvl（先验证 m1 满宽 VLMAX=8 lanes，再按 live budget 评估 m2/m4）替换固定 MLAS_FLOAT32X4 4-float 块循环，Relu 等 lane-independent 激活可直接 vfmax.vf 等单指令形式；非 RVV 路径保持不变",
+    "recommendedVerification": "重新运行 onnxruntime_perf_test_conv_relu_t1 并对 MlasActivation 重新 perf annotate：确认 vsetivli zero,4,e32,m1 固定循环消失、主循环出现 runtime vsetvli（vl>=8）、induction addi 每元素样本密度约减半、函数内指令数/元素从约 1.75 降至约 0.88；并对相同输入做逐元素输出一致性对照（含 tail 长度 0/1/2/3）",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 2.22,
+        "anomalyNote": "系统级 IPC 2.22（54.40G insn / 24.47G cycles），吞吐取向，未明显 memory-latency-bound；无 ARM 侧对照"
+      },
+      {
+        "metric": "Instructions",
+        "rv": 54401011884,
+        "anomalyNote": "同采样窗口内 instructions 计数，用于 IPC 计算"
+      },
+      {
+        "metric": "Cycles",
+        "rv": 24470762914,
+        "anomalyNote": "同采样窗口内 cycles 计数，用于 IPC 计算"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "MlasActivation(MLAS_ACTIVATION const*, float*, float const*, unsigned long, unsigned long, unsigned long)",
+        "fileModule": "onnxruntime/core/mlas/lib/activate.cpp",
+        "rvvPattern": "RVV Register-Group Utilization and LMUL Sizing",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.9895,
+        "note": "Conv+Relu fused 激活路径（Relu 无 bias kernel），elementwise lane-independent 计算，热点区间 d98c7a-d98c92 固定 4-lane 主循环占函数内 98.95% 样本；rank 002/12"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "onnxruntime/core/mlas/lib/activate.cpp:282-355（MlasActivationKernel 主循环）与 onnxruntime/core/mlas/lib/mlasi.h:2204（MLAS_FLOAT32X4 定义）",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/26318; https://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5; https://github.com/opencv/opencv/pull/25586; https://github.com/torvalds/linux/commit/a4348546332c9fae12b29acb514535e0a52b9b3c; https://github.com/torvalds/linux/commit/a894e8ed09c6c7fa239711819db83b8c050eb7b0; https://github.com/torvalds/linux/commit/c2a658d419246108c9bf065ec347355de5ba8a05; https://github.com/openjdk/jdk/commit/bdd37b0e5eaa984e2ad2e9010af37dcd612cc05e; https://github.com/OpenMathLib/OpenBLAS/commit/cc1b5794a0409493ed470f4cced313ea0b560870; https://github.com/OpenMathLib/OpenBLAS/commit/d69be17b6ff7eea5371b03a199db9c112aa6dc4b; https://github.com/OpenMathLib/OpenBLAS/commit/4a12cf53ec116c06e5d74073b54a3bca6046cb17; https://github.com/OpenMathLib/OpenBLAS/commit/240695862984d4de845f1c42821a883946932df7; https://github.com/v8/v8/commit/3844339936068c529170dcb4f2aa160654d25943; https://github.com/vllm-project/vllm/pull/47538",
+      "evidenceExplanation": "MLAS_FLOAT32X4 在 RISC-V 下退化为 vector_size(16) 固定 128-bit 类型，导致主循环被 lowering 为 vsetivli zero,4,e32,m1（每轮 4 lane），与 pattern 'RVV Register-Group Utilization and LMUL Sizing' 的已向量化但 lane 数小于合法候选边界的信号一致；相关 PR（OpenCV/Linux kernel/OpenBLAS/V8/vLLM）均表明 LMUL/lane 宽度调整在实测与 register budget 校验下可显著降低循环与配置开销"
+    }
+  }
+}
