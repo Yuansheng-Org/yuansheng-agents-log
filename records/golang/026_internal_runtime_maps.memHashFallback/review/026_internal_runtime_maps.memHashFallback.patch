@@ -1,0 +1,156 @@
+diff --git a/src/cmd/compile/internal/reflectdata/alg.go b/src/cmd/compile/internal/reflectdata/alg.go
+index 880868cee9..879549971f 100644
+--- a/src/cmd/compile/internal/reflectdata/alg.go
++++ b/src/cmd/compile/internal/reflectdata/alg.go
+@@ -67,11 +67,20 @@ func genhashSig(sig string) *obj.LSym {
+ 		if rest == "" {
+ 			// Just M%d. We can make a memhash_varlen closure.
+ 			// The size of the memory region to hash is encoded in the closure.
+-			if memhashvarlen == nil {
+-				memhashvarlen = typecheck.LookupRuntimeFunc("memhash_varlen")
++			// On riscv64, fixed-size keys that benefit from aligned word loads
++			// use a dedicated entry point. That entry point retains the portable
++			// hash for callers that provide an unaligned key pointer.
++			memhash := &memhashvarlen
++			name := "memhash_varlen"
++			if base.Ctxt.Arch.Name == "riscv64" && (n == 32 || n == 64 || n == 128) {
++				memhash = &memhashvarlenAligned
++				name = "memhash_varlen_aligned"
++			}
++			if *memhash == nil {
++				*memhash = typecheck.LookupRuntimeFunc(name)
+ 			}
+ 			ot := 0
+-			ot = objw.SymPtr(closure, ot, memhashvarlen, 0)
++			ot = objw.SymPtr(closure, ot, *memhash, 0)
+ 			ot = objw.Uintptr(closure, ot, uint64(n)) // size encoded in closue
+ 			objw.Global(closure, int32(ot), obj.DUPOK|obj.RODATA)
+ 			return closure
+diff --git a/src/cmd/compile/internal/reflectdata/reflect.go b/src/cmd/compile/internal/reflectdata/reflect.go
+index c683ecb674..a426c4943f 100644
+--- a/src/cmd/compile/internal/reflectdata/reflect.go
++++ b/src/cmd/compile/internal/reflectdata/reflect.go
+@@ -420,7 +420,8 @@ func ABIKindOfType(t *types.Type) abi.Kind {
+ }
+ 
+ var (
+-	memhashvarlen  *obj.LSym
++	memhashvarlen        *obj.LSym
++	memhashvarlenAligned *obj.LSym
+ 	memequalvarlen *obj.LSym
+ )
+ 
+diff --git a/src/internal/runtime/maps/runtime_hash64_align_riscv64.go b/src/internal/runtime/maps/runtime_hash64_align_riscv64.go
+new file mode 100644
+index 0000000000..a283613692
+--- /dev/null
++++ b/src/internal/runtime/maps/runtime_hash64_align_riscv64.go
+@@ -0,0 +1,43 @@
++// Copyright 2026 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build riscv64
++
++package maps
++
++import "unsafe"
++
++// MemHashAligned hashes a fixed-size key using aligned word loads when the
++// caller-provided pointer permits them. The compiler only selects this entry
++// point for 32-, 64-, and 128-byte memory keys.
++func MemHashAligned(p unsafe.Pointer, seed, s uintptr) uintptr {
++	if uintptr(p)&7 != 0 {
++		return memHashFallback(p, seed, s)
++	}
++
++	seed ^= hashkey[0]
++	l := s
++	if l > 48 {
++		seed1 := seed
++		seed2 := seed
++		for ; l > 48; l -= 48 {
++			seed = mix(readAligned64(p)^hashkey[1], readAligned64(add(p, 8))^seed)
++			seed1 = mix(readAligned64(add(p, 16))^hashkey[2], readAligned64(add(p, 24))^seed1)
++			seed2 = mix(readAligned64(add(p, 32))^hashkey[3], readAligned64(add(p, 40))^seed2)
++			p = add(p, 48)
++		}
++		seed ^= seed1 ^ seed2
++	}
++	for ; l > 16; l -= 16 {
++		seed = mix(readAligned64(p)^hashkey[1], readAligned64(add(p, 8))^seed)
++		p = add(p, 16)
++	}
++	a := readAligned64(add(p, l-16))
++	b := readAligned64(add(p, l-8))
++	return mix(m5^s, mix(a^hashkey[1], b^seed))
++}
++
++func readAligned64(p unsafe.Pointer) uintptr {
++	return uintptr(*(*uint64)(p))
++}
+diff --git a/src/internal/runtime/maps/runtime_hash64_align_riscv64_test.go b/src/internal/runtime/maps/runtime_hash64_align_riscv64_test.go
+new file mode 100644
+index 0000000000..746939aec0
+--- /dev/null
++++ b/src/internal/runtime/maps/runtime_hash64_align_riscv64_test.go
+@@ -0,0 +1,35 @@
++// Copyright 2026 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++//go:build riscv64
++
++package maps_test
++
++import (
++	"internal/runtime/maps"
++	"testing"
++	"unsafe"
++)
++
++func TestMemHashAlignedFallback(t *testing.T) {
++	for _, size := range []uintptr{32, 64, 128} {
++		buf := make([]byte, size+8)
++		for i := range buf {
++			buf[i] = byte(i*37 + 11)
++		}
++		base := uintptr(unsafe.Pointer(unsafe.SliceData(buf)))
++		offset := uintptr(1)
++		if (base+offset)&7 == 0 {
++			offset++
++		}
++		p := unsafe.Pointer(base + offset)
++		for _, seed := range []uintptr{0, 1, 0x12345678} {
++			got := maps.MemHashAligned(p, seed, size)
++			want := maps.MemHashFallback(p, seed, size)
++			if got != want {
++				t.Fatalf("size=%d seed=%#x: MemHashAligned=%#x, memHashFallback=%#x", size, seed, got, want)
++			}
++		}
++	}
++}
+diff --git a/src/runtime/alg_riscv64.go b/src/runtime/alg_riscv64.go
+new file mode 100644
+index 0000000000..f533b35f92
+--- /dev/null
++++ b/src/runtime/alg_riscv64.go
+@@ -0,0 +1,18 @@
++// Copyright 2026 The Go Authors. All rights reserved.
++// Use of this source code is governed by a BSD-style
++// license that can be found in the LICENSE file.
++
++package runtime
++
++import (
++	"internal/runtime/maps"
++	"internal/runtime/sys"
++	"unsafe"
++)
++
++//go:nosplit
++func memhash_varlen_aligned(p unsafe.Pointer, h uintptr) uintptr {
++	ptr := sys.GetClosurePtr()
++	size := *(*uintptr)(unsafe.Pointer(ptr + unsafe.Sizeof(h)))
++	return maps.MemHashAligned(p, h, size)
++}
