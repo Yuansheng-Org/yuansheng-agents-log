@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-sqd-001-r0",
+  "patchCandidateId": "auto",
+  "reviewedAt": "auto",
+  "reviewer": "openai",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "sq-rvv.cpp 新增通用 RVV DCTemplate：decode_vector（标量，语义复用）+ 向量距离循环（vsetvl e32m8 运行时 VL、vle32/vfsub/vfmacc/vfredusum）。LMUL=8；峰值 live 集合 acc+vq+vr+diff 可复用临时寄存器，满足 LMUL*peak_live<=32。关键修复：持久向量累加器 + 循环末尾单次归约，消除每迭代 vfmv.s.f/vfmv.f.s/vsetivli 1 的标量往返（blueprint 根因）。所有指令均在 RVV 1.0；4bit-uniform-L2 既有完全特化优先级更高不受影响；无 x86/ARM 指令。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "technicalAccuracy", "result": "PASS" },
+    { "dimension": "evidenceTraceability", "result": "PASS" },
+    { "dimension": "explainability", "result": "PASS" },
+    { "dimension": "internalConsistency", "result": "PASS" },
+    { "dimension": "safety", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "faiss/impl/scalar_quantizer/sq-rvv.cpp",
+      "evidence": "+    return rvv_reduce(acc, vlmax, 0.0f, __riscv_vfredusum_vs_f32m8_f32m1);",
+      "severity": "suggestion",
+      "category": "correctness",
+      "suggestion": "向量归约顺序与标量逐分量累加不同，L2/IP 距离最低位可能有差异；benchmark QT_*_{L2,IP}_iterations 与 sq-accuracy sql2_recons_error 需按 RVV 构建回归标定。"
+    }
+  ]
+}

@@ -1,0 +1,151 @@
+diff --git a/faiss/Clustering.cpp b/faiss/Clustering.cpp
+index b82b1be40..a8d3dabfa 100644
+--- a/faiss/Clustering.cpp
++++ b/faiss/Clustering.cpp
+@@ -13,6 +13,7 @@
+ 
+ #include <cinttypes>
+ #include <cmath>
++#include <cstdint>
+ #include <cstdio>
+ #include <cstring>
+ #include <limits>
+@@ -90,9 +91,17 @@ void Clustering::train_encoded(
+         // responsibility, but it may spare us some hard-to-debug
+         // reports.
+         const float* x = reinterpret_cast<const float*>(x_in);
++        // Integer exponent-field check (== isfinite) instead of std::isfinite:
++        // on RISC-V std::isfinite lowers to fabs+frflags+fle+fsflags around
++        // every element, serializing the FP pipeline via FCSR reads/writes.
++        // Testing `(bits & 0x7f800000) != 0x7f800000` is pure-integer and
++        // auto-vectorizes cleanly; NaN and both infinities are the only
++        // values whose exponent field is all ones.
++        const uint32_t* xbits = reinterpret_cast<const uint32_t*>(x);
+         for (size_t i = 0; i < nx * d; i++) {
+             FAISS_THROW_IF_NOT_MSG(
+-                    std::isfinite(x[i]), "input contains NaN's or Inf's");
++                    (xbits[i] & 0x7f800000u) != 0x7f800000u,
++                    "input contains NaN's or Inf's");
+         }
+     }
+ 
+diff --git a/faiss/utils/distances_dispatch.h b/faiss/utils/distances_dispatch.h
+index 3fb916b87..36e29ba27 100644
+--- a/faiss/utils/distances_dispatch.h
++++ b/faiss/utils/distances_dispatch.h
+@@ -187,7 +187,10 @@ inline void fvec_add_dispatch(
+         const float* a,
+         const float* b,
+         float* c) {
+-    with_simd_level_256bit(
++    // with_simd_level_256bit excludes SIMDLevel::RISCV_RVV; extend the mask
++    // so the RVV fvec_add specialization in distances_rvv.cpp is reachable.
++    with_selected_simd_levels<AVAILABLE_SIMD_LEVELS_AVX2_NEON |
++            (1 << int(SIMDLevel::RISCV_RVV))>(
+             [&]<SIMDLevel level>() { fvec_add<level>(d, a, b, c); });
+ }
+ 
+@@ -208,7 +211,12 @@ inline void compute_PQ_dis_tables_dsub2_dispatch(
+         const float* x,
+         bool is_inner_product,
+         float* dis_tables) {
+-    with_simd_level_256bit([&]<SIMDLevel level>() {
++    // The simdlib256 path has no RVV backend, so the AVX2/NEON-only mask
++    // (with_simd_level_256bit) would pin RISC-V to the scalar NONE level.
++    // Route through a mask that also carries SIMDLevel::RISCV_RVV so the
++    // distances_rvv.cpp specialization is reachable on RVV-capable builds.
++    with_selected_simd_levels<AVAILABLE_SIMD_LEVELS_AVX2_NEON |
++            (1 << int(SIMDLevel::RISCV_RVV))>([&]<SIMDLevel level>() {
+         compute_PQ_dis_tables_dsub2<level>(
+                 d, ksub, centroids, nx, x, is_inner_product, dis_tables);
+     });
+diff --git a/faiss/utils/simd_impl/distances_rvv.cpp b/faiss/utils/simd_impl/distances_rvv.cpp
+index 0eee6e196..3f937dca9 100644
+--- a/faiss/utils/simd_impl/distances_rvv.cpp
++++ b/faiss/utils/simd_impl/distances_rvv.cpp
+@@ -338,6 +338,85 @@ int fvec_madd_and_argmin<SIMDLevel::RISCV_RVV>(
+     return j < n ? static_cast<int>(j) : -1;
+ }
+ 
++template <>
++void compute_PQ_dis_tables_dsub2<SIMDLevel::RISCV_RVV>(
++        size_t d,
++        size_t ksub,
++        const float* all_centroids,
++        size_t nx,
++        const float* x,
++        bool is_inner_product,
++        float* dis_tables) {
++    size_t M = d / 2;
++    // Fixed 8-lane work: each centroids[k] holds 2 dims for up to 4 m's
++    // (m0..m0+3). vsetvl_e32m1(8) returns min(8, vlmax), so it stays correct
++    // on VLEN<256 too instead of silently dropping tail lanes.
++    size_t vl = __riscv_vsetvl_e32m1(8);
++    for (size_t m0 = 0; m0 < M; m0 += 4) {
++        size_t m1 = std::min(M, m0 + 4);
++        size_t ndim = 2 * (m1 - m0);
++        for (size_t k0 = 0; k0 < ksub; k0 += 8) {
++            vfloat32m1_t centroids[8];
++            for (size_t k = 0; k < 8; k++) {
++                float centroid[8] = {0, 0, 0, 0, 0, 0, 0, 0};
++                size_t rp = (m0 * ksub + k + k0) * 2;
++                for (size_t m = m0; m < m1; m++) {
++                    size_t w = 2 * (m - m0);
++                    centroid[w] = all_centroids[rp];
++                    centroid[w + 1] = all_centroids[rp + 1];
++                    rp += 2 * ksub;
++                }
++                centroids[k] = __riscv_vle32_v_f32m1(centroid, vl);
++            }
++            for (size_t i = 0; i < nx; i++) {
++                float xtmp[8] = {0, 0, 0, 0, 0, 0, 0, 0};
++                const float* xp = x + i * d + m0 * 2;
++                for (size_t j = 0; j < ndim; j++) {
++                    xtmp[j] = xp[j];
++                }
++                vfloat32m1_t xi = __riscv_vle32_v_f32m1(xtmp, vl);
++                float* out = dis_tables + (i * M + m0) * ksub + k0;
++                if (is_inner_product) {
++                    for (size_t k = 0; k < 8; k++) {
++                        vfloat32m1_t p =
++                                __riscv_vfmul_vv_f32m1(xi, centroids[k], vl);
++                        out[k] = rvv_reduce(
++                                p, vl, 0.0f,
++                                __riscv_vfredusum_vs_f32m1_f32m1);
++                    }
++                } else {
++                    for (size_t k = 0; k < 8; k++) {
++                        vfloat32m1_t diff =
++                                __riscv_vfsub_vv_f32m1(xi, centroids[k], vl);
++                        vfloat32m1_t sq =
++                                __riscv_vfmul_vv_f32m1(diff, diff, vl);
++                        out[k] = rvv_reduce(
++                                sq, vl, 0.0f,
++                                __riscv_vfredusum_vs_f32m1_f32m1);
++                    }
++                }
++            }
++        }
++    }
++}
++
++template <>
++void fvec_add<SIMDLevel::RISCV_RVV>(
++        size_t d,
++        const float* a,
++        const float* b,
++        float* c) {
++    size_t i = 0;
++    while (i < d) {
++        size_t vl = __riscv_vsetvl_e32m8(d - i);
++        vfloat32m8_t va = __riscv_vle32_v_f32m8(a + i, vl);
++        vfloat32m8_t vb = __riscv_vle32_v_f32m8(b + i, vl);
++        vfloat32m8_t vc = __riscv_vfadd_vv_f32m8(va, vb, vl);
++        __riscv_vse32_v_f32m8(c + i, vc, vl);
++        i += vl;
++    }
++}
++
+ #define DEFINE_VECTOR_DISTANCE_RVV_FALLBACK(metric)                 \
+     template <>                                                     \
+     float VectorDistance<metric, SIMDLevel::RISCV_RVV>::operator()( \

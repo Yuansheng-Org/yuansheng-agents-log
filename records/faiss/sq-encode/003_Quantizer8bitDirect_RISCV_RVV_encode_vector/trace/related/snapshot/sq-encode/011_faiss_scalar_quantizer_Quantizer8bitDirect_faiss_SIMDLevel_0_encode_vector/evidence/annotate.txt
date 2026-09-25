@@ -1,0 +1,28 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (1 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      000000000038970a <faiss::scalar_quantizer::Quantizer8bitDirect<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const>:
+         : 6      faiss::scalar_quantizer::Quantizer8bitDirect<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const:
+    0.00 :   38970a: addi    sp,sp,-16
+    0.00 :   38970c: sd      s0,0(sp)
+    0.00 :   38970e: sd      ra,8(sp)
+    0.00 :   389710: addi    s0,sp,16
+    0.00 :   389712: ld      a5,8(a0)
+    0.00 :   389714: beqz    a5,389732 <faiss::scalar_quantizer::Quantizer8bitDirect<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x28>
+    0.00 :   389716: li      a5,0
+    0.00 :   389718: flw     fa5,0(a1)
+    0.00 :   38971c: add     a4,a2,a5
+    0.00 :   389720: addi    a5,a5,1
+    0.00 :   389722: fcvt.wu.s       a3,fa5,rtz
+    0.00 :   389726: addi    a1,a1,4
+  100.00 :   389728: sb      a3,0(a4)
+    0.00 :   38972c: ld      a4,8(a0)
+    0.00 :   38972e: bltu    a5,a4,389718 <faiss::scalar_quantizer::Quantizer8bitDirect<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0xe>
+    0.00 :   389732: ld      ra,8(sp)
+    0.00 :   389734: ld      s0,0(sp)
+    0.00 :   389736: addi    sp,sp,16
+    0.00 :   389738: ret

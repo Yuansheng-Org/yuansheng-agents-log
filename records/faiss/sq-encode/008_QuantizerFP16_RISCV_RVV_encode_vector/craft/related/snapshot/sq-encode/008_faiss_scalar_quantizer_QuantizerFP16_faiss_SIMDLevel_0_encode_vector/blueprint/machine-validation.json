@@ -1,0 +1,1 @@
+{"candidate_digest":"a1468146de6704f583685fbd8ef97d345888b4bc98a692bf2ddbe18399eebc8f","checks":["blueprint_strict_json","blueprint_v1_schema","blueprint_cross_field_rules","claim_to_evidence_binding","evidence_size_and_sha256"],"format_version":1,"kind":"machine_validation","status":"pass"}

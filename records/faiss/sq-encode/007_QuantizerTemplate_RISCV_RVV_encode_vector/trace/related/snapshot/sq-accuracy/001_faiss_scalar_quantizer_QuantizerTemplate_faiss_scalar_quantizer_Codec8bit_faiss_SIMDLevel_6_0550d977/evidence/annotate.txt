@@ -1,0 +1,52 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (11 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000007ac27e <faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)0, (faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const>:
+         : 6      faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)0, (faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const:
+    0.00 :   7ac27e: addi    sp,sp,-16
+    0.00 :   7ac280: sd      s0,0(sp)
+    9.09 :   7ac282: sd      ra,8(sp)
+    0.00 :   7ac284: addi    s0,sp,16
+    0.00 :   7ac286: ld      a4,8(a0)
+    0.00 :   7ac288: beqz    a4,7ac2ea <faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)0, (faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x6c>
+    0.00 :   7ac28a: fmv.w.x fa3,zero
+         : 80     faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)0>::encode_component(float, unsigned char*, unsigned long):
+    0.00 :   7ac28e: auipc   a4,0xae
+    0.00 :   7ac292: flw     fa1,-1186(a4) # 859dec <typeinfo name for faiss::ProgressiveDimClustering+0x34>
+    0.00 :   7ac296: auipc   a4,0xae
+    0.00 :   7ac29a: flw     fa0,-1158(a4) # 859e10 <typeinfo name for faiss::ProgressiveDimClustering+0x58>
+    0.00 :   7ac29e: li      a5,0
+         : 38     faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)0, (faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const:
+    9.09 :   7ac2a0: flw     fa4,20(a0)
+         : 80     faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)0>::encode_component(float, unsigned char*, unsigned long):
+    0.00 :   7ac2a4: add     a3,a2,a5
+         : 34     faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)0, (faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const:
+    0.00 :   7ac2a8: li      a4,0
+    0.00 :   7ac2aa: feq.s   a6,fa4,fa3
+    0.00 :   7ac2ae: addi    a5,a5,1
+    9.09 :   7ac2b0: bnez    a6,7ac2de <faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)0, (faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x60>
+    0.00 :   7ac2b4: flw     fa5,0(a1)
+    0.00 :   7ac2b8: flw     fa2,16(a0)
+    0.00 :   7ac2bc: fsub.s  fa5,fa5,fa2
+    0.00 :   7ac2c0: fdiv.s  fa5,fa5,fa4
+    0.00 :   7ac2c4: flt.s   a6,fa5,fa3
+    9.09 :   7ac2c8: bnez    a6,7ac2de <faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)0, (faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x60>
+         : 83     faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)0>::encode_component(float, unsigned char*, unsigned long):
+   27.27 :   7ac2cc: flt.s   a4,fa1,fa5
+    0.00 :   7ac2d0: beqz    a4,7ac2d6 <faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)0, (faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x58>
+    0.00 :   7ac2d2: fmv.s   fa5,fa1
+    0.00 :   7ac2d6: fmul.s  fa5,fa5,fa0
+    0.00 :   7ac2da: fcvt.w.s        a4,fa5,rtz
+   18.18 :   7ac2de: sb      a4,0(a3)
+         : 39     faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)0, (faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const:
+   18.18 :   7ac2e2: ld      a4,8(a0)
+    0.00 :   7ac2e4: addi    a1,a1,4
+    0.00 :   7ac2e6: bltu    a5,a4,7ac2a0 <faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec8bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)0, (faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x22>
+    0.00 :   7ac2ea: ld      ra,8(sp)
+    0.00 :   7ac2ec: ld      s0,0(sp)
+    0.00 :   7ac2ee: addi    sp,sp,16
+    0.00 :   7ac2f0: ret

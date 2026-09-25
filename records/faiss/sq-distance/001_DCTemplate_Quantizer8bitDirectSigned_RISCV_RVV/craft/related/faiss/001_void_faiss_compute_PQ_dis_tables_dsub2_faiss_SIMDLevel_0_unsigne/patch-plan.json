@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-faiss-pq-dis-tables-dsub2-001",
+  "blueprintId": "bp-faiss-pq-dis-tables-dsub2-001",
+  "createdAt": "2026-09-09T13:19:23.828Z",
+  "objective": "构建目标 ISA 不含 v 且本函数无 SIMDLevel::RISCV_RVV 特化，运行时 SIMD dispatch 落入标量 NONE 实现，8-wide simd8float32 被展开为逐标量 flw/fmul.s/fsw 循环，向量单元完全未参与热循环。",
+  "changes": [
+    {
+      "filePath": "faiss/utils/simd_impl/distances_simdlib256.h",
+      "action": "modify",
+      "rationale": "构建目标 ISA 不含 v 且本函数无 SIMDLevel::RISCV_RVV 特化，运行时 SIMD dispatch 落入标量 NONE 实现，8-wide simd8float32 被展开为逐标量 flw/fmul.s/fsw 循环，向量单元完全未参与热循环。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "faiss/utils/distances_dispatch.h",
+      "action": "modify",
+      "rationale": "构建目标 ISA 不含 v 且本函数无 SIMDLevel::RISCV_RVV 特化，运行时 SIMD dispatch 落入标量 NONE 实现，8-wide simd8float32 被展开为逐标量 flw/fmul.s/fsw 循环，向量单元完全未参与热循环。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "CMakeLists.txt",
+      "action": "modify",
+      "rationale": "构建目标 ISA 不含 v 且本函数无 SIMDLevel::RISCV_RVV 特化，运行时 SIMD dispatch 落入标量 NONE 实现，8-wide simd8float32 被展开为逐标量 flw/fmul.s/fsw 循环，向量单元完全未参与热循环。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 faiss/utils/simd_impl/distances_simdlib256.h, faiss/utils/distances_dispatch.h, CMakeLists.txt 来解决 blueprint bp-faiss-pq-dis-tables-dsub2-001。"
+}

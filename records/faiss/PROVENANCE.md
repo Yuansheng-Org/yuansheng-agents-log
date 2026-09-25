@@ -174,16 +174,44 @@
 
 ### 2. `yuansheng-agent-debug` 的 `craft/faiss`（20 目录 × 5 文件）
 
-**未纳入**，且**不可作为本 11 条的 craft 证据**：
+**已作为"追踪补充信息"并入记录 001 的 `craft/related/faiss/`**（整块 20 目录，不拆分）。
+见 `sq-distance/001_.../SOURCE.md`。
 
-- 其 20 个 `blueprintId` 全部落在 `sq-distance`(17) / `rcq-search`(2) / `pq-dis-tables-dsub2`(1)，
-  即 `query_to_code` / `fvec_*` / `Clustering` 家族；本 11 条记录的目标是 `encode_vector` / `decode_vector`，
-  **覆盖 0/11**。
-- 20/20 目录的 `patch-plan.json#changes[].filePath` 与该目录自身 `patch-candidate.json#changedFiles`
-  **互相矛盾**（plan 称改 1 个文件、candidate 实改 4 个）。
-- 但 `patch.diff` 与该目录自己的 `gitDiff` **20/20 LF 归一同字节** ⇒ 不是"正文被覆盖"，
-  而是 `patch-plan.json` 本身不可信。
-- 结论：以该目录任一字段作为 craft 证据都会出错，故整棵树不用于本 11 条。
+> **更正**：早前本文件曾断言 `craft/faiss`「对本 11 条记录不可用 / 覆盖 0/11」，
+> 该结论**已被证伪**。实测：（a）20 个目录**与 `trace/faiss` 用例目录名 20/20 精确配对**；
+> （b）`013_DCTemplate_Quantizer8bitDirectSigned_6_SimilarityIP_6_SL_0_query`
+> 与记录 001 **共用同一 `blueprintId` `bp-faiss-sq-distance-013`**（等级 C1）；
+> （c）`patch-plan.json#changes[].filePath` 只列主改文件**是 `records/mxnet` 的既有约定**
+> （抽查 11/12 条 mxnet 记录，plan == 实际触及文件），**不构成矛盾**。
+> **仍然成立**的部分：`craft/faiss` 的 `patch.diff` 与 11 条记录的任何 payload **无一份逐字节相同**（0/11），
+> 且其 17 个 `DCTemplate` 目录的 `patch.diff` LF 归一后**是同一份正文**（`fea87a4b59fa…`）。
+
+## `related/` 补充追踪信息（本次新增）
+
+11 条记录各新增 `related/` 成员目录（**原件拷贝，LF 归一**），
+收纳方向一致但**并非同一条补丁**的上游产物。**这些不是 craft 证据。**
+
+| 记录 | 新增文件 | 补充内容 | 等级 |
+| --- | ---: | --- | --- |
+| 001 | 111 | `craft/related/faiss/`（20 目录 × 5）+ 快照 `sq-distance/013` 的 `blueprint/`(8) + `evidence/`(4) 拆到 craft/trace 两侧 + `SOURCE.md` | C1（+C2/C3） |
+| 002 | 11 | 快照 `sq-encode/008` 的 `blueprint/`(8) + `evidence/`(4) − 与 003 重复部分 + `SOURCE.md` | 同次采集 |
+| 003 | 11 | 快照 `sq-encode/011` 同上 | 同次采集 |
+| 004 | 11 | 快照 `sq-decode/013` 同上 | 同次采集 |
+| 005 | 11 | 快照 `sq-decode/002` 同上 | 同次采集 |
+| 006 | 11 | 快照 `sq-accuracy/012` 同上 | 同次采集 |
+| 007 | 11 | 快照 `sq-accuracy/001` 同上 | 同次采集 |
+| 008 | 11 | 快照 `sq-encode/008` 同上（与 002 同例） | 同次采集 |
+| 009 | 5 | 定向补录 trace `sq-encode/011_Quantizer8bitDirectSigned_SL_0_encode_vector` | T2 |
+| 010 | 5 | 定向补录 trace `sq-decode/014_QuantizerTemplate_Codec4bit_RISCV_RVV_Scaling_SL_0_decode_vector` | T2 |
+| 011 | 10 | 定向补录 trace `rcq-search/012` + `rcq-search/023`（堆/结果集族） | T3 |
+
+**口径（已与用户确认）**：最小必要——
+只补 009/010/011 的 trace 缺口、只并入 8 条记录**自身**的快照用例、`craft/faiss` 整块挂到唯一 C1 命中者（001）。
+未纳入 47 个内核调度/随机数/benchmark 噪声 trace 用例（`schedule`/`spin_`/`RandomGenerator`/`bench_*`/`_omp_fn*` 等），
+也未纳入其余 22 个与 11 条记录无任何关系的快照用例。
+
+等级定义：**C1** 同 `blueprintId`；**C2** 同蓝图命名空间；**C3** 仅共享被改文件；**T2** 同 trace 命名空间 + 同动词；**T3** 同代码族。
+逐条判定见各记录 `SOURCE.md`。
 
 ## 两条记录共用同一 trace / 快照用例
 

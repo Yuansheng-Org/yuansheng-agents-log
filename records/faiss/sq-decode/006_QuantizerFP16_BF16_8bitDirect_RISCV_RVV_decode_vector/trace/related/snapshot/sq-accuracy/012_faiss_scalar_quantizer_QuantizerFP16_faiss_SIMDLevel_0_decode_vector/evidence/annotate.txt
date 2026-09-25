@@ -1,0 +1,59 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (3 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000389622 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const>:
+         : 6      faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+    0.00 :   389622: addi    sp,sp,-16
+    0.00 :   389624: sd      s0,0(sp)
+    0.00 :   389626: sd      ra,8(sp)
+    0.00 :   389628: addi    s0,sp,16
+    0.00 :   38962a: ld      a6,8(a0)
+    0.00 :   38962e: beqz    a6,3896a8 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x86>
+    0.00 :   389632: slli    a6,a6,0x1
+         : 253    faiss::decode_fp16(unsigned short):
+    0.00 :   389634: auipc   a5,0x4d0
+    0.00 :   389638: flw     fa5,2036(a5) # 859e28 <typeinfo name for faiss::ProgressiveDimClustering+0x70>
+    0.00 :   38963c: add     a6,a6,a1
+    0.00 :   38963e: lui     t4,0xfffe
+    0.00 :   389642: lui     a7,0xf800
+    0.00 :   389646: lui     t3,0x80000
+    0.00 :   38964a: lui     t5,0x70000
+    0.00 :   38964e: lui     t6,0x38000
+    0.00 :   389652: lui     t1,0x38800
+    0.00 :   389656: j       389672 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x50>
+    0.00 :   389658: fmv.w.x fa4,a5
+    0.00 :   38965c: fsub.s  fa4,fa4,fa5
+    0.00 :   389660: fmv.x.w a5,fa4
+    0.00 :   389664: sext.w  a5,a5
+    0.00 :   389666: or      a5,a5,a4
+         : 106    faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+    0.00 :   389668: sw      a5,0(a2)
+    0.00 :   38966a: addi    a1,a1,2
+    0.00 :   38966c: addi    a2,a2,4
+    0.00 :   38966e: beq     a6,a1,3896a8 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x86>
+         : 254    faiss::decode_fp16(unsigned short):
+   33.33 :   389672: lhu     a5,0(a1)
+    0.00 :   389676: slliw   a3,a5,0xd
+    0.00 :   38967a: and     a0,a3,a7
+    0.00 :   38967e: slliw   a5,a5,0x10
+    0.00 :   389682: and     a3,a3,t4
+    0.00 :   389686: and     a4,a5,t3
+    0.00 :   38968a: addw    a5,a3,t1
+    0.00 :   38968e: beqz    a0,389658 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x36>
+    0.00 :   389690: addw    a5,a3,t5
+    0.00 :   389694: beq     a0,a7,389666 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x44>
+    0.00 :   389698: addw    a5,a3,t6
+    0.00 :   38969c: or      a5,a5,a4
+         : 106    faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+   33.33 :   38969e: sw      a5,0(a2)
+   33.33 :   3896a0: addi    a1,a1,2
+    0.00 :   3896a2: addi    a2,a2,4
+    0.00 :   3896a4: bne     a6,a1,389672 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x50>
+    0.00 :   3896a8: ld      ra,8(sp)
+    0.00 :   3896aa: ld      s0,0(sp)
+    0.00 :   3896ac: addi    sp,sp,16
+    0.00 :   3896ae: ret

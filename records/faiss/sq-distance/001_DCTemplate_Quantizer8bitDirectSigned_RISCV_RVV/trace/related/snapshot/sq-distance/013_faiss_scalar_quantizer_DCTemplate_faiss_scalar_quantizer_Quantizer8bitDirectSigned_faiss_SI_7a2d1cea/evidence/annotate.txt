@@ -1,0 +1,64 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (2766 samples, percent: local period)
+------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000007aae2e <faiss::scalar_quantizer::DCTemplate<faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)6>, faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)6>, (faiss::SIMDLevel)0>::query_to_code(unsigned char const*) const>:
+         : 6      faiss::scalar_quantizer::DCTemplate<faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)6>, faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)6>, (faiss::SIMDLevel)0>::query_to_code(unsigned char const*) const:
+    0.07 :   7aae2e: addi    sp,sp,-16
+    1.05 :   7aae30: sd      s0,0(sp)
+    0.61 :   7aae32: sd      ra,8(sp)
+    0.11 :   7aae34: addi    s0,sp,16
+         : 72     faiss::scalar_quantizer::DCTemplate<faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)6>, faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)6>, (faiss::SIMDLevel)0>::compute_distance(float const*, unsigned char const*) const:
+    0.00 :   7aae36: ld      a4,40(a0)
+    0.00 :   7aae38: beqz    a4,7aae94 <faiss::scalar_quantizer::DCTemplate<faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)6>, faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)6>, (faiss::SIMDLevel)0>::query_to_code(unsigned char const*) const+0x66>
+    0.00 :   7aae3a: li      a2,-128
+    0.11 :   7aae3e: vsetvli a5,zero,e8,mf4,ta,ma
+         : 44     faiss::scalar_quantizer::DCTemplate<faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)6>, faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)6>, (faiss::SIMDLevel)0>::query_to_code(unsigned char const*) const:
+    0.00 :   7aae42: ld      a3,24(a0)
+    0.00 :   7aae44: vmv.v.x v5,a2
+         : 71     faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)0>::begin():
+    0.04 :   7aae48: fmv.w.x fa0,zero
+    0.00 :   7aae4c: vsetvli a5,a4,e8,mf4,ta,ma
+         : 78     faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)0>::reconstruct_component(unsigned char const*, unsigned long) const:
+    0.00 :   7aae50: vle8.v  v3,(a1)
+         : 378    faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)0>::add_component(float):
+    0.11 :   7aae54: vle32.v v4,(a3)
+    3.18 :   7aae58: vsetivli        zero,1,e32,m1,ta,ma
+    0.14 :   7aae5c: vfmv.s.f        v2,fa0
+         : 84     faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)0>::reconstruct_component(unsigned char const*, unsigned long) const:
+   24.98 :   7aae60: vsetvli zero,a5,e8,mf4,ta,ma
+         : 378    faiss::scalar_quantizer::DCTemplate<faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)6>, faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)6>, (faiss::SIMDLevel)0>::compute_distance(float const*, unsigned char const*) const:
+    0.00 :   7aae64: slli    a2,a5,0x2
+         : 41     faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)0>::reconstruct_component(unsigned char const*, unsigned long) const:
+    0.00 :   7aae68: vadd.vv v3,v3,v5
+    0.00 :   7aae6c: vsetvli zero,zero,e32,m1,ta,ma
+         : 379    faiss::scalar_quantizer::DCTemplate<faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)6>, faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)6>, (faiss::SIMDLevel)0>::compute_distance(float const*, unsigned char const*) const:
+    0.07 :   7aae70: sub     a4,a4,a5
+         : 41     faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)0>::reconstruct_component(unsigned char const*, unsigned long) const:
+    0.00 :   7aae72: vsext.vf4       v1,v3
+         : 378    faiss::scalar_quantizer::DCTemplate<faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)6>, faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)6>, (faiss::SIMDLevel)0>::compute_distance(float const*, unsigned char const*) const:
+    3.29 :   7aae76: add     a1,a1,a5
+    0.00 :   7aae78: add     a3,a3,a2
+         : 41     faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)0>::reconstruct_component(unsigned char const*, unsigned long) const:
+    0.00 :   7aae7a: vfcvt.f.x.v     v1,v1
+         : 378    faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)0>::add_component(float):
+    0.47 :   7aae7e: vfmul.vv        v1,v1,v4
+    0.36 :   7aae82: vfredosum.vs    v2,v1,v2
+   49.64 :   7aae86: vfmv.f.s        fa0,v2
+         : 84     faiss::scalar_quantizer::DCTemplate<faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)6>, faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)6>, (faiss::SIMDLevel)0>::compute_distance(float const*, unsigned char const*) const:
+   14.17 :   7aae8a: bnez    a4,7aae4c <faiss::scalar_quantizer::DCTemplate<faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)6>, faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)6>, (faiss::SIMDLevel)0>::query_to_code(unsigned char const*) const+0x1e>
+         : 41     faiss::scalar_quantizer::DCTemplate<faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)6>, faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)6>, (faiss::SIMDLevel)0>::query_to_code(unsigned char const*) const:
+    0.14 :   7aae8c: ld      ra,8(sp)
+    1.37 :   7aae8e: ld      s0,0(sp)
+    0.07 :   7aae90: addi    sp,sp,16
+    0.00 :   7aae92: ret
+    0.00 :   7aae94: ld      ra,8(sp)
+    0.00 :   7aae96: ld      s0,0(sp)
+         : 76     faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)0>::begin():
+    0.00 :   7aae98: fmv.w.x fa0,zero
+         : 77     faiss::scalar_quantizer::DCTemplate<faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)6>, faiss::scalar_quantizer::SimilarityIP<(faiss::SIMDLevel)6>, (faiss::SIMDLevel)0>::query_to_code(unsigned char const*) const:
+    0.00 :   7aae9c: addi    sp,sp,16
+    0.00 :   7aae9e: ret

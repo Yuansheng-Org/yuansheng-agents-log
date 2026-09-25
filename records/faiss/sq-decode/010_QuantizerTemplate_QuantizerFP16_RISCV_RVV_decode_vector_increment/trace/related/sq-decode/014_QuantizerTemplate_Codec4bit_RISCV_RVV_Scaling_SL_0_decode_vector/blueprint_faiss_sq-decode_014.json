@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-faiss-sq-decode-014",
+  "source": {
+    "agent": "trace",
+    "createdAt": "auto",
+    "software": "faiss",
+    "testcaseIds": [
+      "sq-decode"
+    ],
+    "diagnosisId": "auto",
+    "targetHardware": "SpacemiT K3 / X100 (RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://github.com/facebookresearch/faiss.git",
+    "testBranch": "main",
+    "commitHash": "545550f6a27031c2269881d97237fd6a5bef15df"
+  },
+  "problem": {
+    "summary": "\u6807\u91cf\u91cf\u5316\u5668 decode_vector \u4e3a\u9010\u5143\u7d20\u6807\u91cf\u5185\u6838\uff0c\u672a\u5411\u91cf\u5316\uff1bsq-rvv.cpp \u4e2d RISCV_RVV \u53d8\u4f53\u4ec5\u4e3a opaque tag\uff08\u7ee7\u627f NONE \u5b9e\u73b0\uff09\u3002\u6837\u672c 1\uff08sq-decode \u5fae\u57fa\u51c6\uff09\u6781\u5c11\u3002",
+    "evidence": [
+      "annotate: QuantizerTemplate<Codec4bit<RISCV_RVV>,Scaling,(SL)0>::decode_vector \u5171 1 sample(s), hotline=57e1a0: flw fa3,16(a0) (100.00%)",
+      "perf stat: {tc}"
+    ]
+  },
+  "rootCause": {
+    "summary": "\u6807\u91cf\u91cf\u5316\u5668 decode_vector \u4e3a\u9010\u5143\u7d20\u6807\u91cf\u5185\u6838\uff0c\u672a\u5411\u91cf\u5316\uff1bsq-rvv.cpp \u4e2d RISCV_RVV \u53d8\u4f53\u4ec5\u4e3a opaque tag\uff08\u7ee7\u627f NONE \u5b9e\u73b0\uff09\u3002\u6837\u672c 1\uff08sq-decode \u5fae\u57fa\u51c6\uff09\u6781\u5c11\u3002",
+    "candidateFiles": [
+      "faiss/impl/scalar_quantizer/sq-rvv.cpp"
+    ],
+    "performanceFactors": [
+      "No vectorization"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "low",
+    "mustPreserve": [
+      "\u91cf\u5316\u8868/\u4f4d\u8bed\u4e49\u4e0e packing \u5e03\u5c40"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "sq-decode"
+    ],
+    "regressionCommand": "agent1 patch_regression --case sq-decode"
+  },
+  "diagnosis": {
+    "overallStatus": "false_alarm",
+    "finalStatus": "false_alarm",
+    "overallConfidence": 0.45,
+    "recommendToCraft": "no",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "\u6837\u672c 1 \u6781\u5c11\uff0c\u7edf\u8ba1\u7f6e\u4fe1\u5ea6\u4e0d\u8db3",
+    "reasoning": "\u6807\u91cf\u91cf\u5316\u5668 decode_vector \u4e3a\u9010\u5143\u7d20\u6807\u91cf\u5185\u6838\uff0c\u672a\u5411\u91cf\u5316\uff1bsq-rvv.cpp \u4e2d RISCV_RVV \u53d8\u4f53\u4ec5\u4e3a opaque tag\uff08\u7ee7\u627f NONE \u5b9e\u73b0\uff09\u3002\u6837\u672c 1\uff08sq-decode \u5fae\u57fa\u51c6\uff09\u6781\u5c11\u3002",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "\u6837\u672c\u6781\u5c11\u53ef\u80fd\u4e3a\u91c7\u6837\u566a\u58f0",
+      "\u5fae\u57fa\u51c6\u77ed\u6267\u884c\u7a97\u53e3"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision\uff1b\u6837\u672c <10",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV / sq-decode",
+    "recommendedFirstAction": "\u4e3a SQ decode_vector \u63d0\u4f9b\u771f\u5b9e RVV \u5185\u6838\uff08vle32/vse8 \u6279\u91cf\u5904\u7406\uff09\u3002correctness\uff1a\u4fdd\u6301\u91cf\u5316\u8868/\u4f4d\u8bed\u4e49\u4e0e packing \u5e03\u5c40\uff1b\u56de\u5f52 QT_*_iterations \u4e0e sq-accuracy sql2_recons_error\u3002",
+    "recommendedVerification": "\u91cd\u8dd1 sq-decode\uff0c\u5bf9\u6bd4\u6837\u672c\u5360\u6bd4\u4e0e QT_*_iterations",
+    "metricEvidence": [
+      {
+        "metric": "sample_count",
+        "rv": 1,
+        "anomalyNote": "1\u20136 sample \u7ea7\u522b"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "QuantizerTemplate<Codec4bit<RISCV_RVV>,Scaling,(SL)0>::decode_vector",
+        "fileModule": "faiss/impl/scalar_quantizer/",
+        "rvvPattern": "No vectorization",
+        "patternConfidence": "LOW",
+        "benefitUpperbound": 0.0417,
+        "note": "\u6807\u91cf\u91cf\u5316\u5668 decode_vector \u4e3a\u9010\u5143\u7d20\u6807\u91cf\u5185\u6838\uff0c\u672a\u5411\u91cf\u5316\uff1bsq-rvv.cpp \u4e2d RISCV_RVV \u53d8\u4f53\u4ec5\u4e3a opaque tag\uff08\u7ee7\u627f NONE"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "faiss/impl/scalar_quantizer/sq-rvv.cpp",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/22179; https://github.com/opencv/opencv/pull/22520; https://github.com/opencv/opencv/pull/23980; https://github.com/opencv/opencv/pull/24058; https://github.com/opencv/opencv/pull/24132; https://github.com/opencv/opencv/pull/24166; https://github.com/opencv/opencv/pull/24301; https://github.com/opencv/opencv/pull/24325; https://github.com/opencv/opencv/pull/27160; https://github.com/opencv/opencv/pull/27119; https://github.com/opencv/opencv/pull/27097; https://github.com/opencv/opencv/pull/27007; https://github.com/opencv/opencv/pull/26958; https://github.com/opencv/opencv/pull/26865; https://github.com/opencv/opencv/commit/b902a8e792e1702b40f19dbd48dff0bfdca8b36d; https://github.com/opencv/opencv/commit/2c16f3b7d2b28f6cac444046b8f95b40d9266a6a; https://github.com/opencv/opencv/commit/e06502a254f79f9d3184de2803d087c6914b7706; https://github.com/opencv/opencv/commit/a2d784b6f53aa1fdfde21ab8e3787a93b59af24f; https://github.com/opencv/opencv/commit/83104bed32093ff0c5c935e8920c72b6b74ae07a",
+      "evidenceExplanation": "\u6807\u91cf\u91cf\u5316\u5668 decode_vector \u4e3a\u9010\u5143\u7d20\u6807\u91cf\u5185\u6838\uff0c\u672a\u5411\u91cf\u5316\uff1bsq-rvv.cpp \u4e2d RISCV_RVV \u53d8\u4f53\u4ec5\u4e3a opaque tag\uff08\u7ee7\u627f NONE \u5b9e\u73b0\uff09\u3002\u6837\u672c 1\uff08sq-decode \u5fae\u57fa\u51c6\uff09\u6781\u5c11\u3002"
+    }
+  }
+}

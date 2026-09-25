@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-faiss-rcq-search-008",
+  "blueprintId": "bp-faiss-rcq-search-008",
+  "createdAt": "2026-09-09T13:24:01.109Z",
+  "objective": "构建含 v（distances_rvv.cpp 生效）但 fvec_add 无 SIMDLevel::RISCV_RVV 特化，且 with_simd_level_256bit dispatch mask（simd_dispatch.h:3",
+  "changes": [
+    {
+      "filePath": "faiss/utils/simd_impl/distances_simdlib256.h",
+      "action": "modify",
+      "rationale": "构建含 v（distances_rvv.cpp 生效）但 fvec_add 无 SIMDLevel::RISCV_RVV 特化，且 with_simd_level_256bit dispatch mask（simd_dispatch.h:3",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "faiss/utils/distances_dispatch.h",
+      "action": "modify",
+      "rationale": "构建含 v（distances_rvv.cpp 生效）但 fvec_add 无 SIMDLevel::RISCV_RVV 特化，且 with_simd_level_256bit dispatch mask（simd_dispatch.h:3",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "faiss/utils/distances.cpp",
+      "action": "modify",
+      "rationale": "构建含 v（distances_rvv.cpp 生效）但 fvec_add 无 SIMDLevel::RISCV_RVV 特化，且 with_simd_level_256bit dispatch mask（simd_dispatch.h:3",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 faiss/utils/simd_impl/distances_simdlib256.h, faiss/utils/distances_dispatch.h, faiss/utils/distances.cpp 来解决 blueprint bp-faiss-rcq-search-008。"
+}

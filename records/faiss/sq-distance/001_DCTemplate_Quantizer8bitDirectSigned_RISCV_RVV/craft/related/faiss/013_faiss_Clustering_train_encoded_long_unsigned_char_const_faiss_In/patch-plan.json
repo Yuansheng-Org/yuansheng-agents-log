@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-faiss-rcq-search-013",
+  "blueprintId": "bp-faiss-rcq-search-013",
+  "createdAt": "2026-09-09T13:26:30.849Z",
+  "objective": "NaN 校验循环为逐元素标量处理，且 std::isfinite 的 lowering 在每个元素上执行 frflags/fsflags CSR 读写对（编译器为保留 FP exception flag 语义围绕 fle.s 生成）。FCS",
+  "changes": [
+    {
+      "filePath": "faiss/Clustering.cpp",
+      "action": "modify",
+      "rationale": "NaN 校验循环为逐元素标量处理，且 std::isfinite 的 lowering 在每个元素上执行 frflags/fsflags CSR 读写对（编译器为保留 FP exception flag 语义围绕 fle.s 生成）。FCS",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 faiss/Clustering.cpp 来解决 blueprint bp-faiss-rcq-search-013。"
+}

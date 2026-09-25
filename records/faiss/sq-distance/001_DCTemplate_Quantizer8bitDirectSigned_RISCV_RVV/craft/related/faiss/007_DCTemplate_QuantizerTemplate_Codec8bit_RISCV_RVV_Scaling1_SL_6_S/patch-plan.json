@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-faiss-sq-distance-007",
+  "blueprintId": "bp-faiss-sq-distance-007",
+  "createdAt": "2026-09-09T13:34:04.579Z",
+  "objective": "SQ 距离内核 query_to_code 已 RVV 向量化但 LMUL 选型欠佳：vsetvli e32,m1（VLEN=256 下仅 8 lane/迭代）且每迭代执行一次 vfredosum.vs 将累加器归约回标量再经 vsetiv",
+  "changes": [
+    {
+      "filePath": "faiss/impl/scalar_quantizer/sq-rvv.cpp",
+      "action": "modify",
+      "rationale": "SQ 距离内核 query_to_code 已 RVV 向量化但 LMUL 选型欠佳：vsetvli e32,m1（VLEN=256 下仅 8 lane/迭代）且每迭代执行一次 vfredosum.vs 将累加器归约回标量再经 vsetiv",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 faiss/impl/scalar_quantizer/sq-rvv.cpp 来解决 blueprint bp-faiss-sq-distance-007。"
+}

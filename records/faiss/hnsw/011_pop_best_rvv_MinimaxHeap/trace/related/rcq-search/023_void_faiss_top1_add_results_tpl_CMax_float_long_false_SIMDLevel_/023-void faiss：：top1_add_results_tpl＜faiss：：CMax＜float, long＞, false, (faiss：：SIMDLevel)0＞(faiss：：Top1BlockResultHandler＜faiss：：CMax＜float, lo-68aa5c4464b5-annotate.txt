@@ -1,0 +1,75 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (172 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      000000000030a00a <void faiss::top1_add_results_tpl<faiss::CMax<float, long>, false, (faiss::SIMDLevel)0>(faiss::Top1BlockResultHandler<faiss::CMax<float, long>, false>*, unsigned long, unsigned long, faiss::CMax<float, long>::T const*)>:
+         : 6      void faiss::top1_add_results_tpl<faiss::CMax<float, long>, false, (faiss::SIMDLevel)0>(faiss::Top1BlockResultHandler<faiss::CMax<float, long>, false>*, unsigned long, unsigned long, faiss::CMax<float, long>::T const*):
+         :
+         : 135    // Type aliases so the comma in CMax<float, int64_t> doesn't split macro args.
+         : 136    using CMaxFI = CMax<float, int64_t>;
+         : 137    using CMinFI = CMin<float, int64_t>;
+         :
+         : 139    INSTANTIATE_NONE(CMaxFI, false)
+    0.00 :   30a00a: addi    sp,sp,-16
+    0.00 :   30a00c: sd      s0,0(sp)
+    0.00 :   30a00e: sd      ra,8(sp)
+    0.00 :   30a010: addi    s0,sp,16
+         : 46     for (size_t qi = self->i0; qi < self->i1; qi++) {
+    0.00 :   30a012: ld      t1,24(a0)
+         : 48     top1_add_results_none<faiss::CMax<float, long int>, false>():
+    0.00 :   30a016: ld      a5,32(a0)
+    0.00 :   30a018: bgeu    t1,a5,30a082 <void faiss::top1_add_results_tpl<faiss::CMax<float, long>, false, (faiss::SIMDLevel)0>(faiss::Top1BlockResultHandler<faiss::CMax<float, long>, false>*, unsigned long, unsigned long, faiss::CMax<float, long>::T const*)+0x78>
+    0.00 :   30a01c: ld      t4,40(a0)
+    0.00 :   30a020: ld      t3,48(a0)
+    0.00 :   30a024: slli    a5,t1,0x3
+    0.00 :   30a028: slli    a4,t1,0x2
+    0.00 :   30a02c: add     t3,t3,a5
+    0.00 :   30a02e: add     t4,t4,a4
+         : 47     const T* dis_tab_i = dis_tab_in + (j1 - j0) * (qi - self->i0) - j0;
+    0.00 :   30a030: sub     t5,a2,a1
+    0.00 :   30a034: mv      a5,t1
+    0.00 :   30a036: sub     a5,t1,a5
+    0.00 :   30a03a: mul     a5,a5,t5
+         : 51     T best_dis = self->dis_tab[qi];
+    0.00 :   30a03e: flw     fa4,0(t4)
+         : 52     TI best_idx = self->ids_tab[qi];
+    0.00 :   30a042: ld      a7,0(t3)
+         : 54     for (size_t j = j0; j < j1; j++) {
+    0.00 :   30a046: bgeu    a1,a2,30a06a <void faiss::top1_add_results_tpl<faiss::CMax<float, long>, false, (faiss::SIMDLevel)0>(faiss::Top1BlockResultHandler<faiss::CMax<float, long>, false>*, unsigned long, unsigned long, faiss::CMax<float, long>::T const*)+0x60>
+    0.58 :   30a04a: slli    a5,a5,0x2
+    0.00 :   30a04c: add     a5,a5,a3
+    0.00 :   30a04e: mv      a4,a1
+         : 55     if (C::cmp(best_dis, dis_tab_i[j])) {
+    8.14 :   30a050: flw     fa5,0(a5)
+    9.88 :   30a054: flt.s   a6,fa5,fa4
+   23.84 :   30a058: beqz    a6,30a062 <void faiss::top1_add_results_tpl<faiss::CMax<float, long>, false, (faiss::SIMDLevel)0>(faiss::Top1BlockResultHandler<faiss::CMax<float, long>, false>*, unsigned long, unsigned long, faiss::CMax<float, long>::T const*)+0x58>
+         : 56     best_dis = dis_tab_i[j];
+    1.74 :   30a05c: fmv.s   fa4,fa5
+         : 57     best_idx = (TI)j;
+    5.81 :   30a060: mv      a7,a4
+         : 54     for (size_t j = j0; j < j1; j++) {
+   25.00 :   30a062: addi    a4,a4,1
+    0.00 :   30a064: addi    a5,a5,4
+   22.67 :   30a066: bne     a2,a4,30a050 <void faiss::top1_add_results_tpl<faiss::CMax<float, long>, false, (faiss::SIMDLevel)0>(faiss::Top1BlockResultHandler<faiss::CMax<float, long>, false>*, unsigned long, unsigned long, faiss::CMax<float, long>::T const*)+0x46>
+         : 61     self->dis_tab[qi] = best_dis;
+    0.00 :   30a06a: fsw     fa4,0(t4)
+         : 62     self->ids_tab[qi] = best_idx;
+    1.74 :   30a06e: sd      a7,0(t3)
+         : 46     for (size_t qi = self->i0; qi < self->i1; qi++) {
+    0.58 :   30a072: ld      a5,32(a0)
+    0.00 :   30a074: addi    t1,t1,1
+    0.00 :   30a076: addi    t4,t4,4
+    0.00 :   30a078: addi    t3,t3,8
+    0.00 :   30a07a: bgeu    t1,a5,30a082 <void faiss::top1_add_results_tpl<faiss::CMax<float, long>, false, (faiss::SIMDLevel)0>(faiss::Top1BlockResultHandler<faiss::CMax<float, long>, false>*, unsigned long, unsigned long, faiss::CMax<float, long>::T const*)+0x78>
+         : 47     const T* dis_tab_i = dis_tab_in + (j1 - j0) * (qi - self->i0) - j0;
+    0.00 :   30a07e: ld      a5,24(a0)
+    0.00 :   30a080: j       30a036 <void faiss::top1_add_results_tpl<faiss::CMax<float, long>, false, (faiss::SIMDLevel)0>(faiss::Top1BlockResultHandler<faiss::CMax<float, long>, false>*, unsigned long, unsigned long, faiss::CMax<float, long>::T const*)+0x2c>
+         : 50     void faiss::top1_add_results_tpl<faiss::CMax<float, long>, false, (faiss::SIMDLevel)0>(faiss::Top1BlockResultHandler<faiss::CMax<float, long>, false>*, unsigned long, unsigned long, faiss::CMax<float, long>::T const*):
+         : 134    INSTANTIATE_NONE(CMaxFI, false)
+    0.00 :   30a082: ld      ra,8(sp)
+    0.00 :   30a084: ld      s0,0(sp)
+    0.00 :   30a086: addi    sp,sp,16
+    0.00 :   30a088: ret

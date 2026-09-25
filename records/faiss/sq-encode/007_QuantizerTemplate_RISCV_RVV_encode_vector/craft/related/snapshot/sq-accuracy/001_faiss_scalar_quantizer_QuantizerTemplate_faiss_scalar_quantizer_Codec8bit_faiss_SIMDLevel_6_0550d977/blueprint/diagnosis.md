@@ -1,0 +1,26 @@
+# Diagnosis
+
+Software: faiss
+Testcase: sq-accuracy
+Function: faiss\_scalar\_quantizer\_QuantizerTemplate\_faiss\_scalar\_quantizer\_Codec8bit\_faiss\_SIMDLevel\_6\_0550d977
+Verdict: `confirmed`
+
+Summary: QuantizerTemplate\<Codec8bit\<RISCV\_RVV\>, QuantizerTemplateScaling::UNIFORM, SIMDLevel::NONE\>::encode\_vector runs a scalar per-component loop (disasm 0x7ac2a0-0x7ac2e6: flw x\[i\], fsub.s vmin, fdiv.s vdiff, two-sided clamp via flt.s+two bnez, fmul.s by 255, fcvt.w.s rtz, sb) with zero RVV instructions, although libfaiss.so is built with v1p0/zvl128b; the RISCV\_RVV QuantizerTemplate in sq-rvv.cpp is a marker type that inherits the scalar NONE encode\_vector, so QT\_8bit uniform encoding never enters a vector path even though the operation is lane-independent contiguous elementwise arithmetic (7 of 11 annotate samples fall inside the loop body)
+
+## Findings
+- `confirmed` (root cause, high) QuantizerTemplate\<Codec8bit\<RISCV\_RVV\>, QuantizerTemplateScaling::UNIFORM, SIMDLevel::NONE\>::encode\_vector runs a scalar per-component loop (disasm 0x7ac2a0-0x7ac2e6: flw x\[i\], fsub.s vmin, fdiv.s vdiff, two-sided clamp via flt.s+two bnez, fmul.s by 255, fcvt.w.s rtz, sb) with zero RVV instructions, although libfaiss.so is built with v1p0/zvl128b; the RISCV\_RVV QuantizerTemplate in sq-rvv.cpp is a marker type that inherits the scalar NONE encode\_vector, so QT\_8bit uniform encoding never enters a vector path even though the operation is lane-independent contiguous elementwise arithmetic (7 of 11 annotate samples fall inside the loop body)
+  Reasoning: Direct disassembly of the target symbol shows only scalar F loads/computes/branches and a byte store; hotspots 0x7ac2cc flt.s 27.27%, 0x7ac2de sb 18.18%, 0x7ac2e2 ld 18.18% sit in the loop body. quantizers.h:66-90 defines the NONE encode\_vector loop xi=(x\[i\]-vmin)/vdiff clamped to \[0,1\] then (int)(255\*xi); sq-rvv.cpp:44-67 declares Codec8bit/QuantizerTemplate\<..RISCV\_RVV\> as empty markers inheriting NONE, so no RVV encode exists. ELF attributes (ed49d3...) show the library was compiled with v1p0 and zvl128b, so the ISA gate is not the reason for the scalar code.
+- `probable` (contributing factor, medium) As long as the scalar codegen survives, the encode loop emits per-iteration overhead beyond the arithmetic: this-\>d is reloaded each iteration (ld a4,8(a0) at 0x7ac2e2), this-\>vdiff is reloaded (flw fa4,20(a0) at 0x7ac2a0) because the uint8\_t\* store to \`code\` forces a conservative aliasing assumption, and the byte-store address is recomputed as base+i (add a3,a2,a5) against a reloaded limit instead of pointer increments with a precomputed end pointer.
+  Reasoning: The disassembly shows the loop reloads both scalar members from \`this\` on every trip and recomputes the store address, while the float input pointer advances by addi a1,a1,4. quantizers.h encodes member access inside the loop body. These integer/load instructions are loop-invariant work that vectorization subsumes but that a scalar-only repair could remove.
+
+## Gaps
+- `evidence_gap_confidence`: Hardware ISA exposure (RVV v availability, actual VLEN via vlenb, core model) is not verified on the run host; only the build ISA from the libfaiss.so ELF attribute string (v1p0, zvl128b, zve64d) is known.
+- `baseline_gap_measurement`: The target-function annotate contains only 11 cpu-clock samples, so hotspot percentages (e.g., 27.27% on one flt.s) are statistically noisy.
+- `source_context_gap_analysis`: The sq-accuracy benchmark workload (dimension d, vector count, and which call sites drive encode\_vector for QT\_8bit) was not inspected; the faiss/tests source lookup returned source\_missing, and only benchmark CSV metrics (benchmark\_QT\_8bit\_\* values) are available.
+- `baseline_gap_measurement`: No vectorized encode implementation exists to measure, so the speedup benefit of the RVV encode path is a forecast; impact confidence is consequently capped below measured levels.
+- `source_context_gap_missing_source`: Local source evidence is unavailable at faiss/tests.
+- `source_context_gap_missing_source`: Local source evidence is unavailable at faiss/scalar\_quantizer.\*.
+
+## Actions
+- `conditional`: Implement a real RVV encode\_vector for the QT\_8bit (Codec8bit\<RISCV\_RVV\>) QuantizerTemplate in sq-rvv.cpp instead of inheriting the scalar NONE base: precompute scalar invariants (vmin, vdiff, and 255/vdiff reciprocal, plus the vdiff==0 shortcut) before the loop, then strip-mine over d with dynamic \_\_riscv\_vsetvl, vle32 unit-stride loads of x, vfsub.vf vmin, vfmul.vf (or vfdiv.vv) scale, two-sided clamp via vfmin/vfmax (or compare+mask-merge to match the reference's NaN/signed-zero behavior), vfcvt.rtz.xu.f.v and vfncvt narrowing to uint8, then vse8 stores; keep the existing scalar implementation for non-RVV builds and for a short-input tail.
+- `conditional`: For the scalar NONE encode\_vector (the path currently used by the RISCV\_RVV fallback), copy this-\>d, this-\>vmin, and this-\>vdiff into const locals before the loop and express the traversal with pointer increments (code pointer += 1, x pointer += 1) plus a precomputed end pointer (code\_end = code + d), so the per-iteration ld a4,8(a0), flw fa4,20(a0), and add a3,a2,a5 no longer execute; if the RVV encode lands, fold this in and delete the scalar-only fix.

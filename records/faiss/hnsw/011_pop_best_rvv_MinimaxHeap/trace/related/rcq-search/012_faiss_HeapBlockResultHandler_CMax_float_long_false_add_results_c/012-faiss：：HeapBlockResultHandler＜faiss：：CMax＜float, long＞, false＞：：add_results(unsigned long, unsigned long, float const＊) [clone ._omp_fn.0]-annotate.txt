@@ -1,0 +1,280 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (766 samples, percent: local period)
+-----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000510cf0 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]>:
+         : 6      faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]:
+         : 354    }
+         : 355    }
+         :
+         : 357    /// add results for query i0..i1 and j0..j1
+         : 358    void add_results(size_t j0, size_t j1, const T* dis_in) final {
+         : 359    #pragma omp parallel for
+    0.00 :   510cf0: addi    sp,sp,-112
+    0.13 :   510cf2: sd      ra,104(sp)
+    0.00 :   510cf4: sd      s0,96(sp)
+    0.00 :   510cf6: sd      s1,88(sp)
+    0.00 :   510cf8: sd      s2,80(sp)
+    0.00 :   510cfa: sd      s3,72(sp)
+    0.00 :   510cfc: sd      s4,64(sp)
+    0.00 :   510cfe: addi    s0,sp,112
+    0.00 :   510d00: ld      s2,0(a0)
+    0.00 :   510d04: mv      s3,a0
+    0.00 :   510d06: auipc   ra,0xffc63
+    0.00 :   510d0a: jalr    -1510(ra) # 173720 <omp_get_num_threads@plt>
+    0.00 :   510d0e: mv      s4,a0
+    0.00 :   510d10: auipc   ra,0xffc62
+    0.00 :   510d14: jalr    160(ra) # 172db0 <omp_get_thread_num@plt>
+         : 355    for (int64_t i = static_cast<int64_t>(i0); i < static_cast<int64_t>(i1);
+    0.00 :   510d18: ld      s1,24(s2)
+    0.00 :   510d1c: ld      t3,32(s2)
+    0.00 :   510d20: mv      a5,a0
+    0.00 :   510d22: sub     t3,t3,s1
+    0.00 :   510d26: rem     a4,t3,s4
+    0.00 :   510d2a: div     t3,t3,s4
+    0.00 :   510d2e: blt     a0,a4,510ec6 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x1d6>
+    0.00 :   510d32: mul     a5,t3,a5
+    0.00 :   510d36: add     a5,a5,a4
+    0.00 :   510d38: add     t3,t3,a5
+    0.00 :   510d3a: bge     a5,t3,510ea4 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x1b4>
+         : 354    #pragma omp parallel for
+    0.00 :   510d3e: ld      t4,16(s3)
+    0.00 :   510d42: ld      t5,8(s3)
+    0.00 :   510d46: sd      s5,56(sp)
+    0.00 :   510d48: ld      s5,24(s3)
+         : 357    i++) {
+         : 358    T* heap_dis = this->dis_tab + i * k;
+    0.00 :   510d4c: ld      t2,40(s2)
+         : 358    TI* heap_ids = this->ids_tab + i * k;
+    0.00 :   510d50: ld      s4,48(s2)
+    0.00 :   510d54: sd      s6,48(sp)
+    0.00 :   510d56: sd      s7,40(sp)
+    0.00 :   510d58: sd      s8,32(sp)
+    0.00 :   510d5a: sd      s9,24(sp)
+    0.00 :   510d5c: sd      s10,16(sp)
+    0.00 :   510d5e: sd      s11,8(sp)
+    0.00 :   510d60: add     a0,s1,a5
+    0.00 :   510d64: add     t3,t3,s1
+         : 360    const T* dis_tab_i =
+         : 361    dis_in + (j1 - j0) * (i - static_cast<int64_t>(i0)) - j0;
+    0.00 :   510d66: sub     s6,t4,t5
+         : 363    void faiss::heap_replace_top<faiss::CMax<float, long> >(unsigned long, faiss::CMax<float, long>::T*, faiss::CMax<float, long>::TI*, faiss::CMax<float, long>::T, faiss::CMax<float, long>::TI):
+         : 125    bh_ids--;
+         : 126    size_t i = 1, i1, i2;
+         : 127    while (1) {
+         : 128    i1 = i << 1;
+         : 129    i2 = i1 + 1;
+         : 130    if (i1 > k) {
+    0.00 :   510d6a: mv      a6,s5
+    0.00 :   510d6c: mv      a2,s1
+         : 133    faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]:
+         : 357    T* heap_dis = this->dis_tab + i * k;
+    0.00 :   510d6e: ld      s7,56(s2)
+         : 360    dis_in + (j1 - j0) * (i - static_cast<int64_t>(i0)) - j0;
+    0.39 :   510d72: sub     a2,a0,a2
+    0.00 :   510d76: mul     a2,a2,s6
+         : 362    T thresh = heap_dis[0];
+         : 363    for (size_t j = j0; j < j1; j++) {
+    0.00 :   510d7a: mv      a1,t5
+         : 357    T* heap_dis = this->dis_tab + i * k;
+    0.00 :   510d7c: mul     s7,a0,s7
+    0.00 :   510d80: slli    a2,a2,0x2
+    0.00 :   510d82: add     a2,a2,a6
+    0.00 :   510d84: slli    s5,s7,0x2
+         : 358    TI* heap_ids = this->ids_tab + i * k;
+    0.00 :   510d88: slli    s7,s7,0x3
+         : 357    T* heap_dis = this->dis_tab + i * k;
+    0.00 :   510d8a: add     s5,s5,t2
+         : 359    void faiss::heap_replace_top<faiss::CMax<float, long> >(unsigned long, faiss::CMax<float, long>::T*, faiss::CMax<float, long>::TI*, faiss::CMax<float, long>::T, faiss::CMax<float, long>::TI):
+         : 120    bh_ids--;
+    0.00 :   510d8c: addi    a7,s7,-8
+         : 122    faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]:
+         : 361    T thresh = heap_dis[0];
+    0.13 :   510d90: flw     fa4,0(s5)
+         : 363    void faiss::heap_replace_top<faiss::CMax<float, long> >(unsigned long, faiss::CMax<float, long>::T*, faiss::CMax<float, long>::TI*, faiss::CMax<float, long>::T, faiss::CMax<float, long>::TI):
+         : 119    bh_val--; /* Use 1-based indexing for easier node->child translation */
+    0.26 :   510d94: addi    t1,s5,-4
+         : 120    bh_ids--;
+    0.00 :   510d98: add     a7,a7,s4
+    0.00 :   510d9a: mv      s10,s7
+         : 123    faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]:
+         : 362    for (size_t j = j0; j < j1; j++) {
+    0.00 :   510d9c: bltu    t5,t4,510daa <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0xba>
+    0.00 :   510da0: j       510e48 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x158>
+    6.01 :   510da2: addi    a1,a1,1
+    0.00 :   510da4: addi    a2,a2,4
+   14.10 :   510da6: beq     t4,a1,510e48 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x158>
+         : 363    T dis = dis_tab_i[j];
+    2.74 :   510daa: flw     fa5,0(a2)
+         : 364    if (C::cmp(thresh, dis)) {
+   65.14 :   510dae: flt.s   a5,fa5,fa4
+    7.18 :   510db2: beqz    a5,510da2 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0xb2>
+         : 365    heap_replace_top<C>(k, heap_dis, heap_ids, dis, j);
+    0.00 :   510db4: ld      s1,56(s2)
+         : 367    void faiss::heap_replace_top<faiss::CMax<float, long> >(unsigned long, faiss::CMax<float, long>::T*, faiss::CMax<float, long>::TI*, faiss::CMax<float, long>::T, faiss::CMax<float, long>::TI):
+         : 125    if (i1 > k) {
+    0.26 :   510db8: li      a5,1
+    0.00 :   510dba: bgeu    a5,s1,510eb4 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x1c4>
+         : 124    i2 = i1 + 1;
+    0.00 :   510dbe: li      s7,3
+         : 123    i1 = i << 1;
+    0.00 :   510dc0: li      t6,2
+         :
+         : 134    // Note that C::cmp2() is a bool function answering
+         : 135    // `(a1 > b1) || ((a1 == b1) && (a2 > b2))` for max
+         : 136    // heap and same with the `<` sign for min heap.
+         : 137    if ((i2 == k + 1) ||
+         : 138    C::cmp2(bh_val[i1], bh_val[i2], bh_ids[i1], bh_ids[i2])) {
+    0.00 :   510dc2: slli    a3,t6,0x2
+    0.00 :   510dc6: slli    a4,t6,0x3
+    0.00 :   510dca: add     a3,a3,t1
+    0.00 :   510dcc: add     a4,a4,a7
+    0.13 :   510dce: flw     fa4,0(a3)
+    0.26 :   510dd2: ld      s8,0(a4)
+         : 132    if ((i2 == k + 1) ||
+    0.00 :   510dd6: beq     s1,t6,510e54 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x164>
+         : 133    C::cmp2(bh_val[i1], bh_val[i2], bh_ids[i1], bh_ids[i2])) {
+    0.00 :   510dda: slli    t0,s7,0x2
+    0.00 :   510dde: add     t0,t0,t1
+    0.00 :   510de0: flw     fa3,0(t0)
+         : 137    faiss::CMax<float, long>::cmp2(float, float, long, long):
+         : 75     return a > b;
+         : 76     }
+         : 77     // Similar to cmp(), but also breaks ties
+         : 78     // by comparing the second pair of arguments.
+         : 79     inline static bool cmp2(T a1, T b1, TI a2, TI b2) {
+         : 80     return (a1 > b1) || ((a1 == b1) && (a2 > b2));
+    0.52 :   510de4: flt.s   s9,fa3,fa4
+    0.13 :   510de8: bnez    s9,510e54 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x164>
+    0.13 :   510dec: feq.s   s3,fa3,fa4
+         : 76     void faiss::heap_replace_top<faiss::CMax<float, long> >(unsigned long, faiss::CMax<float, long>::T*, faiss::CMax<float, long>::TI*, faiss::CMax<float, long>::T, faiss::CMax<float, long>::TI):
+    0.52 :   510df0: slli    s9,s7,0x3
+    0.00 :   510df4: add     s9,s9,a7
+    0.13 :   510df6: ld      s11,0(s9)
+         : 136    faiss::CMax<float, long>::cmp2(float, float, long, long):
+    0.13 :   510dfa: beqz    s3,510e02 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x112>
+    0.00 :   510dfe: blt     s11,s8,510e54 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x164>
+    0.00 :   510e02: flt.s   a4,fa3,fa5
+    0.00 :   510e06: bnez    a4,510e7e <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x18e>
+    0.00 :   510e08: feq.s   a4,fa5,fa3
+    0.00 :   510e0c: beqz    a4,510e12 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x122>
+    0.00 :   510e0e: blt     s11,a1,510e7e <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x18e>
+         : 76     void faiss::heap_replace_top<faiss::CMax<float, long> >(unsigned long, faiss::CMax<float, long>::T*, faiss::CMax<float, long>::TI*, faiss::CMax<float, long>::T, faiss::CMax<float, long>::TI):
+         : 144    i = i1;
+         : 145    } else {
+         : 146    if (C::cmp2(val, bh_val[i2], id, bh_ids[i2])) {
+         : 147    break;
+         : 148    }
+         : 149    bh_val[i] = bh_val[i2];
+    0.00 :   510e12: slli    a4,a5,0x2
+    0.00 :   510e16: add     a4,a4,t1
+         : 145    bh_ids[i] = bh_ids[i2];
+    0.00 :   510e18: slli    a5,a5,0x3
+         : 144    bh_val[i] = bh_val[i2];
+    0.00 :   510e1a: fsw     fa3,0(a4)
+         : 145    bh_ids[i] = bh_ids[i2];
+    0.26 :   510e1e: add     a5,a5,a7
+    0.00 :   510e20: sd      s11,0(a5)
+    0.00 :   510e24: mv      a4,s9
+    0.00 :   510e26: mv      a3,t0
+         : 146    i = i2;
+    0.00 :   510e28: mv      a5,s7
+         : 123    i1 = i << 1;
+    0.00 :   510e2a: slli    t6,a5,0x1
+         : 124    i2 = i1 + 1;
+    0.00 :   510e2e: addi    s7,t6,1
+         : 125    if (i1 > k) {
+    0.00 :   510e32: bgeu    s1,t6,510dc2 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0xd2>
+         : 149    }
+         : 150    }
+         : 151    bh_val[i] = val;
+    0.00 :   510e36: fsw     fa5,0(a3)
+         : 153    faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]:
+         : 366    thresh = heap_dis[0];
+    0.00 :   510e3a: flw     fa4,0(s5)
+         : 368    void faiss::heap_replace_top<faiss::CMax<float, long> >(unsigned long, faiss::CMax<float, long>::T*, faiss::CMax<float, long>::TI*, faiss::CMax<float, long>::T, faiss::CMax<float, long>::TI):
+         : 150    bh_ids[i] = id;
+    0.13 :   510e3e: sd      a1,0(a4)
+         : 152    faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]:
+         : 362    for (size_t j = j0; j < j1; j++) {
+    0.00 :   510e40: addi    a1,a1,1
+    0.00 :   510e42: addi    a2,a2,4
+    0.00 :   510e44: bne     t4,a1,510daa <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0xba>
+    0.00 :   510e48: addi    a0,a0,1
+    0.13 :   510e4a: bge     a0,t3,510e96 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x1a6>
+         : 360    dis_in + (j1 - j0) * (i - static_cast<int64_t>(i0)) - j0;
+    0.13 :   510e4e: ld      a2,24(s2)
+    0.00 :   510e52: j       510d6e <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x7e>
+         : 363    faiss::CMax<float, long>::cmp2(float, float, long, long):
+    0.26 :   510e54: flt.s   t0,fa4,fa5
+    0.00 :   510e58: bnez    t0,510e7e <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x18e>
+    0.00 :   510e5c: feq.s   t0,fa5,fa4
+    0.13 :   510e60: beqz    t0,510e68 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x178>
+    0.00 :   510e64: blt     s8,a1,510e7e <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x18e>
+         : 76     void faiss::heap_replace_top<faiss::CMax<float, long> >(unsigned long, faiss::CMax<float, long>::T*, faiss::CMax<float, long>::TI*, faiss::CMax<float, long>::T, faiss::CMax<float, long>::TI):
+         : 137    bh_val[i] = bh_val[i1];
+    0.00 :   510e68: slli    t0,a5,0x2
+    0.00 :   510e6c: add     t0,t0,t1
+         : 138    bh_ids[i] = bh_ids[i1];
+    0.00 :   510e6e: slli    a5,a5,0x3
+    0.00 :   510e70: add     a5,a5,a7
+         : 137    bh_val[i] = bh_val[i1];
+    0.00 :   510e72: fsw     fa4,0(t0)
+         : 138    bh_ids[i] = bh_ids[i1];
+    0.00 :   510e76: sd      s8,0(a5)
+         : 139    i = i1;
+    0.00 :   510e7a: mv      a5,t6
+    0.00 :   510e7c: j       510e2a <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x13a>
+         : 144    bh_val[i] = bh_val[i2];
+    0.00 :   510e7e: slli    a3,a5,0x2
+         : 149    bh_val[i] = val;
+    0.00 :   510e82: add     a3,a3,t1
+         : 145    bh_ids[i] = bh_ids[i2];
+    0.00 :   510e84: slli    a5,a5,0x3
+         : 149    bh_val[i] = val;
+    0.26 :   510e86: fsw     fa5,0(a3)
+         : 150    bh_ids[i] = id;
+    0.13 :   510e8a: add     a4,a7,a5
+         : 152    faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]:
+         : 366    thresh = heap_dis[0];
+    0.00 :   510e8e: flw     fa4,0(s5)
+         : 368    void faiss::heap_replace_top<faiss::CMax<float, long> >(unsigned long, faiss::CMax<float, long>::T*, faiss::CMax<float, long>::TI*, faiss::CMax<float, long>::T, faiss::CMax<float, long>::TI):
+    0.26 :   510e92: sd      a1,0(a4)
+    0.00 :   510e94: j       510e40 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x150>
+    0.00 :   510e96: ld      s5,56(sp)
+    0.00 :   510e98: ld      s6,48(sp)
+    0.00 :   510e9a: ld      s7,40(sp)
+    0.00 :   510e9c: ld      s8,32(sp)
+    0.00 :   510e9e: ld      s9,24(sp)
+    0.00 :   510ea0: ld      s10,16(sp)
+    0.00 :   510ea2: ld      s11,8(sp)
+         : 159    faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]:
+         : 354    #pragma omp parallel for
+    0.00 :   510ea4: ld      ra,104(sp)
+    0.00 :   510ea6: ld      s0,96(sp)
+    0.00 :   510ea8: ld      s1,88(sp)
+    0.00 :   510eaa: ld      s2,80(sp)
+    0.00 :   510eac: ld      s3,72(sp)
+    0.00 :   510eae: ld      s4,64(sp)
+    0.00 :   510eb0: addi    sp,sp,112
+    0.00 :   510eb2: ret
+         : 363    void faiss::heap_replace_top<faiss::CMax<float, long> >(unsigned long, faiss::CMax<float, long>::T*, faiss::CMax<float, long>::TI*, faiss::CMax<float, long>::T, faiss::CMax<float, long>::TI):
+    0.00 :   510eb4: mv      a3,s5
+         : 149    bh_val[i] = val;
+    0.00 :   510eb6: fsw     fa5,0(a3)
+         : 150    bh_ids[i] = id;
+    0.00 :   510eba: add     a4,s4,s10
+         : 152    faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]:
+         : 366    thresh = heap_dis[0];
+    0.00 :   510ebe: flw     fa4,0(s5)
+         : 368    void faiss::heap_replace_top<faiss::CMax<float, long> >(unsigned long, faiss::CMax<float, long>::T*, faiss::CMax<float, long>::TI*, faiss::CMax<float, long>::T, faiss::CMax<float, long>::TI):
+    0.00 :   510ec2: sd      a1,0(a4)
+    0.00 :   510ec4: j       510e40 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x150>
+    0.00 :   510ec6: addi    t3,t3,1
+         : 153    faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]:
+         : 355    for (int64_t i = static_cast<int64_t>(i0); i < static_cast<int64_t>(i1);
+    0.00 :   510ec8: li      a4,0
+    0.00 :   510eca: j       510d32 <faiss::HeapBlockResultHandler<faiss::CMax<float, long>, false>::add_results(unsigned long, unsigned long, float const*) [clone ._omp_fn.0]+0x42>

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-sqd-005-r0",
+  "patchCandidateId": "auto",
+  "reviewedAt": "auto",
+  "reviewer": "openai",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "\u84dd\u56fe DCTemplate<Codec8bit,Scaling1,L2>\uff1asq-rvv.cpp \u901a\u7528 RVV DCTemplate \u4ee5\u6301\u4e45\u5411\u91cf\u7d2f\u52a0\u5668 + \u5faa\u73af\u672b\u5c3e\u5355\u6b21\u5f52\u7ea6 + LMUL=8 \u66ff\u4ee3\u6bcf\u8fed\u4ee3\u6807\u91cf\u5f80\u8fd4\u5f52\u7ea6\uff08vfmv.s.f/vsetivli 1/vfredosum \u4e32\u884c\u94fe\uff09\uff1bdecode_vector \u590d\u7528\u6807\u91cf\u8bed\u4e49\uff1b\u6307\u4ee4\u5747\u5728 RVV 1.0\uff1b4bit-uniform \u65e2\u6709\u7279\u5316\u4e0d\u53d7\u5f71\u54cd\uff1b\u65e0 x86/ARM \u6307\u4ee4\u3002"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "technicalAccuracy",
+      "result": "PASS"
+    },
+    {
+      "dimension": "evidenceTraceability",
+      "result": "PASS"
+    },
+    {
+      "dimension": "explainability",
+      "result": "PASS"
+    },
+    {
+      "dimension": "internalConsistency",
+      "result": "PASS"
+    },
+    {
+      "dimension": "safety",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "faiss/impl/scalar_quantizer/sq-rvv.cpp",
+      "evidence": "+    return rvv_reduce(acc, vlmax, 0.0f, __riscv_vfredusum_vs_f32m8_f32m1);",
+      "severity": "suggestion",
+      "category": "correctness",
+      "suggestion": "\u5411\u91cf\u5f52\u7ea6\u987a\u5e8f\u4e0e\u6807\u91cf\u4e0d\u540c\uff0c\u8ddd\u79bb\u6700\u4f4e\u4f4d\u5dee\u5f02\u9700\u5728 QT_*_iterations / sql2_recons_error \u56de\u5f52\u6807\u5b9a\u3002"
+    }
+  ]
+}

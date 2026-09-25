@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-pq-001-r1",
+  "patchCandidateId": "auto",
+  "reviewedAt": "auto",
+  "reviewer": "openai",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "RVV 1.0 指令（vsetvl/vle32/vfmul/vfsub/vfredusum）均在 K3 VLEN=256 目标内；e32m1 vtype 一致；tail 经零填充 tmp 保证（与标量 load_simd8float32_partial 一致）；dispatch 受 COMPILE_SIMD_RISCV_RVV 保护；无 x86/ARM 指令。首轮 major finding（vsetvlmax 的 VLEN 假设）已按建议改为 __riscv_vsetvl_e32m1(8)。"
+  },
+  "hallucinationCheck": [
+    { "dimension": "technicalAccuracy", "result": "PASS" },
+    { "dimension": "evidenceTraceability", "result": "PASS" },
+    { "dimension": "explainability", "result": "PASS" },
+    { "dimension": "internalConsistency", "result": "PASS" },
+    { "dimension": "safety", "result": "PASS" }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "faiss/utils/simd_impl/distances_rvv.cpp",
+      "evidence": "+    size_t vl = __riscv_vsetvl_e32m1(8);",
+      "severity": "minor",
+      "category": "arch",
+      "suggestion": "首轮 major finding 已修复：使用 vsetvl_e32m1(8) 保证任意 VLEN 下恰 8 lane。"
+    },
+    {
+      "id": "F2",
+      "file": "faiss/utils/simd_impl/distances_rvv.cpp",
+      "evidence": "+                        out[k] = rvv_reduce(p, vl, 0.0f, __riscv_vfredusum_vs_f32m1_f32m1);",
+      "severity": "suggestion",
+      "category": "correctness",
+      "suggestion": "归约顺序与标量 hadd 不同，L2/IP checksum 基线（1,397,430/2,090,350）需按 RVV 构建重新标定并在 sq-accuracy/pq-dis-tables-dsub2 回归。"
+    }
+  ]
+}

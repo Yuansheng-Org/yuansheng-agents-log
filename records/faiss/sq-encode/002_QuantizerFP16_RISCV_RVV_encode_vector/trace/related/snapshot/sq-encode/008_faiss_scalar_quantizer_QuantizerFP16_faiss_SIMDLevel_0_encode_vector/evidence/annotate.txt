@@ -1,0 +1,68 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (2 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000389592 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const>:
+         : 6      faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const:
+    0.00 :   389592: addi    sp,sp,-16
+    0.00 :   389594: sd      s0,0(sp)
+    0.00 :   389596: sd      ra,8(sp)
+    0.00 :   389598: addi    s0,sp,16
+    0.00 :   38959a: ld      a0,8(a0)
+    0.00 :   38959c: beqz    a0,389612 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x80>
+         : 246    faiss::encode_fp16(float):
+    0.00 :   38959e: auipc   a5,0x4d1
+    0.00 :   3895a2: flw     fa3,-1918(a5) # 859e20 <typeinfo name for faiss::ProgressiveDimClustering+0x68>
+         : 81     faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const:
+    0.00 :   3895a6: auipc   a5,0x4d1
+         : 28     intbits():
+    0.00 :   3895aa: flw     fa4,-1922(a5) # 859e24 <typeinfo name for faiss::ProgressiveDimClustering+0x6c>
+    0.00 :   3895ae: slli    a0,a0,0x2
+         : 29     faiss::encode_fp16(float):
+    0.00 :   3895b0: lui     t1,0x80000
+    0.00 :   3895b4: add     a0,a0,a1
+    0.00 :   3895b6: not     t1,t1
+    0.00 :   3895ba: lui     a6,0x7f800
+    0.00 :   3895be: lui     t4,0x7ffff
+    0.00 :   3895c2: lui     t5,0x1
+    0.00 :   3895c4: lui     t3,0x8
+         : 87     faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const:
+    0.00 :   3895c6: lw      a4,0(a1)
+         : 28     faiss::encode_fp16(float):
+   50.00 :   3895c8: lui     a5,0x8
+    0.00 :   3895ca: addi    a5,a5,-512 # 7e00 <faiss::(anonymous namespace)::index_read_nesting_depth+0x7d88>
+    0.00 :   3895ce: and     a3,a4,t1
+         : 41     faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const:
+    0.00 :   3895d2: and     a7,a4,t4
+         : 23     faiss::encode_fp16(float):
+    0.00 :   3895d6: bltu    a6,a3,3895fc <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x6a>
+    0.00 :   3895da: fmv.w.x fa5,a7
+    0.00 :   3895de: fmul.s  fa5,fa5,fa3
+         : 81     intbits():
+    0.00 :   3895e2: flt.s   a7,fa4,fa5
+    0.00 :   3895e6: fmv.x.w a5,fa5
+    0.00 :   3895ea: beqz    a7,3895f2 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x60>
+    0.00 :   3895ee: fmv.x.w a5,fa4
+         : 31     faiss::encode_fp16(float):
+   50.00 :   3895f2: addw    a5,a5,t5
+    0.00 :   3895f6: beq     a3,a6,38961a <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x88>
+    0.00 :   3895fa: srai    a5,a5,0xd
+    0.00 :   3895fc: srliw   a4,a4,0x10
+    0.00 :   389600: and     a4,a4,t3
+    0.00 :   389604: or      a5,a5,a4
+         : 90     faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const:
+    0.00 :   389606: sh      a5,0(a2)
+    0.00 :   38960a: addi    a1,a1,4
+    0.00 :   38960c: addi    a2,a2,2
+    0.00 :   38960e: bne     a0,a1,3895c6 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x34>
+    0.00 :   389612: ld      ra,8(sp)
+    0.00 :   389614: ld      s0,0(sp)
+    0.00 :   389616: addi    sp,sp,16
+    0.00 :   389618: ret
+         : 252    faiss::encode_fp16(float):
+    0.00 :   38961a: lui     a5,0x8
+    0.00 :   38961c: addi    a5,a5,-1024 # 7c00 <faiss::(anonymous namespace)::index_read_nesting_depth+0x7b88>
+    0.00 :   389620: j       3895fc <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x6a>

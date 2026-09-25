@@ -1,0 +1,33 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (1 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000003896de <faiss::scalar_quantizer::QuantizerBF16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const>:
+         : 6      faiss::scalar_quantizer::QuantizerBF16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+    0.00 :   3896de: addi    sp,sp,-16
+    0.00 :   3896e0: sd      s0,0(sp)
+    0.00 :   3896e2: sd      ra,8(sp)
+    0.00 :   3896e4: addi    s0,sp,16
+    0.00 :   3896e6: ld      a4,8(a0)
+         : 288    faiss::decode_bf16_simd(unsigned short const*, float*, unsigned long):
+    0.00 :   3896e8: beqz    a4,389702 <faiss::scalar_quantizer::QuantizerBF16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x24>
+    0.00 :   3896ea: slli    a4,a4,0x1
+    0.00 :   3896ec: add     a4,a4,a1
+         : 66     faiss::decode_bf16(unsigned short):
+    0.00 :   3896ee: lhu     a5,0(a1)
+         : 38     faiss::decode_bf16_simd(unsigned short const*, float*, unsigned long):
+    0.00 :   3896f2: addi    a1,a1,2
+    0.00 :   3896f4: addi    a2,a2,4
+         : 67     faiss::decode_bf16(unsigned short):
+    0.00 :   3896f6: slliw   a5,a5,0x10
+         : 38     faiss::decode_bf16_simd(unsigned short const*, float*, unsigned long):
+    0.00 :   3896fa: sw      a5,-4(a2)
+  100.00 :   3896fe: bne     a4,a1,3896ee <faiss::scalar_quantizer::QuantizerBF16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x10>
+         : 66     faiss::scalar_quantizer::QuantizerBF16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+    0.00 :   389702: ld      ra,8(sp)
+    0.00 :   389704: ld      s0,0(sp)
+    0.00 :   389706: addi    sp,sp,16
+    0.00 :   389708: ret

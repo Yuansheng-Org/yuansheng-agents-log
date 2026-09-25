@@ -1,0 +1,181 @@
+25-FAISS-CPP-BENCHMARK sq-accuracy RISC-V perf stat
+===================================================
+
+Source CSV: /workspace/results/25-faiss-cpp-benchmark_results.csv
+TestName: sq-accuracy
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 481,457,596 |
+| task_clock | 2,614.35 |
+| cpu_cycle | 4,646,863,383,769 |
+| instruction | 4,137,538,399,646 |
+| cache_references | 76,887,256 |
+| cache_misses | 76,887,511 |
+| branches | 3,688,721,245 |
+| branch_misses | 2,278,850 |
+| L1_dcache_loads | 2,257,425,230 |
+| L1_dcache_load_misses | 7,147,550 |
+| LLC_load_misses | 10,859,217 |
+| LLC_loads | 76,888,922 |
+| IPC | 0.890394 |
+| benchmark_QT_4bit_real_time_ns | 1,830,830 |
+| benchmark_QT_4bit_cpu_time_ns | 1,828,195 |
+| benchmark_QT_4bit_iterations | 20 |
+| benchmark_QT_4bit_code_size | 64 |
+| benchmark_QT_4bit_code_size_two | 128,000 |
+| benchmark_QT_4bit_ndiff_for_idempotence | 0 |
+| benchmark_QT_4bit_sql2_recons_error | 0.0473962 |
+| benchmark_QT_4bit_uniform_real_time_ns | 1,723,462 |
+| benchmark_QT_4bit_uniform_cpu_time_ns | 1,719,069 |
+| benchmark_QT_4bit_uniform_iterations | 20 |
+| benchmark_QT_4bit_uniform_code_size | 64 |
+| benchmark_QT_4bit_uniform_code_size_two | 128,000 |
+| benchmark_QT_4bit_uniform_ndiff_for_idempotence | 0 |
+| benchmark_QT_4bit_uniform_sql2_recons_error | 0.0473934 |
+| benchmark_QT_6bit_real_time_ns | 2,047,506 |
+| benchmark_QT_6bit_cpu_time_ns | 2,043,664 |
+| benchmark_QT_6bit_iterations | 20 |
+| benchmark_QT_6bit_code_size | 96 |
+| benchmark_QT_6bit_code_size_two | 192,000 |
+| benchmark_QT_6bit_ndiff_for_idempotence | 0 |
+| benchmark_QT_6bit_sql2_recons_error | 0.00268991 |
+| benchmark_QT_8bit_real_time_ns | 2,040,889 |
+| benchmark_QT_8bit_cpu_time_ns | 2,037,698 |
+| benchmark_QT_8bit_iterations | 20 |
+| benchmark_QT_8bit_code_size | 128 |
+| benchmark_QT_8bit_code_size_two | 256,000 |
+| benchmark_QT_8bit_ndiff_for_idempotence | 0 |
+| benchmark_QT_8bit_sql2_recons_error | 0.000164317 |
+| benchmark_QT_8bit_direct_real_time_ns | 1,807,486 |
+| benchmark_QT_8bit_direct_cpu_time_ns | 1,802,868 |
+| benchmark_QT_8bit_direct_iterations | 20 |
+| benchmark_QT_8bit_direct_code_size | 128 |
+| benchmark_QT_8bit_direct_code_size_two | 256,000 |
+| benchmark_QT_8bit_direct_ndiff_for_idempotence | 0 |
+| benchmark_QT_8bit_direct_sql2_recons_error | 42.5516 |
+| benchmark_QT_8bit_direct_signed_real_time_ns | 1,799,613 |
+| benchmark_QT_8bit_direct_signed_cpu_time_ns | 1,795,911 |
+| benchmark_QT_8bit_direct_signed_iterations | 20 |
+| benchmark_QT_8bit_direct_signed_code_size | 128 |
+| benchmark_QT_8bit_direct_signed_code_size_two | 256,000 |
+| benchmark_QT_8bit_direct_signed_ndiff_for_idempotence | 0 |
+| benchmark_QT_8bit_direct_signed_sql2_recons_error | 42.5496 |
+| benchmark_QT_8bit_uniform_real_time_ns | 2,005,761 |
+| benchmark_QT_8bit_uniform_cpu_time_ns | 2,002,272 |
+| benchmark_QT_8bit_uniform_iterations | 20 |
+| benchmark_QT_8bit_uniform_code_size | 128 |
+| benchmark_QT_8bit_uniform_code_size_two | 256,000 |
+| benchmark_QT_8bit_uniform_ndiff_for_idempotence | 0 |
+| benchmark_QT_8bit_uniform_sql2_recons_error | 0.000164153 |
+| benchmark_QT_bf16_real_time_ns | 4,251,848 |
+| benchmark_QT_bf16_cpu_time_ns | 4,243,008 |
+| benchmark_QT_bf16_iterations | 20 |
+| benchmark_QT_bf16_code_size | 256 |
+| benchmark_QT_bf16_code_size_two | 512,000 |
+| benchmark_QT_bf16_ndiff_for_idempotence | 0 |
+| benchmark_QT_bf16_sql2_recons_error | 0.0000928341 |
+| benchmark_QT_fp16_real_time_ns | 4,364,902 |
+| benchmark_QT_fp16_cpu_time_ns | 4,355,665 |
+| benchmark_QT_fp16_iterations | 20 |
+| benchmark_QT_fp16_code_size | 256 |
+| benchmark_QT_fp16_code_size_two | 512,000 |
+| benchmark_QT_fp16_ndiff_for_idempotence | 0 |
+| benchmark_QT_fp16_sql2_recons_error | 0.00000144839 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 0.481458 |
+| cache_miss_rate | 100.000% |
+| branch_miss_rate | 0.062% |
+| L1_dcache_load_miss_rate | 0.317% |
+| LLC_load_miss_rate | 14.123% |
+
+perf stat style summary
+-----------------------
+              481,457,596  duration_time
+                 2,614.35  task_clock
+        4,646,863,383,769  cpu_cycle
+        4,137,538,399,646  instruction
+               76,887,256  cache_references
+               76,887,511  cache_misses
+            3,688,721,245  branches
+                2,278,850  branch_misses
+            2,257,425,230  L1_dcache_loads
+                7,147,550  L1_dcache_load_misses
+               10,859,217  LLC_load_misses
+               76,888,922  LLC_loads
+                 0.890394  IPC
+                1,830,830  benchmark_QT_4bit_real_time_ns
+                1,828,195  benchmark_QT_4bit_cpu_time_ns
+                       20  benchmark_QT_4bit_iterations
+                       64  benchmark_QT_4bit_code_size
+                  128,000  benchmark_QT_4bit_code_size_two
+                        0  benchmark_QT_4bit_ndiff_for_idempotence
+                0.0473962  benchmark_QT_4bit_sql2_recons_error
+                1,723,462  benchmark_QT_4bit_uniform_real_time_ns
+                1,719,069  benchmark_QT_4bit_uniform_cpu_time_ns
+                       20  benchmark_QT_4bit_uniform_iterations
+                       64  benchmark_QT_4bit_uniform_code_size
+                  128,000  benchmark_QT_4bit_uniform_code_size_two
+                        0  benchmark_QT_4bit_uniform_ndiff_for_idempotence
+                0.0473934  benchmark_QT_4bit_uniform_sql2_recons_error
+                2,047,506  benchmark_QT_6bit_real_time_ns
+                2,043,664  benchmark_QT_6bit_cpu_time_ns
+                       20  benchmark_QT_6bit_iterations
+                       96  benchmark_QT_6bit_code_size
+                  192,000  benchmark_QT_6bit_code_size_two
+                        0  benchmark_QT_6bit_ndiff_for_idempotence
+               0.00268991  benchmark_QT_6bit_sql2_recons_error
+                2,040,889  benchmark_QT_8bit_real_time_ns
+                2,037,698  benchmark_QT_8bit_cpu_time_ns
+                       20  benchmark_QT_8bit_iterations
+                      128  benchmark_QT_8bit_code_size
+                  256,000  benchmark_QT_8bit_code_size_two
+                        0  benchmark_QT_8bit_ndiff_for_idempotence
+              0.000164317  benchmark_QT_8bit_sql2_recons_error
+                1,807,486  benchmark_QT_8bit_direct_real_time_ns
+                1,802,868  benchmark_QT_8bit_direct_cpu_time_ns
+                       20  benchmark_QT_8bit_direct_iterations
+                      128  benchmark_QT_8bit_direct_code_size
+                  256,000  benchmark_QT_8bit_direct_code_size_two
+                        0  benchmark_QT_8bit_direct_ndiff_for_idempotence
+                  42.5516  benchmark_QT_8bit_direct_sql2_recons_error
+                1,799,613  benchmark_QT_8bit_direct_signed_real_time_ns
+                1,795,911  benchmark_QT_8bit_direct_signed_cpu_time_ns
+                       20  benchmark_QT_8bit_direct_signed_iterations
+                      128  benchmark_QT_8bit_direct_signed_code_size
+                  256,000  benchmark_QT_8bit_direct_signed_code_size_two
+                        0  benchmark_QT_8bit_direct_signed_ndiff_for_idempotence
+                  42.5496  benchmark_QT_8bit_direct_signed_sql2_recons_error
+                2,005,761  benchmark_QT_8bit_uniform_real_time_ns
+                2,002,272  benchmark_QT_8bit_uniform_cpu_time_ns
+                       20  benchmark_QT_8bit_uniform_iterations
+                      128  benchmark_QT_8bit_uniform_code_size
+                  256,000  benchmark_QT_8bit_uniform_code_size_two
+                        0  benchmark_QT_8bit_uniform_ndiff_for_idempotence
+              0.000164153  benchmark_QT_8bit_uniform_sql2_recons_error
+                4,251,848  benchmark_QT_bf16_real_time_ns
+                4,243,008  benchmark_QT_bf16_cpu_time_ns
+                       20  benchmark_QT_bf16_iterations
+                      256  benchmark_QT_bf16_code_size
+                  512,000  benchmark_QT_bf16_code_size_two
+                        0  benchmark_QT_bf16_ndiff_for_idempotence
+             0.0000928341  benchmark_QT_bf16_sql2_recons_error
+                4,364,902  benchmark_QT_fp16_real_time_ns
+                4,355,665  benchmark_QT_fp16_cpu_time_ns
+                       20  benchmark_QT_fp16_iterations
+                      256  benchmark_QT_fp16_code_size
+                  512,000  benchmark_QT_fp16_code_size_two
+                        0  benchmark_QT_fp16_ndiff_for_idempotence
+            0.00000144839  benchmark_QT_fp16_sql2_recons_error
+                 0.481458  duration_s
+                 100.000%  cache_miss_rate
+                   0.062%  branch_miss_rate
+                   0.317%  L1_dcache_load_miss_rate
+                  14.123%  LLC_load_miss_rate

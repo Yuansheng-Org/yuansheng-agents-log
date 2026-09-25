@@ -1,0 +1,46 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (1 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000335f7c <faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const>:
+         : 6      faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const:
+         : 362    Quantizer8bitDirectSigned(
+         : 363    size_t d_in,
+         : 364    const std::vector<float>& /* unused */)
+         : 365    : d(d_in) {}
+         :
+         : 367    void encode_vector(const float* x, uint8_t* code) const final {
+    0.00 :   335f7c: addi    sp,sp,-16
+    0.00 :   335f7e: sd      s0,0(sp)
+    0.00 :   335f80: sd      ra,8(sp)
+    0.00 :   335f82: addi    s0,sp,16
+         : 363    for (size_t i = 0; i < d; i++) {
+    0.00 :   335f84: ld      a5,8(a0)
+    0.00 :   335f86: beqz    a5,335fb0 <faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x34>
+    0.00 :   335f88: auipc   a5,0x2df
+    0.00 :   335f8c: flw     fa4,-1028(a5) # 614b84 <typeinfo name for faiss::ProgressiveDimClustering+0xbc>
+    0.00 :   335f90: li      a5,0
+         : 364    code[i] = (uint8_t)(x[i] + 128);
+    0.00 :   335f92: flw     fa5,0(a1)
+    0.00 :   335f96: add     a4,a2,a5
+         : 363    for (size_t i = 0; i < d; i++) {
+    0.00 :   335f9a: addi    a5,a5,1
+         : 364    code[i] = (uint8_t)(x[i] + 128);
+  100.00 :   335f9c: fadd.s  fa5,fa5,fa4
+         : 363    for (size_t i = 0; i < d; i++) {
+    0.00 :   335fa0: addi    a1,a1,4
+         : 364    code[i] = (uint8_t)(x[i] + 128);
+    0.00 :   335fa2: fcvt.wu.s       a3,fa5,rtz
+    0.00 :   335fa6: sb      a3,0(a4)
+         : 363    for (size_t i = 0; i < d; i++) {
+    0.00 :   335faa: ld      a4,8(a0)
+    0.00 :   335fac: bltu    a5,a4,335f92 <faiss::scalar_quantizer::Quantizer8bitDirectSigned<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x16>
+         : 366    }
+         : 367    }
+    0.00 :   335fb0: ld      ra,8(sp)
+    0.00 :   335fb2: ld      s0,0(sp)
+    0.00 :   335fb4: addi    sp,sp,16
+    0.00 :   335fb6: ret

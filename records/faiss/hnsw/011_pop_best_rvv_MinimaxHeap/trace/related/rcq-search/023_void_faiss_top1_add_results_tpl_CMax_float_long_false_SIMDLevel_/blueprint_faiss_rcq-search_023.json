@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-faiss-rcq-search-023",
+  "source": {
+    "agent": "trace",
+    "createdAt": "auto",
+    "software": "faiss",
+    "testcaseIds": [
+      "rcq-search"
+    ],
+    "diagnosisId": "auto",
+    "targetHardware": "SpacemiT K3 / X100 (RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://github.com/facebookresearch/faiss.git",
+    "testBranch": "main",
+    "commitHash": "545550f6a27031c2269881d97237fd6a5bef15df"
+  },
+  "problem": {
+    "summary": "top1_add_results_tpl \u7684\u6807\u91cf top-1 \u5f52\u7ea6\u5faa\u73af\uff08flw/flt.s/beqz/addi/bne\uff0c\u9010\u5143\u7d20\u6bd4\u8f83\u627e\u6700\u4f18\uff09172 samples\u3002SIMDLevel 0 \u7248\u672c\u88ab\u91c7\u6837\uff1b\u8be5\u5f52\u7ea6\u53ef\u7528 RVV \u6700\u5c0f\u5316/\u6700\u5927\u5316\u5f52\u7ea6\u5411\u91cf\u5316\u3002",
+    "evidence": [
+      "annotate: void faiss::top1_add_results_tpl<CMax<float,long>,false,(SIMDLevel)0>(... \u5171 172 samples\uff0chotline=30a062: addi a4,a4,1 (25.00%), 30a066: bne a2,a4,30a050 (22.67%), 30a058: beqz a6 (23.84%), 30a054: flt.s a6,fa5,fa4 (9.88%), 30a050: flw fa5,0(a5) (8.14%)",
+      "perf stat: IPC=1.931, L1_dcache_load_miss_rate=0.231%, branch_miss_rate=0.113%, duration\u2248271s",
+      "baseline_gap: sampling IP precision\uff08RVV \u6307\u4ee4\u6837\u672c\u504f\u5411\u6807\u91cf\u63a7\u5236\u6307\u4ee4\uff09"
+    ]
+  },
+  "rootCause": {
+    "summary": "top-1 \u5f52\u7ea6\u5faa\u73af\u4ee5\u6807\u91cf\u9010\u5143\u7d20 flt.s \u6bd4\u8f83\u6267\u884c\uff0cNONE \u5b9e\u4f8b\u5316\u88ab\u8fd0\u884c\u65f6\u9009\u4e2d\uff1b\u7b26\u5408 No vectorization pattern\uff08RVV vfredmin/vfredmax \u6216 vmslt/vmerge \u53ef\u5b9e\u73b0\uff09\u3002",
+    "candidateFiles": [
+      "faiss/utils/distances_fused/simdlib_kernel-inl.h",
+      "faiss/impl/approx_topk/"
+    ],
+    "performanceFactors": [
+      "No vectorization"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "low",
+    "mustPreserve": [
+      "\u6570\u503c/\u8ddd\u79bb\u8bed\u4e49",
+      "top-k/\u9608\u503c\u8bed\u4e49\uff08\u82e5\u76f8\u5173\uff09",
+      "NaN \u68c0\u6d4b\u8bed\u4e49\uff08rank 013\uff09"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "rcq-search"
+    ],
+    "regressionCommand": "agent1 patch_regression --case rcq-search"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.55,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "\u6837\u672c 172 \u4e0e\u4f18\u5148\u7ea7\u5f85\u4eba\u5de5\u786e\u8ba4",
+    "reasoning": "top-1 \u5f52\u7ea6\u5faa\u73af\u4ee5\u6807\u91cf\u9010\u5143\u7d20 flt.s \u6bd4\u8f83\u6267\u884c\uff0cNONE \u5b9e\u4f8b\u5316\u88ab\u8fd0\u884c\u65f6\u9009\u4e2d\uff1b\u7b26\u5408 No vectorization pattern\uff08RVV vfredmin/vfredmax \u6216 vmslt/vmerge \u53ef\u5b9e\u73b0\uff09\u3002",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "\u6837\u672c\u91cf 172 \u8f83\u5c0f\uff0c\u4f18\u5148\u7ea7\u4f4e\u4e8e fvec_add \u7b49\u70ed\u70b9",
+      "\u8be5\u51fd\u6570\u7531 add_results \u5206\u5757\u8c03\u7528\uff0c\u5757\u7ed3\u6784\u51b3\u5b9a\u8c03\u7528\u9891\u7387"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision\uff08RVV \u6837\u672c\u504f\u5411\u6807\u91cf\u6307\u4ee4\uff09\uff1b\u7f3a ARM \u4fa7 duration \u5bf9\u6bd4\uff1b\u51fd\u6570\u7ea7 workload \u8d21\u732e\u5360\u6bd4\u672a\u77e5",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV / rcq-search",
+    "recommendedFirstAction": "\u63d0\u4f9b SIMDLevel::RISCV_RVV \u7684 top1_add_results \u53d8\u4f53\uff08vfredmin/vfredmax + vfmv \u5f52\u7ea6 + vcompress \u62ff index\uff09\uff0c\u5e76\u5c06 dispatch \u8986\u76d6 RISCV_RVV\u3002correctness\uff1a\u4fdd\u6301 top-1 tie-break \u8bed\u4e49\uff08CMax \u542b",
+    "recommendedVerification": "\u91cd\u8dd1 rcq-search benchmark\uff0c\u5bf9\u6bd4\u8be5\u51fd\u6570\u6837\u672c\u5360\u6bd4\u3001IPC \u4e0e duration_time\uff08\u57fa\u7ebf 271s\uff09\uff1bperf annotate \u786e\u8ba4 v* \u6307\u4ee4\u51fa\u73b0 / \u6807\u91cf\u70ed\u884c\u6d88\u5931",
+    "metricEvidence": [
+      {
+        "metric": "sample_count",
+        "rv": 172,
+        "anomalyNote": "\u5360 rcq-search \u9876\u5c42\u51fd\u6570\u6837\u672c\u7ea6 0.3%"
+      },
+      {
+        "metric": "IPC",
+        "rv": 1.931,
+        "anomalyNote": "compute-bound\uff0c\u6807\u91cf\u8def\u5f84\u9650\u5236\u541e\u5410"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "void faiss::top1_add_results_tpl<CMax<float,long>,false,(SIMDLevel)0>(...)",
+        "fileModule": "top1_add_results_tpl<CMax,false,NONE> \u6807\u91cf top-1 reduction (30a050-30a066)",
+        "rvvPattern": "No vectorization",
+        "patternConfidence": "MEDIUM",
+        "benefitUpperbound": 0.003,
+        "note": "top1_add_results_tpl \u7684\u6807\u91cf top-1 \u5f52\u7ea6\u5faa\u73af\uff08flw/flt.s/beqz/addi/bne\uff0c\u9010\u5143\u7d20\u6bd4\u8f83\u627e\u6700\u4f18\uff09172 samples\u3002SIMDLevel 0 \u7248\u672c\u88ab\u91c7\u6837\uff1b\u8be5"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "top1_add_results_tpl<CMax,false,NONE> \u6807\u91cf top-1 reduction (30a050-30a066)",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/22179; https://github.com/opencv/opencv/pull/22520; https://github.com/opencv/opencv/pull/23980; https://github.com/opencv/opencv/pull/24058; https://github.com/opencv/opencv/pull/24132; https://github.com/opencv/opencv/pull/24166; https://github.com/opencv/opencv/pull/24301; https://github.com/opencv/opencv/pull/24325; https://github.com/opencv/opencv/pull/27160; https://github.com/opencv/opencv/pull/27119; https://github.com/opencv/opencv/pull/27097; https://github.com/opencv/opencv/pull/27007; https://github.com/opencv/opencv/pull/26958; https://github.com/opencv/opencv/pull/26865; https://github.com/opencv/opencv/commit/b902a8e792e1702b40f19dbd48dff0bfdca8b36d; https://github.com/opencv/opencv/commit/2c16f3b7d2b28f6cac444046b8f95b40d9266a6a; https://github.com/opencv/opencv/commit/e06502a254f79f9d3184de2803d087c6914b7706; https://github.com/opencv/opencv/commit/a2d784b6f53aa1fdfde21ab8e3787a93b59af24f; https://github.com/opencv/opencv/commit/83104bed32093ff0c5c935e8920c72b6b74ae07a",
+      "evidenceExplanation": "top-1 \u5f52\u7ea6\u5faa\u73af\u4ee5\u6807\u91cf\u9010\u5143\u7d20 flt.s \u6bd4\u8f83\u6267\u884c\uff0cNONE \u5b9e\u4f8b\u5316\u88ab\u8fd0\u884c\u65f6\u9009\u4e2d\uff1b\u7b26\u5408 No vectorization pattern\uff08RVV vfredmin/vfredmax \u6216 vmslt/vmerge \u53ef\u5b9e\u73b0\uff09\u3002"
+    }
+  }
+}
