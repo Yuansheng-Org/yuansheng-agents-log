@@ -1,0 +1,48 @@
+{
+ "schemaVersion": "yuansheng.patch_plan.v1",
+ "patchPlanId": "pp-bp-faiss-sq-accuracy-012",
+ "blueprintId": "bp-faiss-sq-accuracy-012",
+ "createdAt": "diagnosis-2259f8efe36d13bb5ca561786fa1a4a4",
+ "objective": "QuantizerFP16<SIMDLevel::NONE>::decode_vector is bottlenecked by a scalar, branch-per-lane software FP16->FP32 conversion loop: it inlines decode_fp16 (fp16-inl.h) as integer bit-decode that per element loads the FP16 halfword (lhu 0x389672), isolates exponent/sign with shifts and ANDs, branches on the zero/subnormal and inf/nan special cases (including the fmv.w.x/fsub.s/fmv.x.w float round-trip at 0x389658-0x389666), ORs the sign, and stores FP32 (sw 0x38969e); all three sampled addresses are inside this body, while the build ISA (v1p0+zvfhmin, zvl128b) provides the RVV widening conversion vfwcvt.f.f.v that the loop omits.",
+ "changes": [
+  {
+   "filePath": "faiss/impl/scalar_quantizer/quantizers.h",
+   "action": "modify",
+   "rationale": "Add an RVV fast path to QuantizerFP16 decode_vector gated on __riscv_v && __riscv_zvfhmin: per iteration vsetvl_e16m* on remaining count, vle16 load of FP16 codes, vfwcvt.f.f.v widening FP16->FP32 (native IEEE handling of normals, denormals, ±0, ±Inf, NaN), vse32 store, with tail handling for d % VL and the existing scalar decode_fp16 loop retained as the fallback; add a masked/narrow repair only if bit-exact NaN-payload/sNaN parity with decode_fp16 is required.",
+   "instructions": [
+    "Runtime exposes v + zvfhmin (build ISA already tags v1p0+zvfhmin, zvl128b; verify via /proc/cpuinfo or hwprobe before relying on the tag).",
+    "decode_vector must remain bit-identical to the scalar decode_fp16 reference for every FP16 bit pattern the consumer can produce.",
+    "d is large enough to amortize one vsetvl and vector load/store per vector (benchmark QT_fp16 uses code_size=256 bytes, i.e. d=128; worst realistic d for this template is the quantizer's d)."
+   ]
+  },
+  {
+   "filePath": "faiss/impl/scalar_quantizer/sq-rvv.cpp",
+   "action": "modify",
+   "rationale": "Add an RVV fast path to QuantizerFP16 decode_vector gated on __riscv_v && __riscv_zvfhmin: per iteration vsetvl_e16m* on remaining count, vle16 load of FP16 codes, vfwcvt.f.f.v widening FP16->FP32 (native IEEE handling of normals, denormals, ±0, ±Inf, NaN), vse32 store, with tail handling for d % VL and the existing scalar decode_fp16 loop retained as the fallback; add a masked/narrow repair only if bit-exact NaN-payload/sNaN parity with decode_fp16 is required.",
+   "instructions": [
+    "Runtime exposes v + zvfhmin (build ISA already tags v1p0+zvfhmin, zvl128b; verify via /proc/cpuinfo or hwprobe before relying on the tag).",
+    "decode_vector must remain bit-identical to the scalar decode_fp16 reference for every FP16 bit pattern the consumer can produce.",
+    "d is large enough to amortize one vsetvl and vector load/store per vector (benchmark QT_fp16 uses code_size=256 bytes, i.e. d=128; worst realistic d for this template is the quantizer's d)."
+   ]
+  }
+ ],
+ "expectedDiffSummary": "real patch touches: faiss/impl/scalar_quantizer/quantizers.h, faiss/impl/scalar_quantizer/sq-rvv.cpp",
+ "readiness": "conditional",
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-accuracy/012_faiss_scalar_quantizer_QuantizerFP16_faiss_SIMDLevel_0_decode_vector",
+   "snapshotCandidate": "candidate-dfdcb87a45ab33f88f9ed861109f9804.patch",
+   "record": "records/faiss/sq-decode/006_QuantizerFP16_BF16_8bitDirect_RISCV_RVV_decode_vector"
+  },
+  "fieldMapping": {
+   "objective": "blueprint.summary.observed_anomaly",
+   "changes[].rationale": "blueprint.craft_actions.actions[0].proposal",
+   "changes[].instructions": "blueprint.craft_actions.actions[0].conditions[].description",
+   "changes[].filePath": "diff --git headers of the real craft/patch.diff",
+   "readiness": "blueprint.craft_actions.actions[0].readiness"
+  }
+ }
+}

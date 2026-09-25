@@ -1,0 +1,38 @@
+{
+ "schemaVersion": "yuansheng.patch_plan.v1",
+ "patchPlanId": "pp-bp-faiss-sq-distance-013",
+ "blueprintId": "bp-faiss-sq-distance-013",
+ "createdAt": "diagnosis-1f7987b0af562ea231ea706d2ee2eb62",
+ "objective": "In faiss::scalar_quantizer::DCTemplate<Quantizer8bitDirectSigned<6>,SimilarityIP<6>,NONE>::query_to_code/compute_distance, the compiler-auto-vectorized RVV inner-product loop runs at LMUL e8/mf4 (4 code bytes per iteration on the zvl128b build target) and performs a per-block ordered vfredosum with a scalar-register-file accumulator round-trip, making the loop latency/control-bound: block reduction+config+branch instructions absorb ~88% of samples (vfmv.f.s 49.64%, vsetvli/vsetivli 28.2%, bnez 14.17%) while the FP multiply work is ~0.5%.",
+ "changes": [
+  {
+   "filePath": "faiss/impl/scalar_quantizer/sq-rvv.cpp",
+   "action": "modify",
+   "rationale": "Raise LMUL/register groups for the auto-vectorized compute_distance loop from e8/mf4 (4 code bytes per iteration on VLEN-128) to the legal spill-free frontier (e8/m1..m8 with matching e32 widening EMUL) via a targeted loop pragma/attribute or intrinsic rewrite of faiss/impl/scalar_quantizer/distance_computers.h:34-39, amortizing per-iteration vsetvl/reduction/branch overhead over 4-16x more elements and keeping VLEN-agnostic strip mining for the tail.",
+   "instructions": [
+    "Compiler is GCC/Clang RISC-V RVV x201 auto-vectorizing the scalar IP-distance loop and emitting the e8/mf4 per-4-element loop",
+    "Per-element operator budget check: live vector set observed at 4 registers (v1-v4) leaves spill-free LMUL headroom (e8/m1..m8, e32 counterpart)",
+    "VLEN fixed at 128 bits per zvl128b build attribute"
+   ]
+  }
+ ],
+ "expectedDiffSummary": "real patch touches: faiss/impl/scalar_quantizer/sq-rvv.cpp",
+ "readiness": "conditional",
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-distance/013_faiss_scalar_quantizer_DCTemplate_faiss_scalar_quantizer_Quantizer8bitDirectSigned_faiss_SI_7a2d1cea",
+   "snapshotCandidate": "candidate-42f3412bbfa105b82a1767fc307da3ad.patch",
+   "record": "records/faiss/sq-distance/001_DCTemplate_Quantizer8bitDirectSigned_RISCV_RVV"
+  },
+  "fieldMapping": {
+   "objective": "blueprint.summary.observed_anomaly",
+   "changes[].rationale": "blueprint.craft_actions.actions[0].proposal",
+   "changes[].instructions": "blueprint.craft_actions.actions[0].conditions[].description",
+   "changes[].filePath": "diff --git headers of the real craft/patch.diff",
+   "readiness": "blueprint.craft_actions.actions[0].readiness"
+  }
+ }
+}

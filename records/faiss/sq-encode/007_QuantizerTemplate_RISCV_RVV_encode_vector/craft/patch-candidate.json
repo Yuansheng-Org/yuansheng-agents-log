@@ -1,0 +1,28 @@
+{
+ "archReviewWarning": "",
+ "schemaVersion": "yuansheng.patch_candidate.v1",
+ "patchCandidateId": "pc-bp-faiss-sq-accuracy-001",
+ "patchPlanId": "pp-bp-faiss-sq-accuracy-001",
+ "createdAt": "diagnosis-f4f3c581546b2a8fa0f5ef66b8c536da",
+ "changedFiles": [
+  "faiss/impl/scalar_quantizer/quantizers.h"
+ ],
+ "gitDiff": "diff --git a/faiss/impl/scalar_quantizer/quantizers.h b/faiss/impl/scalar_quantizer/quantizers.h\nindex 393983de95678eacf07f9e4340ae013bf1744e7f..2b9fdc3429e8cd44246a255202d5b948d8648ef7 100644\n--- a/faiss/impl/scalar_quantizer/quantizers.h\n+++ b/faiss/impl/scalar_quantizer/quantizers.h\n@@ -74,10 +74,27 @@ struct QuantizerTemplate<\n             : d(d_in), vmin(trained[0]), vdiff(trained[1]) {}\n \n     void encode_vector(const float* x, uint8_t* code) const final {\n-        for (size_t i = 0; i < d; i++) {\n+        // Hoist d/vmin/vdiff into const locals before the loop: the uint8_t\n+        // stores to `code` below force a conservative aliasing assumption in\n+        // the compiler (it cannot prove `code` does not alias `this`), so\n+        // member accesses inside the loop body were reloaded from memory on\n+        // every component. Callers guarantee the code buffer is separately\n+        // allocated (never aliasing this), so the loads are loop-invariant.\n+        const size_t d_local = d;\n+        const float vmin_local = vmin;\n+        const float vdiff_local = vdiff;\n+        const float* x_end = x + d_local;\n+        // Traverse with pointer increments and a precomputed end pointer so\n+        // the limit is held in a register. The component index `i` is still\n+        // required by the bit-packed codecs (4/6 bit) that address sub-byte\n+        // fields; for the byte-per-component codecs the compiler\n+        // strength-reduces `code[i]` to an advancing store pointer.\n+        size_t i = 0;\n+        while (x < x_end) {\n+            const float xv = *x++;\n             float xi = 0;\n-            if (vdiff != 0) {\n-                xi = (x[i] - vmin) / vdiff;\n+            if (vdiff_local != 0) {\n+                xi = (xv - vmin_local) / vdiff_local;\n                 if (xi < 0) {\n                     xi = 0;\n                 }\n@@ -86,6 +103,7 @@ struct QuantizerTemplate<\n                 }\n             }\n             Codec::encode_component(xi, code, i);\n+            i++;\n         }\n     }\n \n",
+ "buildModeInvocation": "conditional",
+ "notes": [],
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-accuracy/001_faiss_scalar_quantizer_QuantizerTemplate_faiss_scalar_quantizer_Codec8bit_faiss_SIMDLevel_6_0550d977",
+   "snapshotCandidate": "candidate-409a6b766b3ff48db24b1ec327cd24cb.patch",
+   "record": "records/faiss/sq-encode/007_QuantizerTemplate_RISCV_RVV_encode_vector"
+  },
+  "fieldMapping": {
+   "changedFiles": "diff --git headers of the real craft/patch.diff",
+   "gitDiff": "the real craft/patch.diff body, LF-normalized",
+   "buildModeInvocation": "blueprint.craft_actions.actions[0].readiness"
+  }
+ }
+}

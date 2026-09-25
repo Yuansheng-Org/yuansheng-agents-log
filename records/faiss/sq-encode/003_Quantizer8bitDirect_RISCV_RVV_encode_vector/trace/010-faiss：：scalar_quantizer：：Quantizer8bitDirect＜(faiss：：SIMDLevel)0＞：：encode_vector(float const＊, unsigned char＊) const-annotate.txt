@@ -1,0 +1,43 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (1 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000335f20 <faiss::scalar_quantizer::Quantizer8bitDirect<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const>:
+         : 6      faiss::scalar_quantizer::Quantizer8bitDirect<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const:
+         : 321    const size_t d;
+         :
+         : 323    Quantizer8bitDirect(size_t d_in, const std::vector<float>& /* unused */)
+         : 324    : d(d_in) {}
+         :
+         : 326    void encode_vector(const float* x, uint8_t* code) const final {
+    0.00 :   335f20: addi    sp,sp,-16
+    0.00 :   335f22: sd      s0,0(sp)
+    0.00 :   335f24: sd      ra,8(sp)
+    0.00 :   335f26: addi    s0,sp,16
+         : 322    for (size_t i = 0; i < d; i++) {
+    0.00 :   335f28: ld      a5,8(a0)
+    0.00 :   335f2a: beqz    a5,335f48 <faiss::scalar_quantizer::Quantizer8bitDirect<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0x28>
+    0.00 :   335f2c: li      a5,0
+         : 323    code[i] = (uint8_t)x[i];
+    0.00 :   335f2e: flw     fa5,0(a1)
+  100.00 :   335f32: add     a4,a2,a5
+         : 322    for (size_t i = 0; i < d; i++) {
+    0.00 :   335f36: addi    a5,a5,1
+         : 323    code[i] = (uint8_t)x[i];
+    0.00 :   335f38: fcvt.wu.s       a3,fa5,rtz
+         : 322    for (size_t i = 0; i < d; i++) {
+    0.00 :   335f3c: addi    a1,a1,4
+         : 323    code[i] = (uint8_t)x[i];
+    0.00 :   335f3e: sb      a3,0(a4)
+         : 322    for (size_t i = 0; i < d; i++) {
+    0.00 :   335f42: ld      a4,8(a0)
+    0.00 :   335f44: bltu    a5,a4,335f2e <faiss::scalar_quantizer::Quantizer8bitDirect<(faiss::SIMDLevel)0>::encode_vector(float const*, unsigned char*) const+0xe>
+         : 325    }
+         : 326    }
+    0.00 :   335f48: ld      ra,8(sp)
+    0.00 :   335f4a: ld      s0,0(sp)
+    0.00 :   335f4c: addi    sp,sp,16
+    0.00 :   335f4e: ret

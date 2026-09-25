@@ -1,0 +1,52 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (1 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      0000000000335ef4 <faiss::scalar_quantizer::QuantizerBF16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const>:
+         : 6      faiss::scalar_quantizer::QuantizerBF16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+         :
+         : 287    void encode_vector(const float* x, uint8_t* code) const override {
+         : 288    encode_bf16_simd(x, (uint16_t*)code, d);
+         : 289    }
+         :
+         : 291    void decode_vector(const uint8_t* code, float* x) const override {
+    0.00 :   335ef4: addi    sp,sp,-16
+    0.00 :   335ef6: sd      s0,0(sp)
+    0.00 :   335ef8: sd      ra,8(sp)
+    0.00 :   335efa: addi    s0,sp,16
+         : 287    decode_bf16_simd((const uint16_t*)code, x, d);
+    0.00 :   335efc: ld      a4,8(a0)
+         : 289    faiss::decode_bf16_simd(unsigned short const*, float*, unsigned long):
+         : 65     __m512i w = _mm512_cvtepu16_epi32(v);
+         : 66     w = _mm512_slli_epi32(w, 16);
+         : 67     _mm512_storeu_ps(dst + i, _mm512_castsi512_ps(w));
+         : 68     }
+         : 69     #endif
+         : 70     for (; i < n; i++) {
+    0.00 :   335efe: beqz    a4,335f18 <faiss::scalar_quantizer::QuantizerBF16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x24>
+    0.00 :   335f00: slli    a4,a4,0x1
+    0.00 :   335f02: add     a4,a4,a1
+         : 74     faiss::decode_bf16(unsigned short):
+         : 37     fp.as_u32 = (uint32_t(v) << 16);
+    0.00 :   335f04: lhu     a5,0(a1)
+         : 39     faiss::decode_bf16_simd(unsigned short const*, float*, unsigned long):
+         : 65     for (; i < n; i++) {
+    0.00 :   335f08: addi    a1,a1,2
+    0.00 :   335f0a: addi    a2,a2,4
+         : 68     faiss::decode_bf16(unsigned short):
+         : 37     fp.as_u32 = (uint32_t(v) << 16);
+    0.00 :   335f0c: slliw   a5,a5,0x10
+         : 39     faiss::decode_bf16_simd(unsigned short const*, float*, unsigned long):
+         : 66     dst[i] = decode_bf16(src[i]);
+  100.00 :   335f10: sw      a5,-4(a2)
+         : 65     for (; i < n; i++) {
+    0.00 :   335f14: bne     a1,a4,335f04 <faiss::scalar_quantizer::QuantizerBF16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x10>
+         : 67     faiss::scalar_quantizer::QuantizerBF16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+         : 288    }
+    0.00 :   335f18: ld      ra,8(sp)
+    0.00 :   335f1a: ld      s0,0(sp)
+    0.00 :   335f1c: addi    sp,sp,16
+    0.00 :   335f1e: ret

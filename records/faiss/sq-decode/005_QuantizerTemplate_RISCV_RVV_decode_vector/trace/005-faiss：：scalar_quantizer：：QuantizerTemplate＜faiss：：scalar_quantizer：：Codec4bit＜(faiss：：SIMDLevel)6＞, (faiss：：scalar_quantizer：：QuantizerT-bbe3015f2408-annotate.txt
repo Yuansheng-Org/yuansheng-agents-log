@@ -1,0 +1,76 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (2 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      000000000057e32c <faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec4bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)1, (faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const>:
+         : 6      faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec4bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)1, (faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+         : 134    }
+         : 135    Codec::encode_component(xi, code, i);
+         : 136    }
+         : 137    }
+         :
+         : 139    void decode_vector(const uint8_t* code, float* x) const final {
+    0.00 :   57e32c: addi    sp,sp,-16
+    0.00 :   57e32e: sd      s0,0(sp)
+    0.00 :   57e330: sd      ra,8(sp)
+    0.00 :   57e332: addi    s0,sp,16
+         : 135    for (size_t i = 0; i < d; i++) {
+    0.00 :   57e334: ld      a7,8(a0)
+    0.00 :   57e338: beqz    a7,57e39c <faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec4bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)1, (faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x70>
+    0.00 :   57e33c: auipc   a5,0x96
+    0.00 :   57e340: flw     fa1,2016(a5) # 614b1c <typeinfo name for faiss::ProgressiveDimClustering+0x54>
+    0.00 :   57e344: auipc   a5,0x97
+    0.00 :   57e348: flw     fa2,-1980(a5) # 614b88 <typeinfo name for faiss::ProgressiveDimClustering+0xc0>
+         : 137    float xi = Codec::decode_component(code, i);
+         : 138    x[i] = vmin[i] + xi * vdiff[i];
+    0.00 :   57e34c: ld      t3,16(a0)
+    0.00 :   57e350: ld      t1,24(a0)
+    0.00 :   57e354: li      a5,0
+         : 135    for (size_t i = 0; i < d; i++) {
+    0.00 :   57e356: li      a3,0
+         : 137    faiss::scalar_quantizer::Codec4bit<(faiss::SIMDLevel)0>::decode_component(unsigned char const*, unsigned long):
+         : 58     }
+         :
+         : 60     static FAISS_ALWAYS_INLINE float decode_component(
+         : 61     const uint8_t* code,
+         : 62     size_t i) {
+         : 63     return (((code[i / 2] >> ((i & 1) << 2)) & 0xf) + 0.5f) / 15.0f;
+    0.00 :   57e358: srli    a4,a3,0x1
+    0.00 :   57e35c: add     a4,a4,a1
+    0.00 :   57e35e: lbu     a4,0(a4)
+    0.00 :   57e362: andi    a6,a5,4
+         : 68     faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec4bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)1, (faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+         : 137    x[i] = vmin[i] + xi * vdiff[i];
+    0.00 :   57e366: add     a0,t1,a5
+         : 139    faiss::scalar_quantizer::Codec4bit<(faiss::SIMDLevel)0>::decode_component(unsigned char const*, unsigned long):
+    0.00 :   57e36a: sraw    a4,a4,a6
+    0.00 :   57e36e: andi    a4,a4,15
+    0.00 :   57e370: fcvt.s.w        fa5,a4
+         : 61     faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec4bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)1, (faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+    0.00 :   57e374: add     a4,t3,a5
+   50.00 :   57e378: flw     fa3,0(a4)
+         : 139    faiss::scalar_quantizer::Codec4bit<(faiss::SIMDLevel)0>::decode_component(unsigned char const*, unsigned long):
+    0.00 :   57e37c: fadd.s  fa5,fa5,fa1
+         : 59     faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec4bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)1, (faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+   50.00 :   57e380: flw     fa4,0(a0)
+    0.00 :   57e384: add     a4,a2,a5
+         : 135    for (size_t i = 0; i < d; i++) {
+    0.00 :   57e388: addi    a3,a3,1
+    0.00 :   57e38a: addi    a5,a5,4
+         : 136    faiss::scalar_quantizer::Codec4bit<(faiss::SIMDLevel)0>::decode_component(unsigned char const*, unsigned long):
+    0.00 :   57e38c: fdiv.s  fa5,fa5,fa2
+         : 59     faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec4bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)1, (faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+         : 137    x[i] = vmin[i] + xi * vdiff[i];
+    0.00 :   57e390: fmadd.s fa5,fa4,fa5,fa3
+    0.00 :   57e394: fsw     fa5,0(a4)
+         : 135    for (size_t i = 0; i < d; i++) {
+    0.00 :   57e398: bne     a3,a7,57e358 <faiss::scalar_quantizer::QuantizerTemplate<faiss::scalar_quantizer::Codec4bit<(faiss::SIMDLevel)6>, (faiss::scalar_quantizer::QuantizerTemplateScaling)1, (faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x2c>
+         : 139    }
+         : 140    }
+    0.00 :   57e39c: ld      ra,8(sp)
+    0.00 :   57e39e: ld      s0,0(sp)
+    0.00 :   57e3a0: addi    sp,sp,16
+    0.00 :   57e3a2: ret

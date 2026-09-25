@@ -1,0 +1,97 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rev-013-r0",
+ "patchCandidateId": "pc-bp-faiss-sq-decode-013",
+ "reviewedAt": "diagnosis-a4bc4a208b3a4d6e386aefbb5595637a",
+ "reviewer": "derived-from-yuansheng-validation",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "Add an RVV fast path to decode_bf16_simd in faiss/utils/bf16.h, guarded by __riscv_vector, mirroring the existing __AVX512F__ widening sequence: per chunk load u16 with vle16.v, widen with unsigned vzext.vf2 (e32), shift left by 16 with vsll.vi, store with vse32.v, then fall through to the existing scalar tail for the remainder; leave the AVX512 path and scalar fallback intact.",
+  "changeRiskLevel": "low",
+  "controls": [
+   "Gate the new block with #if defined(__riscv_vector) and otherwise keep the current scalar tail identical",
+   "Use only vzext.vf2 + vsll.vi and validate output bit-for-bit against the scalar decode_bf16 reference before benchmarking",
+   "Keep a fixed-VL main loop plus runtime-VL tail per kernel-conventions to keep vsetvli stable in the hot interval",
+   "Run faiss scalar-quantizer/bf16 unit tests unchanged and compare against the AVX512 path logic on x86 if available"
+  ]
+ },
+ "hallucinationCheck": [
+  {
+   "dimension": "claim_traceability",
+   "result": "PASS",
+   "detail": "claim_traceability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "explainability",
+   "result": "PASS",
+   "detail": "explainability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "internal_consistency",
+   "result": "PASS",
+   "detail": "internal_consistency passed deterministic assembly validation."
+  },
+  {
+   "dimension": "safety_guardrails",
+   "result": "PASS",
+   "detail": "safety_guardrails passed deterministic assembly validation."
+  },
+  {
+   "dimension": "technical_accuracy",
+   "result": "PASS",
+   "detail": "technical_accuracy passed deterministic assembly validation."
+  }
+ ],
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Vzext signedness/width must match _mm512_cvtepu16_epi32 semantics: an unsigned zero-extension (vzext.vf2) is required; a signed extension or an FP conversion would corrupt bit patterns"
+  },
+  {
+   "id": "F2",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Widening changes LMUL budget (e16 source m1 widens to e32 m~2); a misconfigured SEW/LMUL can exceed VLMAX or introduce per-iteration vsetvli overhead that eats the gain"
+  },
+  {
+   "id": "F3",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Toolchain/intrinsic availability and the header's x86-only include guard need careful #if handling to keep the header portable across ISAs"
+  },
+  {
+   "id": "F4",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Tail handling for n not divisible by VLMAX must keep the scalar reference exact"
+  },
+  {
+   "id": "F5",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "GCC/LLVM might already scalar-unroll and outperform a naive first vector version, so a measured gate is required before replacing the existing path"
+  }
+ ],
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-decode/013_faiss_scalar_quantizer_QuantizerBF16_faiss_SIMDLevel_0_decode_vector",
+   "snapshotCandidate": "candidate-14c3155f744bb993b35d48b3fcba4818.patch",
+   "record": "records/faiss/sq-decode/004_decode_bf16_simd"
+  },
+  "fieldMapping": {
+   "reviewResult": "blueprint/machine-validation.json#status",
+   "hallucinationCheck": "blueprint/semantic-validation.json#dimensions (five-dimension)",
+   "archReview.notes": "blueprint.craft_actions.actions[0].proposal",
+   "archReview.status": "blueprint.craft_actions.actions[0].readiness",
+   "archReview.changeRiskLevel": "blueprint.craft_actions.actions[0].change_risk.level",
+   "archReview.controls": "blueprint.craft_actions.actions[0].change_risk.controls",
+   "findings[].detail": "blueprint.craft_actions.actions[0].change_risk.reasons"
+  }
+ }
+}

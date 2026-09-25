@@ -1,0 +1,91 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rev-008-r0",
+ "patchCandidateId": "pc-bp-faiss-sq-encode-008",
+ "reviewedAt": "diagnosis-bd77ef28566ca78a5be28ff8980cbf44",
+ "reviewer": "derived-from-yuansheng-validation",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "Replace the inlined scalar ryg encode_fp16 loop in QuantizerFP16<0>::encode_vector (quantizers.h:246) with a stable-vtype RVV narrowing fast path when zvfhmin is available: vsetvl e32, vle32.v load of the float block, a masked detect of special lanes (NaN / ±Inf / boundary), vfncvt.f.f.w (Zvfhmin f32->f16 narrowing, RNE through FRM) on the bulk lanes, a masked repair that writes the scalar ryg bit patterns (qNaN 0x7E00|sign, Inf 0x7C00|sign) only on special lanes, then vse16.v to the uint16_t code buffer; keep the untouched ryg encode_fp16 as the invariant scalar fallback and for the residual tail/SIMDLevel-0 path.",
+  "changeRiskLevel": "low",
+  "controls": [
+   "Gate the vector path behind a zvfhmin-capability check and keep the scalar ryg helper as the reference and fallback.",
+   "Build a bit-exact conformance test comparing vector vs scalar ryg output across the full special-value corpus (NaN payloads, ±Inf, ±0, denormals, 65504/65520 boundaries, half-ties) before any perf comparison.",
+   "Add a short-vector crossover (use scalar below a measured d threshold) and re-measure the 20-iteration QT_fp16 benchmark after landing.",
+   "Verify one vsetvl per main-loop interval with no vtype switching inside; count header has zero vector spills."
+  ]
+ },
+ "hallucinationCheck": [
+  {
+   "dimension": "claim_traceability",
+   "result": "PASS",
+   "detail": "claim_traceability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "explainability",
+   "result": "PASS",
+   "detail": "explainability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "internal_consistency",
+   "result": "PASS",
+   "detail": "internal_consistency passed deterministic assembly validation."
+  },
+  {
+   "dimension": "safety_guardrails",
+   "result": "PASS",
+   "detail": "safety_guardrails passed deterministic assembly validation."
+  },
+  {
+   "dimension": "technical_accuracy",
+   "result": "PASS",
+   "detail": "technical_accuracy passed deterministic assembly validation."
+  }
+ ],
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Zvfhmin vfncvt.f.f.w rounding/NaN canonicalization and denormal handling may differ from the ryg bit-trick (qNaN 0x7E00, Inf 0x7C00, denormals via FP32 denormals): mismatches would silently change stored codes unless repaired on the masked special lanes."
+  },
+  {
+   "id": "F2",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Vectorization changes the encode's numerical path (FRM, FTZ, NaN payload) which affects downstream distance computations; any bit-pattern deviation changes index results, not just speed."
+  },
+  {
+   "id": "F3",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "A fixed 16-bit store stream requires vse16 alignment/layout identical to the ((uint16_t*)code) contract; an LMUL or SEW mismatch could corrupt adjacent code entries."
+  },
+  {
+   "id": "F4",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "If SIMDLevel<0> exists specifically to provide a scalar/reference path, unconditional vectorization could regress short-vector calls or duplicate maintenance."
+  }
+ ],
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-encode/008_faiss_scalar_quantizer_QuantizerFP16_faiss_SIMDLevel_0_encode_vector",
+   "snapshotCandidate": "candidate-55cb7d9f5f59e4317afc256d874ed229.patch",
+   "record": "records/faiss/sq-encode/002_QuantizerFP16_RISCV_RVV_encode_vector"
+  },
+  "fieldMapping": {
+   "reviewResult": "blueprint/machine-validation.json#status",
+   "hallucinationCheck": "blueprint/semantic-validation.json#dimensions (five-dimension)",
+   "archReview.notes": "blueprint.craft_actions.actions[0].proposal",
+   "archReview.status": "blueprint.craft_actions.actions[0].readiness",
+   "archReview.changeRiskLevel": "blueprint.craft_actions.actions[0].change_risk.level",
+   "archReview.controls": "blueprint.craft_actions.actions[0].change_risk.controls",
+   "findings[].detail": "blueprint.craft_actions.actions[0].change_risk.reasons"
+  }
+ }
+}

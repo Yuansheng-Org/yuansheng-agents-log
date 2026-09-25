@@ -1,0 +1,123 @@
+25-FAISS-CPP-BENCHMARK sq-decode RISC-V perf stat
+=================================================
+
+Source CSV: /workspace/results/25-faiss-cpp-benchmark_results.csv
+TestName: sq-decode
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 267,550,514 |
+| task_clock | 274.71 |
+| cpu_cycle | 603,455,770 |
+| instruction | 987,166,115 |
+| cache_references | NA |
+| cache_misses | NA |
+| branches | 100,285,515 |
+| branch_misses | 317,459 |
+| L1_dcache_loads | 155,194,574 |
+| L1_dcache_load_misses | 533,735 |
+| LLC_load_misses | NA |
+| LLC_loads | NA |
+| IPC | 1.635855 |
+| benchmark_QT_4bit_real_time_ns | 1,201,695 |
+| benchmark_QT_4bit_cpu_time_ns | 1,201,646 |
+| benchmark_QT_4bit_iterations | 20 |
+| benchmark_QT_4bit_code_size | 64 |
+| benchmark_QT_4bit_uniform_real_time_ns | 1,200,476 |
+| benchmark_QT_4bit_uniform_cpu_time_ns | 1,200,525 |
+| benchmark_QT_4bit_uniform_iterations | 20 |
+| benchmark_QT_4bit_uniform_code_size | 64 |
+| benchmark_QT_6bit_real_time_ns | 1,363,032 |
+| benchmark_QT_6bit_cpu_time_ns | 1,360,679 |
+| benchmark_QT_6bit_iterations | 20 |
+| benchmark_QT_6bit_code_size | 96 |
+| benchmark_QT_8bit_real_time_ns | 1,198,976 |
+| benchmark_QT_8bit_cpu_time_ns | 1,197,785 |
+| benchmark_QT_8bit_iterations | 20 |
+| benchmark_QT_8bit_code_size | 128 |
+| benchmark_QT_8bit_direct_real_time_ns | 246,205 |
+| benchmark_QT_8bit_direct_cpu_time_ns | 246,181 |
+| benchmark_QT_8bit_direct_iterations | 20 |
+| benchmark_QT_8bit_direct_code_size | 128 |
+| benchmark_QT_8bit_direct_signed_real_time_ns | 282,878 |
+| benchmark_QT_8bit_direct_signed_cpu_time_ns | 282,892 |
+| benchmark_QT_8bit_direct_signed_iterations | 20 |
+| benchmark_QT_8bit_direct_signed_code_size | 128 |
+| benchmark_QT_8bit_uniform_real_time_ns | 1,200,012 |
+| benchmark_QT_8bit_uniform_cpu_time_ns | 1,198,319 |
+| benchmark_QT_8bit_uniform_iterations | 20 |
+| benchmark_QT_8bit_uniform_code_size | 128 |
+| benchmark_QT_bf16_real_time_ns | 246,428 |
+| benchmark_QT_bf16_cpu_time_ns | 246,435 |
+| benchmark_QT_bf16_iterations | 20 |
+| benchmark_QT_bf16_code_size | 256 |
+| benchmark_QT_fp16_real_time_ns | 644,871 |
+| benchmark_QT_fp16_cpu_time_ns | 644,902 |
+| benchmark_QT_fp16_iterations | 20 |
+| benchmark_QT_fp16_code_size | 256 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 0.267551 |
+| branch_miss_rate | 0.317% |
+| L1_dcache_load_miss_rate | 0.344% |
+
+perf stat style summary
+-----------------------
+        267,550,514  duration_time
+             274.71  task_clock
+        603,455,770  cpu_cycle
+        987,166,115  instruction
+                 NA  cache_references
+                 NA  cache_misses
+        100,285,515  branches
+            317,459  branch_misses
+        155,194,574  L1_dcache_loads
+            533,735  L1_dcache_load_misses
+                 NA  LLC_load_misses
+                 NA  LLC_loads
+           1.635855  IPC
+          1,201,695  benchmark_QT_4bit_real_time_ns
+          1,201,646  benchmark_QT_4bit_cpu_time_ns
+                 20  benchmark_QT_4bit_iterations
+                 64  benchmark_QT_4bit_code_size
+          1,200,476  benchmark_QT_4bit_uniform_real_time_ns
+          1,200,525  benchmark_QT_4bit_uniform_cpu_time_ns
+                 20  benchmark_QT_4bit_uniform_iterations
+                 64  benchmark_QT_4bit_uniform_code_size
+          1,363,032  benchmark_QT_6bit_real_time_ns
+          1,360,679  benchmark_QT_6bit_cpu_time_ns
+                 20  benchmark_QT_6bit_iterations
+                 96  benchmark_QT_6bit_code_size
+          1,198,976  benchmark_QT_8bit_real_time_ns
+          1,197,785  benchmark_QT_8bit_cpu_time_ns
+                 20  benchmark_QT_8bit_iterations
+                128  benchmark_QT_8bit_code_size
+            246,205  benchmark_QT_8bit_direct_real_time_ns
+            246,181  benchmark_QT_8bit_direct_cpu_time_ns
+                 20  benchmark_QT_8bit_direct_iterations
+                128  benchmark_QT_8bit_direct_code_size
+            282,878  benchmark_QT_8bit_direct_signed_real_time_ns
+            282,892  benchmark_QT_8bit_direct_signed_cpu_time_ns
+                 20  benchmark_QT_8bit_direct_signed_iterations
+                128  benchmark_QT_8bit_direct_signed_code_size
+          1,200,012  benchmark_QT_8bit_uniform_real_time_ns
+          1,198,319  benchmark_QT_8bit_uniform_cpu_time_ns
+                 20  benchmark_QT_8bit_uniform_iterations
+                128  benchmark_QT_8bit_uniform_code_size
+            246,428  benchmark_QT_bf16_real_time_ns
+            246,435  benchmark_QT_bf16_cpu_time_ns
+                 20  benchmark_QT_bf16_iterations
+                256  benchmark_QT_bf16_code_size
+            644,871  benchmark_QT_fp16_real_time_ns
+            644,902  benchmark_QT_fp16_cpu_time_ns
+                 20  benchmark_QT_fp16_iterations
+                256  benchmark_QT_fp16_code_size
+           0.267551  duration_s
+             0.317%  branch_miss_rate
+             0.344%  L1_dcache_load_miss_rate

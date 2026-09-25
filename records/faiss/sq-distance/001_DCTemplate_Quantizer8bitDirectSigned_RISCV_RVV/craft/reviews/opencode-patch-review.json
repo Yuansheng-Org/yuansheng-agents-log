@@ -1,0 +1,90 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rev-013-r0",
+ "patchCandidateId": "pc-bp-faiss-sq-distance-013",
+ "reviewedAt": "diagnosis-1f7987b0af562ea231ea706d2ee2eb62",
+ "reviewer": "derived-from-yuansheng-validation",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "Raise LMUL/register groups for the auto-vectorized compute_distance loop from e8/mf4 (4 code bytes per iteration on VLEN-128) to the legal spill-free frontier (e8/m1..m8 with matching e32 widening EMUL) via a targeted loop pragma/attribute or intrinsic rewrite of faiss/impl/scalar_quantizer/distance_computers.h:34-39, amortizing per-iteration vsetvl/reduction/branch overhead over 4-16x more elements and keeping VLEN-agnostic strip mining for the tail.",
+  "changeRiskLevel": "low",
+  "controls": [
+   "Enumerate the legal m1/m2/m4/m8 x unroll=1/2/4/8 frontier from objdump/live-range analysis and admit only spill-free candidates (inspect for vmv/stack spill-reload)",
+   "Keep vsetvli a5,a4 min-on-remaining AVL so d not a multiple of VLMAX remains correct",
+   "A/B within bench_scalar_quantizer_distance sq-distance comparing CPU time and IPC over the workload's d distribution"
+  ]
+ },
+ "hallucinationCheck": [
+  {
+   "dimension": "claim_traceability",
+   "result": "PASS",
+   "detail": "claim_traceability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "explainability",
+   "result": "PASS",
+   "detail": "explainability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "internal_consistency",
+   "result": "PASS",
+   "detail": "internal_consistency passed deterministic assembly validation."
+  },
+  {
+   "dimension": "safety_guardrails",
+   "result": "PASS",
+   "detail": "safety_guardrails passed deterministic assembly validation."
+  },
+  {
+   "dimension": "technical_accuracy",
+   "result": "PASS",
+   "detail": "technical_accuracy passed deterministic assembly validation."
+  }
+ ],
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Larger blocks change vfredosum association unless floating-point ordering contract permits; QT_8bit_direct_signed metric tolerance must be checked against the scalar reference"
+  },
+  {
+   "id": "F2",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Larger LMUL may spill if the allocator's live set grows beyond LMUL*peak_live_vectors<=32 (query float group, byte group, widened group, accumulators); m8 must not be assumed"
+  },
+  {
+   "id": "F3",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Autovec heuristics may not honor LMUL hints or may emit incompatible EMUL for the vsext.vf4 (8->32) widening step, forcing an intrinsic rewrite"
+  },
+  {
+   "id": "F4",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Longer bodies could increase frontend/I-cache pressure on the target core"
+  }
+ ],
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-distance/013_faiss_scalar_quantizer_DCTemplate_faiss_scalar_quantizer_Quantizer8bitDirectSigned_faiss_SI_7a2d1cea",
+   "snapshotCandidate": "candidate-42f3412bbfa105b82a1767fc307da3ad.patch",
+   "record": "records/faiss/sq-distance/001_DCTemplate_Quantizer8bitDirectSigned_RISCV_RVV"
+  },
+  "fieldMapping": {
+   "reviewResult": "blueprint/machine-validation.json#status",
+   "hallucinationCheck": "blueprint/semantic-validation.json#dimensions (five-dimension)",
+   "archReview.notes": "blueprint.craft_actions.actions[0].proposal",
+   "archReview.status": "blueprint.craft_actions.actions[0].readiness",
+   "archReview.changeRiskLevel": "blueprint.craft_actions.actions[0].change_risk.level",
+   "archReview.controls": "blueprint.craft_actions.actions[0].change_risk.controls",
+   "findings[].detail": "blueprint.craft_actions.actions[0].change_risk.reasons"
+  }
+ }
+}

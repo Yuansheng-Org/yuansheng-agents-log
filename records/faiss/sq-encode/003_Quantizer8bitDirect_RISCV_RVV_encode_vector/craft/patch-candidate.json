@@ -1,0 +1,29 @@
+{
+ "archReviewWarning": "",
+ "schemaVersion": "yuansheng.patch_candidate.v1",
+ "patchCandidateId": "pc-bp-faiss-sq-encode-011",
+ "patchPlanId": "pp-bp-faiss-sq-encode-011",
+ "createdAt": "diagnosis-04e6e559bd22e6cd24401370415c99b0",
+ "changedFiles": [
+  "faiss/impl/scalar_quantizer/quantizers.h",
+  "faiss/impl/scalar_quantizer/sq-rvv.cpp"
+ ],
+ "gitDiff": "diff --git a/faiss/impl/scalar_quantizer/quantizers.h b/faiss/impl/scalar_quantizer/quantizers.h\nindex 393983de95678eacf07f9e4340ae013bf1744e7f..ee9d79dd069b65b39e6d5143b122e9d4951653ce 100644\n--- a/faiss/impl/scalar_quantizer/quantizers.h\n+++ b/faiss/impl/scalar_quantizer/quantizers.h\n@@ -318,7 +318,11 @@ struct Quantizer8bitDirect<SIMDLevel::NONE> : ScalarQuantizer::SQuantizer {\n     Quantizer8bitDirect(size_t d_in, const std::vector<float>& /* unused */)\n             : d(d_in) {}\n \n-    void encode_vector(const float* x, uint8_t* code) const final {\n+    // Note: deliberately not `final` so SIMD specializations (e.g.\n+    // Quantizer8bitDirect<SIMDLevel::RISCV_RVV> in sq-rvv.cpp) may override\n+    // this with a vectorized precision-conversion fast path. All existing\n+    // non-RVV specializations inherit this implementation unchanged.\n+    void encode_vector(const float* x, uint8_t* code) const override {\n         for (size_t i = 0; i < d; i++) {\n             code[i] = (uint8_t)x[i];\n         }\ndiff --git a/faiss/impl/scalar_quantizer/sq-rvv.cpp b/faiss/impl/scalar_quantizer/sq-rvv.cpp\nindex 2b86e5c79e9cc9a05c44e34ccfc77729d270a777..c3b58d640390f3fa427a8d3c0d548ac485eb3cb8 100644\n--- a/faiss/impl/scalar_quantizer/sq-rvv.cpp\n+++ b/faiss/impl/scalar_quantizer/sq-rvv.cpp\n@@ -96,8 +96,41 @@ struct QuantizerBF16<SIMDLevel::RISCV_RVV> : QuantizerBF16<SIMDLevel::NONE> {\n template <>\n struct Quantizer8bitDirect<SIMDLevel::RISCV_RVV>\n         : Quantizer8bitDirect<SIMDLevel::NONE> {\n+    using Base = Quantizer8bitDirect<SIMDLevel::NONE>;\n+\n     Quantizer8bitDirect(size_t d, const std::vector<float>& trained)\n-            : Quantizer8bitDirect<SIMDLevel::NONE>(d, trained) {}\n+            : Base(d, trained) {}\n+\n+    /// RVV precision-conversion fast path for code[i] = (uint8_t)x[i].\n+    ///\n+    /// The scalar lowering of `(uint8_t)x[i]` on RISC-V is\n+    /// flw / fcvt.wu.s (rtz) / sb: float -> u32 with round-toward-zero and\n+    /// saturation (negative -> 0, overflow/NaN -> 0xFFFFFFFF), then the low\n+    /// byte is stored. This RVV path reproduces those bytes lane-exactly with\n+    /// a dynamic-vsetvl strip-mined loop: vle32 loads, vfcvt.rtz.xu.f.v\n+    /// converts f32 -> u32 with the same rtz/saturation semantics as the\n+    /// scalar fcvt.wu.s, a pure narrowing shift (vnsrl.wi shift 0,\n+    /// u32 -> u16 -> u8) keeps the low byte of each saturated conversion, and\n+    /// vse8 stores the result. Each iteration's vl naturally covers the tail\n+    /// (partial vl), so zero-length and odd-sized vectors are handled without\n+    /// any out-of-bounds access and without changing the codec contract.\n+    void encode_vector(const float* x, uint8_t* code) const final {\n+        const size_t d = this->d;\n+        size_t i = 0;\n+        while (i < d) {\n+            // Between 1 and VLMAX lanes per chunk; the final chunk is partial.\n+            size_t vl = __riscv_vsetvl_e32m1(d - i);\n+            vfloat32m1_t xv = __riscv_vle32_v_f32m1(x + i, vl);\n+            // Same semantics as scalar fcvt.wu.s rtz (saturates out-of-range\n+            // and NaN to 0 / 0xFFFFFFFF as appropriate), then keep the low\n+            // byte exactly like the scalar value truncation.\n+            vuint32m1_t xu = __riscv_vfcvt_rtz_xu_f_v_u32m1(xv, vl);\n+            vuint16mf2_t xu16 = __riscv_vnsrl_wx_u16mf2(xu, 0, vl);\n+            vuint8mf4_t xu8 = __riscv_vnsrl_wx_u8mf4(xu16, 0, vl);\n+            __riscv_vse8_v_u8mf4(code + i, xu8, vl);\n+            i += vl;\n+        }\n+    }\n };\n \n template <>\n",
+ "buildModeInvocation": "conditional",
+ "notes": [],
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-encode/011_faiss_scalar_quantizer_Quantizer8bitDirect_faiss_SIMDLevel_0_encode_vector",
+   "snapshotCandidate": "candidate-24ffabae714d0188f9e7d3e8b652377a.patch",
+   "record": "records/faiss/sq-encode/003_Quantizer8bitDirect_RISCV_RVV_encode_vector"
+  },
+  "fieldMapping": {
+   "changedFiles": "diff --git headers of the real craft/patch.diff",
+   "gitDiff": "the real craft/patch.diff body, LF-normalized",
+   "buildModeInvocation": "blueprint.craft_actions.actions[0].readiness"
+  }
+ }
+}

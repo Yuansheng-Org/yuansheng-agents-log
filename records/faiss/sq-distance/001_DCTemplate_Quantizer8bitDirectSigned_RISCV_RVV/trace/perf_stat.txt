@@ -1,0 +1,195 @@
+25-FAISS-CPP-BENCHMARK sq-distance RISC-V perf stat
+===================================================
+
+Source CSV: /workspace/results/25-faiss-cpp-benchmark_results.csv
+TestName: sq-distance
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 742,818,733,890 |
+| task_clock | 742,299.92 |
+| cpu_cycle | 1,632,567,371,259 |
+| instruction | 1,524,583,648,034 |
+| cache_references | NA |
+| cache_misses | NA |
+| branches | 119,290,109,190 |
+| branch_misses | 179,889,710 |
+| L1_dcache_loads | 272,729,384,914 |
+| L1_dcache_load_misses | 62,182,716 |
+| LLC_load_misses | NA |
+| LLC_loads | NA |
+| IPC | 0.933856 |
+| benchmark_QT_4bit_L2_real_time_ns | 2,785,672,061 |
+| benchmark_QT_4bit_L2_cpu_time_ns | 2,783,091,305 |
+| benchmark_QT_4bit_L2_iterations | 20 |
+| benchmark_QT_4bit_L2_code_size | 64 |
+| benchmark_QT_4bit_IP_real_time_ns | 2,424,124,518 |
+| benchmark_QT_4bit_IP_cpu_time_ns | 2,422,127,203 |
+| benchmark_QT_4bit_IP_iterations | 20 |
+| benchmark_QT_4bit_IP_code_size | 64 |
+| benchmark_QT_4bit_uniform_L2_real_time_ns | 347,525,408 |
+| benchmark_QT_4bit_uniform_L2_cpu_time_ns | 347,272,603 |
+| benchmark_QT_4bit_uniform_L2_iterations | 20 |
+| benchmark_QT_4bit_uniform_L2_code_size | 64 |
+| benchmark_QT_4bit_uniform_IP_real_time_ns | 2,427,517,525 |
+| benchmark_QT_4bit_uniform_IP_cpu_time_ns | 2,425,594,361 |
+| benchmark_QT_4bit_uniform_IP_iterations | 20 |
+| benchmark_QT_4bit_uniform_IP_code_size | 64 |
+| benchmark_QT_6bit_L2_real_time_ns | 3,046,156,434 |
+| benchmark_QT_6bit_L2_cpu_time_ns | 3,043,924,437 |
+| benchmark_QT_6bit_L2_iterations | 20 |
+| benchmark_QT_6bit_L2_code_size | 96 |
+| benchmark_QT_6bit_IP_real_time_ns | 2,678,282,479 |
+| benchmark_QT_6bit_IP_cpu_time_ns | 2,676,131,852 |
+| benchmark_QT_6bit_IP_iterations | 20 |
+| benchmark_QT_6bit_IP_code_size | 96 |
+| benchmark_QT_8bit_L2_real_time_ns | 2,704,634,472 |
+| benchmark_QT_8bit_L2_cpu_time_ns | 2,702,477,264 |
+| benchmark_QT_8bit_L2_iterations | 20 |
+| benchmark_QT_8bit_L2_code_size | 128 |
+| benchmark_QT_8bit_IP_real_time_ns | 2,586,550,025 |
+| benchmark_QT_8bit_IP_cpu_time_ns | 2,584,634,433 |
+| benchmark_QT_8bit_IP_iterations | 20 |
+| benchmark_QT_8bit_IP_code_size | 128 |
+| benchmark_QT_8bit_direct_L2_real_time_ns | 1,470,056,528 |
+| benchmark_QT_8bit_direct_L2_cpu_time_ns | 1,468,843,144 |
+| benchmark_QT_8bit_direct_L2_iterations | 20 |
+| benchmark_QT_8bit_direct_L2_code_size | 128 |
+| benchmark_QT_8bit_direct_IP_real_time_ns | 1,384,819,995 |
+| benchmark_QT_8bit_direct_IP_cpu_time_ns | 1,383,594,333 |
+| benchmark_QT_8bit_direct_IP_iterations | 20 |
+| benchmark_QT_8bit_direct_IP_code_size | 128 |
+| benchmark_QT_8bit_direct_signed_L2_real_time_ns | 1,563,390,432 |
+| benchmark_QT_8bit_direct_signed_L2_cpu_time_ns | 1,562,111,847 |
+| benchmark_QT_8bit_direct_signed_L2_iterations | 20 |
+| benchmark_QT_8bit_direct_signed_L2_code_size | 128 |
+| benchmark_QT_8bit_direct_signed_IP_real_time_ns | 1,477,199,888 |
+| benchmark_QT_8bit_direct_signed_IP_cpu_time_ns | 1,476,106,767 |
+| benchmark_QT_8bit_direct_signed_IP_iterations | 20 |
+| benchmark_QT_8bit_direct_signed_IP_code_size | 128 |
+| benchmark_QT_8bit_uniform_L2_real_time_ns | 2,828,825,679 |
+| benchmark_QT_8bit_uniform_L2_cpu_time_ns | 2,826,519,885 |
+| benchmark_QT_8bit_uniform_L2_iterations | 20 |
+| benchmark_QT_8bit_uniform_L2_code_size | 128 |
+| benchmark_QT_8bit_uniform_IP_real_time_ns | 2,713,760,526 |
+| benchmark_QT_8bit_uniform_IP_cpu_time_ns | 2,711,638,279 |
+| benchmark_QT_8bit_uniform_IP_iterations | 20 |
+| benchmark_QT_8bit_uniform_IP_code_size | 128 |
+| benchmark_QT_bf16_L2_real_time_ns | 1,470,869,013 |
+| benchmark_QT_bf16_L2_cpu_time_ns | 1,469,455,042 |
+| benchmark_QT_bf16_L2_iterations | 20 |
+| benchmark_QT_bf16_L2_code_size | 256 |
+| benchmark_QT_bf16_IP_real_time_ns | 1,382,671,647 |
+| benchmark_QT_bf16_IP_cpu_time_ns | 1,381,392,498 |
+| benchmark_QT_bf16_IP_iterations | 20 |
+| benchmark_QT_bf16_IP_code_size | 256 |
+| benchmark_QT_fp16_L2_real_time_ns | 1,964,404,925 |
+| benchmark_QT_fp16_L2_cpu_time_ns | 1,962,589,024 |
+| benchmark_QT_fp16_L2_iterations | 20 |
+| benchmark_QT_fp16_L2_code_size | 256 |
+| benchmark_QT_fp16_IP_real_time_ns | 1,873,232,131 |
+| benchmark_QT_fp16_IP_cpu_time_ns | 1,871,663,811 |
+| benchmark_QT_fp16_IP_iterations | 20 |
+| benchmark_QT_fp16_IP_code_size | 256 |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 742.818734 |
+| branch_miss_rate | 0.151% |
+| L1_dcache_load_miss_rate | 0.023% |
+
+perf stat style summary
+-----------------------
+          742,818,733,890  duration_time
+               742,299.92  task_clock
+        1,632,567,371,259  cpu_cycle
+        1,524,583,648,034  instruction
+                       NA  cache_references
+                       NA  cache_misses
+          119,290,109,190  branches
+              179,889,710  branch_misses
+          272,729,384,914  L1_dcache_loads
+               62,182,716  L1_dcache_load_misses
+                       NA  LLC_load_misses
+                       NA  LLC_loads
+                 0.933856  IPC
+            2,785,672,061  benchmark_QT_4bit_L2_real_time_ns
+            2,783,091,305  benchmark_QT_4bit_L2_cpu_time_ns
+                       20  benchmark_QT_4bit_L2_iterations
+                       64  benchmark_QT_4bit_L2_code_size
+            2,424,124,518  benchmark_QT_4bit_IP_real_time_ns
+            2,422,127,203  benchmark_QT_4bit_IP_cpu_time_ns
+                       20  benchmark_QT_4bit_IP_iterations
+                       64  benchmark_QT_4bit_IP_code_size
+              347,525,408  benchmark_QT_4bit_uniform_L2_real_time_ns
+              347,272,603  benchmark_QT_4bit_uniform_L2_cpu_time_ns
+                       20  benchmark_QT_4bit_uniform_L2_iterations
+                       64  benchmark_QT_4bit_uniform_L2_code_size
+            2,427,517,525  benchmark_QT_4bit_uniform_IP_real_time_ns
+            2,425,594,361  benchmark_QT_4bit_uniform_IP_cpu_time_ns
+                       20  benchmark_QT_4bit_uniform_IP_iterations
+                       64  benchmark_QT_4bit_uniform_IP_code_size
+            3,046,156,434  benchmark_QT_6bit_L2_real_time_ns
+            3,043,924,437  benchmark_QT_6bit_L2_cpu_time_ns
+                       20  benchmark_QT_6bit_L2_iterations
+                       96  benchmark_QT_6bit_L2_code_size
+            2,678,282,479  benchmark_QT_6bit_IP_real_time_ns
+            2,676,131,852  benchmark_QT_6bit_IP_cpu_time_ns
+                       20  benchmark_QT_6bit_IP_iterations
+                       96  benchmark_QT_6bit_IP_code_size
+            2,704,634,472  benchmark_QT_8bit_L2_real_time_ns
+            2,702,477,264  benchmark_QT_8bit_L2_cpu_time_ns
+                       20  benchmark_QT_8bit_L2_iterations
+                      128  benchmark_QT_8bit_L2_code_size
+            2,586,550,025  benchmark_QT_8bit_IP_real_time_ns
+            2,584,634,433  benchmark_QT_8bit_IP_cpu_time_ns
+                       20  benchmark_QT_8bit_IP_iterations
+                      128  benchmark_QT_8bit_IP_code_size
+            1,470,056,528  benchmark_QT_8bit_direct_L2_real_time_ns
+            1,468,843,144  benchmark_QT_8bit_direct_L2_cpu_time_ns
+                       20  benchmark_QT_8bit_direct_L2_iterations
+                      128  benchmark_QT_8bit_direct_L2_code_size
+            1,384,819,995  benchmark_QT_8bit_direct_IP_real_time_ns
+            1,383,594,333  benchmark_QT_8bit_direct_IP_cpu_time_ns
+                       20  benchmark_QT_8bit_direct_IP_iterations
+                      128  benchmark_QT_8bit_direct_IP_code_size
+            1,563,390,432  benchmark_QT_8bit_direct_signed_L2_real_time_ns
+            1,562,111,847  benchmark_QT_8bit_direct_signed_L2_cpu_time_ns
+                       20  benchmark_QT_8bit_direct_signed_L2_iterations
+                      128  benchmark_QT_8bit_direct_signed_L2_code_size
+            1,477,199,888  benchmark_QT_8bit_direct_signed_IP_real_time_ns
+            1,476,106,767  benchmark_QT_8bit_direct_signed_IP_cpu_time_ns
+                       20  benchmark_QT_8bit_direct_signed_IP_iterations
+                      128  benchmark_QT_8bit_direct_signed_IP_code_size
+            2,828,825,679  benchmark_QT_8bit_uniform_L2_real_time_ns
+            2,826,519,885  benchmark_QT_8bit_uniform_L2_cpu_time_ns
+                       20  benchmark_QT_8bit_uniform_L2_iterations
+                      128  benchmark_QT_8bit_uniform_L2_code_size
+            2,713,760,526  benchmark_QT_8bit_uniform_IP_real_time_ns
+            2,711,638,279  benchmark_QT_8bit_uniform_IP_cpu_time_ns
+                       20  benchmark_QT_8bit_uniform_IP_iterations
+                      128  benchmark_QT_8bit_uniform_IP_code_size
+            1,470,869,013  benchmark_QT_bf16_L2_real_time_ns
+            1,469,455,042  benchmark_QT_bf16_L2_cpu_time_ns
+                       20  benchmark_QT_bf16_L2_iterations
+                      256  benchmark_QT_bf16_L2_code_size
+            1,382,671,647  benchmark_QT_bf16_IP_real_time_ns
+            1,381,392,498  benchmark_QT_bf16_IP_cpu_time_ns
+                       20  benchmark_QT_bf16_IP_iterations
+                      256  benchmark_QT_bf16_IP_code_size
+            1,964,404,925  benchmark_QT_fp16_L2_real_time_ns
+            1,962,589,024  benchmark_QT_fp16_L2_cpu_time_ns
+                       20  benchmark_QT_fp16_L2_iterations
+                      256  benchmark_QT_fp16_L2_code_size
+            1,873,232,131  benchmark_QT_fp16_IP_real_time_ns
+            1,871,663,811  benchmark_QT_fp16_IP_cpu_time_ns
+                       20  benchmark_QT_fp16_IP_iterations
+                      256  benchmark_QT_fp16_IP_code_size
+               742.818734  duration_s
+                   0.151%  branch_miss_rate
+                   0.023%  L1_dcache_load_miss_rate

@@ -1,0 +1,91 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rev-002-r0",
+ "patchCandidateId": "pc-bp-faiss-sq-decode-002",
+ "reviewedAt": "diagnosis-2ec9e4ff19ed715f02f327c51a9d2ad7",
+ "reviewer": "derived-from-yuansheng-validation",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "Add a real VLEN-agnostic RVV decode_vector override to the QuantizerTemplate RISCV_RVV specializations in faiss/impl/scalar_quantizer/sq-rvv.cpp (NON_UNIFORM, and UNIFORM for consistency), mirroring the AVX2/AVX512 Codec4bit decode_8/16_components approach without any fixed width: strip-mined loop that loads vl/2 packed code bytes (vle8), unpacks low/high 4-bit nibbles (vand 0x0F / vsrl 4 or even-odd deinterleave), converts to float (vzext + vfwcvt.f.xu or vwf), applies the affine decode (0.5f*inv15 offset and inv15 scale via precomputed scalars), and fuses vmin[i]+vdiff[i]*x with vfmacc against contiguous vmin/vdiff vectors, ending with vse32 for the even/odd interleaved component order; keep fixed-VL main loop plus runtime-VL tail per kernel conventions and leave the scalar NONE base as the fallback for non-RVV builds.",
+  "changeRiskLevel": "low",
+  "controls": [
+   "Keep the scalar NONE-base decode_vector untouched so non-RVV and fallback builds produce the original bit pattern",
+   "Gate the new override with the same #ifdef COMPILE_SIMD_RISCV_RVV used by existing sq-rvv.cpp kernels",
+   "Add a unit-style comparison harness that decodes random codes through RVV and scalar paths and reports max abs/rel diff, and treat any nibble-order bug as a hard failure",
+   "Never assume a fixed VLEN or a d multiple of VLEN; derive vl from remaining count each iteration"
+  ]
+ },
+ "hallucinationCheck": [
+  {
+   "dimension": "claim_traceability",
+   "result": "PASS",
+   "detail": "claim_traceability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "explainability",
+   "result": "PASS",
+   "detail": "explainability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "internal_consistency",
+   "result": "PASS",
+   "detail": "internal_consistency passed deterministic assembly validation."
+  },
+  {
+   "dimension": "safety_guardrails",
+   "result": "PASS",
+   "detail": "safety_guardrails passed deterministic assembly validation."
+  },
+  {
+   "dimension": "technical_accuracy",
+   "result": "PASS",
+   "detail": "technical_accuracy passed deterministic assembly validation."
+  }
+ ],
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Replacing the exact /15.0f with a reciprocal multiply changes the last-bit FP rounding of reconstructed components, which can propagate into downstream distance values"
+  },
+  {
+   "id": "F2",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Interleaving low/high nibbles back into component order is the classic even/odd lane-ordering bug site"
+  },
+  {
+   "id": "F3",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "A VLEN-agnostic tail is mandatory; an off-by-one on packed byte loads can read past code_size"
+  },
+  {
+   "id": "F4",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "A new duplicate decode path increases maintenance surface across NONE/AVX2/AVX512/RVV variants"
+  }
+ ],
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-decode/002_faiss_scalar_quantizer_QuantizerTemplate_faiss_scalar_quantizer_Codec4bit_faiss_SIMDLevel_6_9652b988",
+   "snapshotCandidate": "candidate-d5e4afe64193b60e461707799a1c7d25.patch",
+   "record": "records/faiss/sq-decode/005_QuantizerTemplate_RISCV_RVV_decode_vector"
+  },
+  "fieldMapping": {
+   "reviewResult": "blueprint/machine-validation.json#status",
+   "hallucinationCheck": "blueprint/semantic-validation.json#dimensions (five-dimension)",
+   "archReview.notes": "blueprint.craft_actions.actions[0].proposal",
+   "archReview.status": "blueprint.craft_actions.actions[0].readiness",
+   "archReview.changeRiskLevel": "blueprint.craft_actions.actions[0].change_risk.level",
+   "archReview.controls": "blueprint.craft_actions.actions[0].change_risk.controls",
+   "findings[].detail": "blueprint.craft_actions.actions[0].change_risk.reasons"
+  }
+ }
+}

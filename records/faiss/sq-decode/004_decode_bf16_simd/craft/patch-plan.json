@@ -1,0 +1,38 @@
+{
+ "schemaVersion": "yuansheng.patch_plan.v1",
+ "patchPlanId": "pp-bp-faiss-sq-decode-013",
+ "blueprintId": "bp-faiss-sq-decode-013",
+ "createdAt": "diagnosis-a4bc4a208b3a4d6e386aefbb5595637a",
+ "objective": "QuantizerBF16<SIMDLevel::NONE>::decode_vector executes a fully scalar BF16->FP32 conversion loop (disasm 0x3896ee-0x3896fe: lhu; slliw a5,a5,0x10; sw a5,-4(a2); bne, 100% of function samples at the loop) because decode_bf16_simd in faiss/utils/bf16.h has only an __AVX512F__-guarded vector fast path and no RISC-V/RVV path, so on the rv64gcv build the scalar fallback decode_bf16((uint32_t(v))<<16) runs for every element.",
+ "changes": [
+  {
+   "filePath": "faiss/utils/bf16.h",
+   "action": "modify",
+   "rationale": "Add an RVV fast path to decode_bf16_simd in faiss/utils/bf16.h, guarded by __riscv_vector, mirroring the existing __AVX512F__ widening sequence: per chunk load u16 with vle16.v, widen with unsigned vzext.vf2 (e32), shift left by 16 with vsll.vi, store with vse32.v, then fall through to the existing scalar tail for the remainder; leave the AVX512 path and scalar fallback intact.",
+   "instructions": [
+    "Target/build expose RVV V 1.0 (confirmed: libfaiss.so Tag_RISCV_arch rv64gcv with zve64d/zvl128b)",
+    "decode_bf16 semantics are a raw bit shift (no rounding/NaN handling), so plain vector widen+shift reproduces bit patterns exactly",
+    "The header must include the RVV intrinsics header only when __riscv_vector is defined"
+   ]
+  }
+ ],
+ "expectedDiffSummary": "real patch touches: faiss/utils/bf16.h",
+ "readiness": "conditional",
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-decode/013_faiss_scalar_quantizer_QuantizerBF16_faiss_SIMDLevel_0_decode_vector",
+   "snapshotCandidate": "candidate-14c3155f744bb993b35d48b3fcba4818.patch",
+   "record": "records/faiss/sq-decode/004_decode_bf16_simd"
+  },
+  "fieldMapping": {
+   "objective": "blueprint.summary.observed_anomaly",
+   "changes[].rationale": "blueprint.craft_actions.actions[0].proposal",
+   "changes[].instructions": "blueprint.craft_actions.actions[0].conditions[].description",
+   "changes[].filePath": "diff --git headers of the real craft/patch.diff",
+   "readiness": "blueprint.craft_actions.actions[0].readiness"
+  }
+ }
+}

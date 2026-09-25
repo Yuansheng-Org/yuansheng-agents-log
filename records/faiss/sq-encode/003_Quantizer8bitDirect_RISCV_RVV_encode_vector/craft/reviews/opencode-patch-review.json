@@ -1,0 +1,84 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rev-011-r0",
+ "patchCandidateId": "pc-bp-faiss-sq-encode-011",
+ "reviewedAt": "diagnosis-04e6e559bd22e6cd24401370415c99b0",
+ "reviewer": "derived-from-yuansheng-validation",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "Add an RVV precision-conversion fast path to Quantizer8bitDirect::encode_vector (or make the existing V-capable build actually emit vector code for this template): a dynamic-vsetvl strip-mined loop that unit-stride loads x with vle32, converts f32->u32 with vfcvt.rtz.xu.f.v (same round-toward-zero semantics as the current scalar fcvt.wu.s rtz), truncates to 8-bit via a narrowing shift vnsrl.wi shift 0 so the stored byte equals the (uint8_t)x[i] truncation of the conversion result, and stores with vse8; keep the scalar loop as the fallback and unchanged codec contract, with scalar tail handling for partial vl.",
+  "changeRiskLevel": "low",
+  "controls": [
+   "Gate the RVV path on actual V availability consistent with the object's Tag_RISCV_arch v1p0/zve64d, with the scalar path as identical fallback.",
+   "Benchmark across the realized d distribution with the existing sq-encode benchmark (benchmark_QT_8bit_direct_*) and retain a scalar path/tail below the measured crossover.",
+   "Verify lane-exact byte output against the scalar reference before enabling the RVV path in production."
+  ]
+ },
+ "hallucinationCheck": [
+  {
+   "dimension": "claim_traceability",
+   "result": "PASS",
+   "detail": "claim_traceability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "explainability",
+   "result": "PASS",
+   "detail": "explainability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "internal_consistency",
+   "result": "PASS",
+   "detail": "internal_consistency passed deterministic assembly validation."
+  },
+  {
+   "dimension": "safety_guardrails",
+   "result": "PASS",
+   "detail": "safety_guardrails passed deterministic assembly validation."
+  },
+  {
+   "dimension": "technical_accuracy",
+   "result": "PASS",
+   "detail": "technical_accuracy passed deterministic assembly validation."
+  }
+ ],
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Special-value/out-of-range semantics: scalar fcvt.wu.s rtz saturates negative and >2^32-1 operands to 0 / 0xFFFFFFFF before byte truncation; a vector narrowing path (e.g. saturating vnclipu or unverified vnsrl) can change output bytes unless every lane matches the scalar byte output exactly."
+  },
+  {
+   "id": "F2",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Short-vector overhead: the 8bit_direct quantizer encode runs per vector with a known small dimension in the sq-encode bench; vsetvl/dispatch and tail costs can erase or invert the gain for small d, so an unconditional vector path may regress."
+  },
+  {
+   "id": "F3",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Store shape: the loop writes 1 byte per 4 bytes read, so after vectorization the residual bound may shift to L1 store/port throughput rather than ALU conversion; benefits must be verified on the target microarchitecture, not assumed from the lane count."
+  }
+ ],
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-encode/011_faiss_scalar_quantizer_Quantizer8bitDirect_faiss_SIMDLevel_0_encode_vector",
+   "snapshotCandidate": "candidate-24ffabae714d0188f9e7d3e8b652377a.patch",
+   "record": "records/faiss/sq-encode/003_Quantizer8bitDirect_RISCV_RVV_encode_vector"
+  },
+  "fieldMapping": {
+   "reviewResult": "blueprint/machine-validation.json#status",
+   "hallucinationCheck": "blueprint/semantic-validation.json#dimensions (five-dimension)",
+   "archReview.notes": "blueprint.craft_actions.actions[0].proposal",
+   "archReview.status": "blueprint.craft_actions.actions[0].readiness",
+   "archReview.changeRiskLevel": "blueprint.craft_actions.actions[0].change_risk.level",
+   "archReview.controls": "blueprint.craft_actions.actions[0].change_risk.controls",
+   "findings[].detail": "blueprint.craft_actions.actions[0].change_risk.reasons"
+  }
+ }
+}

@@ -1,0 +1,50 @@
+{
+ "schemaVersion": "yuansheng.patch_plan.v1",
+ "patchPlanId": "pp-bp-faiss-sq-encode-008",
+ "blueprintId": "bp-faiss-sq-encode-008",
+ "createdAt": "diagnosis-bd77ef28566ca78a5be28ff8980cbf44",
+ "objective": "QuantizerFP16<SIMDLevel0>::encode_vector's hot region is the inlined scalar FP32->FP16 encode_fp16 (faiss/utils/fp16-inl.h:32 ryg integer/FP trick, invoked per element from quantizers.h:246): every element runs per-lane bit extraction, NaN/Inf special-value branches (bltu/beq -> 0x7E00 NaN / 0x7C00 Inf), FP-multiply rescale (fmul.s), rounding add+arithmetic shift, sign pack and 2-byte store. Both in-function hotspots (0x3895c8 lui 50%, 0x3895f2 addw 50%) are inside that chain, and zero v* (no vfncvt/vfwcvt) conversion instructions execute even though libfaiss is built for v1p0+zve64f+zvfhmin+zvl128b, so the required precision conversion repeats all scalar special-value/rounding machinery per element in a compute-bound loop (IPC 0.83, L1 miss 0.357%, branch miss 0.388%).",
+ "changes": [
+  {
+   "filePath": "faiss/impl/scalar_quantizer/quantizers.h",
+   "action": "modify",
+   "rationale": "Replace the inlined scalar ryg encode_fp16 loop in QuantizerFP16<0>::encode_vector (quantizers.h:246) with a stable-vtype RVV narrowing fast path when zvfhmin is available: vsetvl e32, vle32.v load of the float block, a masked detect of special lanes (NaN / ±Inf / boundary), vfncvt.f.f.w (Zvfhmin f32->f16 narrowing, RNE through FRM) on the bulk lanes, a masked repair that writes the scalar ryg bit patterns (qNaN 0x7E00|sign, Inf 0x7C00|sign) only on special lanes, then vse16.v to the uint16_t code buffer; keep the untouched ryg encode_fp16 as the invariant scalar fallback and for the residual tail/SIMDLevel-0 path.",
+   "instructions": [
+    "Target build and hardware expose zvfhmin (build tag already carries v1p0 zve64f zvfhmin zvl128b); verify at runtime and fall back to scalar ryg otherwise.",
+    "QuantizerFP16 must continue producing the exact scalar ryg bit patterns for NaN payloads, ±0, ±Inf, denormals, overflow/underflow, and half-tie rounding.",
+    "Vector cost amortizes: only take the vector path for d where vsetvli + lane-repair setup pays (benchmark d gives 128 floats / 256-byte codes) with a short-input scalar crossover.",
+    "v type stability: e32 main loop, source fractional LMUL from destination LMUL budget per the widening/narrowing rule; no per-element vtype churn or vector spills."
+   ]
+  },
+  {
+   "filePath": "faiss/utils/fp16-inl.h",
+   "action": "modify",
+   "rationale": "Replace the inlined scalar ryg encode_fp16 loop in QuantizerFP16<0>::encode_vector (quantizers.h:246) with a stable-vtype RVV narrowing fast path when zvfhmin is available: vsetvl e32, vle32.v load of the float block, a masked detect of special lanes (NaN / ±Inf / boundary), vfncvt.f.f.w (Zvfhmin f32->f16 narrowing, RNE through FRM) on the bulk lanes, a masked repair that writes the scalar ryg bit patterns (qNaN 0x7E00|sign, Inf 0x7C00|sign) only on special lanes, then vse16.v to the uint16_t code buffer; keep the untouched ryg encode_fp16 as the invariant scalar fallback and for the residual tail/SIMDLevel-0 path.",
+   "instructions": [
+    "Target build and hardware expose zvfhmin (build tag already carries v1p0 zve64f zvfhmin zvl128b); verify at runtime and fall back to scalar ryg otherwise.",
+    "QuantizerFP16 must continue producing the exact scalar ryg bit patterns for NaN payloads, ±0, ±Inf, denormals, overflow/underflow, and half-tie rounding.",
+    "Vector cost amortizes: only take the vector path for d where vsetvli + lane-repair setup pays (benchmark d gives 128 floats / 256-byte codes) with a short-input scalar crossover.",
+    "v type stability: e32 main loop, source fractional LMUL from destination LMUL budget per the widening/narrowing rule; no per-element vtype churn or vector spills."
+   ]
+  }
+ ],
+ "expectedDiffSummary": "real patch touches: faiss/impl/scalar_quantizer/quantizers.h, faiss/utils/fp16-inl.h",
+ "readiness": "conditional",
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-encode/008_faiss_scalar_quantizer_QuantizerFP16_faiss_SIMDLevel_0_encode_vector",
+   "snapshotCandidate": "candidate-eaaa78e3e6246d2d1c16e4588b544318.patch",
+   "record": "records/faiss/sq-encode/008_QuantizerFP16_RISCV_RVV_encode_vector"
+  },
+  "fieldMapping": {
+   "objective": "blueprint.summary.observed_anomaly",
+   "changes[].rationale": "blueprint.craft_actions.actions[0].proposal",
+   "changes[].instructions": "blueprint.craft_actions.actions[0].conditions[].description",
+   "changes[].filePath": "diff --git headers of the real craft/patch.diff",
+   "readiness": "blueprint.craft_actions.actions[0].readiness"
+  }
+ }
+}

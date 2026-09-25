@@ -1,0 +1,48 @@
+{
+ "schemaVersion": "yuansheng.patch_plan.v1",
+ "patchPlanId": "pp-bp-faiss-sq-encode-011",
+ "blueprintId": "bp-faiss-sq-encode-011",
+ "createdAt": "diagnosis-04e6e559bd22e6cd24401370415c99b0",
+ "objective": "The hot loop of Quantizer8bitDirect<SIMDLevel 0>::encode_vector is a fully scalar, per-element float->uint8 precision conversion (code[i]=(uint8_t)x[i]) — flw, fcvt.wu.s rtz, sb per lane with 100% of samples at the scalar byte store — containing zero v* instructions even though libfaiss.so is built with V (v1p0, zve64d, zvl128b); because the operation is lane-independent and cache-friendly, the workload cost is the scalar loop body and loop control, not memory, and the leverage point is an RVV precision-conversion formulation (vle32 + vfcvt.rtz.xu.f.v + truncating narrowing + vse8).",
+ "changes": [
+  {
+   "filePath": "faiss/impl/scalar_quantizer/quantizers.h",
+   "action": "modify",
+   "rationale": "Add an RVV precision-conversion fast path to Quantizer8bitDirect::encode_vector (or make the existing V-capable build actually emit vector code for this template): a dynamic-vsetvl strip-mined loop that unit-stride loads x with vle32, converts f32->u32 with vfcvt.rtz.xu.f.v (same round-toward-zero semantics as the current scalar fcvt.wu.s rtz), truncates to 8-bit via a narrowing shift vnsrl.wi shift 0 so the stored byte equals the (uint8_t)x[i] truncation of the conversion result, and stores with vse8; keep the scalar loop as the fallback and unchanged codec contract, with scalar tail handling for partial vl.",
+   "instructions": [
+    "Hardware and the libfaiss.so build expose standard V (v1p0, zve64d, zvl128b, VLEN=128).",
+    "d is large enough for vectorization to clear vsetvl/dispatch and tail costs (crossover measured on target).",
+    "(uint8_t)x[i] conversion semantics (fcvt.wu.s rtz then byte truncation) are preserved for every call input."
+   ]
+  },
+  {
+   "filePath": "faiss/impl/scalar_quantizer/sq-rvv.cpp",
+   "action": "modify",
+   "rationale": "Add an RVV precision-conversion fast path to Quantizer8bitDirect::encode_vector (or make the existing V-capable build actually emit vector code for this template): a dynamic-vsetvl strip-mined loop that unit-stride loads x with vle32, converts f32->u32 with vfcvt.rtz.xu.f.v (same round-toward-zero semantics as the current scalar fcvt.wu.s rtz), truncates to 8-bit via a narrowing shift vnsrl.wi shift 0 so the stored byte equals the (uint8_t)x[i] truncation of the conversion result, and stores with vse8; keep the scalar loop as the fallback and unchanged codec contract, with scalar tail handling for partial vl.",
+   "instructions": [
+    "Hardware and the libfaiss.so build expose standard V (v1p0, zve64d, zvl128b, VLEN=128).",
+    "d is large enough for vectorization to clear vsetvl/dispatch and tail costs (crossover measured on target).",
+    "(uint8_t)x[i] conversion semantics (fcvt.wu.s rtz then byte truncation) are preserved for every call input."
+   ]
+  }
+ ],
+ "expectedDiffSummary": "real patch touches: faiss/impl/scalar_quantizer/quantizers.h, faiss/impl/scalar_quantizer/sq-rvv.cpp",
+ "readiness": "conditional",
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-encode/011_faiss_scalar_quantizer_Quantizer8bitDirect_faiss_SIMDLevel_0_encode_vector",
+   "snapshotCandidate": "candidate-24ffabae714d0188f9e7d3e8b652377a.patch",
+   "record": "records/faiss/sq-encode/003_Quantizer8bitDirect_RISCV_RVV_encode_vector"
+  },
+  "fieldMapping": {
+   "objective": "blueprint.summary.observed_anomaly",
+   "changes[].rationale": "blueprint.craft_actions.actions[0].proposal",
+   "changes[].instructions": "blueprint.craft_actions.actions[0].conditions[].description",
+   "changes[].filePath": "diff --git headers of the real craft/patch.diff",
+   "readiness": "blueprint.craft_actions.actions[0].readiness"
+  }
+ }
+}

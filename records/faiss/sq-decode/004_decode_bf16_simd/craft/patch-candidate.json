@@ -1,0 +1,28 @@
+{
+ "archReviewWarning": "",
+ "schemaVersion": "yuansheng.patch_candidate.v1",
+ "patchCandidateId": "pc-bp-faiss-sq-decode-013",
+ "patchPlanId": "pp-bp-faiss-sq-decode-013",
+ "createdAt": "diagnosis-a4bc4a208b3a4d6e386aefbb5595637a",
+ "changedFiles": [
+  "faiss/utils/bf16.h"
+ ],
+ "gitDiff": "diff --git a/faiss/utils/bf16.h b/faiss/utils/bf16.h\nindex 454628004a7f5ca0ecbbebcbf9f4da32b3a60a19..f33f3794a2d7772093fcd3bd4cefdb45fbff2b3c 100644\n--- a/faiss/utils/bf16.h\n+++ b/faiss/utils/bf16.h\n@@ -14,6 +14,10 @@\n #include <immintrin.h>\n #endif\n \n+#if defined(__riscv_vector)\n+#include <riscv_vector.h>\n+#endif\n+\n namespace faiss {\n \n namespace {\n@@ -61,7 +65,34 @@ inline void decode_bf16_simd(const uint16_t* src, float* dst, size_t n) {\n         w = _mm512_slli_epi32(w, 16);\n         _mm512_storeu_ps(dst + i, _mm512_castsi512_ps(w));\n     }\n+#elif defined(__riscv_vector)\n+    // RVV fast path: mirror the AVX512 widening sequence (u16 -> zero-extended\n+    // u32 -> shift left by 16) with bit-exact semantics, but carry a single\n+    // back-branch per vector chunk in a fixed-VL main loop and finish with a\n+    // single runtime-VL tail, so per-call taken branches drop from ~n to ~n/vl.\n+    const size_t vlmax = __riscv_vsetvlmax_e16m1();\n+    for (; i + vlmax <= n; i += vlmax) {\n+        vuint16m1_t v = __riscv_vle16_v_u16m1(src + i, vlmax);\n+        vuint32m2_t w = __riscv_vzext_vf2_u32m2(v, vlmax);\n+        w = __riscv_vsll_vx_u32m2(w, 16, vlmax);\n+        __riscv_vse32_v_f32m2(\n+                dst + i,\n+                __riscv_vreinterpret_v_u32m2_f32m2(w),\n+                vlmax);\n+    }\n+    if (i < n) {\n+        const size_t vl = __riscv_vsetvl_e16m1(n - i);\n+        vuint16m1_t v = __riscv_vle16_v_u16m1(src + i, vl);\n+        vuint32m2_t w = __riscv_vzext_vf2_u32m2(v, vl);\n+        w = __riscv_vsll_vx_u32m2(w, 16, vl);\n+        __riscv_vse32_v_f32m2(\n+                dst + i,\n+                __riscv_vreinterpret_v_u32m2_f32m2(w),\n+                vl);\n+        i += vl;\n+    }\n #endif\n+    // Scalar tail for the last <vl elements (and for non-RVV builds).\n     for (; i < n; i++) {\n         dst[i] = decode_bf16(src[i]);\n     }\n",
+ "buildModeInvocation": "conditional",
+ "notes": [],
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-decode/013_faiss_scalar_quantizer_QuantizerBF16_faiss_SIMDLevel_0_decode_vector",
+   "snapshotCandidate": "candidate-14c3155f744bb993b35d48b3fcba4818.patch",
+   "record": "records/faiss/sq-decode/004_decode_bf16_simd"
+  },
+  "fieldMapping": {
+   "changedFiles": "diff --git headers of the real craft/patch.diff",
+   "gitDiff": "the real craft/patch.diff body, LF-normalized",
+   "buildModeInvocation": "blueprint.craft_actions.actions[0].readiness"
+  }
+ }
+}

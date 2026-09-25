@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-faiss-sq-distance-013",
+  "source": {
+    "agent": "trace",
+    "createdAt": "auto",
+    "software": "faiss",
+    "testcaseIds": [
+      "sq-distance"
+    ],
+    "diagnosisId": "auto",
+    "targetHardware": "SpacemiT K3 / X100 (RVV 1.0, VLEN=256)",
+    "repositoryUrl": "https://github.com/facebookresearch/faiss.git",
+    "testBranch": "main",
+    "commitHash": "545550f6a27031c2269881d97237fd6a5bef15df"
+  },
+  "problem": {
+    "summary": "SQ \u8ddd\u79bb\u5185\u6838 query_to_code \u5df2 RVV \u5411\u91cf\u5316\u4f46 LMUL \u9009\u578b\u6b20\u4f73\uff1avsetvli e32,m1\uff08VLEN=256 \u4e0b\u4ec5 8 lane/\u8fed\u4ee3\uff09\u4e14\u6bcf\u8fed\u4ee3\u6267\u884c\u4e00\u6b21 vfredosum.vs \u5c06\u7d2f\u52a0\u5668\u5f52\u7ea6\u56de\u6807\u91cf\u518d\u7ecf vsetivli 1 + vfmv.s.f \u91cd\u65b0\u6ce8\u5165\uff08fa0\u2192v3\u2192vfredosum\u2192fa0 \u4e32\u884c\u4f9d\u8d56\u94fe\uff09\uff0c\u53e0\u52a0\u6bcf\u6b21\u8fed\u4ee3 2-3 \u6b21 vsetvli \u914d\u7f6e churn\uff1b\u5faa\u73af\u56e0\u6b64 latency-bound\uff08perf stat IPC=0.934 \u4f50\u8bc1\uff09\uff0c\u70ed\u70b9\u6837\u672c 45-88% \u843d\u5728\u5faa\u73af\u56de\u8fb9\u5206\u652f\u3002\u4f9d\u636e patterns/rvv_register_group_utilization.md\uff1a'\u5f53\u524d LMUL \u5c0f\u4e8e\u5408\u6cd5\u5019\u9009\u8fb9\u754c' + \u5f52\u7ea6\u7ed3\u6784\u5bfc\u81f4\u4e32\u884c\u4f9d\u8d56\u3002",
+    "evidence": [
+      "annotate: DCTemplate<Quantizer8bitDirectSigned<6>,SimilarityIP<6>,(SL)0>::query_to_code \u5171 2884 samples, hotline=57fcca: bnez a4 (80.51%), 57fca0: vsetvli e8mf4 (9.29%)",
+      "perf stat: IPC=0.934\uff08latency-bound\uff09, duration\u2248742s"
+    ]
+  },
+  "rootCause": {
+    "summary": "SQ \u8ddd\u79bb\u5185\u6838 query_to_code \u5df2 RVV \u5411\u91cf\u5316\u4f46 LMUL \u9009\u578b\u6b20\u4f73\uff1avsetvli e32,m1\uff08VLEN=256 \u4e0b\u4ec5 8 lane/\u8fed\u4ee3\uff09\u4e14\u6bcf\u8fed\u4ee3\u6267\u884c\u4e00\u6b21 vfredosum.vs \u5c06\u7d2f\u52a0\u5668\u5f52\u7ea6\u56de\u6807\u91cf\u518d\u7ecf vsetiv",
+    "candidateFiles": [
+      "faiss/impl/scalar_quantizer/sq-rvv.cpp"
+    ],
+    "performanceFactors": [
+      "RVV Register-Group Utilization and LMUL Sizing"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "SQ \u8ddd\u79bb\u6570\u503c\u8bed\u4e49\uff08L2 \u5e73\u65b9\u7d2f\u52a0 / IP \u5185\u79ef\uff09",
+      "\u91cf\u5316\u8868\u8bed\u4e49",
+      "\u5f52\u7ea6\u987a\u5e8f\u53d8\u5316\u9700\u56de\u5f52 sq-accuracy sql2_recons_error"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "sq-distance",
+      "sq-accuracy"
+    ],
+    "regressionCommand": "agent1 patch_regression --case sq-distance"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.78,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "SQ \u8ddd\u79bb\u5185\u6838 query_to_code \u5df2 RVV \u5411\u91cf\u5316\u4f46 LMUL \u9009\u578b\u6b20\u4f73\uff1avsetvli e32,m1\uff08VLEN=256 \u4e0b\u4ec5 8 lane/\u8fed\u4ee3\uff09\u4e14\u6bcf\u8fed\u4ee3\u6267\u884c\u4e00\u6b21 vfredosum.vs \u5c06\u7d2f\u52a0\u5668\u5f52\u7ea6\u56de\u6807\u91cf\u518d\u7ecf vsetivli 1 + vfmv.s.f \u91cd\u65b0\u6ce8\u5165\uff08fa0\u2192v3\u2192vfredosum\u2192fa0 \u4e32\u884c\u4f9d\u8d56\u94fe\uff09\uff0c\u53e0\u52a0\u6bcf\u6b21\u8fed\u4ee3 2-3 \u6b21 vsetvli \u914d\u7f6e churn\uff1b\u5faa\u73af\u56e0\u6b64 latency-bound\uff08perf stat IPC=0.934 \u4f50\u8bc1\uff09\uff0c\u70ed\u70b9\u6837\u672c 45-88% \u843d\u5728\u5faa\u73af\u56de\u8fb9\u5206\u652f\u3002\u4f9d\u636e patterns/rvv_register_group_utilization.md\uff1a'\u5f53\u524d LMUL \u5c0f\u4e8e\u5408\u6cd5\u5019\u9009\u8fb9\u754c' + \u5f52\u7ea6\u7ed3\u6784\u5bfc\u81f4\u4e32\u884c\u4f9d\u8d56\u3002",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "bnez \u9ad8\u5360\u6bd4\u90e8\u5206\u4e3a K3 PMU \u91c7\u6837\u504f\u5411\u6807\u91cf\u5206\u652f\u7684 artifact",
+      "\u82e5 LMUL \u63d0\u9ad8\u89e6\u53d1 spill \u5219\u6536\u76ca\u53d7\u9650\uff0c\u9700\u679a\u4e3e\u5019\u9009\u5b9e\u6d4b"
+    ],
+    "currentGaps": "baseline_gap: sampling IP precision\uff1bLMUL frontier \u679a\u4e3e\uff08m1/m2/m4/m8\u00d7unroll\uff09\u672a\u5b9e\u6d4b",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV / sq-distance",
+    "recommendedFirstAction": "\u91cd\u6784 sq-rvv.cpp \u7684 DC \u5185\u6838\uff1a\u5c06\u6807\u91cf\u7d2f\u52a0\u5668\u6539\u4e3a\u8de8\u8fed\u4ee3\u5b58\u6d3b\u7684\u5411\u91cf\u7d2f\u52a0\u5668\uff08vfloat32mX acc\uff0c\u6bcf\u8fed\u4ee3 vfmacc.vv\uff0c\u5faa\u73af\u540e\u4e00\u6b21 vfredusum.vs/vfredosum.vs \u5f52\u7ea6\uff09\uff0c\u6d88\u9664\u6bcf\u8fed\u4ee3\u7684 vsetivli 1/vfmv.s.f/vfmv.f.s \u4e0e\u4e32\u884c\u4f9d\u8d56\uff1b\u5c06 LMUL \u63d0\u5347\u5230 ",
+    "recommendedVerification": "\u91cd\u8dd1 sq-distance\uff1a\u5bf9\u6bd4 IPC\uff08\u57fa\u7ebf 0.934\uff09\u3001\u5faa\u73af\u56de\u8fb9\u6837\u672c\u4e0e QT_*_iterations\uff1b\u56de\u5f52 sq-accuracy sql2_recons_error",
+    "metricEvidence": [
+      {
+        "metric": "sample_count",
+        "rv": 2884,
+        "anomalyNote": "\u5360 sq-distance \u9876\u5c42\u6837\u672c\u7ea6 4.2%"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.934,
+        "anomalyNote": "latency-bound\uff0c\u6bcf\u8fed\u4ee3\u5f52\u7ea6\u4e32\u884c\u4f9d\u8d56\u94fe\u662f\u4e3b\u56e0"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "DCTemplate<Quantizer8bitDirectSigned<6>,SimilarityIP<6>,(SL)0>::query_to_code",
+        "fileModule": "faiss/impl/scalar_quantizer/sq-rvv.cpp",
+        "rvvPattern": "RVV Register-Group Utilization and LMUL Sizing",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.0421,
+        "note": "SQ \u8ddd\u79bb\u5185\u6838 query_to_code \u5df2 RVV \u5411\u91cf\u5316\u4f46 LMUL \u9009\u578b\u6b20\u4f73\uff1avsetvli e32,m1\uff08VLEN=256 \u4e0b\u4ec5 8 lane/\u8fed\u4ee3\uff09"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "faiss/impl/scalar_quantizer/sq-rvv.cpp",
+      "relatedKnowledge": "https://github.com/opencv/opencv/pull/26318; https://github.com/opencv/opencv/commit/5be158a2b6ed0f4f4def851d3a57c3e3b5865ad5; https://github.com/opencv/opencv/pull/25586; https://github.com/torvalds/linux/commit/a4348546332c9fae12b29acb514535e0a52b9b3c; https://github.com/torvalds/linux/commit/a894e8ed09c6c7fa239711819db83b8c050eb7b0; https://github.com/torvalds/linux/commit/c2a658d419246108c9bf065ec347355de5ba8a05; https://github.com/openjdk/jdk/commit/bdd37b0e5eaa984e2ad2e9010af37dcd612cc05e; https://github.com/OpenMathLib/OpenBLAS/commit/cc1b5794a0409493ed470f4cced313ea0b560870; https://github.com/OpenMathLib/OpenBLAS/commit/d69be17b6ff7eea5371b03a199db9c112aa6dc4b; https://github.com/OpenMathLib/OpenBLAS/commit/4a12cf53ec116c06e5d74073b54a3bca6046cb17; https://github.com/OpenMathLib/OpenBLAS/commit/240695862984d4de845f1c42821a883946932df7; https://github.com/v8/v8/commit/3844339936068c529170dcb4f2aa160654d25943; https://github.com/vllm-project/vllm/pull/47538",
+      "evidenceExplanation": "SQ \u8ddd\u79bb\u5185\u6838 query_to_code \u5df2 RVV \u5411\u91cf\u5316\u4f46 LMUL \u9009\u578b\u6b20\u4f73\uff1avsetvli e32,m1\uff08VLEN=256 \u4e0b\u4ec5 8 lane/\u8fed\u4ee3\uff09\u4e14\u6bcf\u8fed\u4ee3\u6267\u884c\u4e00\u6b21 vfredosum.vs \u5c06\u7d2f\u52a0\u5668\u5f52\u7ea6\u56de\u6807\u91cf\u518d\u7ecf vsetiv"
+    }
+  }
+}

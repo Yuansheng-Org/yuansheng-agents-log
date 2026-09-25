@@ -1,0 +1,105 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rev-001-r0",
+ "patchCandidateId": "pc-bp-faiss-sq-accuracy-001",
+ "reviewedAt": "diagnosis-f4f3c581546b2a8fa0f5ef66b8c536da",
+ "reviewer": "derived-from-yuansheng-validation",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "Implement a real RVV encode_vector for the QT_8bit (Codec8bit<RISCV_RVV>) QuantizerTemplate in sq-rvv.cpp instead of inheriting the scalar NONE base: precompute scalar invariants (vmin, vdiff, and 255/vdiff reciprocal, plus the vdiff==0 shortcut) before the loop, then strip-mine over d with dynamic __riscv_vsetvl, vle32 unit-stride loads of x, vfsub.vf vmin, vfmul.vf (or vfdiv.vv) scale, two-sided clamp via vfmin/vfmax (or compare+mask-merge to match the reference's NaN/signed-zero behavior), vfcvt.rtz.xu.f.v and vfncvt narrowing to uint8, then vse8 stores; keep the existing scalar implementation for non-RVV builds and for a short-input tail.",
+  "changeRiskLevel": "low",
+  "controls": [
+   "Gate the RVV path with the same compile/runtime SIMD gate used by the rest of faiss (COMPILE_SIMD_RISCV_RVV / SIMDConfig) and keep the scalar NONE base for comparison and fallback",
+   "Choose clamp instructions to exactly match the scalar compare semantics, or use vmerge from vmflt/vmfgt masks; verify NaN and ±0 behavior on hardware/simulator",
+   "Add an explicit lane-independent shortcut for vdiff==0 written once before the strip-mine loop",
+   "Benchmark d sweep (e.g. 4..512) and pick LMUL and a short-input threshold on the target core; do not hard-code a lane count",
+   "Compile-check the RVV path and re-verify the ELF attributes include v; confirm the symbol instantiates the new path via disassembly",
+   "A/B validate error by comparing vector vs scalar encode bit-for-bit before switching"
+  ]
+ },
+ "hallucinationCheck": [
+  {
+   "dimension": "claim_traceability",
+   "result": "PASS",
+   "detail": "claim_traceability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "explainability",
+   "result": "PASS",
+   "detail": "explainability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "internal_consistency",
+   "result": "PASS",
+   "detail": "internal_consistency passed deterministic assembly validation."
+  },
+  {
+   "dimension": "safety_guardrails",
+   "result": "PASS",
+   "detail": "safety_guardrails passed deterministic assembly validation."
+  },
+  {
+   "dimension": "technical_accuracy",
+   "result": "PASS",
+   "detail": "technical_accuracy passed deterministic assembly validation."
+  }
+ ],
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "RVV elementwise FP ops must reproduce the scalar per-lane roundings: replacing fdiv.s then fmul.s by a single precomputed reciprocal multiply can change low-order bits and recons error"
+  },
+  {
+   "id": "F2",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "vfmin/vfmax NaN and signed-zero semantics differ from the branchy scalar clamp; the reference clamp must win on special values"
+  },
+  {
+   "id": "F3",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "vdiff==0 must map every lane to 0 exactly; a per-lane test inside the vector body would be wrong"
+  },
+  {
+   "id": "F4",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "dynamic-tail and vsetvl/v set up add overhead that can regress very short vectors (small d)"
+  },
+  {
+   "id": "F5",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "reachability risk: adding intrinsics to the header/cpp without keeping the NONE fallback compiled can leave non-RVV platforms broken or the realized path unreachable"
+  },
+  {
+   "id": "F6",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "fusing *255 into the scale constant changes error vs the reference (fdiv then mul), so it must be validated even if faster"
+  }
+ ],
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-accuracy/001_faiss_scalar_quantizer_QuantizerTemplate_faiss_scalar_quantizer_Codec8bit_faiss_SIMDLevel_6_0550d977",
+   "snapshotCandidate": "candidate-409a6b766b3ff48db24b1ec327cd24cb.patch",
+   "record": "records/faiss/sq-encode/007_QuantizerTemplate_RISCV_RVV_encode_vector"
+  },
+  "fieldMapping": {
+   "reviewResult": "blueprint/machine-validation.json#status",
+   "hallucinationCheck": "blueprint/semantic-validation.json#dimensions (five-dimension)",
+   "archReview.notes": "blueprint.craft_actions.actions[0].proposal",
+   "archReview.status": "blueprint.craft_actions.actions[0].readiness",
+   "archReview.changeRiskLevel": "blueprint.craft_actions.actions[0].change_risk.level",
+   "archReview.controls": "blueprint.craft_actions.actions[0].change_risk.controls",
+   "findings[].detail": "blueprint.craft_actions.actions[0].change_risk.reasons"
+  }
+ }
+}

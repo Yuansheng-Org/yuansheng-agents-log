@@ -1,0 +1,97 @@
+{
+ "schemaVersion": "yuansheng.patch_review.v1",
+ "reviewId": "rev-012-r0",
+ "patchCandidateId": "pc-bp-faiss-sq-accuracy-012",
+ "reviewedAt": "diagnosis-2259f8efe36d13bb5ca561786fa1a4a4",
+ "reviewer": "derived-from-yuansheng-validation",
+ "reviewResult": "pass",
+ "archReview": {
+  "status": "passed",
+  "notes": "Add an RVV fast path to QuantizerFP16 decode_vector gated on __riscv_v && __riscv_zvfhmin: per iteration vsetvl_e16m* on remaining count, vle16 load of FP16 codes, vfwcvt.f.f.v widening FP16->FP32 (native IEEE handling of normals, denormals, ±0, ±Inf, NaN), vse32 store, with tail handling for d % VL and the existing scalar decode_fp16 loop retained as the fallback; add a masked/narrow repair only if bit-exact NaN-payload/sNaN parity with decode_fp16 is required.",
+  "changeRiskLevel": "medium",
+  "controls": [
+   "Guard the vector path with __riscv_v && __riscv_zvfhmin and keep the current scalar decode_fp16 loop as the untouched fallback, following the extension-macro-guard rule.",
+   "Choose source LMUL so VLMAX(e16) covers a practical batch (e.g. e16m1 = 8 elems on zvl128b) and the e32 destination register group fits, with a stable vtype (one vsetvl per iteration, no reconfig inside the loop).",
+   "Follow the kernel-conventions widening rule for source/destination LMUL budgets.",
+   "Gate enabling on the exhaustive 0x0000..0xFFFF bit-pattern comparison passing against decode_fp16."
+  ]
+ },
+ "hallucinationCheck": [
+  {
+   "dimension": "claim_traceability",
+   "result": "PASS",
+   "detail": "claim_traceability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "explainability",
+   "result": "PASS",
+   "detail": "explainability passed deterministic assembly validation."
+  },
+  {
+   "dimension": "internal_consistency",
+   "result": "PASS",
+   "detail": "internal_consistency passed deterministic assembly validation."
+  },
+  {
+   "dimension": "safety_guardrails",
+   "result": "PASS",
+   "detail": "safety_guardrails passed deterministic assembly validation."
+  },
+  {
+   "dimension": "technical_accuracy",
+   "result": "PASS",
+   "detail": "technical_accuracy passed deterministic assembly validation."
+  }
+ ],
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Widening conversion doubles the destination register group (e16m1 -> e32m2); with VLEN=128 the chosen LMUL must keep the e32 destination within the register file and not force spills."
+  },
+  {
+   "id": "F2",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "vfwcvt.f.f.v NaN quieting/payload rules may differ from decode_fp16's bit-preserving infnan path (o + 0x70000000), which would change reconstruction bits and sql2_recons_error even when numerically close."
+  },
+  {
+   "id": "F3",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Reconstruction feeds faiss distance computations; any bit-level drift changes sq-accuracy results, so the vector path must be validated exhaustively before enabling."
+  },
+  {
+   "id": "F4",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "Gating on __riscv_v alone is wrong: vfwcvt.f.f.v requires zvfhmin; improper gating yields a compile error or illegal instruction."
+  },
+  {
+   "id": "F5",
+   "severity": "risk",
+   "category": "change_risk",
+   "detail": "vsetvl and pipeline fill overhead wins only when d is not tiny; a threshold or dispatch must avoid regressing short vectors."
+  }
+ ],
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-accuracy/012_faiss_scalar_quantizer_QuantizerFP16_faiss_SIMDLevel_0_decode_vector",
+   "snapshotCandidate": "candidate-dfdcb87a45ab33f88f9ed861109f9804.patch",
+   "record": "records/faiss/sq-decode/006_QuantizerFP16_BF16_8bitDirect_RISCV_RVV_decode_vector"
+  },
+  "fieldMapping": {
+   "reviewResult": "blueprint/machine-validation.json#status",
+   "hallucinationCheck": "blueprint/semantic-validation.json#dimensions (five-dimension)",
+   "archReview.notes": "blueprint.craft_actions.actions[0].proposal",
+   "archReview.status": "blueprint.craft_actions.actions[0].readiness",
+   "archReview.changeRiskLevel": "blueprint.craft_actions.actions[0].change_risk.level",
+   "archReview.controls": "blueprint.craft_actions.actions[0].change_risk.controls",
+   "findings[].detail": "blueprint.craft_actions.actions[0].change_risk.reasons"
+  }
+ }
+}

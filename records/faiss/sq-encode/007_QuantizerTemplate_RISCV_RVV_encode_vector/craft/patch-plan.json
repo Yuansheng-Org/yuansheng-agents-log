@@ -1,0 +1,40 @@
+{
+ "schemaVersion": "yuansheng.patch_plan.v1",
+ "patchPlanId": "pp-bp-faiss-sq-accuracy-001",
+ "blueprintId": "bp-faiss-sq-accuracy-001",
+ "createdAt": "diagnosis-f4f3c581546b2a8fa0f5ef66b8c536da",
+ "objective": "QuantizerTemplate<Codec8bit<RISCV_RVV>, QuantizerTemplateScaling::UNIFORM, SIMDLevel::NONE>::encode_vector runs a scalar per-component loop (disasm 0x7ac2a0-0x7ac2e6: flw x[i], fsub.s vmin, fdiv.s vdiff, two-sided clamp via flt.s+two bnez, fmul.s by 255, fcvt.w.s rtz, sb) with zero RVV instructions, although libfaiss.so is built with v1p0/zvl128b; the RISCV_RVV QuantizerTemplate in sq-rvv.cpp is a marker type that inherits the scalar NONE encode_vector, so QT_8bit uniform encoding never enters a vector path even though the operation is lane-independent contiguous elementwise arithmetic (7 of 11 annotate samples fall inside the loop body)",
+ "changes": [
+  {
+   "filePath": "faiss/impl/scalar_quantizer/quantizers.h",
+   "action": "modify",
+   "rationale": "Implement a real RVV encode_vector for the QT_8bit (Codec8bit<RISCV_RVV>) QuantizerTemplate in sq-rvv.cpp instead of inheriting the scalar NONE base: precompute scalar invariants (vmin, vdiff, and 255/vdiff reciprocal, plus the vdiff==0 shortcut) before the loop, then strip-mine over d with dynamic __riscv_vsetvl, vle32 unit-stride loads of x, vfsub.vf vmin, vfmul.vf (or vfdiv.vv) scale, two-sided clamp via vfmin/vfmax (or compare+mask-merge to match the reference's NaN/signed-zero behavior), vfcvt.rtz.xu.f.v and vfncvt narrowing to uint8, then vse8 stores; keep the existing scalar implementation for non-RVV builds and for a short-input tail.",
+   "instructions": [
+    "libfaiss.so stays built with COMPILE_SIMD_RISCV_RVV and vector caps v1p0/zve32f/zvl128b as shown in the ELF attribute string",
+    "target hardware exposes RVV v; verify VLEN via vlenb before tuning LMUL",
+    "encode semantics to preserve elementwise: code[i]=(int)(255*clamp((x[i]-vmin)/vdiff,0,1)) with all-zero code when vdiff==0",
+    "the RISCV_RVV QuantizerTemplate marker specializations are replaced by a real encode path reachable from sq_dispatch",
+    "bit-exactness or the project's explicit tolerance contract for 8-bit SQ output is respected (sq-accuracy keeps sql2_recons_error stable and ndiff_for_idempotence 0)"
+   ]
+  }
+ ],
+ "expectedDiffSummary": "real patch touches: faiss/impl/scalar_quantizer/quantizers.h",
+ "readiness": "conditional",
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-accuracy/001_faiss_scalar_quantizer_QuantizerTemplate_faiss_scalar_quantizer_Codec8bit_faiss_SIMDLevel_6_0550d977",
+   "snapshotCandidate": "candidate-409a6b766b3ff48db24b1ec327cd24cb.patch",
+   "record": "records/faiss/sq-encode/007_QuantizerTemplate_RISCV_RVV_encode_vector"
+  },
+  "fieldMapping": {
+   "objective": "blueprint.summary.observed_anomaly",
+   "changes[].rationale": "blueprint.craft_actions.actions[0].proposal",
+   "changes[].instructions": "blueprint.craft_actions.actions[0].conditions[].description",
+   "changes[].filePath": "diff --git headers of the real craft/patch.diff",
+   "readiness": "blueprint.craft_actions.actions[0].readiness"
+  }
+ }
+}

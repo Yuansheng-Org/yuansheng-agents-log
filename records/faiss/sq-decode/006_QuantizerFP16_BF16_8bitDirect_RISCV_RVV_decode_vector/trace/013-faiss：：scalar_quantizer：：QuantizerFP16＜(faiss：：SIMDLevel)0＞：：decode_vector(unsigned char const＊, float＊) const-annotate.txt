@@ -1,0 +1,98 @@
+ Percent |	Source code & Disassembly of libfaiss.so for cpu-clock (1 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3      Disassembly of section .text:
+         :
+         : 5      00000000003394ae <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const>:
+         : 6      faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+         : 250    for (size_t i = 0; i < d; i++) {
+         : 251    ((uint16_t*)code)[i] = encode_fp16(x[i]);
+         : 252    }
+         : 253    }
+         :
+         : 255    void decode_vector(const uint8_t* code, float* x) const final {
+    0.00 :   3394ae: addi    sp,sp,-16
+    0.00 :   3394b0: sd      s0,0(sp)
+    0.00 :   3394b2: sd      ra,8(sp)
+    0.00 :   3394b4: addi    s0,sp,16
+         : 251    for (size_t i = 0; i < d; i++) {
+    0.00 :   3394b6: ld      a6,8(a0)
+    0.00 :   3394ba: beqz    a6,339534 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x86>
+    0.00 :   3394be: slli    a6,a6,0x1
+         : 255    faiss::decode_fp16(unsigned short):
+         : 101    int32_t exp = shifted_exp & o;              // just the exponent
+         : 102    o += (int32_t)(127 - 15) << 23;             // exponent adjust
+         :
+         : 104    int32_t infnan_val = o + ((int32_t)(128 - 16) << 23);
+         : 105    int32_t zerodenorm_val =
+         : 106    intbits(floatbits(o + (1u << 23)) - floatbits(113u << 23));
+    0.00 :   3394c0: auipc   a5,0x2db
+    0.00 :   3394c4: flw     fa5,1648(a5) # 614b30 <typeinfo name for faiss::ProgressiveDimClustering+0x68>
+    0.00 :   3394c8: add     a6,a6,a1
+         : 95     int32_t o = ((int32_t)(h & 0x7fffu)) << 13; // exponent/mantissa bits
+    0.00 :   3394ca: lui     t4,0xfffe
+         : 96     int32_t exp = shifted_exp & o;              // just the exponent
+    0.00 :   3394ce: lui     a7,0xf800
+         : 104    int32_t reg_val = (exp == 0) ? zerodenorm_val : o;
+         :
+         : 106    int32_t sign_bit = ((int32_t)(h & 0x8000u)) << 16;
+    0.00 :   3394d2: lui     t3,0x80000
+         : 99     int32_t infnan_val = o + ((int32_t)(128 - 16) << 23);
+    0.00 :   3394d6: lui     t5,0x70000
+         : 97     o += (int32_t)(127 - 15) << 23;             // exponent adjust
+    0.00 :   3394da: lui     t6,0x38000
+         : 101    intbits(floatbits(o + (1u << 23)) - floatbits(113u << 23));
+    0.00 :   3394de: lui     t1,0x38800
+    0.00 :   3394e2: j       3394fe <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x50>
+    0.00 :   3394e4: fmv.w.x fa4,a5
+    0.00 :   3394e8: fsub.s  fa4,fa4,fa5
+    0.00 :   3394ec: fmv.x.w a5,fa4
+    0.00 :   3394f0: sext.w  a5,a5
+         : 105    return floatbits(((exp == shifted_exp) ? infnan_val : reg_val) | sign_bit);
+    0.00 :   3394f2: or      a5,a5,a4
+         : 107    faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+         : 252    x[i] = decode_fp16(((uint16_t*)code)[i]);
+    0.00 :   3394f4: sw      a5,0(a2)
+         : 251    for (size_t i = 0; i < d; i++) {
+    0.00 :   3394f6: addi    a1,a1,2
+    0.00 :   3394f8: addi    a2,a2,4
+    0.00 :   3394fa: beq     a6,a1,339534 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x86>
+         : 255    faiss::decode_fp16(unsigned short):
+         : 95     int32_t o = ((int32_t)(h & 0x7fffu)) << 13; // exponent/mantissa bits
+    0.00 :   3394fe: lhu     a5,0(a1)
+    0.00 :   339502: slliw   a3,a5,0xd
+         : 96     int32_t exp = shifted_exp & o;              // just the exponent
+    0.00 :   339506: and     a0,a3,a7
+         : 104    int32_t sign_bit = ((int32_t)(h & 0x8000u)) << 16;
+    0.00 :   33950a: slliw   a5,a5,0x10
+         : 95     int32_t o = ((int32_t)(h & 0x7fffu)) << 13; // exponent/mantissa bits
+    0.00 :   33950e: and     a3,a3,t4
+         : 104    int32_t sign_bit = ((int32_t)(h & 0x8000u)) << 16;
+    0.00 :   339512: and     a4,a5,t3
+         : 101    intbits(floatbits(o + (1u << 23)) - floatbits(113u << 23));
+    0.00 :   339516: addw    a5,a3,t1
+         : 102    int32_t reg_val = (exp == 0) ? zerodenorm_val : o;
+    0.00 :   33951a: beqz    a0,3394e4 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x36>
+         : 99     int32_t infnan_val = o + ((int32_t)(128 - 16) << 23);
+    0.00 :   33951c: addw    a5,a3,t5
+         : 105    return floatbits(((exp == shifted_exp) ? infnan_val : reg_val) | sign_bit);
+    0.00 :   339520: beq     a0,a7,3394f2 <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x44>
+         : 97     o += (int32_t)(127 - 15) << 23;             // exponent adjust
+    0.00 :   339524: addw    a5,a3,t6
+         : 105    return floatbits(((exp == shifted_exp) ? infnan_val : reg_val) | sign_bit);
+    0.00 :   339528: or      a5,a5,a4
+         : 107    faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const:
+         : 252    x[i] = decode_fp16(((uint16_t*)code)[i]);
+  100.00 :   33952a: sw      a5,0(a2)
+         : 251    for (size_t i = 0; i < d; i++) {
+    0.00 :   33952c: addi    a1,a1,2
+    0.00 :   33952e: addi    a2,a2,4
+    0.00 :   339530: bne     a6,a1,3394fe <faiss::scalar_quantizer::QuantizerFP16<(faiss::SIMDLevel)0>::decode_vector(unsigned char const*, float*) const+0x50>
+         : 254    }
+         : 255    }
+    0.00 :   339534: ld      ra,8(sp)
+    0.00 :   339536: ld      s0,0(sp)
+    0.00 :   339538: addi    sp,sp,16
+    0.00 :   33953a: ret

@@ -1,0 +1,48 @@
+{
+ "schemaVersion": "yuansheng.patch_plan.v1",
+ "patchPlanId": "pp-bp-faiss-sq-decode-002",
+ "blueprintId": "bp-faiss-sq-decode-002",
+ "createdAt": "diagnosis-2ec9e4ff19ed715f02f327c51a9d2ad7",
+ "objective": "faiss::scalar_quantizer::QuantizerTemplate<Codec4bit<RISCV_RVV>, NON_UNIFORM, NONE>::decode_vector executes an entirely scalar per-component decode loop (0x7ac4a8-0x7ac4e8): packed 4-bit nibble unpack (srli/lbu/andi/sraw/andi 15), fcvt.s.w, fadd.s +0.5f, fdiv.s /15.0f, vmin/vdiff scalar loads, fmadd.s, fsw; 100% of the function's profile samples land in this loop and the interval contains zero v* instructions. No RVV decode kernel exists: sq-rvv.cpp defines Codec4bit/QuantizerTemplate<*,NON_UNIFORM,RISCV_RVV> as opaque markers that inherit the scalar NONE base and never override decode_vector (only DCTemplate distance-computers get RVV fast paths), so the runtime-dispatched QT_4bit path (sq-dispatch.h select) executes scalar code and the compiler did not autovectorize the packed-nibble arithmetic.",
+ "changes": [
+  {
+   "filePath": "faiss/impl/scalar_quantizer/quantizers.h",
+   "action": "modify",
+   "rationale": "Add a real VLEN-agnostic RVV decode_vector override to the QuantizerTemplate RISCV_RVV specializations in faiss/impl/scalar_quantizer/sq-rvv.cpp (NON_UNIFORM, and UNIFORM for consistency), mirroring the AVX2/AVX512 Codec4bit decode_8/16_components approach without any fixed width: strip-mined loop that loads vl/2 packed code bytes (vle8), unpacks low/high 4-bit nibbles (vand 0x0F / vsrl 4 or even-odd deinterleave), converts to float (vzext + vfwcvt.f.xu or vwf), applies the affine decode (0.5f*inv15 offset and inv15 scale via precomputed scalars), and fuses vmin[i]+vdiff[i]*x with vfmacc against contiguous vmin/vdiff vectors, ending with vse32 for the even/odd interleaved component order; keep fixed-VL main loop plus runtime-VL tail per kernel conventions and leave the scalar NONE base as the fallback for non-RVV builds.",
+   "instructions": [
+    "The library is built with COMPILE_SIMD_RISCV_RVV (metadata shows rv64* v1p0/zvl128b build ISA)",
+    "Runtime SIMD dispatch in sq-dispatch.h selects SIMDLevel::RISCV_RVV for QT_4bit so the RVV tag-quantizer is reached",
+    "d can be any value including odd; tail must be handled VLEN-agnostically"
+   ]
+  },
+  {
+   "filePath": "faiss/impl/scalar_quantizer/sq-rvv.cpp",
+   "action": "modify",
+   "rationale": "Add a real VLEN-agnostic RVV decode_vector override to the QuantizerTemplate RISCV_RVV specializations in faiss/impl/scalar_quantizer/sq-rvv.cpp (NON_UNIFORM, and UNIFORM for consistency), mirroring the AVX2/AVX512 Codec4bit decode_8/16_components approach without any fixed width: strip-mined loop that loads vl/2 packed code bytes (vle8), unpacks low/high 4-bit nibbles (vand 0x0F / vsrl 4 or even-odd deinterleave), converts to float (vzext + vfwcvt.f.xu or vwf), applies the affine decode (0.5f*inv15 offset and inv15 scale via precomputed scalars), and fuses vmin[i]+vdiff[i]*x with vfmacc against contiguous vmin/vdiff vectors, ending with vse32 for the even/odd interleaved component order; keep fixed-VL main loop plus runtime-VL tail per kernel conventions and leave the scalar NONE base as the fallback for non-RVV builds.",
+   "instructions": [
+    "The library is built with COMPILE_SIMD_RISCV_RVV (metadata shows rv64* v1p0/zvl128b build ISA)",
+    "Runtime SIMD dispatch in sq-dispatch.h selects SIMDLevel::RISCV_RVV for QT_4bit so the RVV tag-quantizer is reached",
+    "d can be any value including odd; tail must be handled VLEN-agnostically"
+   ]
+  }
+ ],
+ "expectedDiffSummary": "real patch touches: faiss/impl/scalar_quantizer/quantizers.h, faiss/impl/scalar_quantizer/sq-rvv.cpp",
+ "readiness": "conditional",
+ "provenance": {
+  "derived": true,
+  "note": "derived-from-upstream-artifact (not an Agent Debug original); see provenance.block",
+  "derivedAt": "2026-09-25",
+  "primarySource": {
+   "snapshotCase": "sq-decode/002_faiss_scalar_quantizer_QuantizerTemplate_faiss_scalar_quantizer_Codec4bit_faiss_SIMDLevel_6_9652b988",
+   "snapshotCandidate": "candidate-d5e4afe64193b60e461707799a1c7d25.patch",
+   "record": "records/faiss/sq-decode/005_QuantizerTemplate_RISCV_RVV_decode_vector"
+  },
+  "fieldMapping": {
+   "objective": "blueprint.summary.observed_anomaly",
+   "changes[].rationale": "blueprint.craft_actions.actions[0].proposal",
+   "changes[].instructions": "blueprint.craft_actions.actions[0].conditions[].description",
+   "changes[].filePath": "diff --git headers of the real craft/patch.diff",
+   "readiness": "blueprint.craft_actions.actions[0].readiness"
+  }
+ }
+}
