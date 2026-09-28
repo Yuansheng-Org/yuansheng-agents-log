@@ -82,5 +82,3 @@ AI 审核通过不代表编译、回归或社区接收。
   （原 `craft/NOTE.md` 随 009/010/011 三条一并移除，见文末。）
 - 8 条记录的 `craft/patch.diff` 与 `yuansheng-patches` 快照的候选补丁**逐字节相同**（LF 归一后），均有完整 `craft/` 产物。
 - `trace/` 的 5 件产物为 Agent Debug Trace 用例的**原件拷贝**（LF 归一），8 条记录均有对应诊断日志。
-- 每个 `craft/reviews/opencode-patch-review.*` 是否派生、派生自哪个字段，见 `PROVENANCE.md`。
-- **已移除记录（本目录 11 → 8）**：原 `009_QuantizerLloydMax_RISCV_RVV_encode_vector`（`sq-encode`）、`010_QuantizerTemplate_QuantizerFP16_RISCV_RVV_decode_vector_increment`（`sq-decode`）、`011_pop_best_rvv_MinimaxHeap`（`hnsw`）三条**无 Agent Debug Trace 诊断日志、亦无优化前 Craft 原始补丁**（仅有复核后的 `reviews/*.patch` 与 `craft/NOTE.md`），已从本目录删除；其复核补丁仍保留在桌面提交包中。连同其 `trace/related/` 同族补录一并撤销。
