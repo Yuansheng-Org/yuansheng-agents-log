@@ -1,0 +1,290 @@
+From 49c7024b07448be1a4f7f5a8edbc099f011f5ad9 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=E7=94=B0=E5=AE=81?= <tianning24@iscas.ac.cn>
+Date: Mon, 28 Sep 2026 10:58:54 +0800
+Subject: [PATCH] rvv: fix bilinear affine no-alpha fetch
+
+---
+ pixman/pixman-bits-image.c |  11 ++
+ pixman/pixman-private.h    |   7 ++
+ pixman/pixman-riscv.c      |   5 +
+ pixman/pixman-rvv.c        | 201 +++++++++++++++++++++++++++++++++++++
+ 4 files changed, 224 insertions(+)
+
+diff --git a/pixman/pixman-bits-image.c b/pixman/pixman-bits-image.c
+index 20353cfd..e0009f9e 100644
+--- a/pixman/pixman-bits-image.c
++++ b/pixman/pixman-bits-image.c
+@@ -490,6 +490,17 @@ __bits_image_fetch_affine_no_alpha (pixman_iter_t *  iter,
+     get_pixel_t get_pixel =
+ 	wide ? fetch_pixel_no_alpha_float : fetch_pixel_no_alpha_32;
+ 
++#ifdef USE_RVV
++    if (!wide && !mask && width > 32 && _pixman_have_rvv &&
++	image->bits.format == PIXMAN_a8r8g8b8 &&
++	image->common.repeat == PIXMAN_REPEAT_NONE &&
++	image->common.filter == PIXMAN_FILTER_BILINEAR &&
++	image->common.transform)
++    {
++	return _pixman_rvv_bits_image_fetch_affine_no_alpha_none_8888 (iter);
++    }
++#endif
++
+     /* reference point is the center of the pixel */
+     v.vector[0] = pixman_int_to_fixed (offset) + pixman_fixed_1 / 2;
+     v.vector[1] = pixman_int_to_fixed (line) + pixman_fixed_1 / 2;
+diff --git a/pixman/pixman-private.h b/pixman/pixman-private.h
+index 89378def..cc1d51a6 100644
+--- a/pixman/pixman-private.h
++++ b/pixman/pixman-private.h
+@@ -668,6 +668,13 @@ _pixman_implementation_create_power9 (pixman_implementation_t *fallback);
+ #ifdef USE_RVV
+ pixman_implementation_t *
+ _pixman_implementation_create_rvv (pixman_implementation_t *fallback);
++
++/* RISC-V RVV source-fetch hook. _pixman_have_rvv is set to TRUE once the RVV
++   implementation has been created (runtime CPU detection passed). */
++extern pixman_bool_t _pixman_have_rvv;
++
++uint32_t *
++_pixman_rvv_bits_image_fetch_affine_no_alpha_none_8888 (pixman_iter_t *iter);
+ #endif
+ 
+ pixman_bool_t
+diff --git a/pixman/pixman-riscv.c b/pixman/pixman-riscv.c
+index 3a5604e7..b7916eff 100644
+--- a/pixman/pixman-riscv.c
++++ b/pixman/pixman-riscv.c
+@@ -119,6 +119,10 @@ detect_cpu_features (void)
+ 
+ #endif
+ 
++/* Set to TRUE once the RVV implementation is created (runtime CPU detection
++   passed), signalling that vectorized source-fetch kernels are safe to use. */
++pixman_bool_t _pixman_have_rvv = FALSE;
++
+ pixman_implementation_t *
+ _pixman_riscv_get_implementations (pixman_implementation_t *imp)
+ {
+@@ -126,6 +130,7 @@ _pixman_riscv_get_implementations (pixman_implementation_t *imp)
+     if (!_pixman_disabled ("rvv") && (detect_cpu_features () & RVV))
+     {
+ 	imp = _pixman_implementation_create_rvv (imp);
++	_pixman_have_rvv = TRUE;
+     }
+ #endif
+     return imp;
+diff --git a/pixman/pixman-rvv.c b/pixman/pixman-rvv.c
+index 570799ca..b5072b81 100644
+--- a/pixman/pixman-rvv.c
++++ b/pixman/pixman-rvv.c
+@@ -3092,6 +3092,207 @@ static const pixman_fast_path_t rvv_fast_paths[] = {
+     {PIXMAN_OP_NONE},
+ };
+ 
++/* Bilinear affine no-alpha 8888 fetch for PIXMAN_REPEAT_NONE. */
++static force_inline vuint32m2_t
++rvv_affine_bilinear_channel_m2 (vuint32m2_t tl, vuint32m2_t tr,
++				vuint32m2_t bl, vuint32m2_t br,
++				vuint32m2_t wtl, vuint32m2_t wtr,
++				vuint32m2_t wbl, vuint32m2_t wbr,
++				unsigned int shift, size_t vl)
++{
++    vuint32m2_t ctl = __riscv_vand_vx_u32m2 (
++	__riscv_vsrl_vx_u32m2 (tl, shift, vl), 0xff, vl);
++    vuint32m2_t ctr = __riscv_vand_vx_u32m2 (
++	__riscv_vsrl_vx_u32m2 (tr, shift, vl), 0xff, vl);
++    vuint32m2_t cbl = __riscv_vand_vx_u32m2 (
++	__riscv_vsrl_vx_u32m2 (bl, shift, vl), 0xff, vl);
++    vuint32m2_t cbr = __riscv_vand_vx_u32m2 (
++	__riscv_vsrl_vx_u32m2 (br, shift, vl), 0xff, vl);
++    vuint32m2_t sum = __riscv_vmul_vv_u32m2 (ctl, wtl, vl);
++
++    sum = __riscv_vmacc_vv_u32m2 (sum, ctr, wtr, vl);
++    sum = __riscv_vmacc_vv_u32m2 (sum, cbl, wbl, vl);
++    sum = __riscv_vmacc_vv_u32m2 (sum, cbr, wbr, vl);
++    return __riscv_vsrl_vx_u32m2 (sum, 16, vl);
++}
++
++uint32_t *
++_pixman_rvv_bits_image_fetch_affine_no_alpha_none_8888 (pixman_iter_t *iter)
++{
++    pixman_image_t *image = iter->image;
++    bits_image_t *bits = &image->bits;
++    const uint32_t *base = bits->bits;
++    uint32_t *buffer = iter->buffer;
++    int rowstride = bits->rowstride;
++    pixman_bool_t flipped = rowstride < 0;
++    pixman_bool_t narrow_offsets;
++    pixman_vector_t v;
++    pixman_fixed_t x, y, ux, uy;
++    int line = iter->y - 1;
++    int i;
++
++    v.vector[0] = pixman_int_to_fixed (iter->x) + pixman_fixed_1 / 2;
++    v.vector[1] = pixman_int_to_fixed (line) + pixman_fixed_1 / 2;
++    v.vector[2] = pixman_fixed_1;
++
++    if (!pixman_transform_point_3d (image->common.transform, &v))
++	return buffer;
++
++    ux = image->common.transform->matrix[0][0];
++    uy = image->common.transform->matrix[1][0];
++    x = v.vector[0];
++    y = v.vector[1];
++
++    if (flipped)
++    {
++	base += (int64_t)(bits->height - 1) * rowstride;
++	rowstride = -rowstride;
++    }
++
++    narrow_offsets =
++	(uint64_t)(bits->height - 1) * (uint32_t)rowstride +
++		(uint32_t)(bits->width - 1) <=
++	    UINT32_MAX / sizeof (uint32_t);
++
++    for (i = 0; i < iter->width;)
++    {
++	size_t vl = __riscv_vsetvl_e32m2 (iter->width - i);
++	vuint32m2_t lane_u = __riscv_vid_v_u32m2 (vl);
++	vint32m2_t lane = __riscv_vreinterpret_v_u32m2_i32m2 (lane_u);
++	vint32m2_t vx = __riscv_vadd_vx_i32m2 (
++	    __riscv_vmul_vx_i32m2 (lane, ux, vl),
++	    x - pixman_fixed_1 / 2, vl);
++	vint32m2_t vy = __riscv_vadd_vx_i32m2 (
++	    __riscv_vmul_vx_i32m2 (lane, uy, vl),
++	    y - pixman_fixed_1 / 2, vl);
++	vint32m2_t x1 = __riscv_vsra_vx_i32m2 (vx, 16, vl);
++	vint32m2_t y1 = __riscv_vsra_vx_i32m2 (vy, 16, vl);
++	vint32m2_t x2 = __riscv_vadd_vx_i32m2 (x1, 1, vl);
++	vint32m2_t y2 = __riscv_vadd_vx_i32m2 (y1, 1, vl);
++	vbool16_t x1ok = __riscv_vmsltu_vx_u32m2_b16 (
++	    __riscv_vreinterpret_v_i32m2_u32m2 (x1), bits->width, vl);
++	vbool16_t x2ok = __riscv_vmsltu_vx_u32m2_b16 (
++	    __riscv_vreinterpret_v_i32m2_u32m2 (x2), bits->width, vl);
++	vbool16_t y1ok = __riscv_vmsltu_vx_u32m2_b16 (
++	    __riscv_vreinterpret_v_i32m2_u32m2 (y1), bits->height, vl);
++	vbool16_t y2ok = __riscv_vmsltu_vx_u32m2_b16 (
++	    __riscv_vreinterpret_v_i32m2_u32m2 (y2), bits->height, vl);
++	vbool16_t mtl = __riscv_vmand_mm_b16 (x1ok, y1ok, vl);
++	vbool16_t mtr = __riscv_vmand_mm_b16 (x2ok, y1ok, vl);
++	vbool16_t mbl = __riscv_vmand_mm_b16 (x1ok, y2ok, vl);
++	vbool16_t mbr = __riscv_vmand_mm_b16 (x2ok, y2ok, vl);
++	vint32m2_t py1 = flipped
++	    ? __riscv_vrsub_vx_i32m2 (y1, bits->height - 1, vl) : y1;
++	vint32m2_t py2 = flipped
++	    ? __riscv_vrsub_vx_i32m2 (y2, bits->height - 1, vl) : y2;
++	vuint32m2_t zero = __riscv_vmv_v_x_u32m2 (0, vl);
++	vuint32m2_t tl, tr, bl, br;
++	vuint32m2_t dx, dy, idx, idy, wtl, wtr, wbl, wbr, out;
++
++	if (narrow_offsets)
++	{
++	    vint32m2_t tl_index = __riscv_vadd_vv_i32m2 (
++		__riscv_vmul_vx_i32m2 (py1, rowstride, vl), x1, vl);
++	    vint32m2_t tr_index = __riscv_vadd_vv_i32m2 (
++		__riscv_vmul_vx_i32m2 (py1, rowstride, vl), x2, vl);
++	    vint32m2_t bl_index = __riscv_vadd_vv_i32m2 (
++		__riscv_vmul_vx_i32m2 (py2, rowstride, vl), x1, vl);
++	    vint32m2_t br_index = __riscv_vadd_vv_i32m2 (
++		__riscv_vmul_vx_i32m2 (py2, rowstride, vl), x2, vl);
++	    vuint32m2_t otl = __riscv_vsll_vx_u32m2 (
++		__riscv_vreinterpret_v_i32m2_u32m2 (tl_index), 2, vl);
++	    vuint32m2_t otr = __riscv_vsll_vx_u32m2 (
++		__riscv_vreinterpret_v_i32m2_u32m2 (tr_index), 2, vl);
++	    vuint32m2_t obl = __riscv_vsll_vx_u32m2 (
++		__riscv_vreinterpret_v_i32m2_u32m2 (bl_index), 2, vl);
++	    vuint32m2_t obr = __riscv_vsll_vx_u32m2 (
++		__riscv_vreinterpret_v_i32m2_u32m2 (br_index), 2, vl);
++
++	    tl = __riscv_vluxei32_v_u32m2_m (mtl, base, otl, vl);
++	    tr = __riscv_vluxei32_v_u32m2_m (mtr, base, otr, vl);
++	    bl = __riscv_vluxei32_v_u32m2_m (mbl, base, obl, vl);
++	    br = __riscv_vluxei32_v_u32m2_m (mbr, base, obr, vl);
++	}
++	else
++	{
++	    vint64m4_t x164 = __riscv_vwcvt_x_x_v_i64m4 (x1, vl);
++	    vint64m4_t x264 = __riscv_vwcvt_x_x_v_i64m4 (x2, vl);
++	    vint64m4_t y164 = __riscv_vwcvt_x_x_v_i64m4 (py1, vl);
++	    vint64m4_t y264 = __riscv_vwcvt_x_x_v_i64m4 (py2, vl);
++	    vint64m4_t tl_index = __riscv_vadd_vv_i64m4 (
++		__riscv_vmul_vx_i64m4 (y164, rowstride, vl), x164, vl);
++	    vint64m4_t tr_index = __riscv_vadd_vv_i64m4 (
++		__riscv_vmul_vx_i64m4 (y164, rowstride, vl), x264, vl);
++	    vint64m4_t bl_index = __riscv_vadd_vv_i64m4 (
++		__riscv_vmul_vx_i64m4 (y264, rowstride, vl), x164, vl);
++	    vint64m4_t br_index = __riscv_vadd_vv_i64m4 (
++		__riscv_vmul_vx_i64m4 (y264, rowstride, vl), x264, vl);
++
++	    tl = __riscv_vluxei64_v_u32m2_m (
++		mtl, base, __riscv_vsll_vx_u64m4 (
++		    __riscv_vreinterpret_v_i64m4_u64m4 (tl_index), 2, vl), vl);
++	    tr = __riscv_vluxei64_v_u32m2_m (
++		mtr, base, __riscv_vsll_vx_u64m4 (
++		    __riscv_vreinterpret_v_i64m4_u64m4 (tr_index), 2, vl), vl);
++	    bl = __riscv_vluxei64_v_u32m2_m (
++		mbl, base, __riscv_vsll_vx_u64m4 (
++		    __riscv_vreinterpret_v_i64m4_u64m4 (bl_index), 2, vl), vl);
++	    br = __riscv_vluxei64_v_u32m2_m (
++		mbr, base, __riscv_vsll_vx_u64m4 (
++		    __riscv_vreinterpret_v_i64m4_u64m4 (br_index), 2, vl), vl);
++	}
++
++	/* Masked-off gather lanes are unspecified; explicitly select zero. */
++	tl = __riscv_vmerge_vvm_u32m2 (zero, tl, mtl, vl);
++	tr = __riscv_vmerge_vvm_u32m2 (zero, tr, mtr, vl);
++	bl = __riscv_vmerge_vvm_u32m2 (zero, bl, mbl, vl);
++	br = __riscv_vmerge_vvm_u32m2 (zero, br, mbr, vl);
++
++	dx = __riscv_vsll_vx_u32m2 (
++	    __riscv_vand_vx_u32m2 (
++		__riscv_vreinterpret_v_i32m2_u32m2 (
++		    __riscv_vsra_vx_i32m2 (
++			vx, 16 - BILINEAR_INTERPOLATION_BITS, vl)),
++		BILINEAR_INTERPOLATION_RANGE - 1, vl),
++	    8 - BILINEAR_INTERPOLATION_BITS, vl);
++	dy = __riscv_vsll_vx_u32m2 (
++	    __riscv_vand_vx_u32m2 (
++		__riscv_vreinterpret_v_i32m2_u32m2 (
++		    __riscv_vsra_vx_i32m2 (
++			vy, 16 - BILINEAR_INTERPOLATION_BITS, vl)),
++		BILINEAR_INTERPOLATION_RANGE - 1, vl),
++	    8 - BILINEAR_INTERPOLATION_BITS, vl);
++	idx = __riscv_vrsub_vx_u32m2 (dx, 256, vl);
++	idy = __riscv_vrsub_vx_u32m2 (dy, 256, vl);
++	wbr = __riscv_vmul_vv_u32m2 (dx, dy, vl);
++	wtr = __riscv_vmul_vv_u32m2 (dx, idy, vl);
++	wbl = __riscv_vmul_vv_u32m2 (idx, dy, vl);
++	wtl = __riscv_vmul_vv_u32m2 (idx, idy, vl);
++
++	out = __riscv_vsll_vx_u32m2 (
++	    rvv_affine_bilinear_channel_m2 (
++		tl, tr, bl, br, wtl, wtr, wbl, wbr, 24, vl), 24, vl);
++	out = __riscv_vor_vv_u32m2 (
++	    out, __riscv_vsll_vx_u32m2 (
++		rvv_affine_bilinear_channel_m2 (
++		    tl, tr, bl, br, wtl, wtr, wbl, wbr, 16, vl), 16, vl), vl);
++	out = __riscv_vor_vv_u32m2 (
++	    out, __riscv_vsll_vx_u32m2 (
++		rvv_affine_bilinear_channel_m2 (
++		    tl, tr, bl, br, wtl, wtr, wbl, wbr, 8, vl), 8, vl), vl);
++	out = __riscv_vor_vv_u32m2 (
++	    out, rvv_affine_bilinear_channel_m2 (
++		tl, tr, bl, br, wtl, wtr, wbl, wbr, 0, vl), vl);
++
++	__riscv_vse32_v_u32m2 (buffer + i, out, vl);
++	x = (pixman_fixed_t)((int64_t)x + (int64_t)vl * ux);
++	y = (pixman_fixed_t)((int64_t)y + (int64_t)vl * uy);
++	i += vl;
++    }
++
++    return buffer;
++}
++
+ pixman_implementation_t *
+ _pixman_implementation_create_rvv (pixman_implementation_t *fallback)
+ {
+-- 
+2.34.1
+

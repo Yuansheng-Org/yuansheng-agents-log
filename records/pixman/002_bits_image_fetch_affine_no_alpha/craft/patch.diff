@@ -1,0 +1,155 @@
+diff --git a/pixman/pixman-bits-image.c b/pixman/pixman-bits-image.c
+index 20353cf..eecf12b 100644
+--- a/pixman/pixman-bits-image.c
++++ b/pixman/pixman-bits-image.c
+@@ -490,6 +490,15 @@ __bits_image_fetch_affine_no_alpha (pixman_iter_t *  iter,
+     get_pixel_t get_pixel =
+ 	wide ? fetch_pixel_no_alpha_float : fetch_pixel_no_alpha_32;
+ 
++#ifdef USE_RVV
++    if (!wide && !mask && _pixman_have_rvv &&
++	image->bits.format == PIXMAN_a8r8g8b8 &&
++	image->common.repeat == PIXMAN_REPEAT_NONE)
++    {
++	return _pixman_rvv_bits_image_fetch_affine_no_alpha_none_8888 (iter);
++    }
++#endif
++
+     /* reference point is the center of the pixel */
+     v.vector[0] = pixman_int_to_fixed (offset) + pixman_fixed_1 / 2;
+     v.vector[1] = pixman_int_to_fixed (line) + pixman_fixed_1 / 2;
+diff --git a/pixman/pixman-private.h b/pixman/pixman-private.h
+index 1416eb4..23f98d0 100644
+--- a/pixman/pixman-private.h
++++ b/pixman/pixman-private.h
+@@ -658,6 +658,13 @@ _pixman_implementation_create_vmx (pixman_implementation_t *fallback);
+ #ifdef USE_RVV
+ pixman_implementation_t *
+ _pixman_implementation_create_rvv (pixman_implementation_t *fallback);
++
++/* RISC-V RVV source-fetch hook. _pixman_have_rvv is set to TRUE once the RVV
++   implementation has been created (runtime CPU detection passed). */
++extern pixman_bool_t _pixman_have_rvv;
++
++uint32_t *
++_pixman_rvv_bits_image_fetch_affine_no_alpha_none_8888 (pixman_iter_t *iter);
+ #endif
+ 
+ pixman_bool_t
+diff --git a/pixman/pixman-riscv.c b/pixman/pixman-riscv.c
+index 3a5604e..b7916ef 100644
+--- a/pixman/pixman-riscv.c
++++ b/pixman/pixman-riscv.c
+@@ -119,6 +119,10 @@ detect_cpu_features (void)
+ 
+ #endif
+ 
++/* Set to TRUE once the RVV implementation is created (runtime CPU detection
++   passed), signalling that vectorized source-fetch kernels are safe to use. */
++pixman_bool_t _pixman_have_rvv = FALSE;
++
+ pixman_implementation_t *
+ _pixman_riscv_get_implementations (pixman_implementation_t *imp)
+ {
+@@ -126,6 +130,7 @@ _pixman_riscv_get_implementations (pixman_implementation_t *imp)
+     if (!_pixman_disabled ("rvv") && (detect_cpu_features () & RVV))
+     {
+ 	imp = _pixman_implementation_create_rvv (imp);
++	_pixman_have_rvv = TRUE;
+     }
+ #endif
+     return imp;
+diff --git a/pixman/pixman-rvv.c b/pixman/pixman-rvv.c
+index 570799c..c5bd3a2 100644
+--- a/pixman/pixman-rvv.c
++++ b/pixman/pixman-rvv.c
+@@ -3092,6 +3092,89 @@ static const pixman_fast_path_t rvv_fast_paths[] = {
+     {PIXMAN_OP_NONE},
+ };
+ 
++/* Affine no-alpha (nearest) 8888 fetch, vectorized (minimal subset).
++ *
++ * Covers only: narrow (32-bit), source format a8r8g8b8, repeat=NONE, no mask.
++ * Replicates __bits_image_fetch_affine_no_alpha's per-pixel nearest gather via
++ * vid/vwmul coordinate recurrence + vluxei64 gather + bounds zeroing; the
++ * scalar tail preserves the remaining pixels.
++ */
++uint32_t *
++_pixman_rvv_bits_image_fetch_affine_no_alpha_none_8888 (pixman_iter_t *iter)
++{
++    pixman_image_t *image = iter->image;
++    int offset = iter->x, line = iter->y++;
++    int width = iter->width;
++    uint32_t *buffer = iter->buffer;
++    bits_image_t *bits = &image->bits;
++    pixman_fixed_t x, y, ux, uy;
++    pixman_vector_t v;
++    const size_t vlmax = __riscv_vsetvlmax_e32m4 ();
++    size_t n = (size_t)width;
++    uint32_t *dst = buffer;
++
++    v.vector[0] = pixman_int_to_fixed (offset) + pixman_fixed_1 / 2;
++    v.vector[1] = pixman_int_to_fixed (line) + pixman_fixed_1 / 2;
++    v.vector[2] = pixman_fixed_1;
++    if (!pixman_transform_point_3d (image->common.transform, &v))
++	return iter->buffer;
++    ux = image->common.transform->matrix[0][0];
++    uy = image->common.transform->matrix[1][0];
++    x = v.vector[0];
++    y = v.vector[1];
++
++    while (n >= vlmax)
++    {
++	size_t vl = vlmax;
++	vuint32m4_t iu = __riscv_vid_v_u32m4 (vl);
++	vint32m4_t iv = __riscv_vreinterpret_v_u32m4_i32m4 (iu);
++	vint32m4_t x0 = __riscv_vsra_vx_i32m4 (
++	    __riscv_vsub_vx_i32m4 (
++		__riscv_vncvt_x_x_w_i32m4 (
++		    __riscv_vwadd_wx_i64m8 (
++			__riscv_vwmul_vx_i64m8 (iv, ux, vl), x, vl), vl),
++		1, vl), 16, vl);
++	vint32m4_t y0 = __riscv_vsra_vx_i32m4 (
++	    __riscv_vsub_vx_i32m4 (
++		__riscv_vncvt_x_x_w_i32m4 (
++		    __riscv_vwadd_wx_i64m8 (
++			__riscv_vwmul_vx_i64m8 (iv, uy, vl), y, vl), vl),
++		1, vl), 16, vl);
++	vbool8_t ok = __riscv_vmand_mm_b8 (
++	    __riscv_vmand_mm_b8 (
++		__riscv_vmsle_vx_i32m4_b8 (x0, bits->width - 1, vl),
++		__riscv_vmsge_vx_i32m4_b8 (x0, 0, vl), vl),
++	    __riscv_vmand_mm_b8 (
++		__riscv_vmsle_vx_i32m4_b8 (y0, bits->height - 1, vl),
++		__riscv_vmsge_vx_i32m4_b8 (y0, 0, vl), vl), vl);
++	vuint64m8_t addru = __riscv_vreinterpret_v_i64m8_u64m8 (
++	    __riscv_vadd_vv_i64m8 (
++		__riscv_vwmul_vv_i64m8 (y0, __riscv_vmv_v_x_i32m4 (bits->rowstride, vl), vl),
++		__riscv_vwcvt_x_x_v_i64m8 (x0, vl), vl));
++	vuint32m4_t px = __riscv_vluxei64_v_u32m4 (bits->bits, addru, vl);
++	vuint32m4_t out = __riscv_vmerge_vvm_u32m4 (
++	    px, __riscv_vmv_v_x_u32m4 (0, vl), ok, vl);
++	__riscv_vse32_v_u32m4 (dst, out, vl);
++
++	x = (pixman_fixed_t)((int64_t)x + (int64_t)vl * ux);
++	y = (pixman_fixed_t)((int64_t)y + (int64_t)vl * uy);
++	dst += vl;
++	n -= vl;
++    }
++
++    while (n-- > 0)
++    {
++	int x0 = pixman_fixed_to_int (x - pixman_fixed_e);
++	int y0 = pixman_fixed_to_int (y - pixman_fixed_e);
++	*dst++ = (y0 < 0 || y0 >= bits->height || x0 < 0 || x0 >= bits->width)
++	    ? 0 : bits->bits[bits->rowstride * y0 + x0];
++	x += ux;
++	y += uy;
++    }
++
++    return iter->buffer;
++}
++
+ pixman_implementation_t *
+ _pixman_implementation_create_rvv (pixman_implementation_t *fallback)
+ {
