@@ -20,7 +20,6 @@
 - 软件页面中的历史汇总数字保留原值；当前总表按归档复核补丁逐项登记，因此 Redis 登记 4 行、MXNet 登记 15 行。MXNet 的 PR 链接指向我们维护的 `RuyiAI-Stack/mxnet` 仓库。
 - [FFmpeg PR #24550](https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/24550) 修改 `libswscale/riscv/rgb2rgb_rvv.S`，当前归档的 FFmpeg 复核补丁中没有对应文件；暂不计入下表。
 - Faiss 第 71 行（record 003，Direct-u8 编码）的上游 PR #5640 页面 `merged` 字段为 false 且状态为 closed，但其已由 `meta-codesync[bot]` 导入并合并进 faiss `main`（squash `f323c18d`，`behind_by == 0` 确认为 main 祖先）；Meta 项目的 codesync 导入路径会保留这一假象，故本行按“已合入上游”登记。
-- 第 72 行（Go，`026_internal_runtime_maps.memHashFallback`）与第 73 行（OpenBLAS，`001_drotm_k`）由本次新提交的上游补丁移入本分区：Go 对应 [CL 840225](https://go-review.googlesource.com/c/go/+/840225)，OpenBLAS 对应 [PR #6070](https://github.com/OpenMathLib/OpenBLAS/pull/6070)，两者均为 open。两行“复核补丁”列标注“PR 版本有差异”：OpenBLAS 线上版本为覆盖 `dflag>0/==0/<0` 三个分支的超集，本仓库复核补丁仅覆盖 `dflag>0`；Go 线上版本与复核补丁改动文件相同，差异为 `gofmt` 格式化与变量块对齐。两处均保留复核补丁原件，未归档线上补丁本体。
 
 ### 已有上游提交链接（73 条）
 
