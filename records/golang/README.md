@@ -23,5 +23,3 @@
 `031_math_bits_TrailingZeros` 是专家从 `craft/go/028_nextFreeFast` 候选补丁中提炼出的贡献。原始 Trace 指向 `028_nextFreeFast`，本目录保留其原始 Trace/Plan/Candidate/AI 审核，并归档 Agent Debug 中 `031_math_bits_TrailingZeros` 的 `optimized-craft/` 与 `test-results/`；详见已有 `review/REVIEW.md`。
 
 `031_math_bits_TrailingZeros` 的 Candidate ID `pc-bp-go-benchmarkmallocgc-scan-noscan-size-176-kind-mallocgc-028` 与 AI Review 引用 `pc-bp-go-benchmarkmallocgc_scan_noscan_size_176_kind_mallocgc-028` 不一致；原始文件已保留。
-
-`026_internal_runtime_maps.memHashFallback` 现提交上游 [CL 840225](https://go-review.googlesource.com/c/go/+/840225)（`runtime: specialize fixed-size map hashing on riscv64`，status NEW）。线上版本与本目录复核补丁改动的文件相同（新增 `runtime_hash64_align_riscv64{,_test}.go`、`alg_riscv64.go`，改 `reflectdata/alg.go`、`reflectdata/reflect.go`），差异为 `gofmt` 格式化与变量块对齐；本目录保留复核补丁原件，未随线上版本更新。

@@ -10,7 +10,7 @@
 
 ## 已筛选补丁的产物归档
 
-本分支仅整理 `add-openblas` 已筛选的 8 个openblas补丁目录，按 `records/openblas/<测试用例>/<函数>/` 组织。测例名称取自 Agent Debug Trace 的 `source.testcaseIds`；原有补丁和专家复核文件保留，新增的 Trace、Craft 中间产物来自 Agent Debug。其中 `001_drotm_k` 为本次新增，其原有 `craft/patch.diff`、`review/patch.diff` 和 `review/performance-comparison.md` 一并迁入；该项现已提交上游 [PR #6070](https://github.com/OpenMathLib/OpenBLAS/pull/6070)（open）。线上提交版本给 `dflag>0`、`dflag==0`、`dflag<0` 三个分支均加了单位步长快路径，是本目录复核补丁（仅覆盖 `dflag>0`）的超集；本目录按现状保留复核补丁原件，未随线上版本更新。PR 尚未合入，上方截图历史汇总保持原值。
+本分支仅整理 `add-openblas` 已筛选的 8 个openblas补丁目录，按 `records/openblas/<测试用例>/<函数>/` 组织。测例名称取自 Agent Debug Trace 的 `source.testcaseIds`；原有补丁和专家复核文件保留，新增的 Trace、Craft 中间产物来自 Agent Debug。其中 `001_drotm_k` 为本次新增，其原有 `craft/patch.diff`、`review/patch.diff` 和 `review/performance-comparison.md` 一并迁入；该项尚无上游提交记录，故不改变上方截图历史汇总。
 
 | 补丁目录 | 测试用例 | Agent Debug Trace 来源 | Blueprint ID |
 | --- | --- | --- | --- |
