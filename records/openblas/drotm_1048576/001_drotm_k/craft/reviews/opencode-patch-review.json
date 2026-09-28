@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "review-bp-openblas-drotm_1048576-001",
+  "patchCandidateId": "pc-bp-openblas-drotm-1048576-001",
+  "reviewedAt": "2026-09-22",
+  "reviewer": "opencode-comet-review",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "arch-scan 命中规则：riscv-macro。补丁仅选择/接线仓库内既有的 RVV 1.0 内核实现（ZVL128B profile 已使用），未新增 ISA 指令或改变 vsetvl/LMUL 语义；目标硬件 metadata 为 rv64imafdcvh（RVV 1.0, VLEN 256），与该实现兼容。"
+  },
+  "hallucinationCheck": [
+    {
+      "dimension": "技术精度",
+      "result": "PASS"
+    },
+    {
+      "dimension": "声明溯源",
+      "result": "PASS"
+    },
+    {
+      "dimension": "可解释性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "内部一致性",
+      "result": "PASS"
+    },
+    {
+      "dimension": "安全",
+      "result": "PASS"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "file": "kernel/riscv64/rotm_rvv.c",
+      "line": 32,
+      "evidence": "patch.diff 新增行原文：+ #define VLEV_FLOAT              __riscv_vle32_v_f32m8 ; + #define VSEV_FLOAT              __riscv_vse32_v_f32m8 ; + #define VLEV_FLOAT              __riscv_vle64_v_f64m8 ; + #define VSEV_FLOAT              __riscv_vse64_v_f64m8",
+      "severity": "suggestion",
+      "category": "动态验证受限",
+      "suggestion": "本补丁按蓝图 recommendedFirstAction 实施（kernel/riscv64/rotm_rvv.c 的 L30（dflag>0）主循环：将 e64,m8 单 block 改为 m4×unroll2（或 m2×unroll4）双 block 独立寄存器组并提前发射两 block 的 load，vsetvli hoist 出主循环（fixed-VL main loop），stride==8 时改用 vle64）。当前环境缺少目标硬件（SpacemiT X100 (K3)）动态 A/B 与回归运行条件，性能收益需在目标硬件上重建后实测确认；静态层面改动聚焦于 blueprint 指出的根因链，未改变数值语义与公共 API。"
+    }
+  ]
+}

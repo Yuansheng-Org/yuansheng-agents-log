@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-pixman-lowlevel-blt-bilinear-042-042-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T08:58:28.184Z",
+    "software": "pixman",
+    "testcaseIds": [
+      "lowlevel-blt-bilinear-042-042"
+    ],
+    "diagnosisId": "diag-20260908T085828184Z-0d739ffa",
+    "targetHardware": "SpacemiT X100 (K3)",
+    "repositoryUrl": "https://gitlab.freedesktop.org/pixman/pixman.git",
+    "testBranch": "master",
+    "commitHash": "14735ced17e0053abbb925f9cf18c05ed9f52378"
+  },
+  "problem": {
+    "summary": "RISC-V 目标（SpacemiT X100，RVV 1.0，VLEN=256）上 pixman 的 bilinear affine R5G6B5 fetch 热点（rank-001）整体以标量流水执行：每像素完成 565 位域展开/回装、10 次插值乘法与数据相关 16-bit tap gather，零 `v*` 指令。根因是构建 ISA 未启用 `v`（build Tag_RISCV_arch 无 v）且不存在向量化 resampling kernel，导致硬件向量单元完全闲置，热点区间 0x30126-0x303be 消耗约 91.4% 函数局部样本。",
+    "evidence": [
+      "perf stat: IPC=2.842619 (instruction 829,960,673,029 / cpu_cycle 291,970,434,246)，compute/throughput-bound，非 memory-bound；无 cache/branch counter",
+      "annotate (cycles:u, 11595 samples, local period): bits_image_fetch_bilinear_affine_none_r5g6b5 为 rank-001 热点；最高行 9.99% @ 30274 slli t1,t1,0x20；5.97% @ 303be sw a2,0(a5)；bilinear 体 0x30126-0x303be ≈91.4% 函数局部样本",
+      "baseline mismatch: hardware 暴露 RVV 1.0（vlenb=32→VLEN=256，含 zvbb/zvbc/zvk*），而冻结 build ISA (rv64i2p1_m2p0_a2p1_f2p2_d2p2_c2p0_..._zca1p0_zcd1p0) 无 `v` → 全函数零 v* 标量流水",
+      "代码证据: 函数由 pixman/pixman/pixman-fast-path.c:2850 bits_image_fetch_bilinear_affine 与 :3117 per-format 宏实例化生成"
+    ]
+  },
+  "rootCause": {
+    "summary": "pixman 的 bilinear affine R5G6B5 fetch 以 compiler-generated 标量逐像素流水执行且构建未启用 RVV（build 无 v），在 RVV 1.0/VLEN=256 的 X100 上造成纯 issue/arithmetic 吞吐负担；属于未向量化的 resampling 语义循环（L1）叠加 build/config 缺口（L0）。",
+    "candidateFiles": [
+      "pixman/pixman/pixman-fast-path.c"
+    ],
+    "performanceFactors": [
+      "RVV Resampling Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "bilinear 插值定点算术顺序与 reference 位精确（pixman_fixed 16.16 坐标、0-256 权重、convert_pixel 565 展开/回装语义）",
+      "border/repeat 语义与越界零像素输出（pixman-fast-path.c:2939-2943 的 out-of-bounds 路径）及 mask 分支（:2891）",
+      "公共 API 与输出布局：bits_image_fetch_bilinear_affine_none_r5g6b5 迭代器合同、32-bit 双 16-bit 像素输出",
+      "非 RVV 目标上的通用 C 回退路径仍可用"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "lowlevel-blt-bilinear-042-042"
+    ],
+    "regressionCommand": "agent1 patch_regression --case lowlevel-blt-bilinear-042-042"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.85,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=2.842619、指令流 829.96B，判定为 compute/throughput-bound 而非 memory-bound，为本地 compute-vectorization 修复提供 bound-type 支持；perf annotate 显示该 rank-001 函数 bilinear 体（0x30126-0x303be，含 565 位域展开/回装、10 次插值乘法、数据相关 16-bit tap gather）占函数局部样本约 91.4% 且全程零 `v*`，pattern 扫描以 HIGH route 命中 RVV Resampling Kernels（interpolation 坐标/权重合同排除 layout/gather/conv 邻行），no-vectorization 为 supporting；基线证据（hardware RVV 1.0/VLEN=256 vs build Tag_RISCV_arch 无 v）确认 build 层缺口；因此根因为未向量化的标量 bilinear fetch 流水，修复方向为精确 -march（含 v）重建并向量化该 fetch。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "config_mismatch 主导的可能：仅以含 v 的精确 -march 重建后，编译器可能自动向量化该 fetch 循环（autovec gap），此时 code_path 成分缩小、收益主要由 build 配置缺口解释",
+      "若 vluxei indexed-load 在 X100 上的实际吞吐显著低于标量 gather（实现属性），向量化收益可能低于 lane 数上限预期，需 A/B benchmark 证实",
+      "采样窗口因素：local period + 单次采样窗口，若函数 workload 级占比低于局部份额，实际整机收益上界低于 91.4% 局部份额"
+    ],
+    "currentGaps": "采样 percent type=local period 且函数 workload 级占比未知 → 收益上界仅为函数局部样本份额（≈91.4%），无 Amdahl 上界；precise_ip/Exact-IP 未知（baseline_gap: sampling IP precision），单指令归因受限，锚点为 interval 级；热点 DSO libpixman-1.so.0.46.5 未单独 readelf -A（build ISA 以同树 bench ELF Tag_RISCV_arch 推断）；无 ARM 侧对比与 execution-summary ratio 数据（无 ys-trace-execution-summary 输出）。",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + lowlevel-blt-bilinear-042-042",
+    "recommendedFirstAction": "在构建配置（CMake flags / -march）中启用硬件与工具链共同支持的精确 RVV march（如 rv64gcv 或其最小子集），clean rebuild pixman；随后在 pixman/pixman/pixman-fast-path.c:2850（bits_image_fetch_bilinear_affine，per-format 宏 :3117 实例化 bits_image_fetch_bilinear_affine_none_r5g6b5）将逐像素标量 fetch/expand/interp/pack 改写为 RVV 向量化 resampling：预计算 tap byte-offset 与权重向量，vluxei* 批量 gather 4 taps，8-bit 通道展开后以 0-256 定点权重 widening 插值（vwmacc 形态），narrow+pack 回 16-bit 输出；保持插值定点算术顺序、border/repeat 与 mask 语义位精确。",
+    "recommendedVerification": "重建后重跑 lowlevel-blt-bilinear-042-042 并重采该函数 annotate：0x30126-0x303be 的 slli/srliw/andi/or/mul 标量序列与 5.97% @ 303be sw a2,0(a5) 应显著缩小或消失，出现 vsetvli/vluxei*/vwmacc* 指令；对比 cycles/输出像素，并逐像素位精确比对输出；覆盖 border/最后行列/奇数宽/tail 与 mask 路径。",
+    "metricEvidence": [
+      {
+        "metric": "duration_time(ns)",
+        "rv": 132836960760,
+        "anomalyNote": "整 benchmark 时长 132.84s；该函数 workload 级占比未知（local period 采样）"
+      },
+      {
+        "metric": "cpu_cycle",
+        "rv": 291970434246,
+        "anomalyNote": "291.97B cycles，配合高指令流表明 compute/throughput-bound"
+      },
+      {
+        "metric": "instruction",
+        "rv": 829960673029,
+        "anomalyNote": "829.96B 指令，标量逐像素流水的高指令计数特征"
+      },
+      {
+        "metric": "IPC",
+        "rv": 2.842619,
+        "anomalyNote": "IPC 2.84 为 compute/throughput-bound 倾向；无 cache/branch counter，精确 bound 分类受限"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "bits_image_fetch_bilinear_affine_none_r5g6b5",
+        "fileModule": "pixman/pixman/pixman-fast-path.c",
+        "rvvPattern": "RVV Resampling Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.914,
+        "note": "图像处理类 bilinear affine R5G6B5 重采样 fetch（rank-001 热点）：每像素标量 565 位域展开/回装、10 次插值乘法、数据相关 16-bit tap gather 与 border 检查；benefitUpperbound 为该函数局部样本份额（cycles:u local period，非 workload 级）"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "pixman/pixman/pixman-fast-path.c:2850 (bits_image_fetch_bilinear_affine；per-format 宏 :3117 实例化 bits_image_fetch_bilinear_affine_none_r5g6b5)",
+      "relatedKnowledge": "https://github.com/alibaba/MNN/pull/4053, https://github.com/alibaba/MNN/commit/f4fcff3436a9d95c5367699b1c53d4eb1cbc3b7d, https://github.com/opencv/opencv/pull/22179, https://github.com/opencv/opencv/pull/22520, https://github.com/opencv/opencv/pull/23980, https://github.com/opencv/opencv/pull/24058, https://github.com/opencv/opencv/pull/24132, https://github.com/opencv/opencv/pull/24166, https://github.com/opencv/opencv/pull/24301, https://github.com/opencv/opencv/pull/24325, https://github.com/opencv/opencv/pull/27160, https://github.com/opencv/opencv/pull/27119, https://github.com/opencv/opencv/pull/27097, https://github.com/opencv/opencv/pull/27007, https://github.com/opencv/opencv/pull/26958, https://github.com/opencv/opencv/pull/26865, https://github.com/opencv/opencv/commit/b902a8e792e1702b40f19dbd48dff0bfdca8b36d, https://github.com/opencv/opencv/commit/2c16f3b7d2b28f6cac444046b8f95b40d9266a6a, https://github.com/opencv/opencv/commit/e06502a254f79f9d3184de2803d087c6914b7706, https://github.com/opencv/opencv/commit/a2d784b6f53aa1fdfde21ab8e3787a93b59af24f, https://github.com/opencv/opencv/commit/83104bed32093ff0c5c935e8920c72b6b74ae07a",
+      "evidenceExplanation": "上述 URL 为 rvv_resampling_kernels.md（MNN RVV resize/interpolation）与 no-vectorization.md（OpenCV scalar→RVV 重写）的 Related PRs 原文：前者证明 bilinear resampling 可在 RVV 上用 indexed-load + 插值流水向量化（与本次 fetch 语义合同一致），后者证明 scalar main loop 在 V-capable target 上重写为 RVV 后 annotate 应出现 vsetvli/vle*/vse*/vwmacc* 且 scalar 不再主导；两处知识均指向同一根因（未向量化标量 resampling 循环）与同一修复形态，未联网补齐。"
+    }
+  }
+}

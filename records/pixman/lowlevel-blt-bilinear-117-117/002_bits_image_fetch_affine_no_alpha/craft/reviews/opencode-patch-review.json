@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "yuansheng.patch_review.v1",
+  "reviewId": "rev-pc-bp-pixman-lowlevel-blt-bilinear-117-117-002",
+  "patchCandidateId": "pc-bp-pixman-lowlevel-blt-bilinear-117-117-002",
+  "reviewedAt": "2026-09-09T06:16:44.000Z",
+  "reviewer": "yuansheng-craft-reviewer",
+  "reviewResult": "pass",
+  "archReview": {
+    "status": "passed",
+    "notes": "verification_status=compile-only; 新增 RVV 内核：vid+vwmul 展开坐标、vluxei64 直接 gather、vmerge 越界清零，消除 per-pixel 函数指针间接；仅注册 narrow+8888+NONE 子集"
+  },
+  "hallucinationCheck": [
+    { "dimension": "技术精度", "result": "PASS" },
+    { "dimension": "声明溯源", "result": "PASS" },
+    { "dimension": "可解释性", "result": "PASS" },
+    { "dimension": "内部一致性", "result": "PASS" },
+    { "dimension": "安全", "result": "PASS" }
+  ],
+  "findings": []
+}

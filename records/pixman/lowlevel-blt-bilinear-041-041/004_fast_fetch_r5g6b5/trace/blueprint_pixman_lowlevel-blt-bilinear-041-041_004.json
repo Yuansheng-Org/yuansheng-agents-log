@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-pixman-lowlevel-blt-bilinear-041-041-004",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T08:53:32.231Z",
+    "software": "pixman",
+    "testcaseIds": [
+      "lowlevel-blt-bilinear-041-041"
+    ],
+    "diagnosisId": "diag-20260908T085332231Z-11283b4b",
+    "targetHardware": "SpacemiT X100 (spacemit-x100, RVV 1.0, VLEN=256, out-of-order)",
+    "repositoryUrl": "https://gitlab.freedesktop.org/pixman/pixman.git",
+    "testBranch": "master",
+    "commitHash": "14735ced17e0053abbb925f9cf18c05ed9f52378"
+  },
+  "problem": {
+    "summary": "pixman lowlevel-blt-bilinear-041-041 在 SpacemiT X100（RVV 1.0, VLEN=256, OoO）上总耗时 83.5s、全程序 IPC 2.476。热点函数 fast_fetch_r5g6b5（rank 004）的主循环（2b8bc–2b930）是全标量 r5g6b5→a8r8g8b8 位域展开（~26 条 shift/mask/or 指令/2 像素，掩码 0xf800f8/0xfc00fc/0xff000/0xff000000），函数内样本份额约 88–90%。硬件暴露 `v` 但执行代码 zero `v*`（binary 未以 V 构建），属典型 hardware/build ISA 不匹配叠加未向量化的布局/channel packing 转换循环。",
+    "evidence": [
+      "Duration(ms): RV=83517.26（duration_time 83,517,262,430 ns），本运行无 ARM 对照",
+      "IPC=2.476（instruction 454.6e9 / cpu_cycle 183.6e9），全程序无 cache/memory/branch counters",
+      "热点函数 fast_fetch_r5g6b5：main loop interval 2b8bc–2b930 全 scalar（zero v*/th.v*），anchor 行 `9.27 : 2b8c6: and a3,a3,a6`，函数内样本份额 ≈88–90%",
+      "硬件 isa line 含 `v`（RVV 1.0）；benchmark 二进制 Tag_RISCV_arch 无 `v`（L0 hardware/build mismatch）",
+      "代码知识证据：rvv_layout_and_channel_packing_kernels.md 与 no-vectorization.md 的 Related PRs 共 39 条 URL"
+    ]
+  },
+  "rootCause": {
+    "summary": "r5g6b5 fetch scanline 转换循环未向量化：binary 未以含 `v` 的 -march 构建（hardware 有 RVV 1.0、执行代码 zero v*），主循环以标量 SWAR 位域展开每 2 像素执行 ~26 条 shift/mask/or 指令；该循环是固定 bit-field layout/channel packing 合同（R5/G6/B5→8/8/8 高位复制 + A=0xff 注入），可在 e16 窄向量内完成分解、输出边界扩宽到 e32。",
+    "candidateFiles": [
+      "fast_fetch_r5g6b5（无 DWARF，源文件未从 artifact 定位；pixman fast-path fetch 函数）"
+    ],
+    "performanceFactors": [
+      "RVV Layout and Channel Packing Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "r5g6b5 位域展开语义（R=5bit/G=6bit/B=5bit → 8/8/8 高位复制 (x<<3)|(x>>2) / (x<<2)|(x>>4)，alpha 0xff 注入 0xff000000）",
+      "小端 16-bit 载入与 32-bit a8r8g8b8 输出",
+      "奇数宽度与 tail 处理（本 testcase 41 像素）",
+      "src 非 4 字节对齐时的 entry 行为（unaligned 单像素路径）",
+      "producer-consumer 布局一致（fetch 输出被 bilinear iterator 消费）"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "lowlevel-blt-bilinear-041-041"
+    ],
+    "regressionCommand": "agent1 patch_regression --case lowlevel-blt-bilinear-041-041"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.75,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "",
+    "reasoning": "perf stat 显示全程序 IPC=2.476（较高，非显著 memory/latency-bound），duration 83.5s；perf annotate 显示 fast_fetch_r5g6b5 主循环（2b8bc–2b930）全标量位域展开，anchor 行 `9.27 : 2b8c6: and a3,a3,a6` 与掩码常量 0xf800f8/0xfc00fc/0xff000/0xff000000 证明该循环是 r5g6b5→a8r8g8b8 固定 bit-field layout/channel packing 合同（RVV Layout and Channel Packing Kernels pattern，route High）；硬件 isa 含 `v`（RVV 1.0, VLEN=256）而执行代码 zero `v*`、benchmark 二进制 Tag_RISCV_arch 无 `v`，构成 L0 hardware/build ISA mismatch（No vectorization supporting pattern）。该 pattern 的 Related PRs（OpenBLAS/OpenCV/oneDNN/MNN/vLLM 的 RVV 布局/packing 向量化实现）证明此类位域 packing 循环在 RVV 上的向量化路线成熟。综合判断：根因大概率成立（mechanism 层面证据充分），但 bound type 未由 cache/memory counters 确认、sampling IP precision 未知、函数 workload 级贡献未知，收益幅度待验证。",
+    "rootCauseType": "config_mismatch",
+    "alternativeExplanations": [
+      "若目标核 scalar ALU 吞吐或 src 未对齐访问本身是限制（缺 cache/mem counters 与 misaligned-vector hwprobe，无法排除），向量化收益可能低于 lane-count 上界",
+      "Skid/IP precision 未知可能造成单行样本归属偏差，但 interval 级归属（主循环 88–90%）对此不敏感",
+      "若 benchmark 中 fetch 函数总调用次数低（workload 级贡献未知），该函数修复对整体耗时影响有限"
+    ],
+    "currentGaps": "热点 object libpixman-1.so.0.46.5 的 readelf -A 未提供（build ISA 仅由执行代码 zero v* 推断）；bound type 仅由 IPC 判定（缺 cache/memory/branch counters）；sampling IP precision（precise_ip）未知；perf annotate 为 local period，函数 workload 级贡献未知；无 DWARF，源文件未定位（candidateFiles 填函数名）；无 ARM 侧对照数据",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 libpixman 实际构建配置（-march 是否含 `v`）与 fast_fetch_r5g6b5 的源码位置（候选 pixman-fast-path.c）；确认 r5g6b5→a8r8g8b8 位域合同与对齐/尾数处理不被破坏",
+    "affectedTarget": "RV (lowlevel-blt-bilinear-041-041)",
+    "recommendedFirstAction": "在 pixman 构建配置中启用含 `v` 的精确 -march（核对 libpixman 编译 flags，如 meson c_args 的 -march），并在 fast_fetch_r5g6b5 主循环（2b8bc–2b930 对应代码）将 r5g6b5→a8r8g8b8 位域展开改为 e16 载入 + 窄向量 shift/mask/or + 输出边界扩宽到 e32（或 vsseg4e8），保留 tail 与未对齐 entry 路径",
+    "recommendedVerification": "重新运行 lowlevel-blt-bilinear-041-041 并对 fast_fetch_r5g6b5 重新 perf annotate：确认出现 vsetvli/vle16/vse32 指令、scalar `and`/`or`/`slliw` share 显著下降、`bne` 循环控制份额下降，对比 duration/IPC 与逐像素 packed 整数值正确性（r5g6b5 round-trip、奇数宽度、各对齐偏移）",
+    "metricEvidence": [
+      {
+        "metric": "Duration(ms)",
+        "rv": 83517.262,
+        "anomalyNote": "duration_time=83,517,262,430 ns；RISC-V 单侧运行，无 ARM 对照基线"
+      },
+      {
+        "metric": "IPC",
+        "rv": 2.476,
+        "anomalyNote": "全程序 IPC 2.476 较高，非显著 memory/latency-bound；缺 cache-miss/branch-miss counters 无法完整判定 bound type"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "fast_fetch_r5g6b5",
+        "fileModule": "unknown（annotate 仅给出 DSO 路径 libpixman-1.so.0.46.5，无 DWARF）",
+        "rvvPattern": "RVV Layout and Channel Packing Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.9,
+        "note": "r5g6b5→a8r8g8b8 像素格式转换（整数密集的位域 layout/channel packing + alpha 注入），bilinear 迭代的 fetch scanline 函数；main loop interval 2b8bc–2b930 占函数内样本 ≈88–90%"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "fast_fetch_r5g6b5（libpixman-1.so.0.46.5，无 DWARF 源文件未定位）",
+      "relatedKnowledge": "rvv_layout_and_channel_packing_kernels.md Related PRs：https://github.com/OpenMathLib/OpenBLAS/commit/c00afc86a6fd318473e14150fec8964104b9cfe6、https://github.com/OpenMathLib/OpenBLAS/commit/ef7f54b35713a315671f64f03fe0d417f1bb0360、https://github.com/OpenMathLib/OpenBLAS/commit/07d0e742c2ac18d6342f6a792dc3f8da04499674、https://github.com/OpenMathLib/OpenBLAS/commit/a8a00bbf4f9169646e1f42ee419a3cc3b4badd82、https://github.com/opencv/opencv/commit/8a36f119cee5a90c59f03a24f8a6efda3179600a、https://github.com/opencv/opencv/commit/189f64726437a3756329890ea75c8ca5fde46bcf、https://github.com/uxlfoundation/oneDNN/commit/ba07c4e658a1ccbb2f6587ab0e5df9831984ee5b、https://github.com/uxlfoundation/oneDNN/commit/79a1557d2119ceb79ab50897b5c481d66b5381f4、https://github.com/uxlfoundation/oneDNN/pull/4548、https://github.com/uxlfoundation/oneDNN/commit/aadd85dd6a2d100fed3a42bc01e669fe4ef0297a、https://github.com/alibaba/MNN/pull/4079、https://github.com/alibaba/MNN/commit/73bfaa46fe4f9c0e24e0238073f5ab1a94edca6c、https://github.com/alibaba/MNN/pull/4021、https://github.com/alibaba/MNN/commit/0a5ee52e7d209b3b5735419f52dd5dd366657478、https://github.com/alibaba/MNN/pull/4067、https://github.com/alibaba/MNN/commit/2c2d7fa68675191bcdad9ebd9727e9c271b0db07、https://github.com/alibaba/MNN/pull/3813、https://github.com/alibaba/MNN/commit/6afcf99fedaec90b5b363ce4c78317800f291443、https://github.com/alibaba/MNN/pull/4426、https://github.com/vllm-project/vllm/pull/47538；no-vectorization.md Related PRs：https://github.com/opencv/opencv/pull/22179、https://github.com/opencv/opencv/pull/22520、https://github.com/opencv/opencv/pull/23980、https://github.com/opencv/opencv/pull/24058、https://github.com/opencv/opencv/pull/24132、https://github.com/opencv/opencv/pull/24166、https://github.com/opencv/opencv/pull/24301、https://github.com/opencv/opencv/pull/24325、https://github.com/opencv/opencv/pull/27160、https://github.com/opencv/opencv/pull/27119、https://github.com/opencv/opencv/pull/27097、https://github.com/opencv/opencv/pull/27007、https://github.com/opencv/opencv/pull/26958、https://github.com/opencv/opencv/pull/26865、https://github.com/opencv/opencv/commit/b902a8e792e1702b40f19dbd48dff0bfdca8b36d、https://github.com/opencv/opencv/commit/2c16f3b7d2b28f6cac444046b8f95b40d9266a6a、https://github.com/opencv/opencv/commit/e06502a254f79f9d3184de2803d087c6914b7706、https://github.com/opencv/opencv/commit/a2d784b6f53aa1fdfde21ab8e3787a93b59af24f、https://github.com/opencv/opencv/commit/83104bed32093ff0c5c935e8920c72b6b74ae07a",
+      "evidenceExplanation": "相关 PR/commit 证明 OpenBLAS/OpenCV/oneDNN/MNN/vLLM 已在 RVV 上实现同类布局/channel packing 与位域转换的向量化（含 BGR555/BGR565 等 packed 位域格式），与本次 r5g6b5 位域展开循环（mask 0xf800f8/0xfc00fc/0xff000/0xff000000）的向量化路线一致；no-vectorization 组的 OpenCV scalable-RVV backend 案例进一步支撑该标量循环在 V-capable 硬件上应被向量化的判断"
+    }
+  }
+}

@@ -1,0 +1,111 @@
+ Percent |	Source code & Disassembly of libpixman-1.so.0.46.5 for cycles:u (2048 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------------------
+         :
+         : 1     /home/yuansheng-ci/workspaces/runs/20260812-run-9-296d9110de22/results/perf_record/lowlevel-blt-nearest-022-022/annotate_all/symfs//workspace/build/pixman/libpixman-1.so.0.46.5：     文件格式 elf64-littleriscv
+         :
+         :
+         : 4     Disassembly of section .text:
+         :
+         : 6     0000000000033bf4 <bits_image_fetch_nearest_affine_none_a8r8g8b8>:
+    0.10 :   33bf4:  addi    sp,sp,-96
+    0.20 :   33bf6:  sd      s0,80(sp)
+    0.05 :   33bf8:  sd      s2,64(sp)
+    0.00 :   33bfa:  sd      s3,56(sp)
+    0.19 :   33bfc:  sd      s5,40(sp)
+    0.00 :   33bfe:  sd      s6,32(sp)
+    0.05 :   33c00:  sd      ra,88(sp)
+    0.10 :   33c02:  sd      s1,72(sp)
+    0.00 :   33c04:  sd      s4,48(sp)
+    0.00 :   33c06:  addi    s0,sp,96
+    0.00 :   33c08:  lw      a5,20(a0)
+    0.00 :   33c0a:  lw      a4,16(a0)
+    0.00 :   33c0c:  ld      s1,0(a0)
+    0.00 :   33c0e:  addiw   a3,a5,1
+    0.00 :   33c12:  sw      a3,20(a0)
+    0.05 :   33c14:  slli    a5,a5,0x10
+    0.00 :   33c16:  lui     a3,0x8
+    0.00 :   33c18:  addw    a5,a5,a3
+    0.00 :   33c1a:  sw      a5,-84(s0)
+    0.00 :   33c1e:  slli    a4,a4,0x10
+    0.00 :   33c20:  lui     a5,0x8
+    0.00 :   33c22:  mv      s2,a0
+    0.00 :   33c24:  addw    a4,a4,a5
+    0.05 :   33c26:  sw      a4,-88(s0)
+    0.00 :   33c2a:  ld      a4,8(s2)
+    0.05 :   33c2e:  ld      a0,56(s1)
+    0.00 :   33c30:  auipc   s5,0x48
+    0.00 :   33c34:  ld      s5,920(s5) # 7bfc8 <__stack_chk_guard@GLIBC_2.27>
+    0.10 :   33c38:  mv      s3,a1
+    0.05 :   33c3a:  lui     a5,0x10
+    0.00 :   33c3c:  mv      s6,a4
+    0.00 :   33c3e:  addi    a1,s0,-88
+    0.00 :   33c42:  ld      a4,0(s5)
+    0.19 :   33c46:  sd      a4,-72(s0)
+    0.05 :   33c4a:  li      a4,0
+    0.00 :   33c4c:  lw      s4,24(s2)
+    0.00 :   33c50:  sw      a5,-80(s0)
+    0.15 :   33c54:  jal     9320 <pixman_transform_point_3d@plt>
+    0.05 :   33c58:  beqz    a0,33cd4 <bits_image_fetch_nearest_affine_none_a8r8g8b8+0xe0>
+    0.00 :   33c5a:  blez    s4,33cd4 <bits_image_fetch_nearest_affine_none_a8r8g8b8+0xe0>
+    0.00 :   33c5e:  ld      a5,56(s1)
+    0.00 :   33c60:  lw      a2,-88(s0)
+    0.10 :   33c64:  lw      a4,-84(s0)
+    0.00 :   33c68:  slli    a0,s4,0x2
+    0.00 :   33c6c:  lw      t4,0(a5) # 10000 <fetch_pixel_r8g8b8+0x38>
+    0.24 :   33c70:  lw      t3,12(a5)
+    0.00 :   33c74:  add     a0,a0,s6
+    0.00 :   33c76:  mv      a5,s6
+    0.00 :   33c78:  addiw   a2,a2,-1
+    0.00 :   33c7a:  addiw   a4,a4,-1
+    0.10 :   33c7c:  mv      a3,s3
+    7.77 :   33c7e:  beqz    s3,33c86 <bits_image_fetch_nearest_affine_none_a8r8g8b8+0x92>
+    0.00 :   33c82:  lw      a1,0(a3)
+    0.00 :   33c84:  beqz    a1,33d00 <bits_image_fetch_nearest_affine_none_a8r8g8b8+0x10c>
+    0.34 :   33c86:  lw      a6,164(s1)
+    0.34 :   33c8a:  sraiw   a1,a4,0x10
+    7.62 :   33c8e:  bge     a1,a6,33cfa <bits_image_fetch_nearest_affine_none_a8r8g8b8+0x106>
+    0.29 :   33c92:  srliw   a6,a1,0x1f
+    0.29 :   33c96:  bnez    a6,33cfa <bits_image_fetch_nearest_affine_none_a8r8g8b8+0x106>
+    6.84 :   33c9a:  lw      a6,160(s1)
+    0.34 :   33c9e:  sraiw   a7,a2,0x10
+    0.24 :   33ca2:  bge     a7,a6,33cfa <bits_image_fetch_nearest_affine_none_a8r8g8b8+0x106>
+    9.14 :   33ca6:  srliw   a6,a7,0x1f
+    0.15 :   33caa:  bnez    a6,33cfa <bits_image_fetch_nearest_affine_none_a8r8g8b8+0x106>
+    0.05 :   33cae:  lw      a6,184(s1)
+    8.56 :   33cb2:  ld      t1,168(s1)
+    0.15 :   33cb6:  mulw    a1,a6,a1
+    0.00 :   33cba:  add     a1,a1,a7
+    0.19 :   33cbc:  slli    a1,a1,0x2
+    0.00 :   33cbe:  add     a1,a1,t1
+    8.45 :   33cc0:  lw      a1,0(a1)
+   46.02 :   33cc2:  sw      a1,0(a5)
+    0.24 :   33cc4:  addi    a5,a5,4
+    0.00 :   33cc6:  addw    a2,t4,a2
+    0.05 :   33cca:  addw    a4,t3,a4
+    0.15 :   33cce:  addi    a3,a3,4 # 8004 <fast_path_cache+0x8004>
+    0.05 :   33cd0:  bne     a5,a0,33c7e <bits_image_fetch_nearest_affine_none_a8r8g8b8+0x8a>
+    0.10 :   33cd4:  ld      a4,-72(s0)
+    0.49 :   33cd8:  ld      a5,0(s5)
+    0.00 :   33cdc:  xor     a5,a5,a4
+    0.00 :   33cde:  li      a4,0
+    0.00 :   33ce0:  ld      a0,8(s2)
+    0.05 :   33ce4:  bnez    a5,33d12 <bits_image_fetch_nearest_affine_none_a8r8g8b8+0x11e>
+    0.05 :   33ce6:  ld      ra,88(sp)
+    0.00 :   33ce8:  ld      s0,80(sp)
+    0.00 :   33cea:  ld      s1,72(sp)
+    0.10 :   33cec:  ld      s2,64(sp)
+    0.00 :   33cee:  ld      s3,56(sp)
+    0.00 :   33cf0:  ld      s4,48(sp)
+    0.05 :   33cf2:  ld      s5,40(sp)
+    0.05 :   33cf4:  ld      s6,32(sp)
+    0.00 :   33cf6:  addi    sp,sp,96
+    0.00 :   33cf8:  ret
+    0.00 :   33cfa:  sw      zero,0(a5)
+    0.00 :   33cfe:  j       33cc4 <bits_image_fetch_nearest_affine_none_a8r8g8b8+0xd0>
+    0.00 :   33d00:  addi    a5,a5,4
+    0.00 :   33d02:  addw    a2,t4,a2
+    0.00 :   33d06:  addw    a4,a4,t3
+    0.00 :   33d0a:  addi    a3,a3,4
+    0.00 :   33d0c:  bne     a5,a0,33c82 <bits_image_fetch_nearest_affine_none_a8r8g8b8+0x8e>
+    0.00 :   33d10:  j       33cd4 <bits_image_fetch_nearest_affine_none_a8r8g8b8+0xe0>
+    0.00 :   33d12:  jal     9370 <__stack_chk_fail@plt>

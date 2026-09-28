@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-pixman-lowlevel-blt-bilinear-117-117-002",
+  "blueprintId": "bp-pixman-lowlevel-blt-bilinear-117-117-002",
+  "createdAt": "2026-09-09T06:16:44.650Z",
+  "objective": "affine bilinear fetch 路径完全标量化：每输出像素 4 次函数指针间接邻居 fetch + 64-bit 通道并行定点插值（pixman-inlines.h:130 变体）构成约 74% 局部样本，分派/循环约占 18%；hardware 有 RVV 1.0 但 build 无 v，且源码无 RVV bilinear fetch kernel（RVV Resampling 未向量化）。",
+  "changes": [
+    {
+      "filePath": "pixman/pixman/pixman-rvv.c",
+      "action": "modify",
+      "rationale": "affine bilinear fetch 路径完全标量化：每输出像素 4 次函数指针间接邻居 fetch + 64-bit 通道并行定点插值（pixman-inlines.h:130 变体）构成约 74% 局部样本，分派/循环约占 18%；hardware 有 RVV 1.0 但 build 无 v，且源码无 RVV bilinear fetch kernel（RVV Resampling 未向量化）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "pixman/pixman/pixman-bits-image.c",
+      "action": "modify",
+      "rationale": "affine bilinear fetch 路径完全标量化：每输出像素 4 次函数指针间接邻居 fetch + 64-bit 通道并行定点插值（pixman-inlines.h:130 变体）构成约 74% 局部样本，分派/循环约占 18%；hardware 有 RVV 1.0 但 build 无 v，且源码无 RVV bilinear fetch kernel（RVV Resampling 未向量化）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "pixman/pixman/pixman-inlines.h",
+      "action": "modify",
+      "rationale": "affine bilinear fetch 路径完全标量化：每输出像素 4 次函数指针间接邻居 fetch + 64-bit 通道并行定点插值（pixman-inlines.h:130 变体）构成约 74% 局部样本，分派/循环约占 18%；hardware 有 RVV 1.0 但 build 无 v，且源码无 RVV bilinear fetch kernel（RVV Resampling 未向量化）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "meson.options",
+      "action": "modify",
+      "rationale": "affine bilinear fetch 路径完全标量化：每输出像素 4 次函数指针间接邻居 fetch + 64-bit 通道并行定点插值（pixman-inlines.h:130 变体）构成约 74% 局部样本，分派/循环约占 18%；hardware 有 RVV 1.0 但 build 无 v，且源码无 RVV bilinear fetch kernel（RVV Resampling 未向量化）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 pixman/pixman/pixman-rvv.c, pixman/pixman/pixman-bits-image.c, pixman/pixman/pixman-inlines.h, meson.options 来解决 blueprint bp-pixman-lowlevel-blt-bilinear-117-117-002。"
+}

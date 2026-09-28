@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-pixman-lowlevel-blt-bilinear-117-117-002",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T09:35:54.459Z",
+    "software": "pixman",
+    "testcaseIds": [
+      "lowlevel-blt-bilinear-117-117"
+    ],
+    "diagnosisId": "diag-20260908T093554459Z-ce35a326",
+    "targetHardware": "SpacemiT X100 (K3)",
+    "repositoryUrl": "https://gitlab.freedesktop.org/pixman/pixman.git",
+    "testBranch": "master",
+    "commitHash": "14735ced17e0053abbb925f9cf18c05ed9f52378"
+  },
+  "problem": {
+    "summary": "在 SpacemiT X100（RVV 1.0, VLEN=256）上 pixman lowlevel-blt-bilinear-117-117 测试中，_bits_image_fetch_affine_no_alpha 为 rank 002 热点（7934 samples）。该 affine fetch 迭代器对每个输出像素执行 filter 分派 + 4 次 fetch_pixel_32 函数指针间接调用（数据相关邻居 load）+ 64-bit 通道并行标量 bilinear 插值（pixman-inlines.h 定点变体，串行 mul/shift/mask 链）。hot 路径 zero v*，build 未启用 RVV，pixman-rvv.c 无任何 bilinear/affine fetch 实现。",
+    "evidence": [
+      "perf stat：duration_time=262,542,559,285ns（≈262.54s），IPC=2.519（RV 单侧，无 ARM 对照）",
+      "annotate（cycles:u, local period, 7934 samples）：bilinear 插值计算块 16fba–170ce ≈52.9%（170b6: and 5.52%、17076: srli 5.00%、170c6: ld 4.42%、17048/17050: mul 1.71% 各）；4× fetch_pixel 间接调用点 16f56–16fb6 ≈21.2%（16f9a 2.41%、16f78 2.36%）；per-scanline 分派/循环 1648c–164c6+1672c–16744 ≈17.8%",
+      "build ISA Tag_RISCV_arch=rv64i2p1…zcd1p0 无 v，而 hardware ISA 含 v/zvbb → L0 配置不匹配；pixman-rvv.c rvv_fast_paths[] 无任何 bilinear/affine fetch 实现（对比 sse2/mips 均有 SIMPLE_BILINEAR_FAST_PATH）"
+    ]
+  },
+  "rootCause": {
+    "summary": "affine bilinear fetch 路径完全标量化：每输出像素 4 次函数指针间接邻居 fetch + 64-bit 通道并行定点插值（pixman-inlines.h:130 变体）构成约 74% 局部样本，分派/循环约占 18%；hardware 有 RVV 1.0 但 build 无 v，且源码无 RVV bilinear fetch kernel（RVV Resampling 未向量化）。",
+    "candidateFiles": [
+      "pixman/pixman/pixman-rvv.c",
+      "pixman/pixman/pixman-bits-image.c",
+      "pixman/pixman/pixman-inlines.h",
+      "meson.options"
+    ],
+    "performanceFactors": [
+      "RVV Resampling Kernels",
+      "L0 baseline: hardware v vs build no-v"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "bilinear_interpolation 的精确定点算术顺序与舍入（pixman-inlines.h `(lo >> 8) & 0xff00ff | hi & ~0xff00ff`，无附加 rounding bias）",
+      "affine 变换坐标合同（half-pixel 对齐 x-pixman_fixed_1/2、pixman_fixed_to_bilinear_weight、BILINEAR_INTERPOLATION_BITS=8）与 repeat NONE/PAD/REFLECT/NORMAL 边界映射",
+      "行 stride/padding、odd width tail 与 fetch_pixel_32/fetch_scanline_32 分派槽位合同"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "lowlevel-blt-bilinear-117-117"
+    ],
+    "regressionCommand": "agent1 patch_regression --case lowlevel-blt-bilinear-117-117"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.72,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "overallConfidence 0.72 < 0.80，且 bound type（cache/memory counter）与采样语义（global-period）证据缺失；需人工确认专用 RVV bilinear scanline kernel 的实施方向",
+    "reasoning": "perf stat 显示 IPC=2.519 与 262.54s duration，annotate 将 rank 002 热点定位到 affine fetch 迭代器：插值计算块（16fba–170ce）约占 52.9% 局部份额，其中 64-bit mul（17048/17050）、mask/shift（17076/170b6）对应 pixman-inlines.h:130 SIZEOF_LONG>4 的通道并行定点插值源码；4× 间接调用点（16f56–16fb6）约 21.2% 对应 per-pixel 数据相关邻居 fetch；硬件快照含 v 而 build ISA 无 v，pixman-rvv.c 的 rvv_fast_paths 无任何 bilinear 项（sse2/mips 均有 SIMPLE_BILINEAR_FAST_PATH）——证据链指向 code_path 根因（RVV bilinear resampling kernel 缺失）并以 config_mismatch（RVV 未启用）为前置。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "插值块的 64-bit mul/load 依赖链可能部分由访存延迟主导（缺 cache/memory counter 未排除）：4 个邻居 fetch 的串行 load-use 链若命中不佳，向量化收益将受带宽限制",
+      "根因也可归到迭代器架构：如果直接为 bilinear 建立专用 fast-path（如 sse2 的 SIMPLE_BILINEAR_FAST_PATH 模式），即使不向量化，per-scanline 分派/循环约 17.8% 也会消失"
+    ],
+    "currentGaps": "perf stat 仅 cycles/instructions，缺 cache/memory/branch counter（bound type 未确认）；annotate percent type=local period 且函数 workload 级贡献未知；precise_ip 未知；无 ARM 对照；annotate 无 DWARF 源行（源码位置经源码树核实）",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认 bound type 分类与「启用 RVV 重建 + 在 pixman-rvv.c 新增专用 RVV bilinear scanline fetch kernel（含定点算术顺序合同验证）」的实施方向后再转发 Craft",
+    "affectedTarget": "RV + lowlevel-blt-bilinear-117-117",
+    "recommendedFirstAction": "在 pixman/pixman/pixman-rvv.c 新增专用 RVV bilinear scanline fetch kernel 并挂入 rvv_fast_paths（参考 pixman-fast-path.c SIMPLE_BILINEAR_FAST_PATH 形态）：per-scanline 预计算 index/weight 向量，vle32/vluxei32 加载两行邻居像素，vwmaccu/vfmacc 定点/浮点插值，vsrl/vnclipu 窄化回 8-bit + alpha 通道，vse32 写出；保持 pixman-inlines.h:130 的算术顺序，并在 meson.options/meson.build 启用 RVV（rvv_flags 按需追加 zvbb）",
+    "recommendedVerification": "启用 RVV 重建后重跑 lowlevel-blt-bilinear-117-117，对 _bits_image_fetch_affine_no_alpha 重跑 perf annotate：确认 vle32/vluxei32/vwmaccu/vfmacc/vse32 出现、16fba–170ce 插值链与 16f56–16fb6 间接调用点消失；pixman test suite/checkasm 验证定点插值逐位一致（算术顺序合同），并覆盖 repeat NONE/PAD/REFLECT/NORMAL、odd width、half-pixel 与负坐标",
+    "metricEvidence": [
+      {
+        "metric": "Duration(s)",
+        "rv": 262.542559,
+        "anomalyNote": "perf stat duration_time 262.54s；RV 单侧无 ARM 对照"
+      },
+      {
+        "metric": "IPC",
+        "rv": 2.518541,
+        "anomalyNote": "全程序整体 IPC 2.52；无函数级 IPC 与 bound-type counter"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "_bits_image_fetch_affine_no_alpha",
+        "fileModule": "_bits_image_fetch_affine_no_alpha",
+        "rvvPattern": "RVV Resampling Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.74,
+        "note": "affine 变换 fetch 迭代器（bilinear 重采样）：插值计算块 16fba–170ce ≈52.9% + 4× fetch 间接调用点 ≈21.2%（函数内局部样本份额 74.1%）；rank 002 热点；源码树核实为 pixman/pixman/pixman-bits-image.c:475 + pixman-inlines.h:130 64-bit 定点插值"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "pixman/pixman/pixman-bits-image.c:475 (__bits_image_fetch_affine_no_alpha)；pixman/pixman/pixman-inlines.h:130 (bilinear_interpolation SIZEOF_LONG>4 变体)；pixman/pixman/pixman-rvv.c:3023 (rvv_fast_paths[] 无 bilinear 实现)；meson.options:67",
+      "relatedKnowledge": "https://github.com/alibaba/MNN/pull/4053\nhttps://github.com/alibaba/MNN/commit/f4fcff3436a9d95c5367699b1c53d4eb1cbc3b7d",
+      "evidenceExplanation": "annotate 的 64-bit mul/shift/mask 序列与 pixman-inlines.h:130 的通道并行定点插值源码一一对应（distx/disty 权重、0xff0000ff/0xff00 mask、mul 累加），4× 间接调用对应 pixman-bits-image.c:129-132 的 tl/tr/bl/br fetch；patterns/rvv_resampling_kernels.md 的 Related PRs（MNN RVV resize）证明 bilinear resampling 向量化（index/weight 预计算 + indexed load + 向量插值）是已落地标准做法，指向同一修复方向"
+    }
+  }
+}

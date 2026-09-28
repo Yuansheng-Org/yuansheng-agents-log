@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-pixman-lowlevel-blt-bilinear-041-041-004",
+  "blueprintId": "bp-pixman-lowlevel-blt-bilinear-041-041-004",
+  "createdAt": "2026-09-09T03:04:15.708Z",
+  "objective": "r5g6b5 fetch scanline 转换循环未向量化：binary 未以含 `v` 的 -march 构建（hardware 有 RVV 1.0、执行代码 zero v*），主循环以标量 SWAR 位域展开每 2 像素执行 ~26 条 shift/mask/or 指令；该循环是固定 bit-field layout/channel packing 合同（R5/G6/B5→8/8/8 高位复制 + A=0xff 注入），可在 e16 窄向量内完成分解、输出边界扩宽到 e32。",
+  "changes": [
+    {
+      "filePath": "fast_fetch_r5g6b5（无 DWARF，源文件未从 artifact 定位；pixman fast-path fetch 函数）",
+      "action": "modify",
+      "rationale": "r5g6b5 fetch scanline 转换循环未向量化：binary 未以含 `v` 的 -march 构建（hardware 有 RVV 1.0、执行代码 zero v*），主循环以标量 SWAR 位域展开每 2 像素执行 ~26 条 shift/mask/or 指令；该循环是固定 bit-field layout/channel packing 合同（R5/G6/B5→8/8/8 高位复制 + A=0xff 注入），可在 e16 窄向量内完成分解、输出边界扩宽到 e32。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 fast_fetch_r5g6b5（无 DWARF，源文件未从 artifact 定位；pixman fast-path fetch 函数） 来解决 blueprint bp-pixman-lowlevel-blt-bilinear-041-041-004。"
+}
