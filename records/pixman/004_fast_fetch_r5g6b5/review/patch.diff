@@ -1,0 +1,82 @@
+From 5ff00d54e1bd9bca35c53dfae3a5902897450d65 Mon Sep 17 00:00:00 2001
+From: Jiakai Xu <xujiakai2025@iscas.ac.cn>
+Date: Wed, 19 Aug 2026 07:35:08 +0000
+Subject: [PATCH] rvv: Add r5g6b5 narrow fetch
+
+Add an RVV source iterator for expanding r5g6b5 pixels to ARGB8888.
+
+Performance on a SpacemiT K3 using:
+
+    taskset -c 2 lowlevel-blt-bench -c src_0565_8888
+
+Results are MPix/s and are the medians of five baseline and five
+patched runs, executed in interleaved order:
+
+              Baseline    Patched    Change
+    L1         859.238   1322.540    +53.92%
+    L2         739.587   1091.380    +47.57%
+    M          726.901   1061.010    +45.96%
+    HT         314.055    368.023    +17.18%
+    VT         253.538    280.285    +10.55%
+    R          145.997    170.421    +16.73%
+    RT          39.705     40.040     +0.84%
+
+Co-authored-by: Yuansheng <yuansheng@iscas.ac.cn>
+Signed-off-by: Jiakai Xu <xujiakai2025@iscas.ac.cn>
+---
+ pixman/pixman-rvv.c | 32 ++++++++++++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
+
+diff --git a/pixman/pixman-rvv.c b/pixman/pixman-rvv.c
+index 570799ca..48bc294b 100644
+--- a/pixman/pixman-rvv.c
++++ b/pixman/pixman-rvv.c
+@@ -3019,6 +3019,36 @@ rvv_blt (pixman_implementation_t *__restrict__ imp,
+     return TRUE;
+ }
+ 
++static uint32_t *
++rvv_fetch_r5g6b5 (pixman_iter_t *iter, const uint32_t *mask)
++{
++    int32_t         w   = iter->width;
++    uint32_t       *dst = iter->buffer;
++    const uint16_t *src = (const uint16_t *)iter->bits;
++
++    iter->bits += iter->stride;
++
++    RVV_FOREACH_2 (w, vl, e16m2, src, dst)
++    {
++	vuint16m2_t s   = __riscv_vle16_v_u16m2 (src, vl);
++	vuint32m4_t out = rvv_convert_0565_to_8888_m4 (s, vl);
++
++	__riscv_vse32 (dst, out, vl);
++    }
++
++    return iter->buffer;
++}
++
++#define IMAGE_FLAGS                                                            \
++    (FAST_PATH_STANDARD_FLAGS | FAST_PATH_ID_TRANSFORM |                       \
++     FAST_PATH_BITS_IMAGE | FAST_PATH_SAMPLES_COVER_CLIP_NEAREST)
++
++static const pixman_iter_info_t rvv_iters[] = {
++    {PIXMAN_r5g6b5, IMAGE_FLAGS, ITER_NARROW | ITER_SRC,
++     _pixman_iter_init_bits_stride, rvv_fetch_r5g6b5, NULL},
++    {PIXMAN_null},
++};
++
+ // clang-format off
+ static const pixman_fast_path_t rvv_fast_paths[] = {
+     PIXMAN_STD_FAST_PATH (OVER, solid, a8, r5g6b5, rvv_composite_over_n_8_0565),
+@@ -3098,6 +3128,8 @@ _pixman_implementation_create_rvv (pixman_implementation_t *fallback)
+     pixman_implementation_t *imp = _pixman_implementation_create (
+ 	fallback, rvv_fast_paths);
+ 
++    imp->iter_info = rvv_iters;
++
+     // clang-format off
+     imp->combine_float[PIXMAN_OP_CLEAR] = rvv_combine_clear_u_float;
+     imp->combine_float[PIXMAN_OP_SRC] = rvv_combine_src_u_float;
+-- 
+2.34.1
+

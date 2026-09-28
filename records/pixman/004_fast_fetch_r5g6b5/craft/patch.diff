@@ -1,0 +1,155 @@
+diff --git a/pixman/pixman-fast-path.c b/pixman/pixman-fast-path.c
+index d510cac..5658029 100644
+--- a/pixman/pixman-fast-path.c
++++ b/pixman/pixman-fast-path.c
+@@ -2168,6 +2168,11 @@ fast_fetch_r5g6b5 (pixman_iter_t *iter, const uint32_t *mask)
+     uint32_t *dst = iter->buffer;
+     const uint16_t *src = (const uint16_t *)iter->bits;
+ 
++#ifdef USE_RVV
++    if (_pixman_have_rvv)
++	return _pixman_rvv_fast_fetch_r5g6b5 (iter);
++#endif
++
+     iter->bits += iter->stride;
+ 
+     /* Align the source buffer at 4 bytes boundary */
+diff --git a/pixman/pixman-private.h b/pixman/pixman-private.h
+index 1416eb4..f365d97 100644
+--- a/pixman/pixman-private.h
++++ b/pixman/pixman-private.h
+@@ -658,6 +658,13 @@ _pixman_implementation_create_vmx (pixman_implementation_t *fallback);
+ #ifdef USE_RVV
+ pixman_implementation_t *
+ _pixman_implementation_create_rvv (pixman_implementation_t *fallback);
++
++/* RISC-V RVV source-fetch hook. _pixman_have_rvv is set to TRUE once the RVV
++   implementation has been created (runtime CPU detection passed). */
++extern pixman_bool_t _pixman_have_rvv;
++
++uint32_t *
++_pixman_rvv_fast_fetch_r5g6b5 (pixman_iter_t *iter);
+ #endif
+ 
+ pixman_bool_t
+diff --git a/pixman/pixman-riscv.c b/pixman/pixman-riscv.c
+index 3a5604e..b7916ef 100644
+--- a/pixman/pixman-riscv.c
++++ b/pixman/pixman-riscv.c
+@@ -119,6 +119,10 @@ detect_cpu_features (void)
+ 
+ #endif
+ 
++/* Set to TRUE once the RVV implementation is created (runtime CPU detection
++   passed), signalling that vectorized source-fetch kernels are safe to use. */
++pixman_bool_t _pixman_have_rvv = FALSE;
++
+ pixman_implementation_t *
+ _pixman_riscv_get_implementations (pixman_implementation_t *imp)
+ {
+@@ -126,6 +130,7 @@ _pixman_riscv_get_implementations (pixman_implementation_t *imp)
+     if (!_pixman_disabled ("rvv") && (detect_cpu_features () & RVV))
+     {
+ 	imp = _pixman_implementation_create_rvv (imp);
++	_pixman_have_rvv = TRUE;
+     }
+ #endif
+     return imp;
+diff --git a/pixman/pixman-rvv.c b/pixman/pixman-rvv.c
+index 570799c..79ede37 100644
+--- a/pixman/pixman-rvv.c
++++ b/pixman/pixman-rvv.c
+@@ -3092,6 +3092,93 @@ static const pixman_fast_path_t rvv_fast_paths[] = {
+     {PIXMAN_OP_NONE},
+ };
+ 
++/* R5G6B5 -> ARGB32 source fetch, vectorized.
++ *
++ * Mirrors fast_fetch_r5g6b5's convert_0565_to_8888: each 16-bit 565 pixel is
++ * widened to 32-bit and the 5/6/5-bit channels expanded to 8-bit with the
++ * alpha byte forced to 0xFF. The alignment head and the scalar SWAR tail
++ * preserve bit-exactness with the reference implementation.
++ */
++uint32_t *
++_pixman_rvv_fast_fetch_r5g6b5 (pixman_iter_t *iter)
++{
++    int32_t         w     = iter->width;
++    uint32_t       *dst   = iter->buffer;
++    const uint16_t *src   = (const uint16_t *)iter->bits;
++    const size_t    vlmax = __riscv_vsetvlmax_e16m4 ();
++    size_t          n;
++
++    iter->bits += iter->stride;
++
++    /* Align the source buffer at 4 bytes boundary (scalar head). */
++    if (w > 0 && ((uintptr_t)src & 3))
++    {
++	*dst++ = convert_0565_to_8888 (*src++);
++	w--;
++    }
++
++    /* Fixed-VL main loop: one 565 pixel per 32-bit lane. */
++    n = (size_t)w;
++    while (n >= vlmax)
++    {
++	vuint16m4_t s = __riscv_vle16_v_u16m4 (src, vlmax);
++	vuint32m8_t v = __riscv_vzext_vf2_u32m8 (s, vlmax);
++	vuint32m8_t b, g, r;
++
++	b = __riscv_vor_vv_u32m8 (
++	    __riscv_vand_vx_u32m8 (__riscv_vsll_vx_u32m8 (v, 3, vlmax), 0xf8, vlmax),
++	    __riscv_vand_vx_u32m8 (__riscv_vsrl_vx_u32m8 (v, 2, vlmax), 0x7, vlmax),
++	    vlmax);
++	g = __riscv_vor_vv_u32m8 (
++	    __riscv_vand_vx_u32m8 (__riscv_vsll_vx_u32m8 (v, 5, vlmax), 0xfc00, vlmax),
++	    __riscv_vand_vx_u32m8 (__riscv_vsrl_vx_u32m8 (v, 1, vlmax), 0x300, vlmax),
++	    vlmax);
++	r = __riscv_vor_vv_u32m8 (
++	    __riscv_vand_vx_u32m8 (__riscv_vsll_vx_u32m8 (v, 8, vlmax), 0xf80000, vlmax),
++	    __riscv_vand_vx_u32m8 (__riscv_vsll_vx_u32m8 (v, 3, vlmax), 0x70000, vlmax),
++	    vlmax);
++	v = __riscv_vor_vv_u32m8 (__riscv_vor_vv_u32m8 (b, g, vlmax), r, vlmax);
++	v = __riscv_vor_vx_u32m8 (v, 0xFF000000, vlmax);
++	__riscv_vse32_v_u32m8 (dst, v, vlmax);
++
++	src += vlmax;
++	dst += vlmax;
++	n   -= vlmax;
++    }
++
++    /* Scalar SWAR tail, two pixels per iteration. */
++    w = (int32_t)n;
++    while ((w -= 2) >= 0)
++    {
++	uint32_t sr, sb, sg, t0, t1;
++	uint32_t s = *(const uint32_t *)src;
++	src += 2;
++	sr = (s >> 8) & 0x00F800F8;
++	sb = (s << 3) & 0x00F800F8;
++	sg = (s >> 3) & 0x00FC00FC;
++	sr |= sr >> 5;
++	sb |= sb >> 5;
++	sg |= sg >> 6;
++	t0 = ((sr << 16) & 0x00FF0000) | ((sg << 8) & 0x0000FF00) |
++	     (sb & 0xFF) | 0xFF000000;
++	t1 = (sr & 0x00FF0000) | ((sg >> 8) & 0x0000FF00) |
++	     (sb >> 16) | 0xFF000000;
++#ifdef WORDS_BIGENDIAN
++	*dst++ = t1;
++	*dst++ = t0;
++#else
++	*dst++ = t0;
++	*dst++ = t1;
++#endif
++    }
++    if (w & 1)
++    {
++	*dst = convert_0565_to_8888 (*src);
++    }
++
++    return iter->buffer;
++}
++
+ pixman_implementation_t *
+ _pixman_implementation_create_rvv (pixman_implementation_t *fallback)
+ {
