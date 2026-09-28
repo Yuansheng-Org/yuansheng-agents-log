@@ -152,7 +152,7 @@
 | Pixman | 5 | [记录](records/pixman/README.md) |
 | PostgreSQL | 2 | [记录](records/postgresql/README.md) |
 | PyTorch | 1 | [记录](records/pytorch/README.md) |
-| Redis | 3 | [记录](records/redis/README.md) |
+| Redis | 4 | [记录](records/redis/README.md) |
 | vLLM | 1 | [记录](records/vllm/README.md) |
 | Faiss | 8 | [记录](records/faiss/README.md) |
 
