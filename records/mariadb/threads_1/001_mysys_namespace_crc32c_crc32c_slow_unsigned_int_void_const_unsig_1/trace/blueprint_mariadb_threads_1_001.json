@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-mariadb-threads_1-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-09T15:30:15.515Z",
+    "software": "mariadb",
+    "testcaseIds": [
+      "threads_1"
+    ],
+    "diagnosisId": "diag-20260909T153015515Z-16ee7aad",
+    "targetHardware": "XuanTie C920v2 (SOPHGO SG2044)",
+    "repositoryUrl": "https://github.com/MariaDB/server.git",
+    "testBranch": "main",
+    "commitHash": "02c842c30dcb05a962eaac58c69920e6be3369cf"
+  },
+  "problem": {
+    "summary": "mariadb sysbench threads_1 中热点函数 crc32c_slow（overhead 排名 001/21）以 slicing-by-4 查表实现 CRC32C：每 4 字节执行 4 次 256-entry 查表 + 串行 XOR 依赖链；目标核 C920v2 硬件 ISA 暴露 Zbc（clmul/clmulh）与 Zbb，但构建产物 Tag_RISCV_arch 无 zbc/v，原生 carry-less 乘法构建层不可达，热循环 latency-bound（IPC 0.57）。",
+    "evidence": [
+      "热点 crc32c_slow 为批次 overhead 排名 001/21，annotate 共 37 samples（local period），全部落在表驱动循环区间（16-byte 主循环 ffa47a-ffa61c 等）",
+      "IPC: RV=0.570491 — latency-bound：串行 CRC 状态依赖链 + 查表 load-use 拖低每周期指令数",
+      "16-byte 主循环最高占比行：ffa5b6 andi a4,a4,1020 (18.92%)、ffa4e8 add a7,a7,a5 (13.51%)、ffa49e lbu t0,4(a1) (8.11%)",
+      "HW isa 含 zbc/zbb/v，build Tag_RISCV_arch（rv64i2p1_..._zca1p0_zcd1p0）无 zbc/zbb/v → clmul 路径在构建层面不可达",
+      "L1_dcache_load_miss_rate=2.182%、LLC_load_miss_rate=11.527% — 查表工作集基本驻留 L1，cache miss 非主导"
+    ]
+  },
+  "rootCause": {
+    "summary": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+    "candidateFiles": [
+      "mysys_namespace::crc32c::crc32c_slow（函数名；无 debug symbols，mysys/ 下 crc32c 源文件无法精确到 file:line，见 diagnosis.currentGaps）"
+    ],
+    "performanceFactors": [
+      "Carry-less Multiplication for Binary-Field Arithmetic"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "CRC32C 输出与标量参考逐字节一致：reflected polynomial 0x1EDC6F41、initial/final XOR 0xffffffff、字节序",
+      "短输入与 tail（0..7 字节）处理语义与查表路径等价",
+      "crc32c_slow(unsigned crc, const void* buf, size_t size) 的调用契约"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "threads_1"
+    ],
+    "regressionCommand": "agent1 patch_regression --case threads_1"
+  },
+  "diagnosis": {
+    "overallStatus": "confirmed",
+    "finalStatus": "confirmed_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "yes",
+    "allowAutoForwardToCraft": true,
+    "blockReason": "",
+    "reasoning": "perf stat 显示 IPC=0.570491（latency-bound），L1 miss 仅 2.18% 排除查表 cache miss 主导；annotate 37/37 样本全部落在 slicing-by-4 表驱动循环（最高行 ffa5b6 18.92%、ffa4e8 13.51%、ffa49e 8.11%），hot loop 内 zero clmul；metadata 冻结的 HW isa 含 zbc/zbb 而 build Tag_RISCV_arch 无 zbc/v（L0 build-ISA mismatch）——三者共同指向『GF(2) 域 CRC32C 以查表模拟、Zbc carry-less 乘法构建层不可达』这一根因，与 carry_less_multiplication_for_binary_field_arithmetic.md 的 profile signals（查表 + 依赖 shift/xor 链 + readelf 未见 zbc + cpuinfo 有 zbc）逐项吻合；该 pattern 的 Related PRs（OpenSSL/Linux kernel/OpenJDK 的 clmul/vclmul CRC 实现）证明同类修复在其他项目的落地形态。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "L0 build-ISA mismatch 本身（mariadbd 构建未启用 v/zbc/zbb）也可视为首要问题——但仅重建开启 zbc 而不改实现，收益远低于 clmul folding，故列为前置条件而非替代根因",
+      "LLC_load_miss_rate=11.527% 的查表 miss 是部分解释——但 L1 miss 仅 2.182%，4KB 查表工作集基本驻留 L1，非主导因素",
+      "uint4korr 的逐字节物化（supporting finding: Wide Scalar Memory-Access Code Generation）解释部分访存开销，但不改变算法层主杠杆"
+    ],
+    "currentGaps": "本 worker 批次无 execution-summary 的 RV/ARM duration 对比数据（specBaseline ratio 不可得）；采样为 local period 且函数级 workload 贡献未知，无法给出 workload 级 Amdahl 收益上界；无 precise_ip/skid 信息（baseline_gap: sampling IP precision）；无 debug symbols，crc32c 源文件与构建配置文件无法精确到 file:line；HW 无 zvbc/zvbb/zbkb，向量 folding 与 brev8 单指令路径不可行（标量 zbc + zbb rev8 可行）",
+    "needsHumanReview": false,
+    "humanReviewFocus": "",
+    "affectedTarget": "RV + threads_1",
+    "recommendedFirstAction": "在 mariadbd RISC-V 构建 flags（-march）中加入 zbc 及 zbb（L0 build-ISA mismatch 前置修复），并在 crc32c_slow 主循环引入基于 clmul/clmulh 的 GF(2) folding：8 字节块折叠 + 归约回 32-bit CRC 状态，tail（0..7 字节）保留 byte 查表路径，rev8（Zbb）处理反射位序；仅实现层面调整，不改变 crc32c_slow 的调用语义与 CRC32C 输出",
+    "recommendedVerification": "以含 zbc/zbb 的 -march 重建后重跑 threads_1 并对 crc32c_slow 重新 perf annotate：预期 clmul/clmulh/rev8 出现在热循环、查表 lw 与 byte 拼装行（ffa4e8/ffa5b6/ffa49e）消失或显著缩小；用 CRC32C KAT/标量参考核对输出逐字节一致（含反射、init/final xor、短输入与 tail）；观察 IPC 与函数内 sample share 变化",
+    "metricEvidence": [
+      {
+        "metric": "IPC",
+        "rv": 0.570491,
+        "anomalyNote": "IPC 0.57 显著偏低，latency-bound：串行 CRC 状态依赖链 + 查表 load-use 拖低每周期指令数"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 2.182,
+        "anomalyNote": "2.182% 低 miss：查表工作集基本驻留 L1，排除 cache miss 主导"
+      },
+      {
+        "metric": "LLC_load_miss_rate(%)",
+        "rv": 11.527,
+        "anomalyNote": "11.527% 中等 miss，非主导因素"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 5.559,
+        "anomalyNote": "循环回边预测基本健康，非主导"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "mysys_namespace::crc32c::crc32c_slow(unsigned int, void const*, unsigned long)",
+        "fileModule": "mysys_namespace::crc32c::crc32c_slow（无 debug symbols，fileModule 未知）",
+        "rvvPattern": "Carry-less Multiplication for Binary-Field Arithmetic",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 1,
+        "note": "密码学/校验和类计算（CRC32C = GF(2) 反射多项式归约），slicing-by-4 查表 + 串行 XOR 依赖链，overhead 排名 001/21"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "mysys_namespace::crc32c::crc32c_slow（函数名；无 debug symbols，无法给 file:line）",
+      "relatedKnowledge": "https://github.com/openssl/openssl/commit/003f569814; https://github.com/openssl/openssl/commit/999376dcf3; https://github.com/openssl/openssl/commit/b24684369b; https://github.com/torvalds/linux/commit/ee6740fd34eb53c5c76be01201c15310f461b69f; https://github.com/torvalds/linux/commit/72acff5f81851fe0858d2430b35b4b08f8f27a72; https://github.com/torvalds/linux/commit/bbe2610bc5ada51418a4191e799cfb4577302a31; https://github.com/openjdk/jdk/commit/2f4f6cc34c10c5519c74abbce8d1715013b50d5d; https://github.com/openjdk/jdk/commit/c517ffba7d9388e75b5d7bba77e565e71c0a7d76; https://github.com/openjdk/jdk/pull/22475",
+      "evidenceExplanation": "OpenSSL/Linux kernel/OpenJDK 在 RISC-V 上以 Zbc clmul / Zvbc vclmul 实现 GHASH/CRC 的 commit 与本次证据（查表驱动的 GF(2) 归约热点 + HW 有 zbc + build 无 zbc）指向同一根因：用原生 carry-less 乘法折叠取代逐 block 查表，消除查表访存与串行依赖链"
+    }
+  }
+}

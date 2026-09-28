@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-mariadb-threads-1-001",
+  "blueprintId": "bp-mariadb-threads_1-001",
+  "createdAt": "2026-09-10T12:34:05.738Z",
+  "objective": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+  "changes": [
+    {
+      "filePath": "zbc/v",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "001/21",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "zbc/zbb/v",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "clmul/clmulh",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "37/37",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "zbc/zbb",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "shift/xor",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "OpenSSL/Linux",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "kernel/OpenJDK",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "clmul/vclmul",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "RV/ARM",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "precise_ip/skid",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "zvbc/zvbb/zbkb",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "GHASH/CRC",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "mysys_namespace::crc32c::crc32c_slow（函数名；无 debug symbols，mysys/ 下 crc32c 源文件无法精确到 file:line，见 diagnosis.currentGaps）",
+      "action": "modify",
+      "rationale": "CRC32C 是 GF(2) 域（无进位）多项式归约，当前以 slicing-by-4 查表实现（每 4 字节 4 次查表 + 串行 XOR），而 C920v2 硬件暴露 Zbc clmul/clmulh 从未被构建产物使用（build 无 zbc/v）——carry-less 乘法被软件模拟，热循环受串行依赖链约束（pattern: Carry-less Multiplication for Binary-Field Arithmetic）。",
+      "instructions": [
+        "编辑前先检查目标软件现有结构、相邻实现和构建入口。",
+        "按 RootCauseBlueprint 指出的根因完成必要改动；源码、构建参数、平台适配、注册/分发表、汇编、kernel、intrinsic、SIMD/vector 路径都属于允许范围。",
+        "避免无关重构、格式噪音以及公共 API 或 fallback 行为破坏。",
+        "无法执行动态检查时，在说明中披露风险并继续产出补丁。",
+        "优先定位目标软件实际使用的 configure/cmake/meson/bazel/make/toolchain/platform 配置和注册入口。",
+        "可以新增或改写目标平台实现、汇编/kernel/intrinsic/SIMD/vector 后端，并同步连接到现有 dispatch/registration 路径。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应围绕 zbc/v, 001/21, zbc/zbb/v, clmul/clmulh, 37/37, zbc/zbb, shift/xor, OpenSSL/Linux, kernel/OpenJDK, clmul/vclmul, RV/ARM, precise_ip/skid, zvbc/zvbb/zbkb, GHASH/CRC, mysys_namespace::crc32c::crc32c_slow（函数名；无 debug symbols，mysys/ 下 crc32c 源文件无法精确到 file:line，见 diagnosis.currentGaps） 解决 blueprint bp-mariadb-threads_1-001 指出的根因。允许涉及 构建系统、平台适配、构建参数、注册入口；源码实现、汇编/kernel/intrinsic/SIMD/vector 后端、分发表。"
+}

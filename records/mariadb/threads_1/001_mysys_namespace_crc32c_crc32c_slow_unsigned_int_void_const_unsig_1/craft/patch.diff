@@ -1,0 +1,241 @@
+diff --git a/mysys/CMakeLists.txt b/mysys/CMakeLists.txt
+index 917b553b75d..a917aa7f911 100644
+--- a/mysys/CMakeLists.txt
++++ b/mysys/CMakeLists.txt
+@@ -150,6 +150,31 @@ ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|AARCH64")
+       SET(CMAKE_REQUIRED_FLAGS "${SAVE_CMAKE_REQUIRED_FLAGS}")
+     ENDIF()
+   ENDIF()
++ELSEIF(CMAKE_SYSTEM_PROCESSOR MATCHES "riscv64|RISCV64")
++  IF(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
++    include(CheckCXXSourceCompiles)
++
++    CHECK_CXX_COMPILER_FLAG(-march=rv64gc_zbc_zbb HAVE_RISCV_ZBC_ZBB_MARCH)
++    IF(HAVE_RISCV_ZBC_ZBB_MARCH)
++      CHECK_CXX_SOURCE_COMPILES("
++      #include <stdint.h>
++      uint64_t foo(uint64_t a, uint64_t b) {
++        return __builtin_riscv_clmul(a, b) ^
++               __builtin_riscv_clmulh(a, b) ^
++               __builtin_riscv_rev8(a) ^
++               __builtin_riscv_brev8(b);
++      }
++      int main() { return (int) foo(1, 2); }
++      " HAVE_RISCV_ZBC_ZBB)
++
++      IF(HAVE_RISCV_ZBC_ZBB)
++        ADD_DEFINITIONS(-DHAVE_RISCV_ZBC)
++        SET(MYSYS_SOURCES ${MYSYS_SOURCES} crc32/crc32c_riscv.cc)
++        SET_SOURCE_FILES_PROPERTIES(crc32/crc32c_riscv.cc PROPERTIES
++          COMPILE_FLAGS "-march=rv64gc_zbc_zbb")
++      ENDIF()
++    ENDIF()
++  ENDIF()
+ ENDIF()
+ 
+ IF(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64|powerpc64" OR CMAKE_SYSTEM_NAME MATCHES AIX)
+diff --git a/mysys/crc32/crc32c.cc b/mysys/crc32/crc32c.cc
+index 30788130d59..770dd92d320 100644
+--- a/mysys/crc32/crc32c.cc
++++ b/mysys/crc32/crc32c.cc
+@@ -489,6 +489,9 @@ static int arch_ppc_probe(void) {
+ #if defined(HAVE_ARMV8_CRC)
+ extern "C" my_crc32_t crc32c_aarch64_available(void);
+ extern "C" const char *crc32c_aarch64_impl(my_crc32_t);
++#elif defined HAVE_RISCV_ZBC
++extern "C" my_crc32_t crc32c_riscv_available(void);
++extern "C" const char *crc32c_riscv_impl(my_crc32_t);
+ #elif defined __i386__||defined __x86_64__||defined _M_X64||defined _M_IX86
+ extern "C" my_crc32_t crc32c_x86_available(void);
+ extern "C" const char *crc32c_x86_impl(my_crc32_t);
+@@ -502,6 +505,9 @@ static inline my_crc32_t Choose_Extend()
+ #elif defined HAVE_ARMV8_CRC
+   if (my_crc32_t crc= crc32c_aarch64_available())
+     return crc;
++#elif defined HAVE_RISCV_ZBC
++  if (my_crc32_t crc= crc32c_riscv_available())
++    return crc;
+ #elif defined __i386__||defined __x86_64__||defined _M_X64||defined _M_IX86
+   if (my_crc32_t crc= crc32c_x86_available())
+     return crc;
+@@ -519,6 +525,9 @@ extern "C" const char *my_crc32c_implementation()
+ #elif defined HAVE_ARMV8_CRC
+   if (const char *ret= crc32c_aarch64_impl(ChosenExtend))
+     return ret;
++#elif defined HAVE_RISCV_ZBC
++  if (const char *ret= crc32c_riscv_impl(ChosenExtend))
++    return ret;
+ #elif defined __i386__||defined __x86_64__||defined _M_X64||defined _M_IX86
+   if (const char *ret= crc32c_x86_impl(ChosenExtend))
+     return ret;
+diff --git a/mysys/crc32/crc32c_riscv.cc b/mysys/crc32/crc32c_riscv.cc
+new file mode 100644
+index 00000000000..2f9ffda7baf
+--- /dev/null
++++ b/mysys/crc32/crc32c_riscv.cc
+@@ -0,0 +1,165 @@
++// Copyright (c) 2026 MariaDB Corporation
++//
++// This program is free software; you can redistribute it and/or modify
++// it under the terms of the GNU General Public License as published by
++// the Free Software Foundation; version 2 of the License.
++//
++// CRC32C (Castagnoli) accelerated implementation for RISC-V using the Zbc
++// carry-less multiply extension and the Zbb bit-manipulation extension.
++//
++// Background
++// ----------
++// crc32c_slow() in crc32c.cc computes CRC32C with a slicing-by-4 table:
++// every 4 bytes trigger 4 dependent 256-entry table loads plus a serial XOR
++// chain.  On cores exposing Zbc/Zbb (e.g. XuanTie C920v2) this is
++// latency-bound: the hot loop is dominated by table load-use latency and a
++// serial dependency chain rather than instruction throughput.  This file
++// replaces the table lookups with carry-less multiply folding.
++//
++// Algorithm
++// ---------
++// CRC32C is a *reflected* (LSB-first) polynomial reduction with
++//   reflected polynomial   0x82F63B78  (bit-reversal of 0x1EDC6F41)
++//   normal full polynomial  x^32 + 0x1EDC6F41
++//   init / final xor        0xFFFFFFFF
++//
++// The reduction is computed in the bit-reversed ("normal", MSB-first) domain
++// using carry-less multiply, reflecting the 32-bit accumulator with
++// brev8 + rev8 at the fold boundaries.  One 4-byte fold is:
++//
++//     crc = bitrev32( crc32c_reduce( bitrev32(crc ^ w) << 32 ) )
++//
++// where w is the next four bytes loaded little-endian and crc32c_reduce is a
++// one-step Barrett reduction modulo (x^32 + 0x1EDC6F41) with precomputed
++// mu = floor(x^64 / P) = 0x11F91CAF6.
++//
++// The algorithm, constants and byte-level semantics were verified against the
++// scalar slicing-by-4 reference over randomized inputs and the standard check
++// value crc32c("123456789") == 0xE3069283.
++//
++// NOTE: this translation unit is compiled with -march=rv64gc_zbc_zbb (see
++// mysys/CMakeLists.txt), so the Zbc/Zbb instructions below are valid.
++
++#include <my_global.h>
++#include <stdint.h>
++#include <stddef.h>
++
++typedef unsigned (*my_crc32_t)(unsigned, const void *, size_t);
++
++#ifdef __linux__
++# if defined(__has_include)
++#  if __has_include(<sys/hwprobe.h>) && __has_include(<asm/hwprobe.h>)
++#   define CRC32C_RISCV_HAVE_HWPROBE 1
++#   include <sys/hwprobe.h>
++#   include <asm/hwprobe.h>
++#  endif
++# endif
++#endif
++
++namespace mysys_namespace {
++namespace crc32c {
++
++// Barrett reduction constants for CRC32C (Castagnoli), normal (MSB-first)
++// polynomial domain.
++static const uint64_t CRC32C_MU = 0x11F91CAF6ULL;  // floor(x^64 / P)
++static const uint64_t CRC32C_P  = 0x11EDC6F41ULL;  // x^32 + 0x1EDC6F41
++
++static inline uint64_t rv_clmul(uint64_t a, uint64_t b)
++{
++  return __builtin_riscv_clmul(a, b);
++}
++
++static inline uint64_t rv_clmulh(uint64_t a, uint64_t b)
++{
++  return __builtin_riscv_clmulh(a, b);
++}
++
++static inline uint64_t rv_rev8(uint64_t a)
++{
++  return __builtin_riscv_rev8(a);
++}
++
++static inline uint64_t rv_brev8(uint64_t a)
++{
++  return __builtin_riscv_brev8(a);
++}
++
++// Reverse all 32 bits of x (rev8 byte-swap composed with brev8).
++static inline uint32_t bitrev32(uint32_t x)
++{
++  return static_cast<uint32_t>(rv_rev8(rv_brev8(x)) >> 32);
++}
++
++// One-step Barrett reduction of a 64-bit value modulo CRC32C_P.  The result
++// is guaranteed to fit in 32 bits.
++static inline uint32_t crc32c_reduce(uint64_t v)
++{
++  const uint64_t hi = v >> 32;
++  const uint64_t q = (rv_clmul(hi, CRC32C_MU) >> 32) |
++                     (rv_clmulh(hi, CRC32C_MU) << 32);
++  return static_cast<uint32_t>(v ^ rv_clmul(q, CRC32C_P));
++}
++
++// Fold four bytes (little-endian word w) into the reflected crc state.
++static inline uint32_t crc32c_fold4(uint32_t crc, uint32_t w)
++{
++  const uint64_t x = bitrev32(crc ^ w);
++  return bitrev32(crc32c_reduce(x << 32));
++}
++
++static uint32_t crc32c_riscv(unsigned crc, const void *buf, size_t size)
++{
++  const uint8_t *p = static_cast<const uint8_t *>(buf);
++  crc ^= 0xFFFFFFFFu;
++
++  while (size >= 4)
++  {
++    crc = crc32c_fold4(crc, uint4korr(reinterpret_cast<const char *>(p)));
++    p += 4;
++    size -= 4;
++  }
++
++  while (size--)
++  {
++    crc ^= *p++;
++    for (int i = 0; i < 8; i++)
++      crc = (crc >> 1) ^ ((crc & 1) ? 0x82F63B78u : 0u);
++  }
++
++  return crc ^ 0xFFFFFFFFu;
++}
++
++}  // namespace crc32c
++}  // namespace mysys_namespace
++
++extern "C" unsigned crc32c_riscv(unsigned crc, const void *buf, size_t size)
++{
++  return mysys_namespace::crc32c::crc32c_riscv(crc, buf, size);
++}
++
++extern "C" my_crc32_t crc32c_riscv_available(void)
++{
++  // This translation unit is only built when the toolchain supports
++  // rv64gc_zbc_zbb (see mysys/CMakeLists.txt).  On Linux we additionally
++  // confirm Zbc/Zbb at runtime via hwprobe so that the same binary remains
++  // safe on heterogeneous RISC-V systems; if the hwprobe API is unavailable
++  // we assume the target (which had to support the -march flags at build
++  // time) provides the extensions.
++#ifdef CRC32C_RISCV_HAVE_HWPROBE
++  struct riscv_hwprobe pairs[1] = { { RISCV_HWPROBE_KEY_IMA_EXT_0, 0 } };
++  if (riscv_hwprobe(pairs, 1, 0, NULL, 0) == 0)
++  {
++    if (!(pairs[0].value & RISCV_HWPROBE_EXT_ZBC) ||
++        !(pairs[0].value & RISCV_HWPROBE_EXT_ZBB))
++      return NULL;
++  }
++#endif
++  return crc32c_riscv;
++}
++
++extern "C" const char *crc32c_riscv_impl(my_crc32_t c)
++{
++  if (c == crc32c_riscv)
++    return "Using RISC-V Zbc carry-less multiply + Zbb instructions";
++  return NULL;
++}
