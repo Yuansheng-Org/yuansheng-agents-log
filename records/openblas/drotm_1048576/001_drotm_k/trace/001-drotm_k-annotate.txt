@@ -1,0 +1,426 @@
+ Percent |	Source code & Disassembly of drotm.goto for cpu-clock (280 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3    Disassembly of section .text:
+         :
+         : 5    0000000000000e90 <drotm_k>:
+         : 6    drotm_k():
+         : 49   #define VFMULVF_FLOAT           __riscv_vfmul_vf_f64m8
+         : 50   #define VFMSACVF_FLOAT          __riscv_vfmsac_vf_f64m8
+         : 51   #endif
+         :
+         : 53   int CNAME(BLASLONG n, FLOAT *dx, BLASLONG incx, FLOAT *dy, BLASLONG incy, FLOAT *dparam)
+         : 54   {
+    0.00 :    e90:    addi    sp,sp,-16
+    0.00 :    e92:    sd      s0,0(sp)
+    0.00 :    e94:    sd      ra,8(sp)
+    0.00 :    e96:    addi    s0,sp,16
+         : 62   --dx;
+         :
+         : 64   FLOAT_V_T v_w, v_z__, v_dx, v_dy;
+         : 65   BLASLONG stride, stride_x, stride_y, offset;
+         :
+         : 67   dflag = dparam[1];
+    0.00 :    e98:    fld     fa5,0(a5)
+         : 63   if (n <= 0 || dflag == - 2.0) goto L140;
+    0.00 :    e9a:    blez    a0,f0e <drotm_k+0x7e>
+    0.00 :    e9e:    auipc   a6,0x0
+    0.00 :    ea2:    fld     fa4,1010(a6) # 1290 <_IO_stdin_used+0x100>
+    0.00 :    ea6:    feq.d   a6,fa5,fa4
+    0.00 :    eaa:    bnez    a6,f0e <drotm_k+0x7e>
+         :
+         : 66   if (incx == 0 || incy == 0) {
+    0.00 :    eae:    beqz    a2,f18 <drotm_k+0x88>
+    0.00 :    eb0:    beqz    a4,f18 <drotm_k+0x88>
+         : 56   --dy;
+    0.00 :    eb2:    addi    a3,a3,-8
+         : 57   --dx;
+    0.00 :    eb4:    addi    a1,a1,-8
+         : 195  dx += offset;
+         : 196  dy += offset;
+         : 197  i__1 = -i__1;
+         : 198  i__2 = -i__2;
+         : 199  }
+         : 200  stride = i__2 * sizeof(FLOAT);
+    0.00 :    eb6:    slli    a6,a2,0x3
+         : 117  if (!(incx == incy && incx > 0)) goto L70;
+    0.00 :    eba:    bne     a2,a4,100e <drotm_k+0x17e>
+    0.00 :    ebe:    blez    a2,100e <drotm_k+0x17e>
+         : 120  if (dflag < 0.) {
+    0.00 :    ec2:    fmv.d.x fa4,zero
+    0.00 :    ec6:    flt.d   a4,fa5,fa4
+    0.00 :    eca:    bnez    a4,108a <drotm_k+0x1fa>
+         : 122  } else if (dflag == 0) {
+    0.00 :    ece:    feq.d   a4,fa5,fa4
+    0.00 :    ed2:    beqz    a4,f6e <drotm_k+0xde>
+         : 128  dh12 = dparam[4];
+    0.00 :    ed4:    fld     fa4,24(a5)
+         : 129  dh21 = dparam[3];
+    0.00 :    ed6:    fld     fa5,16(a5)
+         : 142  vl = VSETVL(n);
+    0.00 :    ed8:    vsetvli a5,a0,e64,m8,ta,ma
+         : 144  v_w = VLSEV_FLOAT(&dx[1], stride, vl);
+    0.00 :    edc:    addi    a7,a1,8
+    0.00 :    ee0:    vlse64.v        v16,(a7),a6
+         : 145  v_z__ = VLSEV_FLOAT(&dy[1], stride, vl);
+    0.00 :    ee4:    addi    a4,a3,8
+    0.00 :    ee8:    vlse64.v        v8,(a4),a6
+         : 141  for (size_t vl; n > 0; n -= vl, dx += vl*i__2, dy += vl*i__2) {
+    0.00 :    eec:    mul     a2,a5,a6
+    0.00 :    ef0:    sub     a0,a0,a5
+         : 147  v_dx = VFMACCVF_FLOAT(v_w, dh12, v_z__, vl);
+    0.00 :    ef2:    vmv8r.v v24,v16
+    0.00 :    ef6:    vfmacc.vf       v24,fa4,v8
+         : 148  v_dy = VFMACCVF_FLOAT(v_z__, dh21, v_w, vl);
+    0.00 :    efa:    vfmacc.vf       v8,fa5,v16
+         : 141  for (size_t vl; n > 0; n -= vl, dx += vl*i__2, dy += vl*i__2) {
+    0.00 :    efe:    add     a1,a1,a2
+    0.00 :    f00:    add     a3,a3,a2
+         : 150  VSSEV_FLOAT(&dx[1], stride, v_dx, vl);
+    0.00 :    f02:    vsse64.v        v24,(a7),a6
+         : 151  VSSEV_FLOAT(&dy[1], stride, v_dy, vl);
+    0.00 :    f06:    vsse64.v        v8,(a4),a6
+         : 141  for (size_t vl; n > 0; n -= vl, dx += vl*i__2, dy += vl*i__2) {
+    0.00 :    f0a:    bgtz    a0,ed8 <drotm_k+0x48>
+         : 288  v_dy = VFMACCVF_FLOAT(v_dy, dh22, v_z__, vl);
+         : 289  VSSEV_FLOAT(&dy[ky], stride_y, v_dy, vl);
+         : 290  }
+         : 291  L140:
+         : 292  return(0);
+         : 293  }
+    0.00 :    f0e:    ld      ra,8(sp)
+    0.00 :    f10:    ld      s0,0(sp)
+    0.00 :    f12:    li      a0,0
+    0.00 :    f14:    addi    sp,sp,16
+    0.00 :    f16:    ret
+         : 69   kx = 1;
+    0.00 :    f18:    li      a7,1
+         : 71   if (incx < 0) {
+    0.00 :    f1a:    bltz    a2,fbe <drotm_k+0x12e>
+         : 70   ky = 1;
+    0.00 :    f1e:    li      a6,1
+         : 74   if (incy < 0) {
+    0.00 :    f20:    bltz    a4,fb2 <drotm_k+0x122>
+         : 78   if (dflag < 0.) {
+    0.00 :    f24:    fmv.d.x fa4,zero
+    0.00 :    f28:    flt.d   t1,fa5,fa4
+    0.00 :    f2c:    bnez    t1,fca <drotm_k+0x13a>
+         : 91   } else if (dflag == 0) {
+    0.00 :    f30:    feq.d   t1,fa5,fa4
+    0.00 :    f34:    beqz    t1,10ce <drotm_k+0x23e>
+         : 92   dh12 = dparam[4];
+    0.00 :    f38:    slli    a7,a7,0x3
+    0.00 :    f3a:    slli    a6,a6,0x3
+    0.00 :    f3c:    fld     fa1,24(a5)
+         : 93   dh21 = dparam[3];
+    0.00 :    f3e:    fld     fa2,16(a5)
+         : 94   for (i = 0; i < n; ++i) {
+    0.00 :    f40:    add     a1,a1,a7
+    0.00 :    f42:    add     a3,a3,a6
+    0.00 :    f44:    slli    a2,a2,0x3
+    0.00 :    f46:    slli    a4,a4,0x3
+    0.00 :    f48:    li      a5,0
+         : 95   w = dx[kx];
+    0.00 :    f4a:    fld     fa5,-8(a1)
+         : 96   z = dy[ky];
+    0.00 :    f4e:    fld     fa4,-8(a3)
+         : 94   for (i = 0; i < n; ++i) {
+    0.00 :    f52:    addi    a5,a5,1
+         : 97   dx[kx] = w + z * dh12;
+    0.00 :    f54:    fmadd.d fa3,fa1,fa4,fa5
+         : 98   dy[ky] = w * dh21 + z;
+    0.00 :    f58:    fmadd.d fa5,fa2,fa5,fa4
+         : 97   dx[kx] = w + z * dh12;
+    0.00 :    f5c:    fsd     fa3,-8(a1)
+         : 98   dy[ky] = w * dh21 + z;
+    0.00 :    f60:    fsd     fa5,-8(a3)
+         : 94   for (i = 0; i < n; ++i) {
+    0.00 :    f64:    add     a1,a1,a2
+    0.00 :    f66:    add     a3,a3,a4
+    0.00 :    f68:    blt     a5,a0,f4a <drotm_k+0xba>
+    0.00 :    f6c:    j       f0e <drotm_k+0x7e>
+         : 155  dh11 = dparam[2];
+    0.00 :    f6e:    fld     fa4,8(a5)
+         : 156  dh22 = dparam[5];
+    0.00 :    f70:    fld     fa5,32(a5)
+         : 169  vl = VSETVL(n);
+    0.00 :    f72:    vsetvli a5,a0,e64,m8,ta,ma
+         : 172  v_z__ = VLSEV_FLOAT(&dy[1], stride, vl);
+    0.00 :    f76:    addi    a4,a3,8
+    0.00 :    f7a:    vlse64.v        v16,(a4),a6
+         : 171  v_w = VLSEV_FLOAT(&dx[1], stride, vl);
+   46.07 :    f7e:    addi    a7,a1,8
+    0.00 :    f82:    vlse64.v        v8,(a7),a6
+         : 168  for (size_t vl; n > 0; n -= vl, dx += vl*i__1, dy += vl*i__1) {
+   31.43 :    f86:    mul     a2,a5,a6
+    0.00 :    f8a:    sub     a0,a0,a5
+         : 174  v_dx = VFMACCVF_FLOAT(v_z__, dh11, v_w, vl);
+    0.00 :    f8c:    vmv8r.v v24,v16
+    0.00 :    f90:    vfmacc.vf       v24,fa4,v8
+         : 175  v_dy = VFMSACVF_FLOAT(v_w, dh22, v_z__, vl);
+    0.36 :    f94:    vfmsac.vf       v8,fa5,v16
+         : 168  for (size_t vl; n > 0; n -= vl, dx += vl*i__1, dy += vl*i__1) {
+    0.00 :    f98:    add     a1,a1,a2
+    0.00 :    f9a:    add     a3,a3,a2
+         : 177  VSSEV_FLOAT(&dx[1], stride, v_dx, vl);
+    0.00 :    f9c:    vsse64.v        v24,(a7),a6
+         : 178  VSSEV_FLOAT(&dy[1], stride, v_dy, vl);
+   10.36 :    fa0:    vsse64.v        v8,(a4),a6
+         : 168  for (size_t vl; n > 0; n -= vl, dx += vl*i__1, dy += vl*i__1) {
+   11.79 :    fa4:    bgtz    a0,f72 <drotm_k+0xe2>
+         : 288  }
+    0.00 :    fa8:    ld      ra,8(sp)
+    0.00 :    faa:    ld      s0,0(sp)
+    0.00 :    fac:    li      a0,0
+    0.00 :    fae:    addi    sp,sp,16
+    0.00 :    fb0:    ret
+         : 75   ky = (1 - n) * incy + 1;
+    0.00 :    fb2:    sub     a6,a6,a0
+    0.00 :    fb6:    mul     a6,a6,a4
+    0.00 :    fba:    addi    a6,a6,1
+    0.00 :    fbc:    j       f24 <drotm_k+0x94>
+         : 72   kx = (1 - n) * incx + 1;
+    0.00 :    fbe:    sub     a7,a7,a0
+    0.00 :    fc2:    mul     a7,a7,a2
+    0.00 :    fc6:    addi    a7,a7,1
+    0.00 :    fc8:    j       f1e <drotm_k+0x8e>
+         : 79   dh11 = dparam[2];
+    0.00 :    fca:    slli    a7,a7,0x3
+    0.00 :    fcc:    slli    a6,a6,0x3
+    0.00 :    fce:    fld     ft0,8(a5)
+         : 80   dh12 = dparam[4];
+    0.00 :    fd2:    fld     fa0,24(a5)
+         : 81   dh21 = dparam[3];
+    0.00 :    fd4:    fld     fa1,16(a5)
+         : 82   dh22 = dparam[5];
+    0.00 :    fd6:    fld     fa2,32(a5)
+         : 83   for (i = 0; i < n; ++i) {
+    0.00 :    fd8:    add     a1,a1,a7
+    0.00 :    fda:    add     a3,a3,a6
+    0.00 :    fdc:    slli    a2,a2,0x3
+    0.00 :    fde:    slli    a4,a4,0x3
+    0.00 :    fe0:    li      a5,0
+         : 85   z = dy[ky];
+    0.00 :    fe2:    fld     fa4,-8(a3)
+         : 84   w = dx[kx];
+    0.00 :    fe6:    fld     fa5,-8(a1)
+         : 83   for (i = 0; i < n; ++i) {
+    0.00 :    fea:    addi    a5,a5,1
+         : 86   dx[kx] = w * dh11 + z * dh12;
+    0.00 :    fec:    fmul.d  fa3,fa0,fa4
+         : 87   dy[ky] = w * dh21 + z * dh22;
+    0.00 :    ff0:    fmul.d  fa4,fa2,fa4
+         : 86   dx[kx] = w * dh11 + z * dh12;
+    0.00 :    ff4:    fmadd.d fa3,ft0,fa5,fa3
+         : 87   dy[ky] = w * dh21 + z * dh22;
+    0.00 :    ff8:    fmadd.d fa5,fa1,fa5,fa4
+         : 86   dx[kx] = w * dh11 + z * dh12;
+    0.00 :    ffc:    fsd     fa3,-8(a1)
+         : 87   dy[ky] = w * dh21 + z * dh22;
+    0.00 :   1000:   fsd     fa5,-8(a3)
+         : 83   for (i = 0; i < n; ++i) {
+    0.00 :   1004:   add     a1,a1,a2
+    0.00 :   1006:   add     a3,a3,a4
+    0.00 :   1008:   blt     a5,a0,fe2 <drotm_k+0x152>
+    0.00 :   100c:   j       f0e <drotm_k+0x7e>
+         : 215  if (incx < 0) {
+    0.00 :   100e:   li      t5,8
+    0.00 :   1010:   bgez    a2,1022 <drotm_k+0x192>
+         : 216  kx = (1 - n) * incx + 1;
+    0.00 :   1014:   li      t5,1
+    0.00 :   1016:   sub     t5,t5,a0
+    0.00 :   101a:   mul     t5,t5,a2
+         : 106  w = dx[kx];
+    0.00 :   101e:   slli    t5,t5,0x3
+    0.00 :   1020:   addi    t5,t5,8
+         : 218  if (incy < 0) {
+    0.00 :   1022:   li      a2,8
+    0.00 :   1024:   bgez    a4,1034 <drotm_k+0x1a4>
+         : 219  ky = (1 - n) * incy + 1;
+    0.00 :   1028:   li      a2,1
+    0.00 :   102a:   sub     a2,a2,a0
+    0.00 :   102c:   mul     a2,a2,a4
+         : 276  v_z__ = VLSEV_FLOAT(&dy[ky], stride_y, vl);
+    0.00 :   1030:   slli    a2,a2,0x3
+    0.00 :   1032:   addi    a2,a2,8
+         : 222  if (dflag < 0.) {
+    0.00 :   1034:   fmv.d.x fa4,zero
+         : 271  stride_y = incy * sizeof(FLOAT);
+    0.00 :   1038:   slli    a4,a4,0x3
+         : 222  if (dflag < 0.) {
+    0.00 :   103a:   flt.d   a7,fa5,fa4
+    0.00 :   103e:   bnez    a7,1144 <drotm_k+0x2b4>
+         : 224  } else if (dflag == 0) {
+    0.00 :   1042:   feq.d   a7,fa5,fa4
+    0.00 :   1046:   beqz    a7,1104 <drotm_k+0x274>
+         : 230  dh12 = dparam[4];
+    0.00 :   104a:   fld     fa4,24(a5)
+         : 231  dh21 = dparam[3];
+    0.00 :   104c:   fld     fa5,16(a5)
+         : 235  vl = VSETVL(n);
+    0.00 :   104e:   vsetvli a5,a0,e64,m8,ta,ma
+         : 237  v_w = VLSEV_FLOAT(&dx[kx], stride_x, vl);
+    0.00 :   1052:   add     t1,a1,t5
+    0.00 :   1056:   vlse64.v        v16,(t1),a6
+         : 238  v_z__ = VLSEV_FLOAT(&dy[ky], stride_y, vl);
+    0.00 :   105a:   add     a7,a3,a2
+    0.00 :   105e:   vlse64.v        v8,(a7),a4
+         : 234  for (size_t vl; n > 0; n -= vl, dx += vl*incx, dy += vl*incy) {
+    0.00 :   1062:   mul     t4,a5,a6
+    0.00 :   1066:   sub     a0,a0,a5
+         : 240  v_dx = VFMACCVF_FLOAT(v_w, dh12, v_z__, vl);
+    0.00 :   1068:   vmv8r.v v24,v16
+    0.00 :   106c:   vfmacc.vf       v24,fa4,v8
+         : 241  v_dy = VFMACCVF_FLOAT(v_z__, dh21, v_w, vl);
+    0.00 :   1070:   vfmacc.vf       v8,fa5,v16
+         : 234  for (size_t vl; n > 0; n -= vl, dx += vl*incx, dy += vl*incy) {
+    0.00 :   1074:   mul     t3,a5,a4
+    0.00 :   1078:   add     a1,a1,t4
+         : 243  VSSEV_FLOAT(&dx[kx], stride_x, v_dx, vl);
+    0.00 :   107a:   vsse64.v        v24,(t1),a6
+         : 244  VSSEV_FLOAT(&dy[ky], stride_y, v_dy, vl);
+    0.00 :   107e:   vsse64.v        v8,(a7),a4
+         : 234  for (size_t vl; n > 0; n -= vl, dx += vl*incx, dy += vl*incy) {
+    0.00 :   1082:   add     a3,a3,t3
+    0.00 :   1084:   bgtz    a0,104e <drotm_k+0x1be>
+    0.00 :   1088:   j       f0e <drotm_k+0x7e>
+         : 182  dh11 = dparam[2];
+    0.00 :   108a:   fld     fa2,8(a5)
+         : 183  dh12 = dparam[4];
+    0.00 :   108c:   fld     fa3,24(a5)
+         : 184  dh21 = dparam[3];
+    0.00 :   108e:   fld     fa4,16(a5)
+         : 185  dh22 = dparam[5];
+    0.00 :   1090:   fld     fa5,32(a5)
+         : 198  vl = VSETVL(n);
+    0.00 :   1092:   vsetvli a5,a0,e64,m8,ta,ma
+         : 200  v_w = VLSEV_FLOAT(&dx[1], stride, vl);
+    0.00 :   1096:   addi    a2,a1,8
+    0.00 :   109a:   vlse64.v        v8,(a2),a6
+         : 201  v_z__ = VLSEV_FLOAT(&dy[1], stride, vl);
+    0.00 :   109e:   addi    a4,a3,8
+    0.00 :   10a2:   vlse64.v        v16,(a4),a6
+         : 197  for (size_t vl; n > 0; n -= vl, dx += vl*i__2, dy += vl*i__2) {
+    0.00 :   10a6:   mul     a7,a5,a6
+    0.00 :   10aa:   sub     a0,a0,a5
+         : 203  v_dx = VFMULVF_FLOAT(v_w, dh11, vl);
+    0.00 :   10ac:   vfmul.vf        v24,v8,fa2
+         : 207  v_dy = VFMULVF_FLOAT(v_w, dh21, vl);
+    0.00 :   10b0:   vfmul.vf        v8,v8,fa4
+         : 204  v_dx = VFMACCVF_FLOAT(v_dx, dh12, v_z__, vl);
+    0.00 :   10b4:   vfmacc.vf       v24,fa3,v16
+         : 208  v_dy = VFMACCVF_FLOAT(v_dy, dh22, v_z__, vl);
+    0.00 :   10b8:   vfmacc.vf       v8,fa5,v16
+         : 197  for (size_t vl; n > 0; n -= vl, dx += vl*i__2, dy += vl*i__2) {
+    0.00 :   10bc:   add     a1,a1,a7
+    0.00 :   10be:   add     a3,a3,a7
+         : 205  VSSEV_FLOAT(&dx[1], stride, v_dx, vl);
+    0.00 :   10c0:   vsse64.v        v24,(a2),a6
+         : 209  VSSEV_FLOAT(&dy[1], stride, v_dy, vl);
+    0.00 :   10c4:   vsse64.v        v8,(a4),a6
+         : 197  for (size_t vl; n > 0; n -= vl, dx += vl*i__2, dy += vl*i__2) {
+    0.00 :   10c8:   bgtz    a0,1092 <drotm_k+0x202>
+    0.00 :   10cc:   j       f0e <drotm_k+0x7e>
+         : 103  dh11 = dparam[2];
+    0.00 :   10ce:   slli    a7,a7,0x3
+    0.00 :   10d0:   slli    a6,a6,0x3
+    0.00 :   10d2:   fld     fa1,8(a5)
+         : 104  dh22 = dparam[5];
+    0.00 :   10d4:   fld     fa2,32(a5)
+         : 105  for (i = 0; i < n; ++i) {
+    0.00 :   10d6:   add     a1,a1,a7
+    0.00 :   10d8:   add     a3,a3,a6
+    0.00 :   10da:   slli    a2,a2,0x3
+    0.00 :   10dc:   slli    a4,a4,0x3
+    0.00 :   10de:   li      a5,0
+         : 106  w = dx[kx];
+    0.00 :   10e0:   fld     fa4,-8(a1)
+         : 107  z = dy[ky];
+    0.00 :   10e4:   fld     fa5,-8(a3)
+         : 105  for (i = 0; i < n; ++i) {
+    0.00 :   10e8:   addi    a5,a5,1
+         : 108  dx[kx] = w * dh11 + z;
+    0.00 :   10ea:   fmadd.d fa3,fa1,fa4,fa5
+         : 109  dy[ky] = -w + dh22 * z;
+    0.00 :   10ee:   fmsub.d fa5,fa2,fa5,fa4
+         : 108  dx[kx] = w * dh11 + z;
+    0.00 :   10f2:   fsd     fa3,-8(a1)
+         : 109  dy[ky] = -w + dh22 * z;
+    0.00 :   10f6:   fsd     fa5,-8(a3)
+         : 105  for (i = 0; i < n; ++i) {
+    0.00 :   10fa:   add     a1,a1,a2
+    0.00 :   10fc:   add     a3,a3,a4
+    0.00 :   10fe:   blt     a5,a0,10e0 <drotm_k+0x250>
+    0.00 :   1102:   j       f0e <drotm_k+0x7e>
+         : 248  dh11 = dparam[2];
+    0.00 :   1104:   fld     fa4,8(a5)
+         : 249  dh22 = dparam[5];
+    0.00 :   1106:   fld     fa5,32(a5)
+         : 253  vl = VSETVL(n);
+    0.00 :   1108:   vsetvli a5,a0,e64,m8,ta,ma
+         : 256  v_z__ = VLSEV_FLOAT(&dy[ky], stride_y, vl);
+    0.00 :   110c:   add     a7,a3,a2
+    0.00 :   1110:   vlse64.v        v16,(a7),a4
+         : 255  v_w = VLSEV_FLOAT(&dx[kx], stride_x, vl);
+    0.00 :   1114:   add     t1,a1,t5
+    0.00 :   1118:   vlse64.v        v8,(t1),a6
+         : 252  for (size_t vl; n > 0; n -= vl, dx += vl*incx, dy += vl*incy) {
+    0.00 :   111c:   mul     t4,a5,a6
+    0.00 :   1120:   sub     a0,a0,a5
+         : 258  v_dx = VFMACCVF_FLOAT(v_z__, dh11, v_w, vl);
+    0.00 :   1122:   vmv8r.v v24,v16
+    0.00 :   1126:   vfmacc.vf       v24,fa4,v8
+         : 259  v_dy = VFMSACVF_FLOAT(v_w, dh22, v_z__, vl);
+    0.00 :   112a:   vfmsac.vf       v8,fa5,v16
+         : 252  for (size_t vl; n > 0; n -= vl, dx += vl*incx, dy += vl*incy) {
+    0.00 :   112e:   mul     t3,a5,a4
+    0.00 :   1132:   add     a1,a1,t4
+         : 261  VSSEV_FLOAT(&dx[kx], stride_x, v_dx, vl);
+    0.00 :   1134:   vsse64.v        v24,(t1),a6
+         : 262  VSSEV_FLOAT(&dy[ky], stride_y, v_dy, vl);
+    0.00 :   1138:   vsse64.v        v8,(a7),a4
+         : 252  for (size_t vl; n > 0; n -= vl, dx += vl*incx, dy += vl*incy) {
+    0.00 :   113c:   add     a3,a3,t3
+    0.00 :   113e:   bgtz    a0,1108 <drotm_k+0x278>
+    0.00 :   1142:   j       f0e <drotm_k+0x7e>
+         : 266  dh11 = dparam[2];
+    0.00 :   1144:   fld     fa2,8(a5)
+         : 267  dh12 = dparam[4];
+    0.00 :   1146:   fld     fa3,24(a5)
+         : 268  dh21 = dparam[3];
+    0.00 :   1148:   fld     fa4,16(a5)
+         : 269  dh22 = dparam[5];
+    0.00 :   114a:   fld     fa5,32(a5)
+         : 273  vl = VSETVL(n);
+    0.00 :   114c:   vsetvli a5,a0,e64,m8,ta,ma
+         : 275  v_w = VLSEV_FLOAT(&dx[kx], stride_x, vl);
+    0.00 :   1150:   add     t1,a1,t5
+    0.00 :   1154:   vlse64.v        v8,(t1),a6
+         : 276  v_z__ = VLSEV_FLOAT(&dy[ky], stride_y, vl);
+    0.00 :   1158:   add     a7,a3,a2
+    0.00 :   115c:   vlse64.v        v16,(a7),a4
+         : 272  for (size_t vl; n > 0; n -= vl, dx += vl*incx, dy += vl*incy) {
+    0.00 :   1160:   mul     t4,a5,a6
+    0.00 :   1164:   sub     a0,a0,a5
+         : 278  v_dx = VFMULVF_FLOAT(v_w, dh11, vl);
+    0.00 :   1166:   vfmul.vf        v24,v8,fa2
+         : 282  v_dy = VFMULVF_FLOAT(v_w, dh21, vl);
+    0.00 :   116a:   vfmul.vf        v8,v8,fa4
+         : 279  v_dx = VFMACCVF_FLOAT(v_dx, dh12, v_z__, vl);
+    0.00 :   116e:   vfmacc.vf       v24,fa3,v16
+         : 283  v_dy = VFMACCVF_FLOAT(v_dy, dh22, v_z__, vl);
+    0.00 :   1172:   vfmacc.vf       v8,fa5,v16
+         : 272  for (size_t vl; n > 0; n -= vl, dx += vl*incx, dy += vl*incy) {
+    0.00 :   1176:   mul     t3,a5,a4
+    0.00 :   117a:   add     a1,a1,t4
+         : 280  VSSEV_FLOAT(&dx[kx], stride_x, v_dx, vl);
+    0.00 :   117c:   vsse64.v        v24,(t1),a6
+         : 284  VSSEV_FLOAT(&dy[ky], stride_y, v_dy, vl);
+    0.00 :   1180:   vsse64.v        v8,(a7),a4
+         : 272  for (size_t vl; n > 0; n -= vl, dx += vl*incx, dy += vl*incy) {
+    0.00 :   1184:   add     a3,a3,t3
+    0.00 :   1186:   bgtz    a0,114c <drotm_k+0x2bc>
+         : 286  L140:
+    0.00 :   118a:   j       f0e <drotm_k+0x7e>

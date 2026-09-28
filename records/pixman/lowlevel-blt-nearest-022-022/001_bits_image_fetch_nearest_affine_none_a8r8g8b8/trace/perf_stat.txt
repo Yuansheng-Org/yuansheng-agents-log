@@ -1,0 +1,33 @@
+21-PIXMAN-BENCHMARK lowlevel-blt-nearest-022-022 RISC-V perf stat
+=================================================================
+
+Source CSV: /workspace/results/21-pixman-benchmark_results.csv
+TestName: lowlevel-blt-nearest-022-022
+Architecture column: PerformanceValue
+
+Raw perf stat metrics
+---------------------
+| Metric | RISC-V value |
+|---|---:|
+| duration_time | 40,057,701,041 |
+| task_clock | 40,035,096,855 |
+| cpu_cycle | 88,055,179,690 |
+| instruction | 140,117,082,131 |
+| IPC | 1.591242 |
+| status | PASSED |
+
+Derived metrics
+---------------
+| Metric | Value |
+|---|---:|
+| duration_s | 40.057701 |
+
+perf stat style summary
+-----------------------
+         40,057,701,041  duration_time
+         40,035,096,855  task_clock
+         88,055,179,690  cpu_cycle
+        140,117,082,131  instruction
+               1.591242  IPC
+                 PASSED  status
+              40.057701  duration_s

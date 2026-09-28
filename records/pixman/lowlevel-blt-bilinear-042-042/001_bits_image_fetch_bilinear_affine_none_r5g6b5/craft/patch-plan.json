@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-pixman-lowlevel-blt-bilinear-042-042-001",
+  "blueprintId": "bp-pixman-lowlevel-blt-bilinear-042-042-001",
+  "createdAt": "2026-09-09T06:14:39.476Z",
+  "objective": "pixman 的 bilinear affine R5G6B5 fetch 以 compiler-generated 标量逐像素流水执行且构建未启用 RVV（build 无 v），在 RVV 1.0/VLEN=256 的 X100 上造成纯 issue/arithmetic 吞吐负担；属于未向量化的 resampling 语义循环（L1）叠加 build/config 缺口（L0）。",
+  "changes": [
+    {
+      "filePath": "pixman/pixman/pixman-fast-path.c",
+      "action": "modify",
+      "rationale": "pixman 的 bilinear affine R5G6B5 fetch 以 compiler-generated 标量逐像素流水执行且构建未启用 RVV（build 无 v），在 RVV 1.0/VLEN=256 的 X100 上造成纯 issue/arithmetic 吞吐负担；属于未向量化的 resampling 语义循环（L1）叠加 build/config 缺口（L0）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 pixman/pixman/pixman-fast-path.c 来解决 blueprint bp-pixman-lowlevel-blt-bilinear-042-042-001。"
+}

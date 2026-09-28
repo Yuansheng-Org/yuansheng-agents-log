@@ -1,0 +1,329 @@
+ Percent |	Source code & Disassembly of libpixman-1.so.0.46.5 for cycles:u (11595 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------------------
+         :
+         : 1     /home/yuansheng-ci/workspaces/runs/20260812-run-9-296d9110de22/results/perf_record/lowlevel-blt-bilinear-042-042/annotate_all/symfs//workspace/build/pixman/libpixman-1.so.0.46.5：     文件格式 elf64-littleriscv
+         :
+         :
+         : 4     Disassembly of section .text:
+         :
+         : 6     000000000002ffbc <bits_image_fetch_bilinear_affine_none_r5g6b5>:
+    0.01 :   2ffbc:  addi    sp,sp,-208
+    0.00 :   2ffbe:  sd      s0,192(sp)
+    0.04 :   2ffc0:  sd      s2,176(sp)
+    0.01 :   2ffc2:  sd      s3,168(sp)
+    0.03 :   2ffc4:  sd      s8,128(sp)
+    0.03 :   2ffc6:  sd      ra,200(sp)
+    0.08 :   2ffc8:  sd      s1,184(sp)
+    0.04 :   2ffca:  sd      s5,152(sp)
+    0.11 :   2ffcc:  sd      s7,136(sp)
+    0.03 :   2ffce:  addi    s0,sp,208
+    0.00 :   2ffd0:  lw      a5,20(a0)
+    0.00 :   2ffd2:  lw      a4,16(a0)
+    0.00 :   2ffd4:  ld      s1,0(a0)
+    0.02 :   2ffd6:  addiw   a3,a5,1
+    0.00 :   2ffda:  sw      a3,20(a0)
+    0.02 :   2ffdc:  slli    a5,a5,0x10
+    0.00 :   2ffde:  lui     a3,0x8
+    0.01 :   2ffe0:  addw    a5,a5,a3
+    0.01 :   2ffe2:  mv      s2,a0
+    0.00 :   2ffe4:  sw      a5,-132(s0)
+    0.00 :   2ffe8:  slli    a4,a4,0x10
+    0.00 :   2ffea:  lui     a5,0x8
+    0.01 :   2ffec:  ld      a0,56(s1)
+    0.00 :   2ffee:  addw    a4,a4,a5
+    0.01 :   2fff0:  auipc   s8,0x4c
+    0.03 :   2fff4:  ld      s8,-40(s8) # 7bfc8 <__stack_chk_guard@GLIBC_2.27>
+    0.02 :   2fff8:  lui     a5,0x10
+    0.00 :   2fffa:  mv      s3,a1
+    0.00 :   2fffc:  sw      a5,-128(s0)
+    0.03 :   30000:  addi    a1,s0,-136
+    0.00 :   30004:  ld      a5,0(s8)
+    0.00 :   30008:  sd      a5,-120(s0)
+    0.02 :   3000c:  li      a5,0
+    0.01 :   3000e:  lw      s5,24(s2)
+    0.00 :   30012:  ld      s7,8(s2)
+    0.01 :   30016:  sw      a4,-136(s0)
+    0.00 :   3001a:  jal     9320 <pixman_transform_point_3d@plt>
+    0.01 :   3001e:  beqz    a0,300fe <bits_image_fetch_bilinear_affine_none_r5g6b5+0x142>
+    0.03 :   30020:  blez    s5,300fe <bits_image_fetch_bilinear_affine_none_r5g6b5+0x142>
+    0.00 :   30024:  li      a2,255
+    0.00 :   30028:  slli    a2,a2,0x18
+    0.00 :   3002a:  addi    a2,a2,255
+    0.00 :   3002e:  slli    a2,a2,0x10
+    0.01 :   30030:  sd      a2,-160(s0)
+    0.00 :   30034:  li      a2,255
+    0.00 :   30038:  slli    a2,a2,0x18
+    0.02 :   3003a:  sd      a2,-168(s0)
+    0.00 :   3003e:  lui     a2,0x10
+    0.00 :   30040:  addi    a2,a2,-1024 # fc00 <fetch_scanline_r8g8b8x8>
+    0.00 :   30044:  sd      s6,144(sp)
+    0.00 :   30046:  sd      s10,112(sp)
+    0.02 :   30048:  sd      s4,160(sp)
+    0.00 :   3004a:  sd      s9,120(sp)
+    0.01 :   3004c:  sd      s11,104(sp)
+    0.00 :   3004e:  sd      a2,-176(s0)
+    0.00 :   30052:  lui     a2,0xff000
+    0.00 :   30056:  ld      a5,56(s1)
+    0.00 :   30058:  addi    a2,a2,255 # ffffffffff0000ff <n_messages.0+0xfffffffffef83de7>
+    0.00 :   3005c:  lw      a3,-136(s0)
+    0.00 :   30060:  lw      a4,-132(s0)
+    0.00 :   30064:  sd      a2,-184(s0)
+    0.00 :   30068:  lui     a2,0x10
+    0.00 :   3006a:  lui     s6,0x8
+    0.00 :   3006c:  slli    t3,s5,0x2
+    0.00 :   30070:  li      s10,255
+    0.00 :   30074:  addi    a2,a2,-256 # ff00 <fetch_scanline_r8g8b8+0x6a>
+    0.00 :   30078:  lw      s4,0(a5) # 10000 <fetch_pixel_r8g8b8+0x38>
+    0.00 :   3007c:  lw      t2,12(a5)
+    0.00 :   30080:  add     t3,t3,s7
+    0.00 :   30082:  mv      a5,s7
+    0.00 :   30084:  subw    a3,a3,s6
+    0.00 :   30088:  subw    a4,a4,s6
+    0.00 :   3008c:  slli    s10,s10,0x20
+    0.00 :   3008e:  sd      a2,-192(s0)
+    0.01 :   30092:  mv      a1,s3
+    0.01 :   30094:  sd      s2,-200(s0)
+    0.00 :   30098:  beqz    s3,300a0 <bits_image_fetch_bilinear_affine_none_r5g6b5+0xe4>
+    0.00 :   3009c:  lw      a2,0(a1)
+    0.00 :   3009e:  beqz    a2,300e0 <bits_image_fetch_bilinear_affine_none_r5g6b5+0x124>
+    0.03 :   300a0:  lw      a7,160(s1)
+    1.38 :   300a4:  lw      t5,164(s1)
+    0.00 :   300a8:  sraiw   a0,a3,0x10
+    0.00 :   300ac:  sraiw   t1,a4,0x10
+    0.02 :   300b0:  slt     a6,a0,a7
+    0.00 :   300b4:  slt     a2,t1,t5
+    0.01 :   300b8:  seqz    a6,a6
+    1.51 :   300bc:  seqz    a2,a2
+    0.01 :   300c0:  or      a2,a2,a6
+    0.01 :   300c4:  addiw   a6,a0,1
+    0.01 :   300c8:  srliw   t4,a6,0x1f
+    0.00 :   300cc:  or      a2,a2,t4
+    1.60 :   300d0:  addiw   t0,t1,1
+    0.00 :   300d4:  bnez    a2,300dc <bits_image_fetch_bilinear_affine_none_r5g6b5+0x120>
+    0.04 :   300d6:  srliw   a2,t0,0x1f
+    1.35 :   300da:  beqz    a2,30126 <bits_image_fetch_bilinear_affine_none_r5g6b5+0x16a>
+    0.00 :   300dc:  sw      zero,0(a5)
+    0.00 :   300e0:  addi    a5,a5,4
+    0.00 :   300e2:  addw    a3,a3,s4
+    0.00 :   300e6:  addw    a4,a4,t2
+    0.00 :   300ea:  addi    a1,a1,4
+    1.66 :   300ec:  bne     a5,t3,30098 <bits_image_fetch_bilinear_affine_none_r5g6b5+0xdc>
+    0.00 :   300f0:  ld      s2,-200(s0)
+    0.06 :   300f4:  ld      s4,160(sp)
+    0.02 :   300f6:  ld      s6,144(sp)
+    0.00 :   300f8:  ld      s9,120(sp)
+    0.00 :   300fa:  ld      s10,112(sp)
+    0.00 :   300fc:  ld      s11,104(sp)
+    0.01 :   300fe:  ld      a4,-120(s0)
+    0.00 :   30102:  ld      a5,0(s8)
+    0.02 :   30106:  xor     a5,a5,a4
+    0.00 :   30108:  li      a4,0
+    0.00 :   3010a:  ld      a0,8(s2)
+    0.00 :   3010e:  bnez    a5,303e0 <bits_image_fetch_bilinear_affine_none_r5g6b5+0x424>
+    0.00 :   30112:  ld      ra,200(sp)
+    0.00 :   30114:  ld      s0,192(sp)
+    0.00 :   30116:  ld      s1,184(sp)
+    0.03 :   30118:  ld      s2,176(sp)
+    0.00 :   3011a:  ld      s3,168(sp)
+    0.00 :   3011c:  ld      s5,152(sp)
+    0.01 :   3011e:  ld      s7,136(sp)
+    0.00 :   30120:  ld      s8,128(sp)
+    0.00 :   30122:  addi    sp,sp,208
+    0.00 :   30124:  ret
+    0.01 :   30126:  sraiw   t6,a3,0x9
+    0.00 :   3012a:  sraiw   t4,a4,0x9
+    0.01 :   3012e:  beqz    t0,303c2 <bits_image_fetch_bilinear_affine_none_r5g6b5+0x406>
+    1.40 :   30132:  lw      a2,184(s1)
+    0.00 :   30136:  ld      s6,168(s1)
+    0.02 :   3013a:  slliw   s2,a0,0x1
+    0.02 :   3013e:  mulw    a2,a2,t1
+    0.00 :   30142:  addiw   t5,t5,-1
+    1.49 :   30144:  lui     s9,0xff000
+    0.01 :   30148:  slli    a2,a2,0x2
+    0.03 :   3014a:  add     a2,a2,s2
+    0.01 :   3014c:  add     s6,s6,a2
+    0.02 :   3014e:  beq     t5,t1,303d2 <bits_image_fetch_bilinear_affine_none_r5g6b5+0x416>
+    1.43 :   30152:  lw      a2,184(s1)
+    0.01 :   30156:  ld      s5,168(s1)
+    0.03 :   3015a:  slliw   t1,a0,0x1
+    1.41 :   3015e:  mulw    a2,a2,t0
+    0.00 :   30162:  lui     t5,0xff000
+    0.01 :   30166:  sd      t5,-152(s0)
+    0.03 :   3016a:  slli    a2,a2,0x2
+    1.47 :   3016c:  add     a2,a2,t1
+    0.00 :   3016e:  add     s5,s5,a2
+    0.06 :   30170:  slliw   t4,t4,0x1
+    0.00 :   30174:  li      a2,256
+    0.00 :   30178:  andi    t4,t4,254
+    0.00 :   3017c:  slliw   t6,t6,0x1
+    0.01 :   30180:  subw    t0,a2,t4
+    1.35 :   30184:  andi    t6,t6,254
+    0.00 :   30188:  li      a2,0
+    0.03 :   3018a:  beqz    a6,30298 <bits_image_fetch_bilinear_affine_none_r5g6b5+0x2dc>
+    1.52 :   3018e:  lhu     s2,0(s6) # 8000 <fast_path_cache+0x8000>
+    0.04 :   30192:  lui     a2,0xf80
+    0.00 :   30196:  lhu     a6,0(s5)
+    1.60 :   3019a:  slliw   s7,s2,0x3
+    0.01 :   3019e:  srliw   t5,s2,0x2
+    0.01 :   301a2:  zext.b  t1,s7
+    0.15 :   301a6:  andi    t5,t5,7
+    0.02 :   301aa:  or      t5,t1,t5
+    0.01 :   301ae:  andi    t1,s2,2016
+    0.00 :   301b2:  slli    t1,t1,0x5
+    0.01 :   301b4:  or      t5,t5,t1
+    1.51 :   301b8:  srliw   t1,s2,0x1
+    0.03 :   301bc:  andi    t1,t1,768
+    0.01 :   301c0:  slliw   s2,s2,0x8
+    0.01 :   301c4:  and     s2,s2,a2
+    0.01 :   301c8:  or      t1,t5,t1
+    1.47 :   301cc:  or      t1,t1,s2
+    0.00 :   301d0:  lui     s2,0x70
+    0.01 :   301d4:  and     s7,s7,s2
+    2.80 :   301d8:  or      t1,t1,s7
+    0.10 :   301dc:  slliw   s7,a6,0x8
+    1.26 :   301e0:  slliw   t5,a6,0x3
+    0.33 :   301e4:  and     s7,s7,a2
+    1.12 :   301e8:  srliw   a2,a6,0x2
+    0.00 :   301ec:  and     s2,t5,s2
+    0.06 :   301f0:  andi    a2,a2,7
+    0.01 :   301f2:  zext.b  t5,t5
+    0.00 :   301f6:  or      t5,t5,a2
+    2.65 :   301fa:  andi    a2,a6,2016
+    0.02 :   301fe:  slli    a2,a2,0x5
+    0.01 :   30200:  srliw   a6,a6,0x1
+    1.23 :   30204:  or      a2,t5,a2
+    0.00 :   30208:  andi    a6,a6,768
+    0.03 :   3020c:  or      a2,a2,a6
+    0.03 :   30210:  or      t5,a2,s7
+    0.29 :   30214:  ld      a2,-152(s0)
+    1.41 :   30218:  or      t1,t1,s9
+    0.00 :   3021c:  or      t5,t5,s2
+    0.00 :   30220:  or      t5,t5,a2
+    0.00 :   30224:  li      s7,255
+    0.00 :   30228:  slli    a2,t1,0x20
+    0.05 :   3022c:  lui     a6,0x10
+    0.00 :   3022e:  slli    s7,s7,0x20
+    2.70 :   30230:  srli    s2,a2,0x10
+    1.28 :   30234:  addi    a6,a6,-256 # ff00 <fetch_scanline_r8g8b8+0x6a>
+    0.00 :   30238:  and     a2,t1,a6
+    0.00 :   3023c:  and     s2,s2,s7
+    1.41 :   30240:  slli    s11,t5,0x20
+    0.03 :   30244:  or      s2,s2,a2
+    0.03 :   30248:  srli    a2,s11,0x10
+    0.05 :   3024c:  and     a6,t5,a6
+    0.03 :   30250:  and     a2,a2,s7
+    1.45 :   30254:  or      a2,a2,a6
+    0.00 :   30258:  li      a6,256
+    0.04 :   3025c:  subw    s7,a6,t6
+    0.06 :   30260:  mulw    s11,t0,s7
+    1.44 :   30264:  lui     a6,0xff000
+    0.02 :   30268:  addi    a6,a6,255 # ffffffffff0000ff <n_messages.0+0xfffffffffef83de7>
+    0.09 :   3026c:  and     t1,t1,a6
+    2.88 :   30270:  and     a6,t5,a6
+    9.99 :   30274:  slli    t1,t1,0x20
+    0.11 :   30276:  slli    a6,a6,0x20
+    0.03 :   30278:  srli    t1,t1,0x20
+    0.14 :   3027c:  srli    a6,a6,0x20
+    0.04 :   30280:  mulw    s7,t4,s7
+    0.03 :   30284:  mul     s2,s2,s11
+    1.52 :   30288:  mul     a2,a2,s7
+    0.00 :   3028c:  mul     t1,t1,s11
+    0.00 :   30290:  add     a2,a2,s2
+    0.02 :   30292:  mul     a6,a6,s7
+    0.00 :   30296:  add     a6,a6,t1
+    0.02 :   30298:  addiw   a7,a7,-1
+    0.11 :   3029a:  beq     a7,a0,303a0 <bits_image_fetch_bilinear_affine_none_r5g6b5+0x3e4>
+    1.44 :   3029e:  lhu     a7,2(s6)
+    0.00 :   302a2:  lhu     t5,2(s5)
+    0.07 :   302a6:  mulw    t4,t6,t4
+    0.00 :   302aa:  slliw   t1,a7,0x3
+    1.50 :   302ae:  srliw   s5,a7,0x2
+    0.00 :   302b2:  andi    s5,s5,7
+    0.00 :   302b6:  zext.b  a0,t1
+    0.00 :   302ba:  or      a0,a0,s5
+    0.03 :   302be:  ld      s5,-176(s0)
+    0.02 :   302c2:  lui     s6,0xf80
+    0.00 :   302c6:  lui     s7,0x70
+    1.50 :   302ca:  and     t1,t1,s7
+    0.01 :   302ce:  mulw    t0,t6,t0
+    0.00 :   302d2:  slliw   t6,a7,0x5
+    0.03 :   302d6:  and     t6,t6,s5
+    0.00 :   302da:  or      a0,a0,t6
+    0.00 :   302de:  srliw   t6,a7,0x1
+    0.03 :   302e2:  andi    t6,t6,768
+    1.40 :   302e6:  slliw   a7,a7,0x8
+    0.03 :   302ea:  or      a0,a0,t6
+    0.00 :   302ee:  and     a7,a7,s6
+    0.01 :   302f2:  or      a0,a0,a7
+    0.02 :   302f6:  or      a0,a0,t1
+    0.01 :   302fa:  or      a0,a0,s9
+    1.62 :   302fe:  ld      s9,-192(s0)
+    0.03 :   30302:  slli    a7,a0,0x20
+    0.01 :   30306:  srli    t1,a7,0x10
+    0.01 :   3030a:  slliw   s2,t5,0x3
+    0.03 :   3030e:  and     a7,a0,s9
+    3.42 :   30312:  srliw   t6,t5,0x2
+    0.02 :   30316:  and     t1,t1,s10
+    0.02 :   3031a:  andi    t6,t6,7
+    0.00 :   3031e:  or      t1,t1,a7
+    2.99 :   30322:  zext.b  a7,s2
+    0.00 :   30326:  or      a7,a7,t6
+    0.07 :   3032a:  slliw   t6,t5,0x5
+    0.00 :   3032e:  and     t6,t6,s5
+    0.00 :   30332:  or      a7,a7,t6
+    0.00 :   30336:  srliw   t6,t5,0x1
+    0.00 :   3033a:  andi    t6,t6,768
+    0.00 :   3033e:  slliw   t5,t5,0x8
+    1.56 :   30342:  or      a7,a7,t6
+    0.05 :   30346:  and     t5,t5,s6
+    0.02 :   3034a:  or      a7,a7,t5
+    0.05 :   3034e:  ld      t5,-152(s0)
+    1.40 :   30352:  and     s2,s2,s7
+    0.02 :   30356:  ld      s11,-184(s0)
+    0.00 :   3035a:  or      a7,a7,s2
+    0.00 :   3035e:  or      a7,a7,t5
+    0.00 :   30362:  slli    s2,a7,0x20
+    3.01 :   30366:  and     t6,a7,s11
+    0.01 :   3036a:  and     a0,a0,s11
+    0.01 :   3036e:  srli    t5,s2,0x10
+    1.57 :   30372:  and     t5,t5,s10
+    1.53 :   30376:  slli    a0,a0,0x20
+    0.00 :   30378:  slli    t6,t6,0x20
+    0.00 :   3037a:  and     a7,a7,s9
+    1.34 :   3037e:  srli    a0,a0,0x20
+    0.05 :   30380:  or      a7,t5,a7
+    0.05 :   30384:  srli    t6,t6,0x20
+    0.02 :   30388:  mul     t5,a0,t0
+    0.08 :   3038c:  mul     t1,t1,t0
+    1.18 :   30390:  mul     a7,a7,t4
+    0.00 :   30394:  mul     a0,t6,t4
+    0.00 :   30398:  add     t1,t1,a7
+    4.53 :   3039a:  add     a2,a2,t1
+    1.54 :   3039c:  add     a0,a0,t5
+    0.00 :   3039e:  add     a6,a6,a0
+    1.48 :   303a0:  ld      a0,-160(s0)
+    0.00 :   303a4:  and     a6,a6,a0
+    0.00 :   303a8:  ld      a0,-168(s0)
+    1.61 :   303ac:  and     a0,a0,a2
+    0.00 :   303ae:  srli    a2,a2,0x10
+    0.04 :   303b0:  or      a6,a6,a0
+    0.01 :   303b4:  and     a2,a2,s10
+    0.00 :   303b8:  or      a2,a2,a6
+    0.00 :   303bc:  srli    a2,a2,0x10
+    5.97 :   303be:  sw      a2,0(a5)
+    0.00 :   303c0:  j       300e0 <bits_image_fetch_bilinear_affine_none_r5g6b5+0x124>
+    0.00 :   303c2:  addiw   t5,t5,-1 # fffffffffeffffff <n_messages.0+0xfffffffffef83ce7>
+    0.00 :   303c4:  li      s9,0
+    0.00 :   303c6:  auipc   s6,0x32
+    0.00 :   303ca:  addi    s6,s6,962 # 62788 <zero>
+    0.00 :   303ce:  bne     t5,t1,30152 <bits_image_fetch_bilinear_affine_none_r5g6b5+0x196>
+    0.00 :   303d2:  sd      zero,-152(s0)
+    0.00 :   303d6:  auipc   s5,0x32
+    0.00 :   303da:  addi    s5,s5,946 # 62788 <zero>
+    0.00 :   303de:  j       30170 <bits_image_fetch_bilinear_affine_none_r5g6b5+0x1b4>
+    0.00 :   303e0:  sd      s4,160(sp)
+    0.00 :   303e2:  sd      s6,144(sp)
+    0.00 :   303e4:  sd      s9,120(sp)
+    0.00 :   303e6:  sd      s10,112(sp)
+    0.00 :   303e8:  sd      s11,104(sp)
+    0.00 :   303ea:  jal     9370 <__stack_chk_fail@plt>

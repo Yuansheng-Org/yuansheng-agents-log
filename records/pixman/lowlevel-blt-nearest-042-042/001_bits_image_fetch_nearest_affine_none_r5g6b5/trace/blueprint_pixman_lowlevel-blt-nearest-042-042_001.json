@@ -1,0 +1,117 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-pixman-lowlevel-blt-nearest-042-042-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-08T09:51:51.096Z",
+    "software": "pixman",
+    "testcaseIds": [
+      "lowlevel-blt-nearest-042-042"
+    ],
+    "diagnosisId": "diag-20260908T095151096Z-1ab162bf",
+    "targetHardware": "SpacemiT X100 (K3)",
+    "repositoryUrl": "https://gitlab.freedesktop.org/pixman/pixman.git",
+    "testBranch": "master",
+    "commitHash": "14735ced17e0053abbb925f9cf18c05ed9f52378"
+  },
+  "problem": {
+    "summary": "pixman 的 rank-001 热点 bits_image_fetch_nearest_affine_none_r5g6b5（r5g6b5→a8r8g8b8 位域展开 fetch）在暴露 RVV 1.0（VLEN=256）的 SpacemiT X100 上以全标量指令执行，转换路径占函数内样本约 65%，且 binary 未以 v 构建、该 fetch 路径无 RVV kernel。",
+    "evidence": [
+      "perf stat（lowlevel-blt-nearest-042-042，44.27s）：cpu_cycle=97,315,570,061；instruction=201,097,812,207；IPC=2.066451；status PASSED",
+      "perf annotate（cycles:u，2854 samples，local period）：位域转换序列 32d96–32dcc 合计约 51.96%（最高行 32da2 and a1,a1,t4 = 20.67%），窄访存 lhu 32d92=4.73% + sw 32dd0=8.48%，转换路径合计约 65.17%",
+      "每像素 repeat=NONE 边界分支簇 32d50–32d7a 约 18%",
+      "build ISA 快照（benchmark ELF Tag_RISCV_arch）无 v；hardware ISA 快照含 v（RVV 1.0）→ hardware 有 v 而 build 无 v 的 L0 baseline finding；pixman/meson.build 仅对 pixman-rvv.c 应用 rvv_flags，pixman-fast-path.c（承载热点）不带 v 编译"
+    ]
+  },
+  "rootCause": {
+    "summary": "固定 bit-field packed decomposition（r5g6b5→a8r8g8b8）在暴露 v 的核上以每像素约 14 条标量 shift/mask/or 逐元素重复执行，叠加每像素 4 次 repeat=NONE 边界分支；贡献载体是 build 未带 v 且 nearest-affine fetch 路径无 RVV kernel（in-tree 已有同构 RVV helper rvv_convert_0565_to_0888_m4 可复用）。",
+    "candidateFiles": [
+      "pixman/pixman/pixman-rvv.c",
+      "pixman/pixman/pixman-riscv.c",
+      "pixman/pixman/pixman-fast-path.c",
+      "pixman/meson.build"
+    ],
+    "performanceFactors": [
+      "RVV Layout and Channel Packing Kernels",
+      "No vectorization (autovec gap / RVV kernel not built)"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "repeat=PIXMAN_REPEAT_NONE 越界像素输出 0x00000000（透明黑），不得 clamp",
+      "每个输出像素与标量 convert_0565_to_0888 逐位一致（packed 整数值直接比较，不得只凭图像显示判断）",
+      "alpha 通道注入 0xff000000（a8r8g8b8 格式），来自 PIXMAN_FORMAT_A(format)?0:0xff000000 合同（pixman-fast-path.c:3055）",
+      "mask 语义：mask==NULL 单路径跳过；mask 非 NULL 时逐像素 32-bit mask 比较",
+      "源图像 rowstride 寻址合同（bits + rowstride*y0 + x0）与 affine 定点坐标递推（x+=ux, y+=uy）语义"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "lowlevel-blt-nearest-042-042"
+    ],
+    "regressionCommand": "agent1 patch_regression --case lowlevel-blt-nearest-042-042"
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.75,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "sampling metadata 仅 local period、函数占 workload 总贡献未知、cache/memory/branch counters 缺失、libpixman-1.so 自身 build ISA 未快照；impact confidence 为 Medium，需先以 USE_RVV 重建并确认 RVV fetcher 被 runtime dispatch 采用后再自动转发",
+    "reasoning": "perf stat 显示 IPC=2.066（201.1G instructions / 97.3G cycles），compute/issue 主导、无内存带宽饱和迹象；perf annotate 2854 samples 中位域转换序列 32d96–32dcc 合计约 51.96%（最高单行 32da2 and a1,a1,t4=20.67%），加窄访存 lhu 4.73% + sw 8.48% 共约 65.17%，证明固定 bit-field packed decomposition 是函数内主导机制；源码 pixman-fast-path.c:3093 convert_r5g6b5 → pixman-private.h:985 convert_0565_to_0888 证实热点为 compiler-generated 标量 565→8888 展开；hardware 快照含 v（RVV 1.0, VLEN=256）而 build ELF attribute 无 v，且 pixman/meson.build:60 仅对 pixman-rvv.c 应用 rvv_flags，pixman-fast-path.c 在任何配置下都不带 v 编译；in-tree pixman-rvv.c:1087 rvv_convert_0565_to_0888_m4 已存在同构 RVV 位域展开 helper 但该 nearest-affine fetch 路径未注册任何 RVV kernel（pixman-rvv.c 仅设置 combine/fill/blt，未注册 iter/fetch）。以上证据共同指向：layout-packing 语义的未向量化标量位域展开 + 该 fetch 路径缺 RVV 实现。",
+    "alternativeExplanations": [
+      "每像素边界分支簇单独是瓶颈：bounds 分支簇 32d50–32d7a 约 18%，若仅做标量分支优化（如循环分段）也可带来部分收益；但转换路径约 65% 仍占主导，且 RVV fetcher 改写会以向量 compare/merge 一并吸收该簇（因果消除测试），故不构成独立根因",
+      "若该构建实际启用了 USE_RVV 而仅 fetch 路径未覆盖，则修复点收敛为在 pixman-rvv.c 新增 fetcher 注册而非全局重建；meson 按文件应用 rvv_flags 使 pixman-fast-path.c 不带 v 编译，此解释与源码证据一致，但 libpixman-1.so 自身 attribute 未在快照，无法完全排除全局未启用 v 的可能",
+      "Sampling IP precision 未知（无 precise_ip/Exact-IP），最高行占比可能含 skid；但结论锚定的是 15 条转换指令的 interval 级份额（约 52%）而非单指令 latency，机制判断不受影响"
+    ],
+    "currentGaps": "percent-type=local period、无 global-period 元数据；函数占 workload 总贡献未知（不能给出 workload 级 Amdahl 上界）；cache/memory/branch counters 缺失（bound type 仅部分确认）；libpixman-1.so 自身 Tag_RISCV_arch 未在快照；Sampling IP precision（precise_ip/Exact-IP）未知；本批次无 ARM/RV 执行对比 ratio，specBaseline 不适用",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认以 USE_RVV（-march 含 v，in-tree 用 rv64gcv1p0）重建的构建策略与 RVV fetcher 在 fast-path/iter 表的注册可达性（_pixman_riscv_get_implementations → _pixman_implementation_create_rvv）；确认 565→8888 展开与 repeat=NONE 越界合并（输出 0）的逐位正确性合同",
+    "affectedTarget": "RV (SpacemiT X100, riscv64) + 测试用例 lowlevel-blt-nearest-042-042",
+    "recommendedFirstAction": "在 pixman/pixman/pixman-rvv.c 新增 bits_image_fetch_nearest_affine_none_r5g6b5 的 RVV fetcher：复用 pixman-rvv.c:1087 rvv_convert_0565_to_0888_m4 的位域展开形态（vle16 窄向量载入 → vand/vsrl/vor 位域分解 → 消费边界 widening 到 u32m4 → vor 注入 0xff000000 → vse32）；每 lane 计算 x0/y0 并用向量 compare + vmerge 实现 repeat=NONE 越界输出 0；在 _pixman_implementation_create_rvv 注册该 fetcher，以 USE_RVV 重建",
+    "recommendedVerification": "重跑 perf record/annotate（lowlevel-blt-nearest-042-042，cycles:u）：确认 32da2/32db6/32dc6/32dd0/32d92 样本份额显著下降且出现 vsetvli/vle16/vse32/vand/vor/vw* 指令；对比重建前后 cycles/instructions/IPC 与 duration；正确性以 packed 整数值逐位比较覆盖 042-042 及同系列 lowlevel-blt 尺寸",
+    "metricEvidence": [
+      {
+        "metric": "cpu_cycle",
+        "rv": 97315570061,
+        "anomalyNote": "perf stat 提供；44.27s 采样窗口；本函数 rank-001，但函数级 workload 贡献未知（baseline_gap: sampling metadata）"
+      },
+      {
+        "metric": "instruction",
+        "rv": 201097812207,
+        "anomalyNote": "perf stat 提供；每像素标量展开约 30 条指令，其中转换路径 15 条 shift/mask/or"
+      },
+      {
+        "metric": "IPC",
+        "rv": 2.066451,
+        "anomalyNote": "perf stat 提供；compute/issue 主导迹象；cache/memory/branch counter 缺失，bound type 仅部分确认"
+      },
+      {
+        "metric": "duration_time (ns)",
+        "rv": 44269635308,
+        "anomalyNote": "perf stat 提供；44.27s；本批次无 ARM/RV 对比 ratio"
+      },
+      {
+        "metric": "转换路径局部样本份额 (cycles:u, local period)",
+        "rv": 0.6517,
+        "anomalyNote": "annotate 计算：转换序列 32d96–32dcc 51.96% + lhu 32d92 4.73% + sw 32dd0 8.48%；最高单行 32da2=20.67%；仅局部份额，非 workload 级"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "bits_image_fetch_nearest_affine_none_r5g6b5",
+        "fileModule": "/home/yuansheng-ci/workspaces/runs/20260812-run-9-296d9110de22/results/perf_record/lowlevel-blt-nearest-042-042/annotate_all/symfs//workspace/build/pixman/libpixman-1.so.0.46.5（源码 pixman-fast-path.c）",
+        "rvvPattern": "RVV Layout and Channel Packing Kernels",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 0.6517,
+        "note": "像素格式 fetch/转换：固定 bit-field packed decomposition（565→8888）+ alpha 注入；每像素 14 条标量 shift/mask/or + 4 次边界分支；rank-001 热点；route High / impact Medium"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "pixman-fast-path.c:3093 convert_r5g6b5 / pixman-private.h:985 convert_0565_to_0888（热点实现）；pixman-rvv.c:1087 rvv_convert_0565_to_0888_m4（in-tree RVV 先例）",
+      "relatedKnowledge": "https://github.com/alibaba/MNN/pull/4079, https://github.com/alibaba/MNN/commit/73bfaa46fe4f9c0e24e0238073f5ab1a94edca6c, https://github.com/alibaba/MNN/pull/4021, https://github.com/alibaba/MNN/commit/0a5ee52e7d209b3b5735419f52dd5dd366657478, https://github.com/opencv/opencv/commit/8a36f119cee5a90c59f03a24f8a6efda3179600a, https://github.com/opencv/opencv/commit/189f64726437a3756329890ea75c8ca5fde46bcf",
+      "evidenceExplanation": "annotate 的 shift/mask/or 主导（32da2/32db6/32dc6）与源码 convert_0565_to_0888 位域展开合同一致；in-tree pixman-rvv.c:1087 已有同构 RVV 位域展开 helper（vand/vwmulu/vwmaccu/vnsrl/vor）证明该合同可向量化；Related PRs（MNN BGR555/BGR565 位域布局、OpenCV RVV layout）提供 packed bit-field layout transform 的 RVV 实现先例"
+    }
+  }
+}

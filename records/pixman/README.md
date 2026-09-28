@@ -10,7 +10,7 @@
 
 ## 已筛选补丁的产物归档
 
-本分支沿用 `add-pixman` 已筛选的 5 个补丁目录，并从 `yuansheng-agent-debug` 补齐对应函数的 Trace 和 Craft 中间产物；未归档该仓库中的其他 pixman 函数。目录按 `records/pixman/<测试用例>/<函数>/` 组织，测试用例名称取自对应 Blueprint 的 `source.testcaseIds`。
+本分支沿用 `add-pixman` 已筛选的 10 个补丁目录，并从 `yuansheng-agent-debug` 补齐对应函数的 Trace 和 Craft 中间产物；未归档该仓库中的其他 pixman 函数。目录按 `records/pixman/<测试用例>/<函数>/` 组织，测试用例名称取自对应 Blueprint 的 `source.testcaseIds`。其中 5 个目录（`001_bits_image_fetch_bilinear_affine_none_r5g6b5`、`001_bits_image_fetch_nearest_affine_none_a8r8g8b8`、`001_bits_image_fetch_nearest_affine_none_r5g6b5`、`002_bits_image_fetch_affine_no_alpha`、`004_fast_fetch_r5g6b5`）为本次新增，其原有 `craft/patch.diff`、`review/patch.diff` 和 `review/performance-comparison.md` 一并迁入；这 5 项尚无上游提交记录，故不改变上方截图历史汇总。
 
 | 补丁目录 | 原始测试用例 | Blueprint ID |
 | --- | --- | --- |
@@ -19,6 +19,11 @@
 | [001_rvv_composite_over_n_8888_8888_ca](lowlevel-blt-bilinear-094-094/001_rvv_composite_over_n_8888_8888_ca/) | `lowlevel-blt-bilinear-094-094` | `bp-pixman-lowlevel-blt-bilinear-094-094-001` |
 | [002_fast_fetch_bilinear_cover](affine-bench-bilinear-scale-2x/002_fast_fetch_bilinear_cover/) | `affine-bench-bilinear-scale-2x` | `bp-pixman-affine-bench-bilinear-scale-2x-002` |
 | [007_fetch_scanline_a8](lowlevel-blt-bilinear-068-068/007_fetch_scanline_a8/) | `lowlevel-blt-bilinear-068-068` | `bp-pixman-lowlevel-blt-bilinear-068-068-007` |
+| [001_bits_image_fetch_bilinear_affine_none_r5g6b5](lowlevel-blt-bilinear-042-042/001_bits_image_fetch_bilinear_affine_none_r5g6b5/) | `lowlevel-blt-bilinear-042-042` | `bp-pixman-lowlevel-blt-bilinear-042-042-001` |
+| [001_bits_image_fetch_nearest_affine_none_a8r8g8b8](lowlevel-blt-nearest-022-022/001_bits_image_fetch_nearest_affine_none_a8r8g8b8/) | `lowlevel-blt-nearest-022-022` | `bp-pixman-lowlevel-blt-nearest-022-022-001` |
+| [001_bits_image_fetch_nearest_affine_none_r5g6b5](lowlevel-blt-nearest-042-042/001_bits_image_fetch_nearest_affine_none_r5g6b5/) | `lowlevel-blt-nearest-042-042` | `bp-pixman-lowlevel-blt-nearest-042-042-001` |
+| [002_bits_image_fetch_affine_no_alpha](lowlevel-blt-bilinear-117-117/002_bits_image_fetch_affine_no_alpha/) | `lowlevel-blt-bilinear-117-117` | `bp-pixman-lowlevel-blt-bilinear-117-117-002` |
+| [004_fast_fetch_r5g6b5](lowlevel-blt-bilinear-041-041/004_fast_fetch_r5g6b5/) | `lowlevel-blt-bilinear-041-041` | `bp-pixman-lowlevel-blt-bilinear-041-041-004` |
 
-每个补丁目录中，`trace/` 保留 Agent Debug 的函数级原始文件；`craft/` 保留原有 `patch.diff`，新增 `patch-plan.json`、`patch-candidate.json` 和 `reviews/` 中的 AI 审核产物；顶层 `review/*.patch` 是 `add-pixman` 已有的专家调整后补丁。归档时核对了原有 `craft/patch.diff` 与 Agent Debug 对应文件的字节内容，以及 Blueprint → Plan → Candidate → AI Review 的 ID 引用。
+每个补丁目录中，`trace/` 保留 Agent Debug 的函数级原始文件；`craft/` 保留原有 `patch.diff`，新增 `patch-plan.json`、`patch-candidate.json` 和 `reviews/` 中的 AI 审核产物；顶层 `review/` 是专家调整后的补丁，`add-pixman` 早期 5 项以 `review/<函数名>.patch` 命名，本次新增的 5 项沿用其原有命名 `review/patch.diff`。归档时核对了原有 `craft/patch.diff` 与 Agent Debug 对应文件的字节内容，以及 Blueprint → Plan → Candidate → AI Review 的 ID 引用。
 

@@ -7,13 +7,13 @@
 ## 1. 当前资料概述
 
 - 资料登记日期：2026-09-08至2026-09-24。
-- 19 款软件的已筛选产物按“测试用例 → 函数”归档，共 94 个函数目录（Faiss 的 8 个目录本次已补归档测例层级与 Trace）。下方总表登记本仓库归档的有效复核补丁，具体产物见各软件 README。
+- 19 款软件的已筛选产物按“测试用例 → 函数”归档，共 101 个函数目录（Faiss 的 8 个目录此前已补归档测例层级与 Trace；Pixman 另有 5 个目录本次由单层改为 `<测试用例>/<函数>` 两层）。下方总表登记本仓库归档的有效复核补丁，具体产物见各软件 README。
 
 19款软件的测试原始记录为：测试用例 **545**、分析热点函数 **2229**、Craft成功生成补丁 **534**。
 
 ## 2. 开源专家复核有效补丁追踪总表
 
-本表按“每个开源专家复核有效补丁一行”登记，目前共 **95 行**：已有上游提交链接的 67 行，暂未记录 PR 链接的 28 行。
+本表按“每个开源专家复核有效补丁一行”登记，目前共 **101 行**：已有上游提交链接的 67 行，暂未记录 PR 链接的 34 行。
 
 - “未提PR”表示本表暂无对应 PR 链接，不推断是否通过邮件等其他渠道提交；缺失的 Trace、测例或原始 Craft 补丁按归档现状标明。
 - “性能提升”记录复核材料中可核对的测试范围及数值，局部内核或微基准结果不代表整项软件的端到端收益；未记录量化结果的补丁不推定有性能提升。
@@ -98,7 +98,7 @@
 | 66 | [MXNet](records/mxnet/README.md) | [category-misc](records/mxnet/category-misc/) | [003_mxnet_op_mxnet_op_Kernel_mxnet_op_cumsum_forward_mshadow_cpu_Lau](records/mxnet/category-misc/003_mxnet_op_mxnet_op_Kernel_mxnet_op_cumsum_forward_mshadow_cpu_Lau/) | [诊断日志](records/mxnet/category-misc/003_mxnet_op_mxnet_op_Kernel_mxnet_op_cumsum_forward_mshadow_cpu_Lau/trace/diaglog_mxnet-opperf_category-misc_003.md) | [原始补丁](records/mxnet/category-misc/003_mxnet_op_mxnet_op_Kernel_mxnet_op_cumsum_forward_mshadow_cpu_Lau/craft/patch.diff) | [复核补丁](records/mxnet/category-misc/003_mxnet_op_mxnet_op_Kernel_mxnet_op_cumsum_forward_mshadow_cpu_Lau/reviews/003_mxnet_op_mxnet_op_Kernel_mxnet_op_cumsum_forward_mshadow_cpu_Lau.patch) | [PR #14](https://github.com/RuyiAI-Stack/mxnet/pull/14) | cumsum 中位耗时降低 90.57%（10.61×）（[数据](records/mxnet/category-misc/003_mxnet_op_mxnet_op_Kernel_mxnet_op_cumsum_forward_mshadow_cpu_Lau/reviews/003_mxnet_op_mxnet_op_Kernel_mxnet_op_cumsum_forward_mshadow_cpu_Lau.md)） |
 | 67 | [MXNet](records/mxnet/README.md) | [category-activation](records/mxnet/category-activation/) | [003_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_tru](records/mxnet/category-activation/003_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_tru/) | [诊断日志](records/mxnet/category-activation/003_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_tru/trace/diaglog_mxnet_category-activation_003.md) | [原始补丁](records/mxnet/category-activation/003_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_tru/craft/patch.diff) | [复核补丁](records/mxnet/category-activation/003_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_tru/reviews/003_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_tru.patch) | [PR #15](https://github.com/RuyiAI-Stack/mxnet/pull/15) | Softmax 中位耗时降低 72.48%（3.63×）（[数据](records/mxnet/category-activation/003_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_tru/reviews/003_void_mxnet_op_mxnet_op_Softmax_mxnet_op_mxnet_op_softmax_fwd_tru.md)） |
 
-### 未提 PR（28 条）
+### 未提 PR（34 条）
 
 | 序号  | 被测软件                                                   | 测试用例 | 热点函数 | Trace 日志 | Craft 补丁生成 | 开源专家复核有效补丁  | 上游社区提交   | 性能提升 |
 | ---:| ------------------------------------------------------ | ---- | ---- | -------- | ---------- | ----------- | -------- | -------- |
@@ -130,10 +130,16 @@
 | 93 | [Caffe](records/caffe/README.md) | [bvlc_alexnet](records/caffe/bvlc_alexnet/) | [004_im2col_cpu](records/caffe/bvlc_alexnet/004_im2col_cpu/) | [诊断日志](records/caffe/bvlc_alexnet/004_im2col_cpu/trace/diaglog_caffe-b_bvlc_alexnet_004.md) | [原始补丁](records/caffe/bvlc_alexnet/004_im2col_cpu/craft/patch.diff) | [复核补丁](records/caffe/bvlc_alexnet/004_im2col_cpu/review/patch-opt.diff) | 未提PR | CaffeNet 整体中位耗时降低 1.90%（[数据](records/caffe/bvlc_alexnet/004_im2col_cpu/review/pr_description.md)） |
 | 94 | [Caffe](records/caffe/README.md) | [bvlc_alexnet](records/caffe/bvlc_alexnet/) | [006_caffe_PoolingLayer_float_Forward_cpu](records/caffe/bvlc_alexnet/006_caffe_PoolingLayer_float_Forward_cpu/) | [诊断日志](records/caffe/bvlc_alexnet/006_caffe_PoolingLayer_float_Forward_cpu/trace/diaglog_caffe-b_bvlc_alexnet_006.md) | [原始补丁](records/caffe/bvlc_alexnet/006_caffe_PoolingLayer_float_Forward_cpu/craft/patch.diff) | [复核补丁](records/caffe/bvlc_alexnet/006_caffe_PoolingLayer_float_Forward_cpu/review/patch-opt.diff) | 未提PR | CaffeNet 整体中位耗时降低 1.71%（[数据](records/caffe/bvlc_alexnet/006_caffe_PoolingLayer_float_Forward_cpu/review/pr_description.md)） |
 | 95 | [Caffe](records/caffe/README.md) | [bvlc_alexnet](records/caffe/bvlc_alexnet/) | [011_void_vPowx_float_int_float_const_float_float](records/caffe/bvlc_alexnet/011_void_vPowx_float_int_float_const_float_float/) | [诊断日志](records/caffe/bvlc_alexnet/011_void_vPowx_float_int_float_const_float_float/trace/diaglog_caffe-b_bvlc_alexnet_011.md) | [原始补丁](records/caffe/bvlc_alexnet/011_void_vPowx_float_int_float_const_float_float/craft/patch.diff) | [复核补丁](records/caffe/bvlc_alexnet/011_void_vPowx_float_int_float_const_float_float/review/patch-opt-best.diff) | 未提PR | CaffeNet 整体中位耗时降低 2.62%（[数据](records/caffe/bvlc_alexnet/011_void_vPowx_float_int_float_const_float_float/review/pr_description.md)） |
+| 96 | [pixman](records/pixman/README.md) | [lowlevel-blt-bilinear-042-042](records/pixman/lowlevel-blt-bilinear-042-042/) | [001_bits_image_fetch_bilinear_affine_none_r5g6b5](records/pixman/lowlevel-blt-bilinear-042-042/001_bits_image_fetch_bilinear_affine_none_r5g6b5/) | [诊断日志](records/pixman/lowlevel-blt-bilinear-042-042/001_bits_image_fetch_bilinear_affine_none_r5g6b5/trace/diaglog_pixman_lowlevel-blt-bilinear-042-042_001.md) | [原始补丁](records/pixman/lowlevel-blt-bilinear-042-042/001_bits_image_fetch_bilinear_affine_none_r5g6b5/craft/patch.diff) | [复核补丁](records/pixman/lowlevel-blt-bilinear-042-042/001_bits_image_fetch_bilinear_affine_none_r5g6b5/review/patch.diff) | 未提PR | L1 场景：提升 166.20%（[数据](records/pixman/lowlevel-blt-bilinear-042-042/001_bits_image_fetch_bilinear_affine_none_r5g6b5/review/performance-comparison.md)） |
+| 97 | [pixman](records/pixman/README.md) | [lowlevel-blt-nearest-022-022](records/pixman/lowlevel-blt-nearest-022-022/) | [001_bits_image_fetch_nearest_affine_none_a8r8g8b8](records/pixman/lowlevel-blt-nearest-022-022/001_bits_image_fetch_nearest_affine_none_a8r8g8b8/) | [诊断日志](records/pixman/lowlevel-blt-nearest-022-022/001_bits_image_fetch_nearest_affine_none_a8r8g8b8/trace/diaglog_pixman_lowlevel-blt-nearest-022-022_001.md) | [原始补丁](records/pixman/lowlevel-blt-nearest-022-022/001_bits_image_fetch_nearest_affine_none_a8r8g8b8/craft/patch.diff) | [复核补丁](records/pixman/lowlevel-blt-nearest-022-022/001_bits_image_fetch_nearest_affine_none_a8r8g8b8/review/patch.diff) | 未提PR | L1 场景：提升 71.08%（[数据](records/pixman/lowlevel-blt-nearest-022-022/001_bits_image_fetch_nearest_affine_none_a8r8g8b8/review/performance-comparison.md)） |
+| 98 | [pixman](records/pixman/README.md) | [lowlevel-blt-nearest-042-042](records/pixman/lowlevel-blt-nearest-042-042/) | [001_bits_image_fetch_nearest_affine_none_r5g6b5](records/pixman/lowlevel-blt-nearest-042-042/001_bits_image_fetch_nearest_affine_none_r5g6b5/) | [诊断日志](records/pixman/lowlevel-blt-nearest-042-042/001_bits_image_fetch_nearest_affine_none_r5g6b5/trace/diaglog_pixman_lowlevel-blt-nearest-042-042_001.md) | [原始补丁](records/pixman/lowlevel-blt-nearest-042-042/001_bits_image_fetch_nearest_affine_none_r5g6b5/craft/patch.diff) | [复核补丁](records/pixman/lowlevel-blt-nearest-042-042/001_bits_image_fetch_nearest_affine_none_r5g6b5/review/patch.diff) | 未提PR | L1 场景：提升 121.02%（[数据](records/pixman/lowlevel-blt-nearest-042-042/001_bits_image_fetch_nearest_affine_none_r5g6b5/review/performance-comparison.md)） |
+| 99 | [pixman](records/pixman/README.md) | [lowlevel-blt-bilinear-117-117](records/pixman/lowlevel-blt-bilinear-117-117/) | [002_bits_image_fetch_affine_no_alpha](records/pixman/lowlevel-blt-bilinear-117-117/002_bits_image_fetch_affine_no_alpha/) | [诊断日志](records/pixman/lowlevel-blt-bilinear-117-117/002_bits_image_fetch_affine_no_alpha/trace/diaglog_pixman_lowlevel-blt-bilinear-117-117_002.md) | [原始补丁](records/pixman/lowlevel-blt-bilinear-117-117/002_bits_image_fetch_affine_no_alpha/craft/patch.diff) | [复核补丁](records/pixman/lowlevel-blt-bilinear-117-117/002_bits_image_fetch_affine_no_alpha/review/patch.diff) | 未提PR | M 场景：提升 3.00%，R 场景 3.67%，其余测点接近持平（[数据](records/pixman/lowlevel-blt-bilinear-117-117/002_bits_image_fetch_affine_no_alpha/review/performance-comparison.md)） |
+| 100 | [pixman](records/pixman/README.md) | [lowlevel-blt-bilinear-041-041](records/pixman/lowlevel-blt-bilinear-041-041/) | [004_fast_fetch_r5g6b5](records/pixman/lowlevel-blt-bilinear-041-041/004_fast_fetch_r5g6b5/) | [诊断日志](records/pixman/lowlevel-blt-bilinear-041-041/004_fast_fetch_r5g6b5/trace/diaglog_pixman_lowlevel-blt-bilinear-041-041_004.md) | [原始补丁](records/pixman/lowlevel-blt-bilinear-041-041/004_fast_fetch_r5g6b5/craft/patch.diff) | [复核补丁](records/pixman/lowlevel-blt-bilinear-041-041/004_fast_fetch_r5g6b5/review/patch.diff) | 未提PR | L1 场景：提升 67.05%（[数据](records/pixman/lowlevel-blt-bilinear-041-041/004_fast_fetch_r5g6b5/review/performance-comparison.md)） |
+| 101 | [OpenBLAS](records/openblas/README.md) | [drotm_1048576](records/openblas/drotm_1048576/) | [001_drotm_k](records/openblas/drotm_1048576/001_drotm_k/) | [诊断日志](records/openblas/drotm_1048576/001_drotm_k/trace/diaglog_openblas_drotm_1048576_001.md) | [原始补丁](records/openblas/drotm_1048576/001_drotm_k/craft/patch.diff) | [复核补丁](records/openblas/drotm_1048576/001_drotm_k/review/patch.diff) | 未提PR | 512 规模 drotm 提升 65.57%、srotm 提升 222.42%（[数据](records/openblas/drotm_1048576/001_drotm_k/review/performance-comparison.md)） |
 
 ## 3. 已筛选产物索引
 
-下表按当前归档目录计数；它与上方追踪总表中的复核补丁统计口径不同。Pixman 和 OpenBLAS 整理分支分别保留 5 项、7 项，均少于对应 `add-*` 分支的 6 项、9 项。
+下表按当前归档目录计数；它与上方追踪总表中的复核补丁统计口径不同。Pixman 和 OpenBLAS 整理分支分别保留 10 项、8 项，对应 `add-pixman`、`add-openblas` 分支分别有 6 项、9 项。
 
 | 软件 | 已归档函数目录 | 软件记录 |
 | --- | ---: | --- |
@@ -146,11 +152,11 @@
 | MXNet | 15 | [记录](records/mxnet/README.md) |
 | oneDNN | 12 | [记录](records/onednn/README.md) |
 | ONNX Runtime | 2 | [记录](records/onnxruntime/README.md) |
-| OpenBLAS | 7 | [记录](records/openblas/README.md) |
+| OpenBLAS | 8 | [记录](records/openblas/README.md) |
 | OpenCV | 10 | [记录](records/opencv/README.md) |
 | OpenJDK | 1 | [记录](records/openjdk/README.md) |
 | OpenSSL | 3 | [记录](records/openssl/README.md) |
-| Pixman | 5 | [记录](records/pixman/README.md) |
+| Pixman | 10 | [记录](records/pixman/README.md) |
 | PostgreSQL | 2 | [记录](records/postgresql/README.md) |
 | PyTorch | 1 | [记录](records/pytorch/README.md) |
 | Redis | 4 | [记录](records/redis/README.md) |

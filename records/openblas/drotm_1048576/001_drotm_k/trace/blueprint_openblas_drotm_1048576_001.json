@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "yuansheng.root_cause_blueprint.v1",
+  "blueprintId": "bp-openblas-drotm_1048576-001",
+  "source": {
+    "agent": "trace",
+    "createdAt": "2026-09-22T03:15:51.569Z",
+    "software": "openblas",
+    "testcaseIds": [
+      "drotm_1048576"
+    ],
+    "diagnosisId": "diag-20260922T031551569Z-365b5dd5",
+    "targetHardware": "SpacemiT X100 (K3)",
+    "repositoryUrl": "https://github.com/OpenMathLib/OpenBLAS.git",
+    "testBranch": "develop",
+    "commitHash": "70c2410f17b60575f34dbb7eac88d16a9f485861"
+  },
+  "problem": {
+    "summary": "drotm_1048576 基准（drotm.goto）在 SpacemiT X100 上 workload 级 IPC 仅 0.19，热点函数 drotm_k 的全部 280 个局部样本集中在 dflag>0 向量主循环（e64,m8），每迭代约 368 cycles。主循环 load→FMA→store 严格串行、单一 m8 block 无跨迭代重叠，访存延迟完全暴露，向量计算单元几乎全程空闲。",
+    "evidence": [
+      "perf stat: IPC=0.1916（1,260,598,346 cycles / 241,496,074 instructions），L1_dcache_load_miss_rate=4.813%，branch_miss_rate=0.449%，benchmark_ms=5.539",
+      "perf annotate: drotm_k 全部 280/280 局部样本落在 dflag>0 主循环区间 0xf6e-0xfa4（f7e addi 46.07%、f86 mul 31.43%、fa0 vsse64.v 10.36%、fa4 bgtz 11.79%、f94 vfmsac 0.36%）",
+      "源码证据: kernel/riscv64/rotm_rvv.c L30 路径硬编码 e64,m8、恒用 VLSEV/VSSEV（stride=8 单步长仍走 vlse64.v），KERNEL.RISCV64_ZVL256B 已正确选中该 RVV 内核"
+    ]
+  },
+  "rootCause": {
+    "summary": "drotm_k 的 RVV 主循环以单一 m8 register group 每轮只处理一个 32-double block，load/FMA/store 串行且寄存器组跨迭代复用导致零重叠；m8 单组占用 24/32 个向量寄存器，架构上无法再容纳第二组做双缓冲，访存延迟逐迭代暴露（IPC 0.19、每迭代≈368 cycles）。",
+    "candidateFiles": [
+      "kernel/riscv64/rotm_rvv.c"
+    ],
+    "performanceFactors": [
+      "Register-Budgeted RVV Loop Unrolling"
+    ]
+  },
+  "constraints": {
+    "riskLevel": "medium",
+    "mustPreserve": [
+      "BLAS DROTM 数值语义：每元素 dx'=dy+dh11*dx、dy'=dx-dh22*dy，FMA 融合运算逐元素保持（NaN/±0/rounding 不变）",
+      "函数签名与公共 API（drotm_k 的 BLASLONG/FLOAT 接口）",
+      "incx/incy 任意步长（含负 stride）路径与 runtime-VL tail 的精确元素覆盖"
+    ]
+  },
+  "validation": {
+    "requiredTests": [
+      "drotm_1048576",
+      "srotm_1048576"
+    ]
+  },
+  "diagnosis": {
+    "overallStatus": "probable",
+    "finalStatus": "probable_root_cause",
+    "overallConfidence": 0.82,
+    "recommendToCraft": "conditional",
+    "allowAutoForwardToCraft": false,
+    "blockReason": "需要 Craft 侧在 SpacemiT X100 上对 rotm_rvv.c L30 主循环的 m4×unroll2 多组重叠 + fixed-VL + stride==8 时 vle64/vse64 做 A/B 实测确认（当前 sampling IP precision、build ISA 无 ELF、X100 上 vlse-vs-vle 吞吐均未实测，impact 为 Medium）。",
+    "reasoning": "perf stat 显示 workload 级 IPC 仅 0.1916 且 32768 次迭代每迭代约 368 cycles（11 条指令），而 FMA 指令样本合计仅 0.36%，证明计算单元空闲、访存延迟主导（memory-latency-bound）；perf annotate 显示 drotm_k 全部 280 局部样本集中在 dflag>0 主循环，77.5% 落在两条 vlse64 周围标量指令（f7e 46.07%/f86 31.43%）即 load stall shadow；源码 kernel/riscv64/rotm_rvv.c L30 证实 LMUL=m8 硬编码单 block、恒用 strided 访存、每迭代重算 vsetvli，而 KERNEL.RISCV64_ZVL256B 已将 DROTMKERNEL 指向 rotm_rvv.c（无 kernel-selection 问题）。命中 Register-Budgeted RVV Loop Unrolling pattern（L4），修复方向为 m4×unroll2（或 m2×unroll4）多独立组重叠 + fixed-VL 主循环 + runtime-VL tail。",
+    "rootCauseType": "code_path",
+    "alternativeExplanations": [
+      "X100 微架构对 vlse64（strided gather 形态）的吞吐低于 unit-stride vle64，stride==8 的连续数据走 strided 访存指令放大每迭代延迟（已并入主修复实现细节，自身未通过独立 row gate）",
+      "硬件 prefetcher 不识别 strided 访存流，导致每迭代暴露 L2/DRAM 延迟而无法预取（与主因同机制）",
+      "内存带宽限制（16MB 工作集 / 5.5ms ≈ 3GB/s 远低于 X100 带宽能力，已由数据排除）"
+    ],
+    "currentGaps": "baseline_gap: build ISA（本 run 无 ELF binary，Tag_RISCV_arch 未直接读取，反汇编 v* + KERNEL.RISCV64_ZVL256B 间接确认含 v）；baseline_gap: sampling metadata（percent type=local period、函数 workload 贡献未正式记录，不做 workload 级 Amdahl 上界）；baseline_gap: sampling IP precision（无 precise_ip，单行样本只锚定 loop interval）；X100 上 m4×2/m2×4 unroll 与 vle-vs-vlse 吞吐无 A/B 实测（RISCV_HWPROBE_KEY_MISALIGNED_VECTOR_PERF 未读取）；无 ARM 侧对照数据",
+    "needsHumanReview": true,
+    "humanReviewFocus": "确认在 SpacemiT X100 上对 rotm_rvv.c L30 主循环的 m4×unroll2 多组重叠 + fixed-VL + stride==8 用 vle64/vse64 做 A/B 实测（IPC/mflops），并验证非 unit-stride 路径与全部 tail 长度的正确性；重建时以 readelf -A 核对 Tag_RISCV_arch 确认 build ISA。",
+    "affectedTarget": "RV + drotm_1048576",
+    "recommendedFirstAction": "kernel/riscv64/rotm_rvv.c 的 L30（dflag>0）主循环：将 e64,m8 单 block 改为 m4×unroll2（或 m2×unroll4）双 block 独立寄存器组并提前发射两 block 的 load，vsetvli hoist 出主循环（fixed-VL main loop），stride==8 时改用 vle64.v/vse64.v，保留 runtime-VL tail 精确覆盖剩余元素",
+    "recommendedVerification": "以相同 -march 重建后重跑 drotm_1048576 基准并复采 perf annotate：f7e/f86 shadow 样本应大幅坍缩、fa4 bgtz 份额减半、主循环内 vsetvli/mul 消失；perf stat 确认 IPC 从 0.19 显著上升、official_mflops 从 1135.83 上升；覆盖 n=0/小 n/step 整倍数/全部 tail 长度、非 unit-stride（incx≠1）路径回归及 NaN/±0 数值语义",
+    "metricEvidence": [
+      {
+        "metric": "benchmark_ms",
+        "rv": 5.539,
+        "anomalyNote": "drotm_1048576 完成 1,048,576 元素 modified Givens rotation 耗时 5.539ms"
+      },
+      {
+        "metric": "IPC",
+        "rv": 0.1916,
+        "anomalyNote": "workload 级 IPC 仅 0.19，远低于 OoO 核健康值（>0.7），主循环每迭代约 368 cycles（11 条指令），访存延迟主导"
+      },
+      {
+        "metric": "L1_dcache_load_miss_rate(%)",
+        "rv": 4.813,
+        "anomalyNote": "L1 dcache load miss 率 4.8%，m8 strided load 每条 256B 跨 4 个 cache line，miss 时暴露完整访存延迟"
+      },
+      {
+        "metric": "branch_miss_rate(%)",
+        "rv": 0.449,
+        "anomalyNote": "分支缺失率 0.45% 正常，排除 branch-bound"
+      }
+    ],
+    "hotspotEvidence": [
+      {
+        "hotspotFunction": "drotm_k",
+        "fileModule": "kernel/riscv64/rotm_rvv.c",
+        "rvvPattern": "Register-Budgeted RVV Loop Unrolling",
+        "patternConfidence": "HIGH",
+        "benefitUpperbound": 1,
+        "note": "BLAS Level-1 modified Givens rotation（DROTM）double kernel，内存密集流式访存；280/280 局部样本全在 dflag>0 向量主循环区间"
+      }
+    ],
+    "codeKnowledgeEvidence": {
+      "relatedCodeLocation": "kernel/riscv64/rotm_rvv.c:154-179（L30 主循环）",
+      "relatedKnowledge": "https://github.com/google/XNNPACK/commit/0c7b565c2fc1debcb12a4dc8941a56c9f0ced6fe ; https://github.com/google/XNNPACK/pull/10403",
+      "evidenceExplanation": "XNNPACK 的 RVV 循环展开提交（depthwise-conv unroll 与 FP16 unary u2v→u8v）证明多 block/多独立寄存器组展开可显著降低 loop-control 开销并隐藏访存延迟；rotm_rvv.c 当前 m8 单 block 串行结构正是该 pattern 的修复对象"
+    }
+  }
+}

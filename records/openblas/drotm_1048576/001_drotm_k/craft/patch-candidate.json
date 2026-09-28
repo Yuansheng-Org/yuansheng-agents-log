@@ -1,0 +1,13 @@
+{
+  "archReviewWarning": "",
+  "schemaVersion": "yuansheng.patch_candidate.v1",
+  "patchCandidateId": "pc-bp-openblas-drotm-1048576-001",
+  "patchPlanId": "pp-bp-openblas-drotm-1048576-001",
+  "createdAt": "2026-09-22T08:00:11.347Z",
+  "changedFiles": [
+    "kernel/riscv64/rotm_rvv.c"
+  ],
+  "gitDiff": "diff --git a/kernel/riscv64/rotm_rvv.c b/kernel/riscv64/rotm_rvv.c\nindex 3c72faee2..58ea665bf 100644\n--- a/kernel/riscv64/rotm_rvv.c\n+++ b/kernel/riscv64/rotm_rvv.c\n@@ -32,6 +32,8 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n #define FLOAT_V_T               vfloat32m8_t\n #define VLSEV_FLOAT             __riscv_vlse32_v_f32m8\n #define VSSEV_FLOAT             __riscv_vsse32_v_f32m8\n+#define VLEV_FLOAT              __riscv_vle32_v_f32m8\n+#define VSEV_FLOAT              __riscv_vse32_v_f32m8\n #define VFMACCVF_FLOAT          __riscv_vfmacc_vf_f32m8\n #define VFMULVF_FLOAT           __riscv_vfmul_vf_f32m8\n #define VFMSACVF_FLOAT          __riscv_vfmsac_vf_f32m8\n@@ -40,6 +42,8 @@ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n #define FLOAT_V_T               vfloat64m8_t\n #define VLSEV_FLOAT             __riscv_vlse64_v_f64m8\n #define VSSEV_FLOAT             __riscv_vsse64_v_f64m8\n+#define VLEV_FLOAT              __riscv_vle64_v_f64m8\n+#define VSEV_FLOAT              __riscv_vse64_v_f64m8\n #define VFMACCVF_FLOAT          __riscv_vfmacc_vf_f64m8\n #define VFMULVF_FLOAT           __riscv_vfmul_vf_f64m8\n #define VFMSACVF_FLOAT          __riscv_vfmsac_vf_f64m8\n@@ -165,6 +169,21 @@ L30:\n     }\n     stride = i__1 * sizeof(FLOAT);\n     n = i__2  / i__1;\n+    if (i__1 == 1) {\n+        for (size_t vl; n > 0; n -= vl, dx += vl, dy += vl) {\n+            vl = VSETVL(n);\n+\n+            v_w = VLEV_FLOAT(&dx[1], vl);\n+            v_z__ = VLEV_FLOAT(&dy[1], vl);\n+\n+            v_dx = VFMACCVF_FLOAT(v_z__, dh11, v_w, vl);\n+            v_dy = VFMSACVF_FLOAT(v_w, dh22, v_z__, vl);\n+\n+            VSEV_FLOAT(&dx[1], v_dx, vl);\n+            VSEV_FLOAT(&dy[1], v_dy, vl);\n+        }\n+        goto L140;\n+    }\n     for (size_t vl; n > 0; n -= vl, dx += vl*i__1, dy += vl*i__1) {\n         vl = VSETVL(n);\n \n",
+  "buildModeInvocation": "OpenCode 构建模式",
+  "notes": []
+}

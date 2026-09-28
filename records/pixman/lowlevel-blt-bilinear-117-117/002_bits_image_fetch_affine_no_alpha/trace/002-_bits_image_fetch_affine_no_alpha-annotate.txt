@@ -1,0 +1,1335 @@
+ Percent |	Source code & Disassembly of libpixman-1.so.0.46.5 for cycles:u (7934 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------------------
+         :
+         : 1     /home/yuansheng-ci/workspaces/runs/20260812-run-9-296d9110de22/results/perf_record/lowlevel-blt-bilinear-117-117/annotate_all/symfs//workspace/build/pixman/libpixman-1.so.0.46.5：     文件格式 elf64-littleriscv
+         :
+         :
+         : 4     Disassembly of section .text:
+         :
+         : 6     000000000001637c <__bits_image_fetch_affine_no_alpha>:
+    0.01 :   1637c:  addi    sp,sp,-432
+    0.05 :   1637e:  sd      s0,416(sp)
+    0.01 :   16380:  sd      s1,408(sp)
+    0.01 :   16382:  sd      s4,384(sp)
+    0.00 :   16384:  sd      ra,424(sp)
+    0.00 :   16386:  sd      s2,400(sp)
+    0.00 :   16388:  sd      s9,344(sp)
+    0.05 :   1638a:  addi    s0,sp,432
+    0.01 :   1638c:  lw      a5,20(a0)
+    0.00 :   1638e:  auipc   a3,0x66
+    0.01 :   16392:  ld      a3,-966(a3) # 7bfc8 <__stack_chk_guard@GLIBC_2.27>
+    0.00 :   16396:  sd      a1,-304(s0)
+    0.01 :   1639a:  addiw   a4,a5,1
+    0.00 :   1639e:  sw      a4,20(a0)
+    0.00 :   163a0:  sd      zero,-168(s0)
+    0.00 :   163a4:  ld      a4,0(a3)
+    0.03 :   163a6:  sd      a4,-152(s0)
+    0.00 :   163aa:  li      a4,0
+    0.00 :   163ac:  sd      zero,-160(s0)
+    0.00 :   163b0:  ld      s9,0(a0)
+    0.01 :   163b4:  lw      a4,16(a0)
+    0.00 :   163b6:  lw      s2,24(a0)
+    0.00 :   163ba:  ld      t0,8(a0)
+    0.01 :   163be:  mv      s1,a0
+    0.00 :   163c0:  mv      a7,a2
+    0.00 :   163c2:  auipc   s4,0xffffe
+    0.00 :   163c6:  addi    s4,s4,1234 # 14894 <fetch_pixel_no_alpha_float>
+    0.01 :   163ca:  bnez    a1,163d4 <__bits_image_fetch_affine_no_alpha+0x58>
+    0.00 :   163cc:  auipc   s4,0xffffe
+    0.00 :   163d0:  addi    s4,s4,1154 # 1484e <fetch_pixel_no_alpha_32>
+    0.00 :   163d4:  lui     a3,0x8
+    0.00 :   163d6:  slli    a4,a4,0x10
+    0.00 :   163d8:  addw    a4,a4,a3
+    0.00 :   163da:  slli    a5,a5,0x10
+    0.00 :   163dc:  lui     a3,0x8
+    0.00 :   163de:  ld      a0,56(s9)
+    0.00 :   163e2:  addw    a5,a5,a3
+    0.00 :   163e4:  lui     a3,0x10
+    0.00 :   163e6:  sw      a4,-184(s0)
+    0.03 :   163ea:  sw      a5,-180(s0)
+    0.00 :   163ee:  sw      a3,-176(s0)
+    0.00 :   163f2:  beqz    a0,171cc <__bits_image_fetch_affine_no_alpha+0xe50>
+    0.01 :   163f6:  addi    a1,s0,-184
+    0.00 :   163fa:  sd      a7,-272(s0)
+    0.00 :   163fe:  sd      t0,-264(s0)
+    0.03 :   16402:  jal     9320 <pixman_transform_point_3d@plt>
+    0.00 :   16406:  ld      t0,-264(s0)
+    0.00 :   1640a:  ld      a7,-272(s0)
+    0.00 :   1640e:  beqz    a0,16762 <__bits_image_fetch_affine_no_alpha+0x3e6>
+    0.00 :   16412:  ld      a3,56(s9)
+    0.03 :   16416:  lw      a4,-184(s0)
+    0.00 :   1641a:  lw      a5,-180(s0)
+    0.00 :   1641e:  lw      a2,0(a3)
+    0.03 :   16420:  lw      a3,12(a3)
+    0.00 :   16422:  sd      a2,-344(s0)
+    0.00 :   16426:  sd      a3,-352(s0)
+    0.03 :   1642a:  blez    s2,16762 <__bits_image_fetch_affine_no_alpha+0x3e6>
+    0.00 :   1642e:  mv      t2,a5
+    0.00 :   16430:  li      a5,255
+    0.00 :   16434:  slli    a5,a5,0x18
+    0.01 :   16436:  fsd     fs0,312(sp)
+    0.00 :   16438:  fsd     fs1,304(sp)
+    0.00 :   1643a:  auipc   a2,0x4a
+    0.04 :   1643e:  flw     fs0,-1846(a2) # 5fd04 <operator_table+0xc94>
+    0.00 :   16442:  auipc   a2,0x4a
+    0.00 :   16446:  flw     fs1,-1870(a2) # 5fcf4 <operator_table+0xc84>
+    0.00 :   1644a:  addi    a5,a5,255
+    0.00 :   1644e:  slli    a5,a5,0x10
+    0.00 :   16450:  slli    s2,s2,0x2
+    0.00 :   16452:  add     a2,a7,s2
+    0.00 :   16456:  sd      a5,-400(s0)
+    0.04 :   1645a:  addi    a5,s0,-200
+    0.00 :   1645e:  sd      s3,392(sp)
+    0.00 :   16460:  sd      s6,368(sp)
+    0.04 :   16462:  sd      s7,360(sp)
+    0.00 :   16464:  mv      s3,a7
+    0.00 :   16466:  sd      a7,-328(s0)
+    0.03 :   1646a:  sd      s5,376(sp)
+    0.00 :   1646c:  sd      s8,352(sp)
+    0.00 :   1646e:  sd      s10,336(sp)
+    0.04 :   16470:  sd      s11,328(sp)
+    0.01 :   16472:  fsd     fs2,296(sp)
+    0.03 :   16474:  fsd     fs3,288(sp)
+    0.03 :   16476:  sd      a2,-336(s0)
+    0.00 :   1647a:  sd      a5,-264(s0)
+    0.00 :   1647e:  mv      s6,s4
+    0.00 :   16480:  mv      s7,s9
+    0.04 :   16482:  sd      t0,-280(s0)
+    0.00 :   16486:  sd      s1,-424(s0)
+    0.01 :   1648a:  mv      a7,a4
+    0.00 :   1648c:  ld      a5,-328(s0)
+    0.00 :   16490:  beqz    a5,16baa <__bits_image_fetch_affine_no_alpha+0x82e>
+    2.56 :   16494:  mv      s1,a7
+    0.00 :   16496:  mv      s2,t2
+    0.00 :   16498:  ld      a5,-304(s0)
+    0.00 :   1649c:  bnez    a5,169f6 <__bits_image_fetch_affine_no_alpha+0x67a>
+    2.06 :   164a0:  mv      a7,s1
+    0.00 :   164a2:  mv      t2,s2
+    0.00 :   164a4:  lw      a5,0(s3)
+    0.00 :   164a8:  beqz    a5,16c34 <__bits_image_fetch_affine_no_alpha+0x8b8>
+    2.70 :   164ac:  lw      a4,68(s7)
+    0.01 :   164b0:  li      a5,6
+    0.00 :   164b2:  bltu    a5,a4,17436 <__bits_image_fetch_affine_no_alpha+0x10ba>
+    2.13 :   164b6:  lwu     a5,68(s7)
+    0.04 :   164ba:  auipc   a4,0x4a
+    0.00 :   164be:  addi    a4,a4,242 # 605ac <__PRETTY_FUNCTION__.0+0x3c>
+    0.00 :   164c2:  slli    a5,a5,0x2
+    0.00 :   164c4:  add     a5,a5,a4
+    1.99 :   164c6:  lw      a5,0(a5)
+    0.11 :   164c8:  add     a5,a5,a4
+    0.01 :   164ca:  jr      a5
+    0.00 :   164cc:  ld      t5,72(s7)
+    0.00 :   164d0:  lui     a4,0xffff0
+    0.00 :   164d2:  addiw   a3,t2,-1
+    0.00 :   164d6:  lw      a5,0(t5)
+    0.00 :   164da:  lw      a1,4(t5)
+    0.00 :   164de:  addiw   a2,a7,-1
+    0.00 :   164e2:  addw    a0,a5,a4
+    0.00 :   164e6:  addw    a4,a4,a1
+    0.00 :   164e8:  sraiw   a4,a4,0x1
+    0.00 :   164ec:  subw    a3,a3,a4
+    0.00 :   164ee:  sraiw   s8,a3,0x10
+    0.00 :   164f2:  sraiw   a0,a0,0x1
+    0.00 :   164f6:  ld      a3,-304(s0)
+    0.00 :   164fa:  subw    a2,a2,a0
+    0.00 :   164fc:  sraiw   a4,a2,0x10
+    0.00 :   16500:  sraiw   a5,a5,0x10
+    0.00 :   16504:  sraiw   a1,a1,0x10
+    0.00 :   16508:  lw      s11,64(s7)
+    0.00 :   1650c:  lw      s1,160(s7)
+    0.00 :   16510:  lw      s2,164(s7)
+    0.00 :   16514:  addw    s9,a5,a4
+    0.00 :   16518:  addi    t5,t5,8
+    0.00 :   1651a:  addw    a2,a1,s8
+    0.00 :   1651e:  beqz    a3,16c5a <__bits_image_fetch_affine_no_alpha+0x8de>
+    0.00 :   16522:  bge     s8,a2,172fa <__bits_image_fetch_affine_no_alpha+0xf7e>
+    0.00 :   16526:  addiw   a5,a5,-1
+    0.00 :   16528:  slli    a1,a5,0x20
+    0.00 :   1652c:  srli    a5,a1,0x1e
+    0.00 :   16530:  addi    a5,a5,4
+    0.00 :   16532:  sd      s6,-288(s0)
+    0.00 :   16536:  sd      s7,-296(s0)
+    0.00 :   1653a:  mv      s10,s8
+    0.00 :   1653c:  sd      s11,-272(s0)
+    0.00 :   16540:  mv      s7,s1
+    0.00 :   16542:  mv      s6,s2
+    0.00 :   16544:  mv      s11,s9
+    0.00 :   16546:  sd      a5,-368(s0)
+    0.00 :   1654a:  sd      a7,-376(s0)
+    0.00 :   1654e:  li      s8,0
+    0.00 :   16550:  sd      s3,-384(s0)
+    0.00 :   16554:  sd      t2,-392(s0)
+    0.00 :   16558:  li      s1,0
+    0.00 :   1655a:  li      s2,0
+    0.00 :   1655c:  li      s9,0
+    0.00 :   1655e:  sd      a2,-360(s0)
+    0.00 :   16562:  bge     a4,s11,16644 <__bits_image_fetch_affine_no_alpha+0x2c8>
+    0.00 :   16566:  mv      s3,s2
+    0.00 :   16568:  mv      s5,s1
+    0.00 :   1656a:  mv      s2,s9
+    0.00 :   1656c:  mv      s4,s11
+    0.00 :   1656e:  mv      s9,s7
+    0.00 :   16570:  mv      s11,s6
+    0.00 :   16572:  sd      t5,-312(s0)
+    0.00 :   16576:  mv      s7,t5
+    0.00 :   16578:  mv      s1,s8
+    0.00 :   1657a:  sd      a4,-320(s0)
+    0.00 :   1657e:  mv      s6,a4
+    0.00 :   16580:  lw      s8,0(s7)
+    0.00 :   16584:  beqz    s8,16620 <__bits_image_fetch_affine_no_alpha+0x2a4>
+    0.00 :   16588:  ld      a5,-272(s0)
+    0.00 :   1658c:  beqz    a5,169ae <__bits_image_fetch_affine_no_alpha+0x632>
+    0.00 :   16590:  li      a4,1
+    0.00 :   16592:  beq     a5,a4,169c4 <__bits_image_fetch_affine_no_alpha+0x648>
+    0.00 :   16596:  ld      a5,-272(s0)
+    0.00 :   1659a:  li      a4,2
+    0.00 :   1659c:  beq     a5,a4,16bca <__bits_image_fetch_affine_no_alpha+0x84e>
+    0.00 :   165a0:  slliw   a4,s9,0x1
+    0.00 :   165a4:  bltz    s6,16bfc <__bits_image_fetch_affine_no_alpha+0x880>
+    0.00 :   165a8:  remw    a1,s6,a4
+    0.00 :   165ac:  blt     a1,s9,165b6 <__bits_image_fetch_affine_no_alpha+0x23a>
+    0.00 :   165b0:  subw    a4,a4,a1
+    0.00 :   165b2:  addiw   a1,a4,-1 # fffffffffffeffff <n_messages.0+0xfffffffffff73ce7>
+    0.00 :   165b6:  slliw   a4,s11,0x1
+    0.00 :   165ba:  bltz    s10,16bec <__bits_image_fetch_affine_no_alpha+0x870>
+    0.00 :   165be:  remw    a2,s10,a4
+    0.00 :   165c2:  blt     a2,s11,165cc <__bits_image_fetch_affine_no_alpha+0x250>
+    0.00 :   165c6:  subw    a2,a4,a2
+    0.00 :   165ca:  addiw   a2,a2,-1
+    0.00 :   165cc:  ld      a4,-264(s0)
+    0.00 :   165d0:  ld      a0,-296(s0)
+    0.00 :   165d4:  ld      a5,-288(s0)
+    0.00 :   165d8:  li      a3,0
+    0.00 :   165da:  jalr    a5
+    0.00 :   165dc:  fcvt.s.w        fa5,s8
+    0.00 :   165e0:  fcvt.s.wu       ft2,s5
+    0.00 :   165e4:  fcvt.s.wu       ft1,s1
+    0.00 :   165e8:  fcvt.s.wu       ft0,s2
+    0.00 :   165ec:  fcvt.s.wu       fa1,s3
+    0.00 :   165f0:  flw     fa2,-200(s0)
+    0.00 :   165f4:  flw     fa3,-196(s0)
+    0.00 :   165f8:  flw     fa4,-192(s0)
+    0.00 :   165fc:  flw     fa0,-188(s0)
+    0.00 :   16600:  fmadd.s fa2,fa2,fa5,ft2
+    0.00 :   16604:  fmadd.s fa3,fa5,fa3,ft1
+    0.00 :   16608:  fmadd.s fa4,fa5,fa4,ft0
+    0.00 :   1660c:  fmadd.s fa5,fa5,fa0,fa1
+    0.00 :   16610:  fcvt.wu.s       s5,fa2,rtz
+    0.00 :   16614:  fcvt.wu.s       s1,fa3,rtz
+    0.00 :   16618:  fcvt.wu.s       s2,fa4,rtz
+    0.00 :   1661c:  fcvt.wu.s       s3,fa5,rtz
+    0.00 :   16620:  addiw   s6,s6,1
+    0.00 :   16622:  addi    s7,s7,4
+    0.00 :   16624:  bne     s6,s4,16580 <__bits_image_fetch_affine_no_alpha+0x204>
+    0.00 :   16628:  ld      t5,-312(s0)
+    0.00 :   1662c:  ld      a5,-368(s0)
+    0.00 :   16630:  ld      a4,-320(s0)
+    0.00 :   16634:  mv      s8,s1
+    0.00 :   16636:  mv      s7,s9
+    0.00 :   16638:  mv      s6,s11
+    0.00 :   1663a:  mv      s9,s2
+    0.00 :   1663c:  mv      s1,s5
+    0.00 :   1663e:  mv      s2,s3
+    0.00 :   16640:  mv      s11,s4
+    0.00 :   16642:  add     t5,t5,a5
+    0.00 :   16644:  ld      a5,-360(s0)
+    0.00 :   16648:  addiw   s10,s10,1
+    0.00 :   1664a:  bne     s10,a5,16562 <__bits_image_fetch_affine_no_alpha+0x1e6>
+    0.00 :   1664e:  fcvt.s.w        fa1,s1
+    0.00 :   16652:  fmv.w.x fa5,zero
+    0.00 :   16656:  fcvt.s.w        fa3,s8
+    0.00 :   1665a:  fmul.s  fa1,fa1,fs0
+    0.00 :   1665e:  fcvt.s.w        fa4,s2
+    0.00 :   16662:  fcvt.s.w        fa2,s9
+    0.00 :   16666:  fmul.s  fa3,fa3,fs0
+    0.00 :   1666a:  fmul.s  fa4,fa4,fs0
+    0.00 :   1666e:  flt.s   a5,fa1,fa5
+    0.00 :   16672:  fmul.s  fa2,fa2,fs0
+    0.00 :   16676:  ld      s6,-288(s0)
+    0.00 :   1667a:  ld      s7,-296(s0)
+    0.00 :   1667e:  ld      a7,-376(s0)
+    0.00 :   16682:  ld      s3,-384(s0)
+    0.00 :   16686:  ld      t2,-392(s0)
+    0.00 :   1668a:  bnez    a5,166a2 <__bits_image_fetch_affine_no_alpha+0x326>
+    0.00 :   1668c:  auipc   a5,0x49
+    0.00 :   16690:  flw     fa0,1640(a5) # 5fcf4 <operator_table+0xc84>
+    0.00 :   16694:  fmv.s   fa5,fa1
+    0.00 :   16698:  flt.s   a5,fa0,fa1
+    0.00 :   1669c:  beqz    a5,166a2 <__bits_image_fetch_affine_no_alpha+0x326>
+    0.00 :   1669e:  fmv.s   fa5,fa0
+    0.00 :   166a2:  ld      a5,-280(s0)
+    0.00 :   166a6:  fsw     fa5,0(a5)
+    0.00 :   166aa:  fmv.w.x fa5,zero
+    0.00 :   166ae:  flt.s   a5,fa3,fa5
+    0.00 :   166b2:  bnez    a5,166ca <__bits_image_fetch_affine_no_alpha+0x34e>
+    0.00 :   166b4:  auipc   a5,0x49
+    0.00 :   166b8:  flw     fa1,1600(a5) # 5fcf4 <operator_table+0xc84>
+    0.00 :   166bc:  fmv.s   fa5,fa3
+    0.00 :   166c0:  flt.s   a5,fa1,fa3
+    0.00 :   166c4:  beqz    a5,166ca <__bits_image_fetch_affine_no_alpha+0x34e>
+    0.00 :   166c6:  fmv.s   fa5,fa1
+    0.00 :   166ca:  ld      a5,-280(s0)
+    0.00 :   166ce:  fmv.w.x fa3,zero
+    0.00 :   166d2:  fsw     fa5,4(a5)
+    0.00 :   166d6:  flt.s   a5,fa2,fa3
+    0.00 :   166da:  bnez    a5,166f2 <__bits_image_fetch_affine_no_alpha+0x376>
+    0.00 :   166dc:  auipc   a5,0x49
+    0.00 :   166e0:  flw     fa5,1560(a5) # 5fcf4 <operator_table+0xc84>
+    0.00 :   166e4:  fmv.s   fa3,fa2
+    0.00 :   166e8:  flt.s   a5,fa5,fa2
+    0.00 :   166ec:  beqz    a5,166f2 <__bits_image_fetch_affine_no_alpha+0x376>
+    0.00 :   166ee:  fmv.s   fa3,fa5
+    0.00 :   166f2:  ld      a5,-280(s0)
+    0.00 :   166f6:  fmv.w.x fa5,zero
+    0.00 :   166fa:  fsw     fa3,8(a5)
+    0.00 :   166fe:  flt.s   a5,fa4,fa5
+    0.00 :   16702:  bnez    a5,1671a <__bits_image_fetch_affine_no_alpha+0x39e>
+    0.00 :   16704:  auipc   a5,0x49
+    0.00 :   16708:  flw     fa3,1520(a5) # 5fcf4 <operator_table+0xc84>
+    0.00 :   1670c:  fmv.s   fa5,fa4
+    0.00 :   16710:  flt.s   a5,fa3,fa4
+    0.00 :   16714:  beqz    a5,1671a <__bits_image_fetch_affine_no_alpha+0x39e>
+    0.00 :   16716:  fmv.s   fa5,fa3
+    0.00 :   1671a:  ld      a5,-280(s0)
+    0.00 :   1671e:  fsw     fa5,12(a5)
+    0.00 :   16722:  li      a5,16
+    0.00 :   16724:  ld      a4,-280(s0)
+    0.00 :   16728:  addi    s3,s3,4
+    0.00 :   1672a:  add     a5,a5,a4
+    1.94 :   1672c:  sd      a5,-280(s0)
+    0.01 :   16730:  ld      a5,-344(s0)
+    0.00 :   16734:  addw    a7,a7,a5
+    2.21 :   16738:  ld      a5,-352(s0)
+    0.00 :   1673c:  addw    t2,t2,a5
+    0.00 :   16740:  ld      a5,-336(s0)
+    2.07 :   16744:  bne     a5,s3,1648c <__bits_image_fetch_affine_no_alpha+0x110>
+    0.00 :   16748:  ld      s1,-424(s0)
+    0.10 :   1674c:  ld      s3,392(sp)
+    0.04 :   1674e:  ld      s5,376(sp)
+    0.00 :   16750:  ld      s6,368(sp)
+    0.01 :   16752:  ld      s7,360(sp)
+    0.00 :   16754:  ld      s8,352(sp)
+    0.00 :   16756:  ld      s10,336(sp)
+    0.00 :   16758:  ld      s11,328(sp)
+    0.00 :   1675a:  fld     fs0,312(sp)
+    0.00 :   1675c:  fld     fs1,304(sp)
+    0.00 :   1675e:  fld     fs2,296(sp)
+    0.03 :   16760:  fld     fs3,288(sp)
+    0.00 :   16762:  auipc   a5,0x66
+    0.00 :   16766:  ld      a5,-1946(a5) # 7bfc8 <__stack_chk_guard@GLIBC_2.27>
+    0.03 :   1676a:  ld      a4,-152(s0)
+    0.00 :   1676e:  ld      a5,0(a5)
+    0.00 :   16770:  xor     a5,a5,a4
+    0.00 :   16772:  li      a4,0
+    0.03 :   16774:  ld      a0,8(s1)
+    0.00 :   16776:  bnez    a5,17456 <__bits_image_fetch_affine_no_alpha+0x10da>
+    0.00 :   1677a:  ld      ra,424(sp)
+    0.00 :   1677c:  ld      s0,416(sp)
+    0.01 :   1677e:  ld      s1,408(sp)
+    0.00 :   16780:  ld      s2,400(sp)
+    0.00 :   16782:  ld      s4,384(sp)
+    0.01 :   16784:  ld      s9,344(sp)
+    0.00 :   16786:  addi    sp,sp,432
+    0.00 :   16788:  ret
+    0.00 :   1678a:  ld      a5,-304(s0)
+    0.00 :   1678e:  bnez    a5,16a34 <__bits_image_fetch_affine_no_alpha+0x6b8>
+    2.55 :   16792:  lui     a5,0xffff8
+    0.00 :   16794:  addw    a4,a7,a5
+    0.06 :   16798:  lw      a1,64(s7)
+    0.00 :   1679c:  addw    a5,t2,a5
+    1.42 :   167a0:  sraiw   s8,a5,0x10
+    0.00 :   167a4:  sraiw   s1,a4,0x10
+    0.01 :   167a8:  addiw   s9,s1,1
+    0.78 :   167ac:  addiw   s10,s8,1
+    0.00 :   167b0:  sraiw   s2,a5,0x9
+    0.00 :   167b4:  sraiw   s5,a4,0x9
+    0.00 :   167b8:  mv      a6,s9
+    1.45 :   167ba:  mv      a5,s10
+    0.61 :   167bc:  mv      s4,s8
+    0.00 :   167be:  beqz    a1,16f56 <__bits_image_fetch_affine_no_alpha+0xbda>
+    0.00 :   167c2:  li      a0,1
+    0.00 :   167c4:  lw      a4,160(s7)
+    0.00 :   167c8:  lw      a3,164(s7)
+    0.00 :   167cc:  beq     a1,a0,16862 <__bits_image_fetch_affine_no_alpha+0x4e6>
+    0.00 :   167d0:  li      a0,2
+    0.00 :   167d2:  beq     a1,a0,17312 <__bits_image_fetch_affine_no_alpha+0xf96>
+    0.00 :   167d6:  slliw   a1,a4,0x1
+    0.00 :   167da:  bltz    s1,17238 <__bits_image_fetch_affine_no_alpha+0xebc>
+    0.00 :   167de:  remw    s1,s1,a1
+    0.00 :   167e2:  blt     s1,a4,167ec <__bits_image_fetch_affine_no_alpha+0x470>
+    0.00 :   167e6:  subw    s1,a1,s1
+    0.00 :   167ea:  addiw   s1,s1,-1
+    0.00 :   167ec:  slliw   a0,a3,0x1
+    0.00 :   167f0:  bltz    s4,1724a <__bits_image_fetch_affine_no_alpha+0xece>
+    0.00 :   167f4:  remw    s8,s4,a0
+    0.00 :   167f8:  bge     s8,a3,172e2 <__bits_image_fetch_affine_no_alpha+0xf66>
+    0.00 :   167fc:  bltz    a6,17262 <__bits_image_fetch_affine_no_alpha+0xee6>
+    0.00 :   16800:  remw    s9,a6,a1
+    0.00 :   16804:  bge     s9,a4,17276 <__bits_image_fetch_affine_no_alpha+0xefa>
+    0.00 :   16808:  remw    s10,a5,a0
+    0.00 :   1680c:  blt     s10,a3,16818 <__bits_image_fetch_affine_no_alpha+0x49c>
+    0.00 :   16810:  subw    a0,a0,s10
+    0.00 :   16814:  addiw   s10,a0,-1
+    0.00 :   16818:  sd      t2,-288(s0)
+    0.00 :   1681c:  sd      a7,-272(s0)
+    0.00 :   16820:  addi    a4,s0,-248
+    0.00 :   16824:  li      a3,0
+    0.00 :   16826:  mv      a2,s8
+    0.00 :   16828:  mv      a1,s1
+    0.00 :   1682a:  mv      a0,s7
+    0.00 :   1682c:  jalr    s6
+    0.00 :   1682e:  mv      a2,s8
+    0.00 :   16830:  addi    a4,s0,-232
+    0.00 :   16834:  mv      a1,s9
+    0.00 :   16836:  mv      a0,s7
+    0.00 :   16838:  li      a3,0
+    0.00 :   1683a:  jalr    s6
+    0.00 :   1683c:  mv      a1,s1
+    0.00 :   1683e:  addi    a4,s0,-216
+    0.00 :   16842:  mv      a2,s10
+    0.00 :   16844:  mv      a0,s7
+    0.00 :   16846:  li      a3,0
+    0.00 :   16848:  jalr    s6
+    0.00 :   1684a:  mv      a2,s10
+    0.00 :   1684c:  mv      a1,s9
+    0.00 :   1684e:  addi    a4,s0,-200
+    0.00 :   16852:  mv      a0,s7
+    0.00 :   16854:  li      a3,0
+    0.00 :   16856:  jalr    s6
+    0.00 :   16858:  ld      a7,-272(s0)
+    0.00 :   1685c:  ld      t2,-288(s0)
+    0.00 :   16860:  j       16fba <__bits_image_fetch_affine_no_alpha+0xc3e>
+    0.00 :   16862:  blt     s1,a4,1686c <__bits_image_fetch_affine_no_alpha+0x4f0>
+    0.00 :   16866:  subw    s1,s1,a4
+    0.00 :   16868:  bge     s1,a4,16866 <__bits_image_fetch_affine_no_alpha+0x4ea>
+    0.00 :   1686c:  bgez    s1,16876 <__bits_image_fetch_affine_no_alpha+0x4fa>
+    0.00 :   16870:  addw    s1,s1,a4
+    0.00 :   16872:  bltz    s1,16870 <__bits_image_fetch_affine_no_alpha+0x4f4>
+    0.00 :   16876:  blt     s4,a3,16882 <__bits_image_fetch_affine_no_alpha+0x506>
+    0.00 :   1687a:  subw    s8,s8,a3
+    0.00 :   1687e:  bge     s8,a3,1687a <__bits_image_fetch_affine_no_alpha+0x4fe>
+    0.00 :   16882:  bgez    s8,1688e <__bits_image_fetch_affine_no_alpha+0x512>
+    0.00 :   16886:  addw    s8,a3,s8
+    0.00 :   1688a:  bltz    s8,16886 <__bits_image_fetch_affine_no_alpha+0x50a>
+    0.00 :   1688e:  blt     a6,a4,1689a <__bits_image_fetch_affine_no_alpha+0x51e>
+    0.00 :   16892:  subw    s9,s9,a4
+    0.00 :   16896:  bge     s9,a4,16892 <__bits_image_fetch_affine_no_alpha+0x516>
+    0.00 :   1689a:  bgez    s9,168a6 <__bits_image_fetch_affine_no_alpha+0x52a>
+    0.00 :   1689e:  addw    s9,a4,s9
+    0.00 :   168a2:  bltz    s9,1689e <__bits_image_fetch_affine_no_alpha+0x522>
+    0.00 :   168a6:  blt     a5,a3,168b2 <__bits_image_fetch_affine_no_alpha+0x536>
+    0.00 :   168aa:  subw    s10,s10,a3
+    0.00 :   168ae:  bge     s10,a3,168aa <__bits_image_fetch_affine_no_alpha+0x52e>
+    0.00 :   168b2:  bgez    s10,16818 <__bits_image_fetch_affine_no_alpha+0x49c>
+    0.00 :   168b6:  addw    s10,a3,s10
+    0.00 :   168ba:  bltz    s10,168b6 <__bits_image_fetch_affine_no_alpha+0x53a>
+    0.00 :   168be:  j       16818 <__bits_image_fetch_affine_no_alpha+0x49c>
+    0.00 :   168c0:  lw      a3,64(s7)
+    0.00 :   168c4:  addiw   a2,t2,-1
+    0.00 :   168c8:  sraiw   a2,a2,0x10
+    0.00 :   168cc:  addiw   a1,a7,-1
+    0.00 :   168d0:  mv      a5,a2
+    0.00 :   168d2:  sraiw   a1,a1,0x10
+    0.00 :   168d6:  beqz    a3,16c72 <__bits_image_fetch_affine_no_alpha+0x8f6>
+    0.00 :   168da:  li      a0,1
+    0.00 :   168dc:  lw      a4,160(s7)
+    0.00 :   168e0:  beq     a3,a0,16944 <__bits_image_fetch_affine_no_alpha+0x5c8>
+    0.00 :   168e4:  li      a6,2
+    0.00 :   168e6:  lw      a0,164(s7)
+    0.00 :   168ea:  beq     a3,a6,171d8 <__bits_image_fetch_affine_no_alpha+0xe5c>
+    0.00 :   168ee:  slliw   a5,a4,0x1
+    0.00 :   168f2:  bltz    a1,171f4 <__bits_image_fetch_affine_no_alpha+0xe78>
+    0.00 :   168f6:  remw    a1,a1,a5
+    0.00 :   168fa:  blt     a1,a4,16904 <__bits_image_fetch_affine_no_alpha+0x588>
+    0.00 :   168fe:  subw    a5,a5,a1
+    0.00 :   16900:  addiw   a1,a5,-1 # ffffffffffff7fff <n_messages.0+0xfffffffffff7bce7>
+    0.00 :   16904:  slliw   a4,a0,0x1
+    0.00 :   16908:  bltz    a2,17206 <__bits_image_fetch_affine_no_alpha+0xe8a>
+    0.00 :   1690c:  remw    a5,a2,a4
+    0.00 :   16910:  blt     a5,a0,1691a <__bits_image_fetch_affine_no_alpha+0x59e>
+    0.00 :   16914:  subw    a5,a4,a5
+    0.00 :   16918:  addiw   a5,a5,-1
+    0.00 :   1691a:  ld      a4,-280(s0)
+    0.00 :   1691e:  sd      t2,-288(s0)
+    0.00 :   16922:  sd      a7,-272(s0)
+    0.00 :   16926:  mv      a2,a5
+    0.00 :   16928:  li      a3,0
+    0.00 :   1692a:  mv      a0,s7
+    0.00 :   1692c:  jalr    s6
+    0.00 :   1692e:  ld      a7,-272(s0)
+    0.00 :   16932:  ld      t2,-288(s0)
+    0.00 :   16936:  ld      a4,-304(s0)
+    0.00 :   1693a:  li      a5,4
+    0.00 :   1693c:  beqz    a4,16724 <__bits_image_fetch_affine_no_alpha+0x3a8>
+    0.00 :   16940:  li      a5,16
+    0.00 :   16942:  j       16724 <__bits_image_fetch_affine_no_alpha+0x3a8>
+    0.00 :   16944:  blt     a1,a4,1694e <__bits_image_fetch_affine_no_alpha+0x5d2>
+    0.00 :   16948:  subw    a1,a1,a4
+    0.00 :   1694a:  bge     a1,a4,16948 <__bits_image_fetch_affine_no_alpha+0x5cc>
+    0.00 :   1694e:  bgez    a1,16958 <__bits_image_fetch_affine_no_alpha+0x5dc>
+    0.00 :   16952:  addw    a1,a1,a4
+    0.00 :   16954:  bltz    a1,16952 <__bits_image_fetch_affine_no_alpha+0x5d6>
+    0.00 :   16958:  lw      a4,164(s7)
+    0.00 :   1695c:  blt     a2,a4,16966 <__bits_image_fetch_affine_no_alpha+0x5ea>
+    0.00 :   16960:  subw    a5,a5,a4
+    0.00 :   16962:  bge     a5,a4,16960 <__bits_image_fetch_affine_no_alpha+0x5e4>
+    0.00 :   16966:  bgez    a5,1691a <__bits_image_fetch_affine_no_alpha+0x59e>
+    0.00 :   1696a:  addw    a5,a5,a4
+    0.00 :   1696c:  bltz    a5,1696a <__bits_image_fetch_affine_no_alpha+0x5ee>
+    0.00 :   16970:  j       1691a <__bits_image_fetch_affine_no_alpha+0x59e>
+    0.00 :   16972:  ld      a5,-304(s0)
+    0.00 :   16976:  bnez    a5,16b76 <__bits_image_fetch_affine_no_alpha+0x7fa>
+    0.00 :   1697a:  ld      a4,-280(s0)
+    0.00 :   1697e:  auipc   a5,0xffffe
+    0.00 :   16982:  addi    a5,a5,-144 # 148ee <accum_32>
+    0.00 :   16986:  mv      a2,t2
+    0.00 :   16988:  mv      a1,a7
+    0.00 :   1698a:  auipc   a6,0xffffe
+    0.00 :   1698e:  addi    a6,a6,-64 # 1494a <reduce_32>
+    0.00 :   16992:  mv      a3,s6
+    0.00 :   16994:  mv      a0,s7
+    0.00 :   16996:  sd      t2,-288(s0)
+    0.00 :   1699a:  sd      a7,-272(s0)
+    0.00 :   1699e:  jal     14b3e <bits_image_fetch_pixel_separable_convolution>
+    0.00 :   169a2:  ld      a7,-272(s0)
+    0.00 :   169a6:  ld      t2,-288(s0)
+    0.00 :   169aa:  li      a5,4
+    0.00 :   169ac:  j       16724 <__bits_image_fetch_affine_no_alpha+0x3a8>
+    0.00 :   169ae:  ld      a4,-264(s0)
+    0.00 :   169b2:  ld      a0,-296(s0)
+    0.00 :   169b6:  ld      a5,-288(s0)
+    0.00 :   169ba:  li      a3,1
+    0.00 :   169bc:  mv      a2,s10
+    0.00 :   169be:  mv      a1,s6
+    0.00 :   169c0:  jalr    a5
+    0.00 :   169c2:  j       165dc <__bits_image_fetch_affine_no_alpha+0x260>
+    0.00 :   169c4:  mv      a1,s6
+    0.00 :   169c6:  blt     s6,s9,169d2 <__bits_image_fetch_affine_no_alpha+0x656>
+    0.00 :   169ca:  subw    a1,a1,s9
+    0.00 :   169ce:  bge     a1,s9,169ca <__bits_image_fetch_affine_no_alpha+0x64e>
+    0.00 :   169d2:  bgez    a1,169de <__bits_image_fetch_affine_no_alpha+0x662>
+    0.00 :   169d6:  addw    a1,a1,s9
+    0.00 :   169da:  bltz    a1,169d6 <__bits_image_fetch_affine_no_alpha+0x65a>
+    0.00 :   169de:  mv      a2,s10
+    0.00 :   169e0:  blt     s10,s11,169ec <__bits_image_fetch_affine_no_alpha+0x670>
+    0.00 :   169e4:  subw    a2,a2,s11
+    0.00 :   169e8:  bge     a2,s11,169e4 <__bits_image_fetch_affine_no_alpha+0x668>
+    0.00 :   169ec:  bgez    a2,165cc <__bits_image_fetch_affine_no_alpha+0x250>
+    0.00 :   169f0:  addw    a2,a2,s11
+    0.00 :   169f4:  j       169ec <__bits_image_fetch_affine_no_alpha+0x670>
+    0.00 :   169f6:  ld      a5,-328(s0)
+    0.00 :   169fa:  li      a2,16
+    0.00 :   169fc:  addi    a1,s0,-168
+    0.00 :   16a00:  subw    a0,s3,a5
+    0.00 :   16a04:  slli    a0,a0,0x2
+    0.00 :   16a06:  add     a0,a0,a5
+    0.00 :   16a08:  jal     9250 <memcmp@plt>
+    0.00 :   16a0c:  beqz    a0,16c10 <__bits_image_fetch_affine_no_alpha+0x894>
+    0.00 :   16a10:  lw      a4,68(s7)
+    0.00 :   16a14:  li      a5,6
+    0.00 :   16a16:  mv      a7,s1
+    0.00 :   16a18:  mv      t2,s2
+    0.00 :   16a1a:  bltu    a5,a4,17436 <__bits_image_fetch_affine_no_alpha+0x10ba>
+    0.00 :   16a1e:  lwu     a5,68(s7)
+    0.00 :   16a22:  auipc   a4,0x4a
+    0.00 :   16a26:  addi    a4,a4,-1114 # 605c8 <__PRETTY_FUNCTION__.0+0x58>
+    0.00 :   16a2a:  slli    a5,a5,0x2
+    0.00 :   16a2c:  add     a5,a5,a4
+    0.00 :   16a2e:  lw      a5,0(a5)
+    0.00 :   16a30:  add     a5,a5,a4
+    0.00 :   16a32:  jr      a5
+    0.00 :   16a34:  lui     s1,0xffff8
+    0.00 :   16a36:  addw    s2,a7,s1
+    0.00 :   16a3a:  addw    s1,t2,s1
+    0.00 :   16a3e:  slli    a4,s2,0x30
+    0.00 :   16a42:  slli    a5,s1,0x30
+    0.00 :   16a46:  srli    a4,a4,0x30
+    0.00 :   16a48:  srli    a5,a5,0x30
+    0.00 :   16a4a:  fcvt.s.w        fa5,a4
+    0.00 :   16a4e:  fcvt.s.w        fs3,a5
+    0.00 :   16a52:  lw      a3,64(s7)
+    0.00 :   16a56:  sraiw   s1,s1,0x10
+    0.00 :   16a5a:  sraiw   s2,s2,0x10
+    0.00 :   16a5e:  addiw   s8,s2,1
+    0.00 :   16a62:  addiw   s9,s1,1 # ffffffffffff8001 <n_messages.0+0xfffffffffff7bce9>
+    0.00 :   16a66:  fmul.s  fs2,fa5,fs0
+    0.00 :   16a6a:  fmul.s  fs3,fs3,fs0
+    0.00 :   16a6e:  mv      s10,s8
+    0.00 :   16a70:  mv      s5,s9
+    0.00 :   16a72:  mv      s4,s1
+    0.00 :   16a74:  beqz    a3,170d2 <__bits_image_fetch_affine_no_alpha+0xd56>
+    0.00 :   16a78:  li      a1,1
+    0.00 :   16a7a:  lw      a5,160(s7)
+    0.00 :   16a7e:  lw      a4,164(s7)
+    0.00 :   16a82:  beq     a3,a1,16b18 <__bits_image_fetch_affine_no_alpha+0x79c>
+    0.00 :   16a86:  li      a1,2
+    0.00 :   16a88:  beq     a3,a1,1733a <__bits_image_fetch_affine_no_alpha+0xfbe>
+    0.00 :   16a8c:  slliw   a3,a5,0x1
+    0.00 :   16a90:  bltz    s2,17228 <__bits_image_fetch_affine_no_alpha+0xeac>
+    0.00 :   16a94:  remw    s2,s2,a3
+    0.00 :   16a98:  blt     s2,a5,16aa2 <__bits_image_fetch_affine_no_alpha+0x726>
+    0.00 :   16a9c:  subw    s2,a3,s2
+    0.00 :   16aa0:  addiw   s2,s2,-1
+    0.00 :   16aa2:  slliw   a1,a4,0x1
+    0.00 :   16aa6:  bltz    s4,17296 <__bits_image_fetch_affine_no_alpha+0xf1a>
+    0.00 :   16aaa:  remw    s1,s4,a1
+    0.00 :   16aae:  bge     s1,a4,17362 <__bits_image_fetch_affine_no_alpha+0xfe6>
+    0.00 :   16ab2:  bltz    s10,172ae <__bits_image_fetch_affine_no_alpha+0xf32>
+    0.00 :   16ab6:  remw    s8,s10,a3
+    0.00 :   16aba:  bge     s8,a5,172c2 <__bits_image_fetch_affine_no_alpha+0xf46>
+    0.00 :   16abe:  remw    s9,s5,a1
+    0.00 :   16ac2:  blt     s9,a4,16ace <__bits_image_fetch_affine_no_alpha+0x752>
+    0.00 :   16ac6:  subw    a1,a1,s9
+    0.00 :   16aca:  addiw   s9,a1,-1
+    0.00 :   16ace:  sd      t2,-288(s0)
+    0.00 :   16ad2:  sd      a7,-272(s0)
+    0.00 :   16ad6:  addi    a4,s0,-248
+    0.00 :   16ada:  li      a3,0
+    0.00 :   16adc:  mv      a2,s1
+    0.00 :   16ade:  mv      a1,s2
+    0.00 :   16ae0:  mv      a0,s7
+    0.00 :   16ae2:  jalr    s6
+    0.00 :   16ae4:  mv      a2,s1
+    0.00 :   16ae6:  addi    a4,s0,-232
+    0.00 :   16aea:  mv      a1,s8
+    0.00 :   16aec:  mv      a0,s7
+    0.00 :   16aee:  li      a3,0
+    0.00 :   16af0:  jalr    s6
+    0.00 :   16af2:  mv      a1,s2
+    0.00 :   16af4:  addi    a4,s0,-216
+    0.00 :   16af8:  mv      a2,s9
+    0.00 :   16afa:  mv      a0,s7
+    0.00 :   16afc:  li      a3,0
+    0.00 :   16afe:  jalr    s6
+    0.00 :   16b00:  mv      a2,s9
+    0.00 :   16b02:  mv      a1,s8
+    0.00 :   16b04:  addi    a4,s0,-200
+    0.00 :   16b08:  mv      a0,s7
+    0.00 :   16b0a:  li      a3,0
+    0.00 :   16b0c:  jalr    s6
+    0.00 :   16b0e:  ld      a7,-272(s0)
+    0.00 :   16b12:  ld      t2,-288(s0)
+    0.00 :   16b16:  j       1711a <__bits_image_fetch_affine_no_alpha+0xd9e>
+    0.00 :   16b18:  blt     s2,a5,16b24 <__bits_image_fetch_affine_no_alpha+0x7a8>
+    0.00 :   16b1c:  subw    s2,s2,a5
+    0.00 :   16b20:  bge     s2,a5,16b1c <__bits_image_fetch_affine_no_alpha+0x7a0>
+    0.00 :   16b24:  bgez    s2,16b30 <__bits_image_fetch_affine_no_alpha+0x7b4>
+    0.00 :   16b28:  addw    s2,a5,s2
+    0.00 :   16b2c:  bltz    s2,16b28 <__bits_image_fetch_affine_no_alpha+0x7ac>
+    0.00 :   16b30:  blt     s4,a4,16b3a <__bits_image_fetch_affine_no_alpha+0x7be>
+    0.00 :   16b34:  subw    s1,s1,a4
+    0.00 :   16b36:  bge     s1,a4,16b34 <__bits_image_fetch_affine_no_alpha+0x7b8>
+    0.00 :   16b3a:  bgez    s1,16b44 <__bits_image_fetch_affine_no_alpha+0x7c8>
+    0.00 :   16b3e:  addw    s1,s1,a4
+    0.00 :   16b40:  bltz    s1,16b3e <__bits_image_fetch_affine_no_alpha+0x7c2>
+    0.00 :   16b44:  blt     s10,a5,16b50 <__bits_image_fetch_affine_no_alpha+0x7d4>
+    0.00 :   16b48:  subw    s8,s8,a5
+    0.00 :   16b4c:  bge     s8,a5,16b48 <__bits_image_fetch_affine_no_alpha+0x7cc>
+    0.00 :   16b50:  bgez    s8,16b5c <__bits_image_fetch_affine_no_alpha+0x7e0>
+    0.00 :   16b54:  addw    s8,a5,s8
+    0.00 :   16b58:  bltz    s8,16b54 <__bits_image_fetch_affine_no_alpha+0x7d8>
+    0.00 :   16b5c:  blt     s5,a4,16b68 <__bits_image_fetch_affine_no_alpha+0x7ec>
+    0.00 :   16b60:  subw    s9,s9,a4
+    0.00 :   16b64:  bge     s9,a4,16b60 <__bits_image_fetch_affine_no_alpha+0x7e4>
+    0.00 :   16b68:  bgez    s9,16ace <__bits_image_fetch_affine_no_alpha+0x752>
+    0.00 :   16b6c:  addw    s9,a4,s9
+    0.00 :   16b70:  bltz    s9,16b6c <__bits_image_fetch_affine_no_alpha+0x7f0>
+    0.00 :   16b74:  j       16ace <__bits_image_fetch_affine_no_alpha+0x752>
+    0.00 :   16b76:  ld      a4,-280(s0)
+    0.00 :   16b7a:  auipc   a5,0xffffe
+    0.00 :   16b7e:  addi    a5,a5,-380 # 149fe <accum_float>
+    0.00 :   16b82:  mv      a2,t2
+    0.00 :   16b84:  mv      a1,a7
+    0.00 :   16b86:  auipc   a6,0xffffe
+    0.00 :   16b8a:  addi    a6,a6,-290 # 14a64 <reduce_float>
+    0.00 :   16b8e:  mv      a3,s6
+    0.00 :   16b90:  mv      a0,s7
+    0.00 :   16b92:  sd      t2,-288(s0)
+    0.00 :   16b96:  sd      a7,-272(s0)
+    0.00 :   16b9a:  jal     14b3e <bits_image_fetch_pixel_separable_convolution>
+    0.00 :   16b9e:  ld      a7,-272(s0)
+    0.00 :   16ba2:  ld      t2,-288(s0)
+    0.00 :   16ba6:  li      a5,16
+    0.00 :   16ba8:  j       16724 <__bits_image_fetch_affine_no_alpha+0x3a8>
+    0.00 :   16baa:  lw      a4,68(s7)
+    0.00 :   16bae:  li      a5,6
+    0.00 :   16bb0:  bltu    a5,a4,17436 <__bits_image_fetch_affine_no_alpha+0x10ba>
+    0.00 :   16bb4:  lwu     a5,68(s7)
+    0.00 :   16bb8:  auipc   a4,0x4a
+    0.00 :   16bbc:  addi    a4,a4,-1492 # 605e4 <__PRETTY_FUNCTION__.0+0x74>
+    0.00 :   16bc0:  slli    a5,a5,0x2
+    0.00 :   16bc2:  add     a5,a5,a4
+    0.00 :   16bc4:  lw      a5,0(a5)
+    0.00 :   16bc6:  add     a5,a5,a4
+    0.00 :   16bc8:  jr      a5
+    0.00 :   16bca:  li      a1,0
+    0.00 :   16bcc:  bltz    s6,16bda <__bits_image_fetch_affine_no_alpha+0x85e>
+    0.00 :   16bd0:  mv      a1,s6
+    0.00 :   16bd2:  blt     s6,s9,16bda <__bits_image_fetch_affine_no_alpha+0x85e>
+    0.00 :   16bd6:  addiw   a1,s9,-1
+    0.00 :   16bda:  li      a2,0
+    0.00 :   16bdc:  bltz    s10,165cc <__bits_image_fetch_affine_no_alpha+0x250>
+    0.00 :   16be0:  mv      a2,s10
+    0.00 :   16be2:  blt     s10,s11,165cc <__bits_image_fetch_affine_no_alpha+0x250>
+    0.00 :   16be6:  addiw   a2,s11,-1
+    0.00 :   16bea:  j       165cc <__bits_image_fetch_affine_no_alpha+0x250>
+    0.00 :   16bec:  not     a2,s10
+    0.00 :   16bf0:  remw    a2,a2,a4
+    0.00 :   16bf4:  subw    a2,a4,a2
+    0.00 :   16bf8:  addiw   a2,a2,-1
+    0.00 :   16bfa:  j       165c2 <__bits_image_fetch_affine_no_alpha+0x246>
+    0.00 :   16bfc:  not     a1,s6
+    0.00 :   16c00:  remw    a1,a1,a4
+    0.00 :   16c04:  subw    a1,a4,a1
+    0.00 :   16c08:  addiw   a1,a1,-1
+    0.00 :   16c0a:  blt     a1,s9,165b6 <__bits_image_fetch_affine_no_alpha+0x23a>
+    0.00 :   16c0e:  j       165b0 <__bits_image_fetch_affine_no_alpha+0x234>
+    0.00 :   16c10:  ld      a5,-336(s0)
+    0.00 :   16c14:  addi    s3,s3,4
+    0.00 :   16c16:  beq     a5,s3,16748 <__bits_image_fetch_affine_no_alpha+0x3cc>
+    0.00 :   16c1a:  ld      a5,-280(s0)
+    0.00 :   16c1e:  addi    a5,a5,16
+    0.00 :   16c20:  sd      a5,-280(s0)
+    0.00 :   16c24:  ld      a5,-344(s0)
+    0.00 :   16c28:  addw    s1,s1,a5
+    0.00 :   16c2a:  ld      a5,-352(s0)
+    0.00 :   16c2e:  addw    s2,s2,a5
+    0.00 :   16c32:  j       16498 <__bits_image_fetch_affine_no_alpha+0x11c>
+    0.00 :   16c34:  ld      a5,-336(s0)
+    0.00 :   16c38:  addi    s3,s3,4
+    0.00 :   16c3a:  beq     s3,a5,16748 <__bits_image_fetch_affine_no_alpha+0x3cc>
+    0.00 :   16c3e:  ld      a5,-280(s0)
+    0.00 :   16c42:  addi    a5,a5,4
+    0.00 :   16c44:  sd      a5,-280(s0)
+    0.00 :   16c48:  ld      a5,-344(s0)
+    0.00 :   16c4c:  addw    a7,a7,a5
+    0.00 :   16c50:  ld      a5,-352(s0)
+    0.00 :   16c54:  addw    t2,t2,a5
+    0.00 :   16c58:  j       164a4 <__bits_image_fetch_affine_no_alpha+0x128>
+    0.00 :   16c5a:  blez    a1,17218 <__bits_image_fetch_affine_no_alpha+0xe9c>
+    0.00 :   16c5e:  bgtz    a5,16c8e <__bits_image_fetch_affine_no_alpha+0x912>
+    0.00 :   16c62:  addiw   s8,s8,1
+    0.00 :   16c64:  blt     s8,a2,16c5e <__bits_image_fetch_affine_no_alpha+0x8e2>
+    0.00 :   16c68:  li      t4,0
+    0.00 :   16c6a:  li      t1,0
+    0.00 :   16c6c:  li      s10,0
+    0.00 :   16c6e:  li      t3,0
+    0.00 :   16c70:  j       16dea <__bits_image_fetch_affine_no_alpha+0xa6e>
+    0.00 :   16c72:  ld      a4,-280(s0)
+    0.00 :   16c76:  sd      t2,-288(s0)
+    0.00 :   16c7a:  sd      a7,-272(s0)
+    0.00 :   16c7e:  li      a3,1
+    0.00 :   16c80:  mv      a0,s7
+    0.00 :   16c82:  jalr    s6
+    0.00 :   16c84:  ld      a7,-272(s0)
+    0.00 :   16c88:  ld      t2,-288(s0)
+    0.00 :   16c8c:  j       16936 <__bits_image_fetch_affine_no_alpha+0x5ba>
+    0.00 :   16c8e:  li      a1,0
+    0.00 :   16c90:  bge     a4,s9,16ca0 <__bits_image_fetch_affine_no_alpha+0x924>
+    0.00 :   16c94:  addiw   a1,a5,-1
+    0.00 :   16c98:  slli    a5,a1,0x20
+    0.00 :   16c9c:  srli    a1,a5,0x1e
+    0.00 :   16ca0:  addi    a5,a1,4
+    0.00 :   16ca4:  sd      a5,-368(s0)
+    0.00 :   16ca8:  slliw   a5,s1,0x1
+    0.00 :   16cac:  li      s10,0
+    0.00 :   16cae:  sd      a5,-320(s0)
+    0.00 :   16cb2:  slliw   a5,s2,0x1
+    0.00 :   16cb6:  sd      a5,-360(s0)
+    0.00 :   16cba:  sd      s7,-296(s0)
+    0.00 :   16cbe:  mv      s5,s8
+    0.00 :   16cc0:  mv      s4,s1
+    0.00 :   16cc2:  mv      s7,s2
+    0.00 :   16cc4:  mv      s1,s9
+    0.00 :   16cc6:  sd      s6,-288(s0)
+    0.00 :   16cca:  sd      a7,-392(s0)
+    0.00 :   16cce:  mv      a5,t5
+    0.00 :   16cd0:  li      s8,0
+    0.00 :   16cd2:  sd      s3,-408(s0)
+    0.00 :   16cd6:  sd      t2,-416(s0)
+    0.00 :   16cda:  sd      s11,-272(s0)
+    0.00 :   16cde:  li      s2,0
+    0.00 :   16ce0:  sd      a4,-376(s0)
+    0.00 :   16ce4:  mv      s9,s10
+    0.00 :   16ce6:  sd      a2,-384(s0)
+    0.00 :   16cea:  ld      s11,-376(s0)
+    0.00 :   16cee:  mv      s6,a5
+    0.00 :   16cf0:  mv      a4,s4
+    0.00 :   16cf2:  sd      a5,-312(s0)
+    0.00 :   16cf6:  mv      a5,s1
+    0.00 :   16cf8:  mv      s4,s11
+    0.00 :   16cfa:  mv      s1,s9
+    0.00 :   16cfc:  mv      s11,s8
+    0.00 :   16cfe:  mv      s9,s7
+    0.00 :   16d00:  mv      s3,s2
+    0.00 :   16d02:  mv      s7,s6
+    0.00 :   16d04:  mv      s8,a4
+    0.00 :   16d06:  mv      s6,a5
+    0.00 :   16d08:  lw      s2,0(s7)
+    0.00 :   16d0c:  beqz    s2,16da6 <__bits_image_fetch_affine_no_alpha+0xa2a>
+    0.00 :   16d10:  ld      a5,-272(s0)
+    0.00 :   16d14:  beqz    a5,16e90 <__bits_image_fetch_affine_no_alpha+0xb14>
+    0.00 :   16d18:  li      a4,1
+    0.00 :   16d1a:  beq     a5,a4,16ea6 <__bits_image_fetch_affine_no_alpha+0xb2a>
+    0.00 :   16d1e:  ld      a5,-272(s0)
+    0.00 :   16d22:  li      a4,2
+    0.00 :   16d24:  beq     a5,a4,16ed8 <__bits_image_fetch_affine_no_alpha+0xb5c>
+    0.00 :   16d28:  bltz    s4,16f0e <__bits_image_fetch_affine_no_alpha+0xb92>
+    0.00 :   16d2c:  ld      a5,-320(s0)
+    0.00 :   16d30:  remw    a1,s4,a5
+    0.00 :   16d34:  blt     a1,s8,16d42 <__bits_image_fetch_affine_no_alpha+0x9c6>
+    0.00 :   16d38:  ld      a5,-320(s0)
+    0.00 :   16d3c:  subw    a1,a5,a1
+    0.00 :   16d40:  addiw   a1,a1,-1
+    0.00 :   16d42:  bltz    s5,16efa <__bits_image_fetch_affine_no_alpha+0xb7e>
+    0.00 :   16d46:  ld      a5,-360(s0)
+    0.00 :   16d4a:  remw    a2,s5,a5
+    0.00 :   16d4e:  blt     a2,s9,16d5c <__bits_image_fetch_affine_no_alpha+0x9e0>
+    0.00 :   16d52:  ld      a5,-360(s0)
+    0.00 :   16d56:  subw    a2,a5,a2
+    0.00 :   16d5a:  addiw   a2,a2,-1
+    0.00 :   16d5c:  ld      a4,-264(s0)
+    0.00 :   16d60:  ld      a0,-296(s0)
+    0.00 :   16d64:  ld      a5,-288(s0)
+    0.00 :   16d68:  li      a3,0
+    0.00 :   16d6a:  jalr    a5
+    0.00 :   16d6c:  lw      a4,-200(s0)
+    0.00 :   16d70:  srliw   a2,a4,0x10
+    0.00 :   16d74:  srliw   a3,a4,0x8
+    0.00 :   16d78:  zext.b  a2,a2
+    0.00 :   16d7c:  zext.b  a3,a3
+    0.00 :   16d80:  mulw    a2,a2,s2
+    0.00 :   16d84:  mulw    a3,a3,s2
+    0.00 :   16d88:  addw    s10,a2,s10
+    0.00 :   16d8c:  zext.b  a2,a4
+    0.00 :   16d90:  srliw   a4,a4,0x18
+    0.00 :   16d94:  mulw    a4,a4,s2
+    0.00 :   16d98:  addw    s1,s1,a3
+    0.00 :   16d9a:  mulw    a3,a2,s2
+    0.00 :   16d9e:  addw    s11,a4,s11
+    0.00 :   16da2:  addw    s3,a3,s3
+    0.00 :   16da6:  addiw   s4,s4,1
+    0.00 :   16da8:  addi    s7,s7,4
+    0.00 :   16daa:  blt     s4,s6,16d08 <__bits_image_fetch_affine_no_alpha+0x98c>
+    0.00 :   16dae:  ld      a4,-368(s0)
+    0.00 :   16db2:  ld      a5,-312(s0)
+    0.00 :   16db6:  addiw   s5,s5,1
+    0.00 :   16db8:  mv      s4,s8
+    0.00 :   16dba:  add     a5,a5,a4
+    0.00 :   16dbc:  ld      a4,-384(s0)
+    0.00 :   16dc0:  mv      s7,s9
+    0.00 :   16dc2:  mv      s2,s3
+    0.00 :   16dc4:  mv      s9,s1
+    0.00 :   16dc6:  mv      s8,s11
+    0.00 :   16dc8:  mv      s1,s6
+    0.00 :   16dca:  blt     s5,a4,16cea <__bits_image_fetch_affine_no_alpha+0x96e>
+    0.00 :   16dce:  mv      t1,s3
+    0.00 :   16dd0:  ld      s6,-288(s0)
+    0.00 :   16dd4:  ld      s7,-296(s0)
+    0.00 :   16dd8:  ld      a7,-392(s0)
+    0.00 :   16ddc:  ld      s3,-408(s0)
+    0.00 :   16de0:  ld      t2,-416(s0)
+    0.00 :   16de4:  mv      t3,s10
+    0.00 :   16de6:  mv      t4,s11
+    0.00 :   16de8:  mv      s10,s9
+    0.00 :   16dea:  lui     a5,0x8
+    0.00 :   16dec:  addw    t4,t4,a5
+    0.00 :   16df0:  sraiw   a4,t4,0x1f
+    0.00 :   16df4:  srliw   a4,a4,0x10
+    0.00 :   16df8:  addw    a4,a4,t4
+    0.00 :   16dfc:  sraiw   a4,a4,0x10
+    0.00 :   16e00:  li      a3,255
+    0.00 :   16e04:  mv      a5,a4
+    0.00 :   16e06:  bge     a3,a4,16f4a <__bits_image_fetch_affine_no_alpha+0xbce>
+    0.00 :   16e0a:  mv      a5,a3
+    0.00 :   16e0c:  lui     a4,0x8
+    0.00 :   16e0e:  addw    t3,t3,a4
+    0.00 :   16e12:  sraiw   a3,t3,0x1f
+    0.00 :   16e16:  srliw   a3,a3,0x10
+    0.00 :   16e1a:  addw    a3,a3,t3
+    0.00 :   16e1e:  sraiw   a3,a3,0x10
+    0.00 :   16e22:  li      a1,255
+    0.00 :   16e26:  slliw   a4,a5,0x18
+    0.00 :   16e2a:  mv      a2,a3
+    0.00 :   16e2c:  bge     a1,a3,16f3e <__bits_image_fetch_affine_no_alpha+0xbc2>
+    0.00 :   16e30:  mv      a2,a1
+    0.00 :   16e32:  lui     a5,0x8
+    0.00 :   16e34:  addw    t1,t1,a5
+    0.00 :   16e38:  sraiw   a5,t1,0x1f
+    0.00 :   16e3c:  srliw   a5,a5,0x10
+    0.00 :   16e40:  slliw   a2,a2,0x10
+    0.00 :   16e44:  addw    a5,a5,t1
+    0.00 :   16e48:  or      a4,a4,a2
+    0.00 :   16e4a:  sraiw   a5,a5,0x10
+    0.00 :   16e4e:  li      a2,255
+    0.00 :   16e52:  mv      a3,a5
+    0.00 :   16e54:  bge     a2,a5,16f32 <__bits_image_fetch_affine_no_alpha+0xbb6>
+    0.00 :   16e58:  mv      a3,a2
+    0.00 :   16e5a:  lui     a5,0x8
+    0.00 :   16e5c:  addw    a6,s10,a5
+    0.00 :   16e60:  or      a4,a4,a3
+    0.00 :   16e62:  sraiw   a3,a6,0x1f
+    0.00 :   16e66:  srliw   a3,a3,0x10
+    0.00 :   16e6a:  addw    a3,a3,a6
+    0.00 :   16e6e:  sraiw   a3,a3,0x10
+    0.00 :   16e72:  li      a2,255
+    0.00 :   16e76:  mv      a5,a3
+    0.00 :   16e78:  bge     a2,a3,16f26 <__bits_image_fetch_affine_no_alpha+0xbaa>
+    0.00 :   16e7c:  mv      a5,a2
+    0.00 :   16e7e:  slliw   a5,a5,0x8
+    0.00 :   16e82:  or      a5,a5,a4
+    0.00 :   16e84:  sext.w  a5,a5
+    0.00 :   16e86:  ld      a4,-280(s0)
+    0.00 :   16e8a:  sw      a5,0(a4)
+    0.00 :   16e8c:  li      a5,4
+    0.00 :   16e8e:  j       16724 <__bits_image_fetch_affine_no_alpha+0x3a8>
+    0.00 :   16e90:  ld      a4,-264(s0)
+    0.00 :   16e94:  ld      a0,-296(s0)
+    0.00 :   16e98:  ld      a5,-288(s0)
+    0.00 :   16e9c:  li      a3,1
+    0.00 :   16e9e:  mv      a2,s5
+    0.00 :   16ea0:  mv      a1,s4
+    0.00 :   16ea2:  jalr    a5
+    0.00 :   16ea4:  j       16d6c <__bits_image_fetch_affine_no_alpha+0x9f0>
+    0.00 :   16ea6:  mv      a1,s4
+    0.00 :   16ea8:  blt     s4,s8,16eb4 <__bits_image_fetch_affine_no_alpha+0xb38>
+    0.00 :   16eac:  subw    a1,a1,s8
+    0.00 :   16eb0:  bge     a1,s8,16eac <__bits_image_fetch_affine_no_alpha+0xb30>
+    0.00 :   16eb4:  bgez    a1,16ec0 <__bits_image_fetch_affine_no_alpha+0xb44>
+    0.00 :   16eb8:  addw    a1,a1,s8
+    0.00 :   16ebc:  bltz    a1,16eb8 <__bits_image_fetch_affine_no_alpha+0xb3c>
+    0.00 :   16ec0:  mv      a2,s5
+    0.00 :   16ec2:  blt     s5,s9,16ece <__bits_image_fetch_affine_no_alpha+0xb52>
+    0.00 :   16ec6:  subw    a2,a2,s9
+    0.00 :   16eca:  bge     a2,s9,16ec6 <__bits_image_fetch_affine_no_alpha+0xb4a>
+    0.00 :   16ece:  bgez    a2,16d5c <__bits_image_fetch_affine_no_alpha+0x9e0>
+    0.00 :   16ed2:  addw    a2,a2,s9
+    0.00 :   16ed6:  j       16ece <__bits_image_fetch_affine_no_alpha+0xb52>
+    0.00 :   16ed8:  li      a1,0
+    0.00 :   16eda:  bltz    s4,16ee8 <__bits_image_fetch_affine_no_alpha+0xb6c>
+    0.00 :   16ede:  mv      a1,s4
+    0.00 :   16ee0:  blt     s4,s8,16ee8 <__bits_image_fetch_affine_no_alpha+0xb6c>
+    0.00 :   16ee4:  addiw   a1,s8,-1
+    0.00 :   16ee8:  li      a2,0
+    0.00 :   16eea:  bltz    s5,16d5c <__bits_image_fetch_affine_no_alpha+0x9e0>
+    0.00 :   16eee:  mv      a2,s5
+    0.00 :   16ef0:  blt     s5,s9,16d5c <__bits_image_fetch_affine_no_alpha+0x9e0>
+    0.00 :   16ef4:  addiw   a2,s9,-1
+    0.00 :   16ef8:  j       16d5c <__bits_image_fetch_affine_no_alpha+0x9e0>
+    0.00 :   16efa:  ld      a5,-360(s0)
+    0.00 :   16efe:  not     a2,s5
+    0.00 :   16f02:  remw    a2,a2,a5
+    0.00 :   16f06:  subw    a2,a5,a2
+    0.00 :   16f0a:  addiw   a2,a2,-1
+    0.00 :   16f0c:  j       16d4e <__bits_image_fetch_affine_no_alpha+0x9d2>
+    0.00 :   16f0e:  ld      a5,-320(s0)
+    0.00 :   16f12:  not     a1,s4
+    0.00 :   16f16:  remw    a1,a1,a5
+    0.00 :   16f1a:  subw    a1,a5,a1
+    0.00 :   16f1e:  addiw   a1,a1,-1
+    0.00 :   16f20:  blt     a1,s8,16d42 <__bits_image_fetch_affine_no_alpha+0x9c6>
+    0.00 :   16f24:  j       16d38 <__bits_image_fetch_affine_no_alpha+0x9bc>
+    0.00 :   16f26:  slli    a3,a5,0x20
+    0.00 :   16f2a:  bgez    a3,16e7e <__bits_image_fetch_affine_no_alpha+0xb02>
+    0.00 :   16f2e:  li      a5,0
+    0.00 :   16f30:  j       16e7e <__bits_image_fetch_affine_no_alpha+0xb02>
+    0.00 :   16f32:  slli    a5,a3,0x20
+    0.00 :   16f36:  bgez    a5,16e5a <__bits_image_fetch_affine_no_alpha+0xade>
+    0.00 :   16f3a:  li      a3,0
+    0.00 :   16f3c:  j       16e5a <__bits_image_fetch_affine_no_alpha+0xade>
+    0.00 :   16f3e:  slli    a5,a2,0x20
+    0.00 :   16f42:  bgez    a5,16e32 <__bits_image_fetch_affine_no_alpha+0xab6>
+    0.00 :   16f46:  li      a2,0
+    0.00 :   16f48:  j       16e32 <__bits_image_fetch_affine_no_alpha+0xab6>
+    0.00 :   16f4a:  slli    a4,a5,0x20
+    0.00 :   16f4e:  bgez    a4,16e0c <__bits_image_fetch_affine_no_alpha+0xa90>
+    0.00 :   16f52:  li      a5,0
+    0.00 :   16f54:  j       16e0c <__bits_image_fetch_affine_no_alpha+0xa90>
+    1.20 :   16f56:  sd      t2,-320(s0)
+    0.79 :   16f5a:  sd      a7,-312(s0)
+    0.00 :   16f5e:  addi    a4,s0,-248
+    0.00 :   16f62:  li      a3,1
+    0.03 :   16f64:  mv      a2,s8
+    1.41 :   16f66:  mv      a1,s1
+    0.20 :   16f68:  mv      a0,s7
+    0.59 :   16f6a:  sd      s10,-296(s0)
+    1.58 :   16f6e:  sd      s9,-272(s0)
+    0.16 :   16f72:  jalr    s6
+    0.00 :   16f74:  ld      a6,-272(s0)
+    2.36 :   16f78:  mv      a2,s8
+    0.00 :   16f7a:  addi    a4,s0,-232
+    0.00 :   16f7e:  mv      a1,a6
+    0.00 :   16f80:  sd      a6,-288(s0)
+    0.79 :   16f84:  mv      a0,s7
+    0.00 :   16f86:  li      a3,1
+    1.22 :   16f88:  jalr    s6
+    0.00 :   16f8a:  ld      a5,-296(s0)
+    1.95 :   16f8e:  mv      a1,s1
+    0.00 :   16f90:  addi    a4,s0,-216
+    0.00 :   16f94:  mv      a2,a5
+    0.00 :   16f96:  sd      a5,-272(s0)
+    2.41 :   16f9a:  mv      a0,s7
+    0.00 :   16f9c:  li      a3,1
+    0.00 :   16f9e:  jalr    s6
+    0.01 :   16fa0:  ld      a2,-272(s0)
+    2.19 :   16fa4:  ld      a1,-288(s0)
+    0.00 :   16fa8:  addi    a4,s0,-200
+    0.00 :   16fac:  mv      a0,s7
+    0.00 :   16fae:  li      a3,1
+    2.10 :   16fb0:  jalr    s6
+    0.48 :   16fb2:  ld      t2,-320(s0)
+    1.73 :   16fb6:  ld      a7,-312(s0)
+    0.34 :   16fba:  slliw   a2,s5,0x1
+    0.00 :   16fbe:  slliw   a3,s2,0x1
+    0.00 :   16fc2:  andi    a2,a2,254
+    0.00 :   16fc6:  andi    a3,a3,254
+    2.07 :   16fca:  li      a5,256
+    0.00 :   16fce:  subw    t5,a5,a3
+    0.00 :   16fd2:  subw    a5,a5,a2
+    0.00 :   16fd4:  mulw    t0,a2,t5
+    0.00 :   16fd8:  lw      a6,-248(s0)
+    2.11 :   16fdc:  lw      a4,-232(s0)
+    0.00 :   16fe0:  li      t1,255
+    0.00 :   16fe4:  slli    a1,a6,0x20
+    0.00 :   16fe8:  srli    s1,a1,0x10
+    0.00 :   16fec:  lui     t3,0x10
+    0.01 :   16fee:  slli    a1,a4,0x20
+    1.17 :   16ff2:  slli    t1,t1,0x20
+    0.89 :   16ff4:  addi    t3,t3,-256 # ff00 <fetch_scanline_r8g8b8+0x6a>
+    0.00 :   16ff8:  mulw    t5,t5,a5
+    0.00 :   16ffc:  srli    t6,a1,0x10
+    0.00 :   17000:  and     t4,a6,t3
+    0.54 :   17004:  and     s1,s1,t1
+    0.59 :   17008:  and     t6,t6,t1
+    1.30 :   1700c:  or      t4,t4,s1
+    0.00 :   17010:  lui     a1,0xff000
+    0.39 :   17014:  addi    a1,a1,255 # ffffffffff0000ff <n_messages.0+0xfffffffffef83de7>
+    0.52 :   17018:  and     a6,a6,a1
+    0.00 :   1701c:  slli    a6,a6,0x20
+    1.32 :   1701e:  mulw    a2,a2,a3
+    0.03 :   17022:  lw      a0,-200(s0)
+    0.90 :   17026:  srli    a6,a6,0x20
+    0.00 :   1702a:  slli    s1,a0,0x20
+    1.37 :   1702e:  mulw    a3,a3,a5
+    2.43 :   17032:  and     a5,a4,t3
+    0.21 :   17036:  or      a5,a5,t6
+    0.00 :   1703a:  and     a4,a4,a1
+    0.00 :   1703c:  slli    a4,a4,0x20
+    0.00 :   1703e:  srli    a4,a4,0x20
+    0.87 :   17040:  srli    t6,s1,0x10
+    0.00 :   17044:  and     t6,t6,t1
+    0.00 :   17048:  mul     a5,a5,t0
+    0.01 :   1704c:  mul     t4,t4,t5
+    1.71 :   17050:  mul     a6,a6,t5
+    0.08 :   17054:  lw      t5,-216(s0)
+    0.32 :   17058:  add     t4,t4,a5
+    0.00 :   1705a:  and     a5,a0,t3
+    2.00 :   1705e:  and     a0,a0,a1
+    0.00 :   17060:  slli    a0,a0,0x20
+    0.00 :   17062:  and     a1,t5,a1
+    0.11 :   17066:  srli    a0,a0,0x20
+    2.22 :   17068:  slli    a1,a1,0x20
+    0.00 :   1706a:  or      a5,a5,t6
+    0.01 :   1706e:  mul     a4,a4,t0
+    1.27 :   17072:  slli    t0,t5,0x20
+    5.00 :   17076:  srli    a1,a1,0x20
+    0.00 :   17078:  srli    t6,t0,0x10
+    0.00 :   1707c:  and     t5,t5,t3
+    2.62 :   17080:  and     t6,t6,t1
+    1.32 :   17084:  or      t5,t5,t6
+    0.00 :   17088:  mul     a0,a0,a2
+    0.00 :   1708c:  add     a4,a4,a6
+    1.39 :   1708e:  li      a6,255
+    0.63 :   17092:  slli    a6,a6,0x18
+    0.00 :   17094:  mul     a1,a1,a3
+    0.06 :   17098:  mul     t3,a5,a2
+    0.00 :   1709c:  add     a2,a4,a0
+    1.59 :   170a0:  li      a5,4
+    0.05 :   170a2:  mul     t5,t5,a3
+    0.00 :   170a6:  add     a3,a2,a1
+    1.20 :   170aa:  ld      a2,-400(s0)
+    0.00 :   170ae:  add     t4,t4,t3
+    0.00 :   170b0:  and     a3,a3,a2
+    0.00 :   170b2:  add     a4,t4,t5
+    5.52 :   170b6:  and     a6,a4,a6
+    2.09 :   170ba:  srli    a4,a4,0x10
+    0.00 :   170bc:  or      a3,a3,a6
+    0.04 :   170c0:  and     a4,a4,t1
+    0.00 :   170c4:  or      a4,a4,a3
+    4.42 :   170c6:  ld      a3,-280(s0)
+    0.00 :   170ca:  srli    a4,a4,0x10
+    0.06 :   170cc:  sw      a4,0(a3)
+    2.33 :   170ce:  j       16724 <__bits_image_fetch_affine_no_alpha+0x3a8>
+    0.00 :   170d2:  sd      t2,-288(s0)
+    0.00 :   170d6:  sd      a7,-272(s0)
+    0.00 :   170da:  addi    a4,s0,-248
+    0.00 :   170de:  li      a3,1
+    0.00 :   170e0:  mv      a2,s1
+    0.00 :   170e2:  mv      a1,s2
+    0.00 :   170e4:  mv      a0,s7
+    0.00 :   170e6:  jalr    s6
+    0.00 :   170e8:  mv      a2,s1
+    0.00 :   170ea:  addi    a4,s0,-232
+    0.00 :   170ee:  mv      a1,s8
+    0.00 :   170f0:  mv      a0,s7
+    0.00 :   170f2:  li      a3,1
+    0.00 :   170f4:  jalr    s6
+    0.00 :   170f6:  mv      a1,s2
+    0.00 :   170f8:  addi    a4,s0,-216
+    0.00 :   170fc:  mv      a2,s9
+    0.00 :   170fe:  mv      a0,s7
+    0.00 :   17100:  li      a3,1
+    0.00 :   17102:  jalr    s6
+    0.00 :   17104:  mv      a2,s9
+    0.00 :   17106:  mv      a1,s8
+    0.00 :   17108:  addi    a4,s0,-200
+    0.00 :   1710c:  mv      a0,s7
+    0.00 :   1710e:  li      a3,1
+    0.00 :   17110:  jalr    s6
+    0.00 :   17112:  ld      t2,-288(s0)
+    0.00 :   17116:  ld      a7,-272(s0)
+    0.00 :   1711a:  fsub.s  fa5,fs1,fs3
+    0.00 :   1711e:  fsub.s  fa4,fs1,fs2
+    0.00 :   17122:  flw     ft2,-232(s0)
+    0.00 :   17126:  flw     ft1,-228(s0)
+    0.00 :   1712a:  flw     ft0,-224(s0)
+    0.00 :   1712e:  fmul.s  fa3,fs2,fa5
+    0.00 :   17132:  flw     fa0,-220(s0)
+    0.00 :   17136:  fmul.s  fa5,fa5,fa4
+    0.00 :   1713a:  flw     ft3,-248(s0)
+    0.00 :   1713e:  flw     fa1,-244(s0)
+    0.00 :   17142:  fmul.s  ft2,fa3,ft2
+    0.00 :   17146:  fmul.s  ft1,ft1,fa3
+    0.00 :   1714a:  fmul.s  ft0,ft0,fa3
+    0.00 :   1714e:  fmul.s  fa0,fa0,fa3
+    0.00 :   17152:  flw     fa2,-240(s0)
+    0.00 :   17156:  flw     fa3,-236(s0)
+    0.00 :   1715a:  fmul.s  fa4,fs3,fa4
+    0.00 :   1715e:  fmadd.s fa1,fa1,fa5,ft1
+    0.00 :   17162:  fmadd.s fa2,fa2,fa5,ft0
+    0.00 :   17166:  fmadd.s fa3,fa3,fa5,fa0
+    0.00 :   1716a:  fmadd.s ft3,ft3,fa5,ft2
+    0.00 :   1716e:  flw     ft1,-212(s0)
+    0.00 :   17172:  flw     ft2,-216(s0)
+    0.00 :   17176:  flw     ft0,-208(s0)
+    0.00 :   1717a:  flw     fa0,-204(s0)
+    0.00 :   1717e:  fmul.s  fa5,fs2,fs3
+    0.00 :   17182:  fmadd.s ft1,ft1,fa4,fa1
+    0.00 :   17186:  fmadd.s ft0,ft0,fa4,fa2
+    0.00 :   1718a:  fmadd.s fa0,fa0,fa4,fa3
+    0.00 :   1718e:  fmadd.s ft2,ft2,fa4,ft3
+    0.00 :   17192:  flw     fa1,-200(s0)
+    0.00 :   17196:  flw     fa2,-196(s0)
+    0.00 :   1719a:  flw     fa3,-192(s0)
+    0.00 :   1719e:  flw     fa4,-188(s0)
+    0.00 :   171a2:  fmadd.s fa1,fa1,fa5,ft2
+    0.00 :   171a6:  fmadd.s fa2,fa2,fa5,ft1
+    0.00 :   171aa:  fmadd.s fa3,fa3,fa5,ft0
+    0.00 :   171ae:  fmadd.s fa5,fa4,fa5,fa0
+    0.00 :   171b2:  ld      a4,-280(s0)
+    0.00 :   171b6:  li      a5,16
+    0.00 :   171b8:  fsw     fa1,0(a4) # 8000 <fast_path_cache+0x8000>
+    0.00 :   171bc:  fsw     fa2,4(a4)
+    0.00 :   171c0:  fsw     fa3,8(a4)
+    0.00 :   171c4:  fsw     fa5,12(a4)
+    0.00 :   171c8:  j       16724 <__bits_image_fetch_affine_no_alpha+0x3a8>
+    0.00 :   171cc:  sd      a3,-344(s0)
+    0.00 :   171d0:  sd      zero,-352(s0)
+    0.00 :   171d4:  j       1642a <__bits_image_fetch_affine_no_alpha+0xae>
+    0.00 :   171d8:  bltz    a1,1721c <__bits_image_fetch_affine_no_alpha+0xea0>
+    0.00 :   171dc:  blt     a1,a4,171e4 <__bits_image_fetch_affine_no_alpha+0xe68>
+    0.00 :   171e0:  addiw   a1,a4,-1
+    0.00 :   171e4:  bltz    a2,17222 <__bits_image_fetch_affine_no_alpha+0xea6>
+    0.00 :   171e8:  blt     a2,a0,1691a <__bits_image_fetch_affine_no_alpha+0x59e>
+    0.00 :   171ec:  addiw   a5,a0,-1
+    0.00 :   171f0:  j       1691a <__bits_image_fetch_affine_no_alpha+0x59e>
+    0.00 :   171f4:  not     a1,a1
+    0.00 :   171f8:  remw    a1,a1,a5
+    0.00 :   171fc:  subw    a1,a5,a1
+    0.00 :   17200:  addiw   a1,a1,-1
+    0.00 :   17202:  j       168fa <__bits_image_fetch_affine_no_alpha+0x57e>
+    0.00 :   17206:  not     a5,a2
+    0.00 :   1720a:  remw    a5,a5,a4
+    0.00 :   1720e:  subw    a5,a4,a5
+    0.00 :   17212:  addiw   a5,a5,-1 # 7fff <fast_path_cache+0x7fff>
+    0.00 :   17214:  j       16910 <__bits_image_fetch_affine_no_alpha+0x594>
+    0.00 :   17218:  li      a5,0
+    0.00 :   1721a:  j       16e86 <__bits_image_fetch_affine_no_alpha+0xb0a>
+    0.00 :   1721c:  li      a1,0
+    0.00 :   1721e:  bgez    a2,171e8 <__bits_image_fetch_affine_no_alpha+0xe6c>
+    0.00 :   17222:  li      a5,0
+    0.00 :   17224:  j       1691a <__bits_image_fetch_affine_no_alpha+0x59e>
+    0.00 :   17228:  not     s2,s2
+    0.00 :   1722c:  remw    s2,s2,a3
+    0.00 :   17230:  subw    s2,a3,s2
+    0.00 :   17234:  addiw   s2,s2,-1
+    0.00 :   17236:  j       16a98 <__bits_image_fetch_affine_no_alpha+0x71c>
+    0.00 :   17238:  not     s1,s1
+    0.00 :   1723c:  remw    s1,s1,a1
+    0.00 :   17240:  subw    s1,a1,s1
+    0.00 :   17244:  addiw   s1,s1,-1
+    0.00 :   17246:  j       167e2 <__bits_image_fetch_affine_no_alpha+0x466>
+    0.00 :   1724a:  not     a2,s4
+    0.00 :   1724e:  remw    a2,a2,a0
+    0.00 :   17252:  subw    a2,a0,a2
+    0.00 :   17256:  addiw   s8,a2,-1
+    0.00 :   1725a:  bge     s8,a3,172e2 <__bits_image_fetch_affine_no_alpha+0xf66>
+    0.00 :   1725e:  bgez    a6,172ec <__bits_image_fetch_affine_no_alpha+0xf70>
+    0.00 :   17262:  not     a2,a6
+    0.00 :   17266:  remw    a2,a2,a1
+    0.00 :   1726a:  subw    a2,a1,a2
+    0.00 :   1726e:  addiw   s9,a2,-1
+    0.00 :   17272:  blt     s9,a4,1727e <__bits_image_fetch_affine_no_alpha+0xf02>
+    0.00 :   17276:  subw    a1,a1,s9
+    0.00 :   1727a:  addiw   s9,a1,-1
+    0.00 :   1727e:  bgez    a5,16808 <__bits_image_fetch_affine_no_alpha+0x48c>
+    0.00 :   17282:  not     a5,a5
+    0.00 :   17286:  remw    a5,a5,a0
+    0.00 :   1728a:  subw    a5,a0,a5
+    0.00 :   1728e:  addiw   s10,a5,-1
+    0.00 :   17292:  j       1680c <__bits_image_fetch_affine_no_alpha+0x490>
+    0.00 :   17296:  not     a2,s4
+    0.00 :   1729a:  remw    a2,a2,a1
+    0.00 :   1729e:  subw    a2,a1,a2
+    0.00 :   172a2:  addiw   s1,a2,-1
+    0.00 :   172a6:  bge     s1,a4,17362 <__bits_image_fetch_affine_no_alpha+0xfe6>
+    0.00 :   172aa:  bgez    s10,1736c <__bits_image_fetch_affine_no_alpha+0xff0>
+    0.00 :   172ae:  not     a2,s10
+    0.00 :   172b2:  remw    a2,a2,a3
+    0.00 :   172b6:  subw    a2,a3,a2
+    0.00 :   172ba:  addiw   s8,a2,-1
+    0.00 :   172be:  blt     s8,a5,172ca <__bits_image_fetch_affine_no_alpha+0xf4e>
+    0.00 :   172c2:  subw    a3,a3,s8
+    0.00 :   172c6:  addiw   s8,a3,-1 # ffff <fetch_pixel_r8g8b8+0x37>
+    0.00 :   172ca:  bgez    s5,16abe <__bits_image_fetch_affine_no_alpha+0x742>
+    0.00 :   172ce:  not     a5,s5
+    0.00 :   172d2:  remw    a5,a5,a1
+    0.00 :   172d6:  subw    a5,a1,a5
+    0.00 :   172da:  addiw   s9,a5,-1
+    0.00 :   172de:  j       16ac2 <__bits_image_fetch_affine_no_alpha+0x746>
+    0.00 :   172e2:  subw    s8,a0,s8
+    0.00 :   172e6:  addiw   s8,s8,-1
+    0.00 :   172e8:  bltz    a6,17262 <__bits_image_fetch_affine_no_alpha+0xee6>
+    0.00 :   172ec:  remw    s9,a6,a1
+    0.00 :   172f0:  bge     s9,a4,17276 <__bits_image_fetch_affine_no_alpha+0xefa>
+    0.00 :   172f4:  bgez    a5,16808 <__bits_image_fetch_affine_no_alpha+0x48c>
+    0.00 :   172f8:  j       17282 <__bits_image_fetch_affine_no_alpha+0xf06>
+    0.00 :   172fa:  fmv.w.x fa4,zero
+    0.00 :   172fe:  ld      a5,-280(s0)
+    0.00 :   17302:  fmv.s   fa2,fa4
+    0.00 :   17306:  fsw     fa4,0(a5)
+    0.00 :   1730a:  fsw     fa4,4(a5)
+    0.00 :   1730e:  j       166dc <__bits_image_fetch_affine_no_alpha+0x360>
+    0.00 :   17312:  bltz    s1,17394 <__bits_image_fetch_affine_no_alpha+0x1018>
+    0.00 :   17316:  blt     s1,a4,173bc <__bits_image_fetch_affine_no_alpha+0x1040>
+    0.00 :   1731a:  addiw   s1,a4,-1
+    0.00 :   1731e:  bltz    s8,173f6 <__bits_image_fetch_affine_no_alpha+0x107a>
+    0.00 :   17322:  blt     s4,a3,1732a <__bits_image_fetch_affine_no_alpha+0xfae>
+    0.00 :   17326:  addiw   s8,a3,-1
+    0.00 :   1732a:  bge     a6,a4,173fa <__bits_image_fetch_affine_no_alpha+0x107e>
+    0.00 :   1732e:  blt     a5,a3,16818 <__bits_image_fetch_affine_no_alpha+0x49c>
+    0.00 :   17332:  addiw   s10,a3,-1
+    0.00 :   17336:  j       16818 <__bits_image_fetch_affine_no_alpha+0x49c>
+    0.00 :   1733a:  bltz    s2,1737a <__bits_image_fetch_affine_no_alpha+0xffe>
+    0.00 :   1733e:  blt     s2,a5,173ae <__bits_image_fetch_affine_no_alpha+0x1032>
+    0.00 :   17342:  addiw   s2,a5,-1
+    0.00 :   17346:  bltz    s1,173f2 <__bits_image_fetch_affine_no_alpha+0x1076>
+    0.00 :   1734a:  blt     s4,a4,17352 <__bits_image_fetch_affine_no_alpha+0xfd6>
+    0.00 :   1734e:  addiw   s1,a4,-1
+    0.00 :   17352:  bge     s10,a5,17400 <__bits_image_fetch_affine_no_alpha+0x1084>
+    0.00 :   17356:  blt     s5,a4,16ace <__bits_image_fetch_affine_no_alpha+0x752>
+    0.00 :   1735a:  addiw   s9,a4,-1
+    0.00 :   1735e:  j       16ace <__bits_image_fetch_affine_no_alpha+0x752>
+    0.00 :   17362:  subw    s1,a1,s1
+    0.00 :   17366:  addiw   s1,s1,-1
+    0.00 :   17368:  bltz    s10,172ae <__bits_image_fetch_affine_no_alpha+0xf32>
+    0.00 :   1736c:  remw    s8,s10,a3
+    0.00 :   17370:  bge     s8,a5,172c2 <__bits_image_fetch_affine_no_alpha+0xf46>
+    0.00 :   17374:  bgez    s5,16abe <__bits_image_fetch_affine_no_alpha+0x742>
+    0.00 :   17378:  j       172ce <__bits_image_fetch_affine_no_alpha+0xf52>
+    0.00 :   1737a:  bltz    s1,173de <__bits_image_fetch_affine_no_alpha+0x1062>
+    0.00 :   1737e:  blt     s1,a4,1742c <__bits_image_fetch_affine_no_alpha+0x10b0>
+    0.00 :   17382:  addiw   s1,a4,-1
+    0.00 :   17386:  beqz    s8,1741e <__bits_image_fetch_affine_no_alpha+0x10a2>
+    0.00 :   1738a:  mv      s9,s1
+    0.00 :   1738c:  li      s8,0
+    0.00 :   1738e:  li      s2,0
+    0.00 :   17390:  j       16ace <__bits_image_fetch_affine_no_alpha+0x752>
+    0.00 :   17394:  bltz    s8,173ca <__bits_image_fetch_affine_no_alpha+0x104e>
+    0.00 :   17398:  blt     s8,a3,17414 <__bits_image_fetch_affine_no_alpha+0x1098>
+    0.00 :   1739c:  addiw   s8,a3,-1
+    0.00 :   173a0:  beqz    s9,17406 <__bits_image_fetch_affine_no_alpha+0x108a>
+    0.00 :   173a4:  mv      s10,s8
+    0.00 :   173a6:  li      s9,0
+    0.00 :   173a8:  li      s1,0
+    0.00 :   173aa:  j       16818 <__bits_image_fetch_affine_no_alpha+0x49c>
+    0.00 :   173ae:  bgez    s1,1734a <__bits_image_fetch_affine_no_alpha+0xfce>
+    0.00 :   173b2:  blt     s10,a5,173e6 <__bits_image_fetch_affine_no_alpha+0x106a>
+    0.00 :   173b6:  addiw   s8,a5,-1
+    0.00 :   173ba:  j       173e6 <__bits_image_fetch_affine_no_alpha+0x106a>
+    0.00 :   173bc:  bgez    s8,17322 <__bits_image_fetch_affine_no_alpha+0xfa6>
+    0.00 :   173c0:  blt     a6,a4,173d2 <__bits_image_fetch_affine_no_alpha+0x1056>
+    0.00 :   173c4:  addiw   s9,a4,-1
+    0.00 :   173c8:  j       173d2 <__bits_image_fetch_affine_no_alpha+0x1056>
+    0.00 :   173ca:  li      s1,0
+    0.00 :   173cc:  beqz    s9,173c0 <__bits_image_fetch_affine_no_alpha+0x1044>
+    0.00 :   173d0:  li      s9,0
+    0.00 :   173d2:  li      s8,0
+    0.00 :   173d4:  bgez    a5,1732e <__bits_image_fetch_affine_no_alpha+0xfb2>
+    0.00 :   173d8:  li      s10,0
+    0.00 :   173da:  j       16818 <__bits_image_fetch_affine_no_alpha+0x49c>
+    0.00 :   173de:  li      s2,0
+    0.00 :   173e0:  beqz    s8,173b2 <__bits_image_fetch_affine_no_alpha+0x1036>
+    0.00 :   173e4:  li      s8,0
+    0.00 :   173e6:  li      s1,0
+    0.00 :   173e8:  bgez    s5,17356 <__bits_image_fetch_affine_no_alpha+0xfda>
+    0.00 :   173ec:  li      s9,0
+    0.00 :   173ee:  j       16ace <__bits_image_fetch_affine_no_alpha+0x752>
+    0.00 :   173f2:  mv      s8,s2
+    0.00 :   173f4:  j       173e6 <__bits_image_fetch_affine_no_alpha+0x106a>
+    0.00 :   173f6:  mv      s9,s1
+    0.00 :   173f8:  j       173d2 <__bits_image_fetch_affine_no_alpha+0x1056>
+    0.00 :   173fa:  addiw   s9,a4,-1
+    0.00 :   173fe:  j       1732e <__bits_image_fetch_affine_no_alpha+0xfb2>
+    0.00 :   17400:  addiw   s8,a5,-1
+    0.00 :   17404:  j       17356 <__bits_image_fetch_affine_no_alpha+0xfda>
+    0.00 :   17406:  mv      s9,a4
+    0.00 :   17408:  blez    a4,1740e <__bits_image_fetch_affine_no_alpha+0x1092>
+    0.00 :   1740c:  li      s9,1
+    0.00 :   1740e:  addiw   s9,s9,-1
+    0.00 :   17410:  li      s1,0
+    0.00 :   17412:  j       1732e <__bits_image_fetch_affine_no_alpha+0xfb2>
+    0.00 :   17414:  beqz    s9,17406 <__bits_image_fetch_affine_no_alpha+0x108a>
+    0.00 :   17418:  li      s9,0
+    0.00 :   1741a:  li      s1,0
+    0.00 :   1741c:  j       1732e <__bits_image_fetch_affine_no_alpha+0xfb2>
+    0.00 :   1741e:  mv      s8,a5
+    0.00 :   17420:  blez    a5,17426 <__bits_image_fetch_affine_no_alpha+0x10aa>
+    0.00 :   17424:  li      s8,1
+    0.00 :   17426:  addiw   s8,s8,-1
+    0.00 :   17428:  li      s2,0
+    0.00 :   1742a:  j       17356 <__bits_image_fetch_affine_no_alpha+0xfda>
+    0.00 :   1742c:  beqz    s8,1741e <__bits_image_fetch_affine_no_alpha+0x10a2>
+    0.00 :   17430:  li      s8,0
+    0.00 :   17432:  li      s2,0
+    0.00 :   17434:  j       17356 <__bits_image_fetch_affine_no_alpha+0xfda>
+    0.00 :   17436:  auipc   a3,0x49
+    0.00 :   1743a:  addi    a3,a3,458 # 60600 <__PRETTY_FUNCTION__.2>
+    0.00 :   1743e:  li      a2,469
+    0.00 :   17442:  auipc   a1,0x48
+    0.00 :   17446:  addi    a1,a1,-642 # 5f1c0 <operator_table+0x150>
+    0.00 :   1744a:  auipc   a0,0x48
+    0.00 :   1744e:  addi    a0,a0,-610 # 5f1e8 <operator_table+0x178>
+    0.00 :   17452:  jal     9500 <__assert_fail@plt>
+    0.00 :   17456:  sd      s3,392(sp)
+    0.00 :   17458:  sd      s5,376(sp)
+    0.00 :   1745a:  sd      s6,368(sp)
+    0.00 :   1745c:  sd      s7,360(sp)
+    0.00 :   1745e:  sd      s8,352(sp)
+    0.00 :   17460:  sd      s10,336(sp)
+    0.00 :   17462:  sd      s11,328(sp)
+    0.00 :   17464:  fsd     fs0,312(sp)
+    0.00 :   17466:  fsd     fs1,304(sp)
+    0.00 :   17468:  fsd     fs2,296(sp)
+    0.00 :   1746a:  fsd     fs3,288(sp)
+    0.00 :   1746c:  jal     9370 <__stack_chk_fail@plt>

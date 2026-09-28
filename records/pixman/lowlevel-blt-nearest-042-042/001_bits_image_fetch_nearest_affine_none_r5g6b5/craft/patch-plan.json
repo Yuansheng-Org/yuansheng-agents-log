@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-pixman-lowlevel-blt-nearest-042-042-001",
+  "blueprintId": "bp-pixman-lowlevel-blt-nearest-042-042-001",
+  "createdAt": "2026-09-09T03:50:52.175Z",
+  "objective": "固定 bit-field packed decomposition（r5g6b5→a8r8g8b8）在暴露 v 的核上以每像素约 14 条标量 shift/mask/or 逐元素重复执行，叠加每像素 4 次 repeat=NONE 边界分支；贡献载体是 build 未带 v 且 nearest-affine fetch 路径无 RVV kernel（in-tree 已有同构 RVV helper rvv_convert_0565_to_0888_m4 可复用）。",
+  "changes": [
+    {
+      "filePath": "pixman/pixman/pixman-rvv.c",
+      "action": "modify",
+      "rationale": "固定 bit-field packed decomposition（r5g6b5→a8r8g8b8）在暴露 v 的核上以每像素约 14 条标量 shift/mask/or 逐元素重复执行，叠加每像素 4 次 repeat=NONE 边界分支；贡献载体是 build 未带 v 且 nearest-affine fetch 路径无 RVV kernel（in-tree 已有同构 RVV helper rvv_convert_0565_to_0888_m4 可复用）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "pixman/pixman/pixman-riscv.c",
+      "action": "modify",
+      "rationale": "固定 bit-field packed decomposition（r5g6b5→a8r8g8b8）在暴露 v 的核上以每像素约 14 条标量 shift/mask/or 逐元素重复执行，叠加每像素 4 次 repeat=NONE 边界分支；贡献载体是 build 未带 v 且 nearest-affine fetch 路径无 RVV kernel（in-tree 已有同构 RVV helper rvv_convert_0565_to_0888_m4 可复用）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "pixman/pixman/pixman-fast-path.c",
+      "action": "modify",
+      "rationale": "固定 bit-field packed decomposition（r5g6b5→a8r8g8b8）在暴露 v 的核上以每像素约 14 条标量 shift/mask/or 逐元素重复执行，叠加每像素 4 次 repeat=NONE 边界分支；贡献载体是 build 未带 v 且 nearest-affine fetch 路径无 RVV kernel（in-tree 已有同构 RVV helper rvv_convert_0565_to_0888_m4 可复用）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    },
+    {
+      "filePath": "pixman/meson.build",
+      "action": "modify",
+      "rationale": "固定 bit-field packed decomposition（r5g6b5→a8r8g8b8）在暴露 v 的核上以每像素约 14 条标量 shift/mask/or 逐元素重复执行，叠加每像素 4 次 repeat=NONE 边界分支；贡献载体是 build 未带 v 且 nearest-affine fetch 路径无 RVV kernel（in-tree 已有同构 RVV helper rvv_convert_0565_to_0888_m4 可复用）。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 pixman/pixman/pixman-rvv.c, pixman/pixman/pixman-riscv.c, pixman/pixman/pixman-fast-path.c, pixman/meson.build 来解决 blueprint bp-pixman-lowlevel-blt-nearest-042-042-001。"
+}

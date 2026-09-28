@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "yuansheng.patch_plan.v1",
+  "patchPlanId": "pp-bp-pixman-lowlevel-blt-nearest-022-022-001",
+  "blueprintId": "bp-pixman-lowlevel-blt-nearest-022-022-001",
+  "createdAt": "2026-09-09T03:48:30.337Z",
+  "objective": "affine nearest fetch 主循环为 compiler-generated 标量 indexed gather（数据相关索引 + 逐 lane 标量 load/store），叠加 libpixman-1.so 未按含 v 的 -march 构建，导致 RVV 1.0（VLEN=256）的 vluxei/vse 向量化能力完全未启用。",
+  "changes": [
+    {
+      "filePath": "bits_image_fetch_nearest_affine_none_a8r8g8b8（pixman fast-path fetch；无 debug symbols 且无源码访问权，仅能定位到函数名，详见 diagnosis.currentGaps）",
+      "action": "modify",
+      "rationale": "affine nearest fetch 主循环为 compiler-generated 标量 indexed gather（数据相关索引 + 逐 lane 标量 load/store），叠加 libpixman-1.so 未按含 v 的 -march 构建，导致 RVV 1.0（VLEN=256）的 vluxei/vse 向量化能力完全未启用。",
+      "instructions": [
+        "编辑前先检查文件。",
+        "做出最小的、保持行为不变的性能修复，以解决 RootCauseBlueprint 指出的根因。",
+        "避免无关重构和格式噪音。"
+      ],
+      "risk": "medium"
+    }
+  ],
+  "expectedDiffSummary": "候选补丁应通过聚焦修改 bits_image_fetch_nearest_affine_none_a8r8g8b8（pixman fast-path fetch；无 debug symbols 且无源码访问权，仅能定位到函数名，详见 diagnosis.currentGaps） 来解决 blueprint bp-pixman-lowlevel-blt-nearest-022-022-001。"
+}
