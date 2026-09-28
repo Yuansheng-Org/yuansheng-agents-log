@@ -21,12 +21,6 @@
 - 软件页面中的历史汇总数字保留原值；当前总表按归档复核补丁逐项登记，因此 Redis 登记 4 行、MXNet 登记 15 行。MXNet 的 PR 链接指向我们维护的 `RuyiAI-Stack/mxnet` 仓库。
 - OpenCV 的 10 条 PR 与本仓库 10 份 `reviews/*.patch` 逐字节一致，对应下表第 29–38 行。标注“PR 版本有差异”的行，仅确认了补丁主题和归档目录的关联，线上提交版本与本地复核补丁不完全一致。
 - [FFmpeg PR #24550](https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/24550) 修改 `libswscale/riscv/rgb2rgb_rvv.S`，当前归档的 FFmpeg 复核补丁中没有对应文件；暂不计入下表。
-- Faiss 第 68–75 行按 3 个测试用例（`sq-distance` / `sq-encode` / `sq-decode`）归档，每条均含 Trace 日志与原始 Craft 补丁；其中第 68–70 行已提上游、列于上一分区，第 71–75 行暂未记录 PR。原 009 / 010 / 011 三条因无 Agent Debug Trace 诊断日志、亦无优化前 Craft 原始补丁，已从 `records/faiss` 移除（其复核补丁单列于桌面提交包，未归档）。
-- Faiss 已提交上游的 3 条复核补丁移至本分区：第 68 行对应 PR #5638、第 69 行对应 PR #5639、第 70 行对应 PR #5641，三条均经补丁逐字节比对确认。原第 70 行（record 003，Direct-u8 编码）编号顺延为第 71 行；该行的上游 PR #5640 实际已由 Meta codesync 导入并合并进 faiss main（squash `f323c18d`），本表按现状仍列于“未提 PR”分区，仅在此说明。
-- Faiss HNSW MinimaxHeap pop_min（上游 PR #5666）在本表无对应行：其补丁与本仓库已移除的 `records/faiss/hnsw/011_pop_best_rvv_MinimaxHeap` 逐字节相同，而该记录因无 Agent Debug Trace 诊断日志、亦无优化前 Craft 原始补丁已从 `records/faiss` 删除，故未单独登记。
-- OpenSSL 第 9、10 行的性能数据测于 SG2044（VLEN=128），基线与补丁同 runner；第 10 行的固定 `e64/m4` 形式仅在 VLEN=128 成立（上游在 VLEN≥256 改用 `e64/m2`），且为单次聚合运行，两行的测点、镜像摘要与证据边界均以各自 `review/*_pr_description.md` 为准。
-- MXNet 第 53–58 行的性能数据均测于 SG2044（VLEN=128）。第 53 行的 block 分支与其余两行为不同形状，不可并排比较；第 54 行的 `-fno-math-errno` 并非 RISC-V 专属（x86/aarch64 同样受益，此处收益大是因为同时解锁了 RVV 向量化）；第 55 行的 A2 子项会因 FMA 收缩引入末位差异（A1 子项逐位相同）；第 57 行是“解锁式”改动，单独提交无收益，须与第 53 行的索引遍历补丁成对；第 56、58 行的收益为内核级 A/B，端到端 OpPerf 数字尚未采集。各行以各自的 `reviews/*.md` 为准。
-- glibc 第 81 行的性能数据取自其复核补丁 `review/patch.diff` 的 mbox 信封正文头部（该目录无独立性能 `*.md`）；测于 K3（X100 核，VLEN=256），基线为 glibc `afc3228d`，1 次预热 + 6 次正式运行，基线与向量实现按 IFUNC 成对测量，数值为各用例 6 次中位数的几何平均；单平台单轮口径，其余测点以该文件正文为准。
 
 ### 已有上游提交链接（70 条）
 
