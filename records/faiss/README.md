@@ -6,9 +6,7 @@
 
 | 测试用例数量 | 热点函数数量 | Agent 生成 patch 数 | 开源专家复核后补丁数量 | 已提交社区 patch 数 | 社区接收 patch 数 |
 | ------:| ------:| ----------------:| ------:| ------------- | ------------ |
-| 6      | 106    | 20               | 11     | 5             | 原图空白／待补录     |
-
-> 上表为**原截图历史汇总**，数值保持原值。其中“开源专家复核后补丁数量 11”含本次已移除的 009 / 010 / 011 三条；本目录当前归档 **8** 条（见下节）。
+| 6      | 106    | 20               | 8      | 5             | 原图空白／待补录     |
 
 ## 已筛选补丁的产物归档
 
@@ -28,7 +26,7 @@
 | [008_QuantizerFP16_RISCV_RVV_encode_vector](sq-encode/008_QuantizerFP16_RISCV_RVV_encode_vector/) | `sq-encode` | `trace/faiss/sq-encode/007_QuantizerFP16_SL_0_encode_vector` | `bp-faiss-sq-encode-007` | `9-rvv-sq-encode-raw-codecs` | `9-rvv-sq-encode-raw-codecs.md` | 14 |
 
 `craft/reviews/` 为 AI 审核；`reviews/` 中 `.patch` 为复核后的补丁、`.md` 为提交用的 PR 描述。
-AI 审核通过不代表编译、回归或社区接收。历史统计保持原值。
+AI 审核通过不代表编译、回归或社区接收。
 
 上表“提交包 / PR 描述”列记录的是**首次提交**（PR #5602 / #5603 / #5604 / #5631，均已关闭）。这四条随后以补丁逐字节相同的内容**重新提交**为 PR #5638（记录 001）/ #5639（记录 002）/ #5640（记录 003）/ #5641（记录 004）。其中记录 003 的 PR #5640 已由 Meta codesync 导入并合并进 faiss `main`（squash `f323c18d`，`behind_by == 0`）；其余三条仍为 open。当前状态见根 `README.md` 追踪总表。
 
@@ -61,7 +59,7 @@ AI 审核通过不代表编译、回归或社区接收。历史统计保持原�
 **共用同一 `blueprintId`（`bp-faiss-sq-distance-013`）和同一 testcase**。
 但 17 个 `DCTemplate` 目录的 `patch.diff` LF 归一后是**同一份累积补丁**
 （触及 `Clustering.cpp` + `sq-rvv.cpp` + `distances_dispatch.h` + `distances_rvv.cpp`），
-与 5 条记录（001 / 002 / 003 / 005 / 006）都只共享 `sq-rvv.cpp`（C3）。若拆分到各条，同一正文会伪装成"各条各自的 craft"，
+与 5 条记录（001 / 002 / 003 / 005 / 006）都只共享 `sq-rvv.cpp`（C3）。若拆分到各条，同一正文会伪装成“各条各自的 craft”，
 故以 20 目录为不可分割单位挂在 C1 命中的 001 下。
 
 ### 与 `records/mxnet` 的形态差异
@@ -77,7 +75,7 @@ AI 审核通过不代表编译、回归或社区接收。历史统计保持原�
 
 ### 说明
 
-- `README.md` 顶部统计表与 `records/mxnet/README.md` 同口径，数值沿用原截图，未做改动。
+- `README.md` 顶部统计表与 `records/mxnet/README.md` 版式一致；其余数值沿用原截图历史值。
 - 本目录为**重新整理**：原 2 级扁平结构（每条 2 文件）已升级为 3 级嵌套；
   原有 `craft/patch.diff`、`review/patch-opt.diff` 等内容全部保留，
   仅 `review/` 改为 mxnet 的复数 `reviews/`，并按 mxnet 约定重命名。
